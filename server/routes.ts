@@ -1057,7 +1057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const transitionQuery = `${transition.currentRole} to ${transition.targetRole} career transition statistics, success rate, time frame, common paths`;
           
           console.log(`Searching for transition statistics: ${transitionQuery}`);
-          const perplexityPrompt = `
+          const langGraphPrompt = `
             You are a career transition analyst studying transitions from ${transition.currentRole} to ${transition.targetRole}.
             
             Search for real data and statistics about this specific career transition path.
@@ -1079,11 +1079,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             Return only the JSON, with no additional text.
           `;
           
-          const perplexityResponse = await callLLM(perplexityPrompt, 1000);
+          const langGraphResponse = await callLLM(langGraphPrompt, 1000);
           
           try {
             // Debug the structure of the response
-            console.log("Perplexity API response structure:", Object.keys(perplexityResponse));
+            console.log("LangGraph response structure:", Object.keys(langGraphResponse));
             
             let insightsData;
             
