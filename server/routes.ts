@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Cleared existing insights for transition ID: ${transitionId} to ensure fresh analysis`);
       
       // Get insights (should be empty after deletion)
-      let insights = [];
+      let insights: any[] = [];
       if (insights.length === 0) {
         console.log("No insights found, generating insights with Perplexity Sonar");
         

@@ -29,10 +29,13 @@ const Dashboard: React.FC = () => {
     }
   }, [match, setLocation]);
 
-  // Fetch dashboard data
+  // Fetch dashboard data with automatic refresh - always get fresh data
   const { data, isLoading, isError, error } = useQuery<DashboardData>({
     queryKey: [`/api/dashboard/${transitionId}`],
     enabled: !!transitionId,
+    staleTime: 0, // Always consider data stale
+    // Important: Force refetch on mount to ensure fresh data
+    refetchOnMount: true
   });
 
   // State for tracking loading stages
@@ -168,23 +171,202 @@ const Dashboard: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {loadingStage ? (
-            // Engaging loader with interactive content during processing
+            // Advanced agentic workflow loader with step visualization
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row justify-between items-center mb-6">
                 <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0">
-                  Processing Your Career Data
+                  <span className="text-primary-light">CARA.AI</span> Processing Career Transition
                 </h1>
                 <div className="flex items-center">
                   <span className="text-sm text-text-secondary mr-2">
-                    Current stage:
+                    Current operation:
                   </span>
-                  <span className="text-sm text-primary-light font-medium">
-                    {loadingStage === 'stories' && "Finding Transition Stories"}
-                    {loadingStage === 'skills' && "Analyzing Skill Requirements"}
-                    {loadingStage === 'plan' && "Creating Career Plan"}
-                    {loadingStage === 'insights' && "Extracting Key Insights"}
-                    {loadingStage === 'metrics' && "Calculating Success Metrics"}
+                  <span className="text-sm text-primary-light font-medium animate-pulse">
+                    Processing live data
                   </span>
+                </div>
+              </div>
+              
+              {/* Agent Workflow Status */}
+              <div className="bg-surface-dark border border-primary/20 rounded-xl p-6 shadow-glow">
+                <h2 className="text-lg font-medium mb-4 flex items-center">
+                  <svg 
+                    className="mr-2 h-5 w-5 text-primary" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path 
+                      d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                    <path 
+                      d="M12 6v6l4 2" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>CARA.AI Workflow Status</span>
+                </h2>
+                
+                <div className="space-y-4">
+                  {/* Stage 1: Scraping Stories */}
+                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'stories' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'stories' ? 'bg-primary text-black' : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                      {loadingStage === 'stories' ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : '1'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className={`font-medium ${loadingStage === 'stories' ? 'text-primary-light' : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                          Finding Career Transition Stories
+                        </h3>
+                        {loadingStage === 'stories' && (
+                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
+                        )}
+                        {(loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics') && (
+                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Scraping web forums and platforms for real stories from professionals who made the transition from {data?.transition.currentRole || "current role"} to {data?.transition.targetRole || "target role"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Stage 2: Analyze Insights */}
+                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'insights' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'insights' ? 'bg-primary text-black' : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                      {loadingStage === 'insights' ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : '2'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className={`font-medium ${loadingStage === 'insights' ? 'text-primary-light' : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                          Extracting Key Observations & Challenges
+                        </h3>
+                        {loadingStage === 'insights' && (
+                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
+                        )}
+                        {(loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics') && (
+                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Analyzing transition stories to identify key observations, challenges, and success patterns
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Stage 3: Analyze Skills */}
+                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'skills' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'skills' ? 'bg-primary text-black' : loadingStage === 'plan' || loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                      {loadingStage === 'skills' ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : loadingStage === 'plan' || loadingStage === 'metrics' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : '3'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className={`font-medium ${loadingStage === 'skills' ? 'text-primary-light' : loadingStage === 'plan' || loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                          Analyzing Skill Requirements & Gaps
+                        </h3>
+                        {loadingStage === 'skills' && (
+                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
+                        )}
+                        {(loadingStage === 'plan' || loadingStage === 'metrics') && (
+                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Identifying critical skills needed and determining skill gaps based on transition requirements
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Stage 4: Create Career Plan */}
+                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'plan' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'plan' ? 'bg-primary text-black' : loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                      {loadingStage === 'plan' ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : loadingStage === 'metrics' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : '4'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className={`font-medium ${loadingStage === 'plan' ? 'text-primary-light' : loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                          Creating Career Trajectory Plan
+                        </h3>
+                        {loadingStage === 'plan' && (
+                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
+                        )}
+                        {loadingStage === 'metrics' && (
+                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Building a personalized career transition roadmap with specific milestones and learning resources
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Stage 5: Metrics & Success Rate */}
+                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'metrics' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'metrics' ? 'bg-primary text-black' : 'bg-surface-lighter text-text-secondary'}`}>
+                      {loadingStage === 'metrics' ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : '5'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className={`font-medium ${loadingStage === 'metrics' ? 'text-primary-light' : 'text-text'}`}>
+                          Calculating Success Metrics & Predictions
+                        </h3>
+                        {loadingStage === 'metrics' && (
+                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Estimating transition success rate, timeline, and generating personalized metrics
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -309,7 +491,7 @@ const Dashboard: React.FC = () => {
               {data.transition.currentRole} → {data.transition.targetRole}
             </span>
           </h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center">
             <div className="flex items-center">
               <span className="text-sm text-text-secondary mr-2">
                 Last updated:
@@ -318,33 +500,6 @@ const Dashboard: React.FC = () => {
                 {new Date(data.transition.createdAt).toLocaleDateString()}
               </span>
             </div>
-            
-            <button
-              onClick={handleRefreshData}
-              disabled={isRefreshing || isProcessing}
-              className={`inline-flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
-                isRefreshing || isProcessing
-                  ? "bg-primary/30 text-white cursor-not-allowed" 
-                  : "bg-primary/20 hover:bg-primary/30 text-primary-light hover:text-white"
-              }`}
-            >
-              {isRefreshing || isProcessing ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Get Fresh Data
-                </>
-              )}
-            </button>
           </div>
         </div>
 

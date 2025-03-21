@@ -1,0 +1,208 @@
+
+> rest-express@1.0.0 dev
+Initializing database tables...
+Database tables already exist
+Predefined role skills seeded
+11:48:24 AM [express] serving on port 5000
+11:48:31 AM [express] GET /api/dashboard/13 200 in 212ms :: {"success":true,"transition":{"id":13,"us…
+Clearing all data for transition ID: 13
+Cleared all data for transition ID: 13
+Successfully cleared all data for transition ID: 13
+11:48:31 AM [express] POST /api/clear-data 200 in 291ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 13, clearing existing data...
+Successfully cleared existing data for transition 13
+Starting web scraping for Microsoft Level 64 to Google L4 transition (search_711981 - 2025-03-21)
+Cara is using Perplexity AI to search for career transition data across multiple forums
+11:48:31 AM [express] POST /api/scrape 200 in 123ms :: {"success":true,"message":"Scraping initiated …
+Scraping for Microsoft Level 64 to Google L4 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Cleared existing insights for transition ID: 13 to ensure fresh analysis
+No insights found, generating insights with Perplexity Sonar
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+11:48:37 AM [express] GET /api/dashboard/1 404 in 43ms :: {"success":false,"error":"Transition not fo…
+11:48:42 AM [express] POST /api/transitions 200 in 50ms :: {"success":true,"transitionId":13,"message…
+Clearing all data for transition ID: 13
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Analyzing 3 stories with Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Cleared all data for transition ID: 13
+Successfully cleared all data for transition ID: 13
+11:48:43 AM [express] POST /api/clear-data 200 in 289ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 13, clearing existing data...
+Successfully cleared existing data for transition 13
+Starting web scraping for Microsoft Level 64 to Google L4 transition (search_723367 - 2025-03-21)
+Cara is using Perplexity AI to search for career transition data across multiple forums
+11:48:43 AM [express] POST /api/scrape 200 in 122ms :: {"success":true,"message":"Scraping initiated …
+Scraping for Microsoft Level 64 to Google L4 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Found 3 relevant results about Microsoft Level 64 to Google L4 transitions
+Cara found 3 relevant transition stories from multiple sources
+After filtering duplicates, 3 new stories will be saved
+Saved new scraped data from ** Blind to database
+Saved new scraped data from ** Blind to database
+Saved new scraped data from ** Medium (jmmv.dev) to database
+Cleared existing insights for transition ID: 13 to ensure fresh analysis
+No insights found, generating insights with Perplexity Sonar
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Created 6 insights for transition with Perplexity Sonar
+11:49:10 AM [express] GET /api/stories-analysis/13 200 in 35509ms :: {"success":true,"data":{"keyObse…
+Cara is analyzing transition from Microsoft Level 64 to Google L4
+Cara is using Perplexity AI to search for career transition data across multiple forums
+11:49:10 AM [express] POST /api/analyze 200 in 91ms :: {"success":true,"message":"Analysis initiated"}
+Scraping for Microsoft Level 64 to Google L4 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+No skill gaps found, generating skill gaps using Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Analyzing 3 stories with Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Found 3 relevant results about Microsoft Level 64 to Google L4 transitions
+Cara found 3 relevant transition stories from multiple sources
+After filtering duplicates, 3 new stories will be saved
+Saved new scraped data from Blind to database
+Saved new scraped data from Medium to database
+Saved new scraped data from Fishbowl to database
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Created 5 real skill gaps for transition using Perplexity Sonar
+Cara is generating a plan for transition from Microsoft Level 64 to Google L4
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Created 13 insights for transition with Perplexity Sonar
+11:49:36 AM [express] GET /api/stories-analysis/13 200 in 30466ms :: {"success":true,"data":{"keyObse…
+Cara is analyzing transition from Microsoft Level 64 to Google L4
+Cara is using Perplexity AI to search for career transition data across multiple forums
+11:49:37 AM [express] POST /api/analyze 200 in 81ms :: {"success":true,"message":"Analysis initiated"}
+Scraping for Microsoft Level 64 to Google L4 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Cara is generating a plan for transition from Microsoft Level 64 to Google L4
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Found 3 relevant results about Microsoft Level 64 to Google L4 transitions
+Cara found 3 relevant transition stories from multiple sources
+After filtering duplicates, 3 new stories will be saved
+Saved new scraped data from Blind to database
+Saved new scraped data from Blind to database
+Saved new scraped data from Julio Merino's Blog to database
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 1 results from Perplexity response
+Found 1 relevant results about Microsoft Level 64 to Google L4 transitions
+Cara found 1 relevant transition stories from multiple sources
+After filtering duplicates, 1 new stories will be saved
+Saved new scraped data from **: Blind to database
+Limited data, Cara is searching with alternative phrasing
+Scraping for professionals transitioning from Microsoft Level 64 to becoming a Google L4 success stories using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from professionals transitioning from Microsoft Level 64 to becoming a Google L4 success stories experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Found 3 relevant results about professionals transitioning from Microsoft Level 64 to becoming a Google L4 success stories transitions
+Found 3 additional stories, 2 are new
+Saved additional data from ** Fishbowl to database
+Saved additional data from ** LeetCode to database
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Cara successfully generated a plan with 6 milestones
+11:51:07 AM [express] POST /api/plan 200 in 116722ms :: {"success":true,"planId":14,"milestones":6,"m…
+Cleared all data for transition ID: 13
+Cleared existing data for transition ID: 13 to ensure fresh analysis
+Calculating personalized success rate with Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Cara successfully generated a plan with 6 milestones
+11:51:12 AM [express] POST /api/plan 200 in 95607ms :: {"success":true,"planId":15,"milestones":6,"me…
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+11:51:23 AM [express] GET /api/insights/13 200 in 16200ms :: {"success":true,"insights":{"successRate…
+No scraped data found, generating insights with Perplexity Sonar
+Searching for transition statistics: Microsoft Level 64 to Google L4 career transition statistics, success rate, time frame, common paths
+Sending request to Perplexity API with model: sonar
+11:51:24 AM [express] GET /api/dashboard/13 200 in 278ms :: {"success":true,"transition":{"id":13,"us…
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Perplexity API response structure: [
+  '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
+  '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '20', '21', '22', '23', '24', '25', '26', '27', '28', '29',
+  '30', '31', '32', '33', '34', '35', '36', '37', '38', '39',
+  '40', '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '50', '51', '52', '53', '54', '55', '56', '57', '58', '59',
+  '60', '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '70', '71', '72', '73', '74', '75', '76', '77', '78', '79',
+  '80', '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '90', '91', '92', '93', '94', '95', '96', '97', '98', '99',
+  ... 184 more items
+]
+Error parsing Perplexity response: Error: Invalid data structure from Perplexity response
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1084:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Fallback to basic transition insights after Perplexity failures
+11:51:30 AM [express] GET /api/insights/13 200 in 6382ms :: {"success":true,"insights":{"successRate"…
+Cleared existing insights for transition ID: 13 to ensure fresh analysis
+No insights found, generating insights with Perplexity Sonar
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Searching for career transition stories: Career transition from Microsoft Level 64 to Google L4 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+11:51:30 AM [express] GET /api/dashboard/13 304 in 203ms :: {"success":true,"transition":{"id":13,"us…
+No scraped data found, generating insights with Perplexity Sonar
+Searching for transition statistics: Microsoft Level 64 to Google L4 career transition statistics, success rate, time frame, common paths
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 0 results from Perplexity response
+No transition stories found with Perplexity, creating fallback insights
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Perplexity API response structure: [
+  '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
+  '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '20', '21', '22', '23', '24', '25', '26', '27', '28', '29',
+  '30', '31', '32', '33', '34', '35', '36', '37', '38', '39',
+  '40', '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '50', '51', '52', '53', '54', '55', '56', '57', '58', '59',
+  '60', '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '70', '71', '72', '73', '74', '75', '76', '77', '78', '79',
+  '80', '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '90', '91', '92', '93', '94', '95', '96', '97', '98', '99',
+  ... 296 more items
+]
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
