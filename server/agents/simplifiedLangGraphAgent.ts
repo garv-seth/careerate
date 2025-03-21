@@ -583,7 +583,7 @@ Format as a JSON object with these categories.`;
       // Define edges from agent to other nodes
       .addConditionalEdges(
         "agent",
-        (state: typeof CaraState.State) => {
+        (state) => {
           const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
           
           // Check for tool calls first
@@ -605,13 +605,7 @@ Format as a JSON object with these categories.`;
               return "complete";
           }
         },
-        {
-          "tools": "tools",
-          "scraping": "scraping",
-          "analyzing": "analyzing", 
-          "planning": "planning",
-          "complete": "complete"
-        }
+        ["tools", "scraping", "analyzing", "planning", "complete"]
       )
       
       // Define the return edges
