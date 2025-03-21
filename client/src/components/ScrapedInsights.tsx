@@ -51,10 +51,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
     loadScrapedData();
   }, [transition.id]);
 
-  // Group insights by type from both server and client data
-  const observations = insights.filter((i) => i.type === "observation");
-  const challenges = insights.filter((i) => i.type === "challenge");
-  const stories = insights.filter((i) => i.type === "story");
+  // We're not using insights directly - only using data from the API
   
   // Create story insights from scraped data if we don't have them already
   const scrapedStories = scrapedData.map((item, index) => ({
@@ -72,11 +69,11 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
     url: item.url
   }));
 
-  // Use real scraped stories if available, otherwise use the ones from insights
-  const allStories = scrapedStories.length > 0 ? scrapedStories : stories;
+  // ONLY use real scraped stories from API
+  const allStories = scrapedStories;
   
   // Display only one story if not expanded
-  const displayStories = expanded ? allStories : allStories.slice(0, 1);
+  const displayStories = expanded ? allStories : (allStories.length > 0 ? allStories.slice(0, 1) : []);
 
   // Get observations and challenges from analyzed data if available
   const keyObservations = storiesData?.keyObservations || [];
@@ -108,11 +105,11 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
             </h3>
 
             <ul className="space-y-3">
-              {observations.length > 0 || keyObservations.length > 0 ? (
-                (observations.length > 0 ? observations : keyObservations.map((content, i) => ({
+              {keyObservations.length > 0 ? (
+                keyObservations.map((content, i) => ({
                   id: i,
                   content
-                }))).map((observation, idx) => (
+                })).map((observation, idx) => (
                   <li key={idx} className="flex items-start">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -177,11 +174,11 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
             </h3>
 
             <ul className="space-y-3">
-              {challenges.length > 0 || commonChallenges.length > 0 ? (
-                (challenges.length > 0 ? challenges : commonChallenges.map((content, i) => ({
+              {commonChallenges.length > 0 ? (
+                commonChallenges.map((content, i) => ({
                   id: i,
                   content
-                }))).map((challenge, idx) => (
+                })).map((challenge, idx) => (
                   <li key={idx} className="flex items-start">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
