@@ -779,6 +779,82 @@ export async function findResources(
   }
 }
 
+/**
+ * Calculate a personalized success rate for a career transition
+ * Takes into account the user's skills, current role details, and target role requirements
+ * 
+ * @param currentRole Current role title
+ * @param targetRole Target role title
+ * @param userSkills Array of skills the user already has
+ * @returns Object with success rate estimate and supporting data
+ */
+export async function calculatePersonalizedSuccessRate(
+  currentRole: string, 
+  targetRole: string, 
+  userSkills: string[] = []
+): Promise<{
+  successRate: number;
+  rationale: string;
+  keyFactors: string[];
+}> {
+  try {
+    const prompt = `
+      You are a career transition analyst specializing in providing realistic success rate predictions.
+      
+      A professional is considering transitioning from ${currentRole} to ${targetRole}.
+      Their existing skills include: ${userSkills.join(', ') || 'Unknown'}.
+      
+      Based on real career transition data (search the web for actual statistics):
+      
+      1. Calculate a realistic success rate (percentage from 0-100) for this specific career transition
+      2. Provide a brief rationale for your percentage
+      3. List 3-5 key factors that would increase their chance of success
+      
+      Your assessment should be data-driven and realistic, not optimistic.
+      Search for real data about this specific career transition path.
+      
+      Format your response as JSON:
+      {
+        "successRate": number,
+        "rationale": "brief explanation with sources",
+        "keyFactors": ["factor 1", "factor 2", "factor 3"]
+      }
+      
+      Return only the JSON object.
+    `;
+    
+    const response = await callPerplexity(prompt, 1000);
+    
+    try {
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      let result;
+      
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      } else {
+        result = JSON.parse(response);
+      }
+      
+      // Validate the result structure
+      if (typeof result.successRate !== 'number') {
+        throw new Error('Invalid success rate value');
+      }
+      
+      return {
+        successRate: Math.min(Math.max(result.successRate, 0), 100),
+        rationale: result.rationale || "Based on analysis of similar career transitions",
+        keyFactors: Array.isArray(result.keyFactors) ? result.keyFactors : []
+      };
+    } catch (parseError) {
+      console.error('Error parsing personalized success rate:', parseError);
+      throw new Error('Failed to calculate personalized success rate');
+    }
+  } catch (error) {
+    console.error('Error calculating personalized success rate:', error);
+    throw error;
+  }
+}
+
 export async function generateTransitionOverview(
   currentRole: string,
   targetRole: string,

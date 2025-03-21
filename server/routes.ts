@@ -1057,8 +1057,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate insights from scraped data using Perplexity Sonar
+      // First, get any existing skill gaps to extract user skills
+      const skillGaps = await storage.getSkillGapsByTransitionId(transitionId);
+      const userSkills = skillGaps.map(gap => gap.skillName);
+      
+      // Clear existing transition data 
+      await storage.clearTransitionData(transitionId);
+      console.log(`Cleared existing data for transition ID: ${transitionId}`);
+      
       try {
-        // Convert scrapedData to compatible format for generateTransitionOverview
+        // Convert scrapedData to compatible format for analysis
         const formattedData = scrapedData.map(item => ({
           source: item.source,
           content: item.content,
@@ -1067,36 +1075,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
           date: undefined
         }));
         
+        // Try to get personalized success rate first
         try {
-          const overviewData = await generateTransitionOverview(
+          console.log("Calculating personalized success rate with Perplexity Sonar");
+          const personalizedData = await calculatePersonalizedSuccessRate(
             transition.currentRole,
             transition.targetRole,
-            formattedData
+            userSkills
           );
           
-          res.json({ 
-            success: true, 
-            insights: overviewData
-          });
-        } catch (perplexityError) {
-          console.error("Error generating insights with Perplexity Sonar:", perplexityError);
-          console.log("Using fallback insights after Perplexity API failure");
+          // Try to get average transition time and common paths
+          let avgTime = 6; // Default time if not available
+          let commonPaths = [];
           
-          // Use fallback insights instead of returning an error
-          const fallbackInsights = {
-            successRate: 70, // conservative estimate
-            avgTransitionTime: 8, // months (conservative estimate)
-            commonPaths: [
+          try {
+            const overviewData = await generateTransitionOverview(
+              transition.currentRole,
+              transition.targetRole,
+              formattedData
+            );
+            
+            avgTime = overviewData.avgTransitionTime;
+            commonPaths = overviewData.commonPaths;
+          } catch (overviewError) {
+            console.error("Error generating overview details:", overviewError);
+            
+            // Use default paths if not available
+            commonPaths = [
               { path: `Direct application to ${transition.targetRole} positions with referrals`, count: 10 },
               { path: `Project-based demonstration of skills needed for ${transition.targetRole}`, count: 7 },
               { path: `Gradual role shift within the same company`, count: 5 }
-            ]
+            ];
+          }
+          
+          // Create a complete insights object with the personalized success rate
+          const completeInsights = {
+            successRate: personalizedData.successRate,
+            avgTransitionTime: avgTime,
+            commonPaths: commonPaths,
+            rationale: personalizedData.rationale,
+            keyFactors: personalizedData.keyFactors
           };
           
-          res.json({
-            success: true,
-            insights: fallbackInsights
+          res.json({ 
+            success: true, 
+            insights: completeInsights
           });
+        } catch (personalizedError) {
+          console.error("Error calculating personalized success rate:", personalizedError);
+          
+          // Fall back to standard overview if personalized approach fails
+          try {
+            const overviewData = await generateTransitionOverview(
+              transition.currentRole,
+              transition.targetRole,
+              formattedData
+            );
+            
+            res.json({ 
+              success: true, 
+              insights: overviewData
+            });
+          } catch (overviewError) {
+            console.error("Error generating insights with Perplexity Sonar:", overviewError);
+            console.log("Using baseline insights after multiple API failures");
+            
+            // Use fallback insights as last resort
+            const baselineInsights = {
+              successRate: 65, // general baseline estimate
+              avgTransitionTime: 8, // months (general baseline)
+              commonPaths: [
+                { path: `Direct application to ${transition.targetRole} positions with referrals`, count: 10 },
+                { path: `Project-based demonstration of skills needed for ${transition.targetRole}`, count: 7 },
+                { path: `Gradual role shift within the same company`, count: 5 }
+              ]
+            };
+            
+            res.json({
+              success: true,
+              insights: baselineInsights
+            });
+          }
         }
       } catch (error) {
         console.error("Error preparing data for insights generation:", error);

@@ -32,26 +32,35 @@ export interface IStorage {
   // Scraped data methods
   getScrapedDataByTransitionId(transitionId: number): Promise<ScrapedData[]>;
   createScrapedData(scrapedData: InsertScrapedData): Promise<ScrapedData>;
+  deleteScrapedDataByTransitionId(transitionId: number): Promise<void>;
   
   // Skill gap methods
   getSkillGapsByTransitionId(transitionId: number): Promise<SkillGap[]>;
   createSkillGap(skillGap: InsertSkillGap): Promise<SkillGap>;
+  deleteSkillGapsByTransitionId(transitionId: number): Promise<void>;
   
   // Plan methods
   getPlanByTransitionId(transitionId: number): Promise<Plan | undefined>;
   createPlan(plan: InsertPlan): Promise<Plan>;
+  deletePlansByTransitionId(transitionId: number): Promise<void>;
   
   // Milestone methods
   getMilestonesByPlanId(planId: number): Promise<Milestone[]>;
   createMilestone(milestone: InsertMilestone): Promise<Milestone>;
+  deleteMilestonesByPlanId(planId: number): Promise<void>;
   
   // Resource methods
   getResourcesByMilestoneId(milestoneId: number): Promise<Resource[]>;
   createResource(resource: InsertResource): Promise<Resource>;
+  deleteResourcesByMilestoneId(milestoneId: number): Promise<void>;
   
   // Insight methods
   getInsightsByTransitionId(transitionId: number): Promise<Insight[]>;
   createInsight(insight: InsertInsight): Promise<Insight>;
+  deleteInsightsByTransitionId(transitionId: number): Promise<void>;
+  
+  // Clear all transition data
+  clearTransitionData(transitionId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -214,6 +223,59 @@ export class DatabaseStorage implements IStorage {
       .values(insertInsight)
       .returning();
     return insight;
+  }
+  
+  // Delete methods for clearing transition data
+  async deleteScrapedDataByTransitionId(transitionId: number): Promise<void> {
+    await db.delete(scrapedData).where(eq(scrapedData.transitionId, transitionId));
+  }
+  
+  async deleteSkillGapsByTransitionId(transitionId: number): Promise<void> {
+    await db.delete(skillGaps).where(eq(skillGaps.transitionId, transitionId));
+  }
+  
+  async deletePlansByTransitionId(transitionId: number): Promise<void> {
+    // First, get all plans to find their IDs for milestone and resource deletion
+    const transitionPlans = await this.getPlanByTransitionId(transitionId);
+    if (transitionPlans) {
+      // Delete the milestones for each plan
+      await this.deleteMilestonesByPlanId(transitionPlans.id);
+    }
+    
+    // Now delete the plans
+    await db.delete(plans).where(eq(plans.transitionId, transitionId));
+  }
+  
+  async deleteMilestonesByPlanId(planId: number): Promise<void> {
+    // First, get all milestones to find their IDs for resource deletion
+    const planMilestones = await this.getMilestonesByPlanId(planId);
+    for (const milestone of planMilestones) {
+      // Delete resources for each milestone
+      await this.deleteResourcesByMilestoneId(milestone.id);
+    }
+    
+    // Now delete the milestones
+    await db.delete(milestones).where(eq(milestones.planId, planId));
+  }
+  
+  async deleteResourcesByMilestoneId(milestoneId: number): Promise<void> {
+    await db.delete(resources).where(eq(resources.milestoneId, milestoneId));
+  }
+  
+  async deleteInsightsByTransitionId(transitionId: number): Promise<void> {
+    await db.delete(insights).where(eq(insights.transitionId, transitionId));
+  }
+  
+  // Clear all transition data
+  async clearTransitionData(transitionId: number): Promise<void> {
+    // Delete in the correct order based on foreign key dependencies
+    await this.deleteInsightsByTransitionId(transitionId);
+    await this.deletePlansByTransitionId(transitionId);
+    await this.deleteSkillGapsByTransitionId(transitionId);
+    await this.deleteScrapedDataByTransitionId(transitionId);
+    
+    // Keep the transition record itself
+    console.log(`Cleared all data for transition ID: ${transitionId}`);
   }
 }
 

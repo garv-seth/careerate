@@ -15,6 +15,8 @@ interface TransitionInsight {
     path: string;
     count: number;
   }[];
+  rationale?: string;
+  keyFactors?: string[];
 }
 
 const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
@@ -156,6 +158,35 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
               </div>
             </div>
 
+            {/* Display rationale if available */}
+            {insights.rationale && (
+              <div className="pt-2 pb-3 border-b border-border/30">
+                <h4 className="text-sm font-medium text-text-secondary mb-2">
+                  Analysis Rationale
+                </h4>
+                <p className="text-sm text-text-muted bg-surface-dark/30 p-2 rounded">
+                  {insights.rationale}
+                </p>
+              </div>
+            )}
+            
+            {/* Display key success factors if available */}
+            {insights.keyFactors && insights.keyFactors.length > 0 && (
+              <div className="pt-2 pb-3 border-b border-border/30">
+                <h4 className="text-sm font-medium text-text-secondary mb-2">
+                  Key Success Factors
+                </h4>
+                <ul className="space-y-1">
+                  {insights.keyFactors.map((factor, index) => (
+                    <li key={index} className="text-sm flex items-start">
+                      <span className="text-primary-light mr-2">•</span>
+                      <span className="text-text-muted">{factor}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
             <div className="pt-2">
               <h4 className="text-sm font-medium text-text-secondary mb-2">
                 Common Paths
