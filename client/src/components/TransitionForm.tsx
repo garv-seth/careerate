@@ -44,12 +44,10 @@ const TransitionForm: React.FC = () => {
     mutationFn: async (values: FormValues) => {
       try {
         // Use the new endpoint that matches our backend route
-        const res = await apiRequest("POST", "/api/transitions", values);
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to submit transition");
-        }
-        return data;
+        return await apiRequest("/api/transitions", {
+          method: "POST",
+          data: values
+        });
       } catch (error) {
         console.error("Error submitting transition:", error);
         throw error;
