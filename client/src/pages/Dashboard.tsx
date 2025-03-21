@@ -9,7 +9,7 @@ import CareerTrajectory from "@/components/CareerTrajectory";
 import ScrapedInsights from "@/components/ImprovedScrapedInsights";
 import CompanyLogoNetwork from "@/components/CompanyLogoNetwork";
 import DigitalRain from "@/components/DigitalRain";
-import EngagingLoader from "@/components/EngagingLoader";
+{/* EngagingLoader removed */}
 import { apiRequest } from "@/lib/queryClient";
 import { DashboardData } from "@/types";
 
@@ -172,7 +172,7 @@ const Dashboard: React.FC = () => {
     processApiSteps();
   }, [data, transitionId, toast, queryClient, isProcessing]);
 
-  // EngagingLoader component is already imported at the top of the file
+  // Loading state handling
 
   // Show engaging loader when data is loading or being processed
   if (isLoading || loadingStage) {
@@ -186,7 +186,7 @@ const Dashboard: React.FC = () => {
               <div className="flex flex-col md:flex-row justify-between items-center mb-6">
                 <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0 flex items-center">
                   <span className="text-primary-light">Cara</span>
-                  <span className="ml-2 text-xs px-2 py-1 bg-surface-darker text-text-secondary rounded-md">agent</span>
+                  <span className="text-xs text-text-secondary translate-y-[-8px] translate-x-[-2px]">agent</span>
                 </h1>
                 <div className="flex items-center">
                   <span className="text-sm text-text-secondary mr-2">
@@ -227,8 +227,47 @@ const Dashboard: React.FC = () => {
                 
                 {/* Vertical timeline with connecting line */}
                 <div className="relative">
-                  {/* Vertical connecting line */}
-                  <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-primary/20 z-0" aria-hidden="true"></div>
+                  {/* Vertical connecting line with dynamic segments */}
+                  <div className="absolute left-4 top-8 bottom-8 w-0.5 z-0" aria-hidden="true">
+                    {/* Line segments that change color based on completed stages */}
+                    <div className={`absolute top-0 h-[20%] w-full transition-colors duration-500 ${
+                      loadingStage === 'stories' 
+                        ? 'bg-primary animate-pulse' 
+                        : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
+                          ? 'bg-green-500' 
+                          : 'bg-primary/20'
+                    }`}></div>
+                    
+                    <div className={`absolute top-[20%] h-[20%] w-full transition-colors duration-500 ${
+                      loadingStage === 'insights' 
+                        ? 'bg-primary animate-pulse' 
+                        : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
+                          ? 'bg-green-500' 
+                          : 'bg-primary/20'
+                    }`}></div>
+                    
+                    <div className={`absolute top-[40%] h-[20%] w-full transition-colors duration-500 ${
+                      loadingStage === 'skills' 
+                        ? 'bg-primary animate-pulse' 
+                        : loadingStage === 'plan' || loadingStage === 'metrics' 
+                          ? 'bg-green-500' 
+                          : 'bg-primary/20'
+                    }`}></div>
+                    
+                    <div className={`absolute top-[60%] h-[20%] w-full transition-colors duration-500 ${
+                      loadingStage === 'plan' 
+                        ? 'bg-primary animate-pulse' 
+                        : loadingStage === 'metrics' 
+                          ? 'bg-green-500' 
+                          : 'bg-primary/20'
+                    }`}></div>
+                    
+                    <div className={`absolute top-[80%] h-[20%] w-full transition-colors duration-500 ${
+                      loadingStage === 'metrics' 
+                        ? 'bg-primary animate-pulse' 
+                        : 'bg-primary/20'
+                    }`}></div>
+                  </div>
                   {/* Stage 1: Scraping Stories */}
                   <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
                     loadingStage === 'stories' 
@@ -479,10 +518,15 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
               
-              <EngagingLoader 
-                currentStage={loadingStage}
-                transition={data?.transition || { currentRole: "", targetRole: "" }}
-              />
+              {/* Simple progress indicator */}
+              <div className="bg-surface-dark/80 border border-primary/10 rounded-xl p-4 text-center">
+                <p className="text-sm text-text-secondary">
+                  Cara agent is gathering real-world data to build your personalized career plan
+                </p>
+                <div className="w-full bg-surface-darkest/50 h-2 rounded-full overflow-hidden mt-3">
+                  <div className="h-full bg-gradient-to-r from-primary-dark via-primary to-primary-light w-full animate-pulse" />
+                </div>
+              </div>
             </div>
           ) : (
             // Simple skeleton loader for initial page load
