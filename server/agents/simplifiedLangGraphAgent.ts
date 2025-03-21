@@ -282,24 +282,28 @@ export class SimplifiedLangGraphAgent {
         // Process each search result
         const results = JSON.parse(searchResults);
         if (Array.isArray(results)) {
-          scrapedStories = results.map((result: { title?: string; content?: string; url?: string }) => {
-            // Store in the database
-            storage.createScrapedData({
+          scrapedStories = await Promise.all(results.map(async (result: { title?: string; content?: string; url?: string }) => {
+            const source = result.title || "Search Result";
+            const content = result.content || "No content available";
+            const url = result.url || "";
+            
+            // Store in the database with guaranteed non-null values
+            await storage.createScrapedData({
               transitionId: state.transition.transitionId,
-              source: result.title || "Search Result",
-              content: result.content || "",
-              url: result.url || null,
-              postDate: null,
+              source,
+              content,
+              url: url || null,
+              postDate: new Date().toISOString(),
               skillsExtracted: []
             });
             
             return {
-              source: result.title || "Search Result",
-              content: result.content || "",
-              url: result.url || "",
-              date: ""
+              source,
+              content,
+              url,
+              date: new Date().toISOString()
             };
-          });
+          }));
         }
       } catch (error) {
         console.error("Error processing scraped stories:", error);
