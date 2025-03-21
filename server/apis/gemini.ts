@@ -16,31 +16,7 @@ export async function generateApiCall(platform: string, query: string): Promise<
     // Safety check - don't proceed if we don't have an API key
     if (!process.env.GEMINI_API_KEY) {
       console.error("Missing Gemini API key");
-      
-      // Return default API call configurations if Gemini is not available
-      if (platform === "Reddit") {
-        return JSON.stringify({
-          method: 'GET',
-          url: 'https://reddit-scraper2.p.rapidapi.com/search_posts',
-          host: 'reddit-scraper2.p.rapidapi.com',
-          params: { query, sort: 'RELEVANCE', time: 'all' }
-        });
-      } else if (platform === "Quora") {
-        return JSON.stringify({
-          method: 'GET',
-          url: 'https://quora-scraper.p.rapidapi.com/search_answers',
-          host: 'quora-scraper.p.rapidapi.com',
-          endpoint: 'search_answers',
-          params: { query, language: 'en', time: 'all_times' }
-        });
-      } else {
-        return JSON.stringify({
-          method: 'GET',
-          url: 'https://real-time-forums-search.p.rapidapi.com/search',
-          host: 'real-time-forums-search.p.rapidapi.com',
-          params: { q: query, gl: 'us', hl: 'en' }
-        });
-      }
+      throw new Error("Gemini API key is required to generate API calls");
     }
     
     // Import Google AI SDK
@@ -152,57 +128,14 @@ Only return a JSON object with these fields:
       return jsonMatch[0];
     }
     
-    // If JSON extraction fails, return default configurations
-    if (platform === "Reddit") {
-      return JSON.stringify({
-        method: 'GET',
-        url: 'https://reddit-scraper2.p.rapidapi.com/search_posts',
-        host: 'reddit-scraper2.p.rapidapi.com',
-        params: { query, sort: 'RELEVANCE', time: 'all' }
-      });
-    } else if (platform === "Quora") {
-      return JSON.stringify({
-        method: 'GET',
-        url: 'https://quora-scraper.p.rapidapi.com/search_answers',
-        host: 'quora-scraper.p.rapidapi.com',
-        endpoint: 'search_answers',
-        params: { query, language: 'en', time: 'all_times' }
-      });
-    } else {
-      return JSON.stringify({
-        method: 'GET',
-        url: 'https://real-time-forums-search.p.rapidapi.com/search',
-        host: 'real-time-forums-search.p.rapidapi.com',
-        params: { q: query, gl: 'us', hl: 'en' }
-      });
-    }
-  } catch (error) {
+    // If JSON extraction fails, throw an error
+    throw new Error(`Failed to extract valid JSON from Gemini response for ${platform} API call`);
+  } catch (error: any) {
     console.error("Error generating API call with Gemini:", error);
     
-    // Return default configurations if an error occurs
-    if (platform === "Reddit") {
-      return JSON.stringify({
-        method: 'GET',
-        url: 'https://reddit-scraper2.p.rapidapi.com/search_posts',
-        host: 'reddit-scraper2.p.rapidapi.com',
-        params: { query, sort: 'RELEVANCE', time: 'all' }
-      });
-    } else if (platform === "Quora") {
-      return JSON.stringify({
-        method: 'GET',
-        url: 'https://quora-scraper.p.rapidapi.com/search_answers',
-        host: 'quora-scraper.p.rapidapi.com',
-        endpoint: 'search_answers',
-        params: { query, language: 'en', time: 'all_times' }
-      });
-    } else {
-      return JSON.stringify({
-        method: 'GET',
-        url: 'https://real-time-forums-search.p.rapidapi.com/search',
-        host: 'real-time-forums-search.p.rapidapi.com',
-        params: { q: query, gl: 'us', hl: 'en' }
-      });
-    }
+    // Propagate the error rather than using fallback values
+    const errorMessage = error?.message || 'Unknown error';
+    throw new Error(`Failed to generate API call with Gemini: ${errorMessage}`);
   }
 }
 
@@ -377,11 +310,11 @@ export async function findResourcesWithGemini(
       }
     } catch (parseError) {
       console.error("Error parsing Gemini resources response:", parseError);
-      return [];
+      throw new Error(`Failed to parse resources for ${skill}: ${parseError.message}`);
     }
   } catch (error) {
     console.error(`Error finding resources for ${skill}:`, error);
-    return [];
+    throw new Error(`Failed to find resources for ${skill}: ${error.message}`);
   }
 }
 

@@ -359,7 +359,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <h4 className="text-sm font-medium mr-2">
                         {transition.currentRole} → {transition.targetRole}
                       </h4>
-                      <span className="text-xs text-text-muted">from forums</span>
+                      <span className="text-xs text-text-muted">retrieving data</span>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">
                       "Loading transition stories from real sources..."
@@ -389,7 +389,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <h4 className="text-sm font-medium mr-2">
                         {transition.currentRole} → {transition.targetRole}
                       </h4>
-                      <span className="text-xs text-text-muted">from forums</span>
+                      <span className="text-xs text-text-muted">awaiting data</span>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">
                       "No transition stories found yet. Check back later as Cara continues to gather data."
