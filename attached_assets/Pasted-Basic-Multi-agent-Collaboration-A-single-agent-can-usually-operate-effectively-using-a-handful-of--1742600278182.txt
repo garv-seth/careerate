@@ -1,0 +1,529 @@
+Basic Multi-agent Collaboration¶
+A single agent can usually operate effectively using a handful of tools within a single domain, but even using powerful models like gpt-4, it can be less effective at using many tools.
+
+One way to approach complicated tasks is through a "divide-and-conquer" approach: create an specialized agent for each task or domain and route tasks to the correct "expert".
+
+This notebook (inspired by the paper AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation, by Wu, et. al.) shows one way to do this using LangGraph.
+
+The resulting graph will look something like the following diagram:
+
+
+
+Before we get started, a quick note: this and other multi-agent notebooks are designed to show how you can implement certain design patterns in LangGraph. If the pattern suits your needs, we recommend combining it with some of the other fundamental patterns described elsewhere in the docs for best performance.
+
+
+// process.env.OPENAI_API_KEY = "sk_...";
+// process.env.TAVILY_API_KEY = "sk_...";
+// process.env.LANGCHAIN_API_KEY = "sk_...";
+// process.env.LANGCHAIN_TRACING_V2 = "true";
+// process.env.LANGCHAIN_PROJECT = "Multi-agent Collaboration: LangGraphJS";
+Helper Utilities¶
+The following helper functions will help create agents. These agents will then be nodes in the graph.
+
+You can skip ahead if you just want to see what the graph looks like.
+
+
+import {
+  ChatPromptTemplate,
+  MessagesPlaceholder,
+} from "@langchain/core/prompts";
+import { StructuredTool } from "@langchain/core/tools";
+import { convertToOpenAITool } from "@langchain/core/utils/function_calling";
+import { Runnable } from "@langchain/core/runnables";
+import { ChatOpenAI } from "@langchain/openai";
+
+/**
+ * Create an agent that can run a set of tools.
+ */
+async function createAgent({
+  llm,
+  tools,
+  systemMessage,
+}: {
+  llm: ChatOpenAI;
+  tools: StructuredTool[];
+  systemMessage: string;
+}): Promise<Runnable> {
+  const toolNames = tools.map((tool) => tool.name).join(", ");
+  const formattedTools = tools.map((t) => convertToOpenAITool(t));
+
+  let prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      "You are a helpful AI assistant, collaborating with other assistants." +
+      " Use the provided tools to progress towards answering the question." +
+      " If you are unable to fully answer, that's OK, another assistant with different tools " +
+      " will help where you left off. Execute what you can to make progress." +
+      " If you or any of the other assistants have the final answer or deliverable," +
+      " prefix your response with FINAL ANSWER so the team knows to stop." +
+      " You have access to the following tools: {tool_names}.\n{system_message}",
+    ],
+    new MessagesPlaceholder("messages"),
+  ]);
+  prompt = await prompt.partial({
+    system_message: systemMessage,
+    tool_names: toolNames,
+  });
+
+  return prompt.pipe(llm.bind({ tools: formattedTools }));
+}
+Define State¶
+We first define the state of the graph. This will just a list of messages, along with a key to track the most recent sender
+
+
+import { BaseMessage } from "@langchain/core/messages";
+import { Annotation } from "@langchain/langgraph";
+
+// This defines the object that is passed between each node
+// in the graph. We will create different nodes for each agent and tool
+const AgentState = Annotation.Root({
+  messages: Annotation<BaseMessage[]>({
+    reducer: (x, y) => x.concat(y),
+  }),
+  sender: Annotation<string>({
+    reducer: (x, y) => y ?? x ?? "user",
+    default: () => "user",
+  }),
+})
+Define tools¶
+These tools will be used by our worker agents to answer our questions.
+
+We will create a chart tool (using d3.js), and the LangChain TavilySearchResults tool for web search functionality.
+
+
+require("esm-hook"); // Only for running this in TSLab. See: https://github.com/yunabe/tslab/issues/72
+import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
+import { tool } from "@langchain/core/tools";
+import * as d3 from "d3";
+// ----------ATTENTION----------
+// If attempting to run this notebook locally, you must follow these instructions
+// to install the necessary system dependencies for the `canvas` package.
+// https://www.npmjs.com/package/canvas#compiling
+// -----------------------------
+import { createCanvas } from "canvas";
+import { z } from "zod";
+import * as tslab from "tslab";
+
+const chartTool = tool(
+  ({ data }) => {
+    const width = 500;
+    const height = 500;
+    const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    const x = d3
+      .scaleBand()
+      .domain(data.map((d) => d.label))
+      .range([margin.left, width - margin.right])
+      .padding(0.1);
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, d3.max(data, (d) => d.value) ?? 0])
+      .nice()
+      .range([height - margin.bottom, margin.top]);
+
+    const colorPalette = [
+      "#e6194B",
+      "#3cb44b",
+      "#ffe119",
+      "#4363d8",
+      "#f58231",
+      "#911eb4",
+      "#42d4f4",
+      "#f032e6",
+      "#bfef45",
+      "#fabebe",
+    ];
+
+    data.forEach((d, idx) => {
+      ctx.fillStyle = colorPalette[idx % colorPalette.length];
+      ctx.fillRect(
+        x(d.label) ?? 0,
+        y(d.value),
+        x.bandwidth(),
+        height - margin.bottom - y(d.value),
+      );
+    });
+
+    ctx.beginPath();
+    ctx.strokeStyle = "black";
+    ctx.moveTo(margin.left, height - margin.bottom);
+    ctx.lineTo(width - margin.right, height - margin.bottom);
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    x.domain().forEach((d) => {
+      const xCoord = (x(d) ?? 0) + x.bandwidth() / 2;
+      ctx.fillText(d, xCoord, height - margin.bottom + 6);
+    });
+
+    ctx.beginPath();
+    ctx.moveTo(margin.left, height - margin.top);
+    ctx.lineTo(margin.left, height - margin.bottom);
+    ctx.stroke();
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    const ticks = y.ticks();
+    ticks.forEach((d) => {
+      const yCoord = y(d); // height - margin.bottom - y(d);
+      ctx.moveTo(margin.left, yCoord);
+      ctx.lineTo(margin.left - 6, yCoord);
+      ctx.stroke();
+      ctx.fillText(d.toString(), margin.left - 8, yCoord);
+    });
+    tslab.display.png(canvas.toBuffer());
+    return "Chart has been generated and displayed to the user!";
+  },
+  {
+    name: "generate_bar_chart",
+    description:
+      "Generates a bar chart from an array of data points using D3.js and displays it for the user.",
+    schema: z.object({
+      data: z
+        .object({
+          label: z.string(),
+          value: z.number(),
+        })
+        .array(),
+    }),
+  }
+)
+
+const tavilyTool = new TavilySearchResults();
+Create graph¶
+Now that we've defined our tools and made some helper functions, will create the individual agents below and tell them how to talk to each other using LangGraph.
+
+Define Agent Nodes¶
+In LangGraph, nodes represent functions that perform the work. In our example, we will have "agent" nodes and a "callTool" node.
+
+The input for every node is the graph's state. In our case, the state will have a list of messages as input, as well as the name of the previous node.
+
+First, let's define the nodes for the agents.
+
+
+import { HumanMessage } from "@langchain/core/messages";
+import type { RunnableConfig } from "@langchain/core/runnables";
+
+// Helper function to run a node for a given agent
+async function runAgentNode(props: {
+  state: typeof AgentState.State;
+  agent: Runnable;
+  name: string;
+  config?: RunnableConfig;
+}) {
+  const { state, agent, name, config } = props;
+  let result = await agent.invoke(state, config);
+  // We convert the agent output into a format that is suitable
+  // to append to the global state
+  if (!result?.tool_calls || result.tool_calls.length === 0) {
+    // If the agent is NOT calling a tool, we want it to
+    // look like a human message.
+    result = new HumanMessage({ ...result, name: name });
+  }
+  return {
+    messages: [result],
+    // Since we have a strict workflow, we can
+    // track the sender so we know who to pass to next.
+    sender: name,
+  };
+}
+
+const llm = new ChatOpenAI({ modelName: "gpt-4o" });
+
+// Research agent and node
+const researchAgent = await createAgent({
+  llm,
+  tools: [tavilyTool],
+  systemMessage:
+    "You should provide accurate data for the chart generator to use.",
+});
+
+async function researchNode(
+  state: typeof AgentState.State,
+  config?: RunnableConfig,
+) {
+  return runAgentNode({
+    state: state,
+    agent: researchAgent,
+    name: "Researcher",
+    config,
+  });
+}
+
+// Chart Generator
+const chartAgent = await createAgent({
+  llm,
+  tools: [chartTool],
+  systemMessage: "Any charts you display will be visible by the user.",
+});
+
+async function chartNode(state: typeof AgentState.State) {
+  return runAgentNode({
+    state: state,
+    agent: chartAgent,
+    name: "ChartGenerator",
+  });
+}
+
+// Example invocation
+const researchResults = await researchNode({
+  messages: [new HumanMessage("Research the US primaries in 2024")],
+  sender: "User",
+});
+
+researchResults;
+
+{
+  messages: [
+    AIMessage {
+      "id": "chatcmpl-9yopin5fBlXtA15wWiUlDyiKT9T9P",
+      "content": "",
+      "additional_kwargs": {
+        "tool_calls": [
+          {
+            "id": "call_SRihR0BFFtw3TlHQtiBDPR3v",
+            "type": "function",
+            "function": "[Object]"
+          }
+        ]
+      },
+      "response_metadata": {
+        "tokenUsage": {
+          "completionTokens": 22,
+          "promptTokens": 192,
+          "totalTokens": 214
+        },
+        "finish_reason": "tool_calls",
+        "system_fingerprint": "fp_3aa7262c27"
+      },
+      "tool_calls": [
+        {
+          "name": "tavily_search_results_json",
+          "args": {
+            "input": "US primaries 2024 updates"
+          },
+          "type": "tool_call",
+          "id": "call_SRihR0BFFtw3TlHQtiBDPR3v"
+        }
+      ],
+      "invalid_tool_calls": [],
+      "usage_metadata": {
+        "input_tokens": 192,
+        "output_tokens": 22,
+        "total_tokens": 214
+      }
+    }
+  ],
+  sender: 'Researcher'
+}
+Define Tool Node¶
+We now define a node to run the tools
+
+
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+
+const tools = [tavilyTool, chartTool];
+// This runs tools in the graph
+const toolNode = new ToolNode<typeof AgentState.State>(tools);
+
+// Example invocation
+await toolNode.invoke(researchResults);
+
+{
+  messages: [
+    ToolMessage {
+      "content": "[{\"title\":\"Election Results 2024: Live Election Map | Races by State - POLITICO\",\"url\":\"https://www.politico.com/2024-election/results/\",\"content\":\"Live 2024 election results and maps by state. POLITICO's coverage of 2024 primary races for President, Senate, House and Governors.\",\"score\":0.9798227,\"raw_content\":null},{\"title\":\"Presidential Primary Election Results 2024 | Delegate Count Map by ...\",\"url\":\"https://www.politico.com/2024-election/results/president/\",\"content\":\"Live 2024 Presidential election results, maps and delegate counts by state. POLITICO's coverage of 2024 primary races for President, Senate, House and Governors.\",\"score\":0.97666925,\"raw_content\":null},{\"title\":\"Election 2024: Presidential campaign news, polls and results | CNN Politics\",\"url\":\"https://www.cnn.com/election/2024\",\"content\":\"2024 election guide: Presidential candidates, polls, primaries and caucuses, voter information and results for November 5, 2024\",\"score\":0.92455155,\"raw_content\":null},{\"title\":\"2024 Election news: Latest on the presidential race, polls & results\",\"url\":\"https://www.politico.com/news/2024-elections\",\"content\":\"POLITICO\\nPolitico Logo\\nWASHINGTON & POLITICS\\n2024 ELECTIONS\\nSTATE POLITICS & POLICY\\nGLOBAL POLITICS & POLICY\\nPOLICY NEWS\\nNEWSLETTERS\\nCOLUMNISTS\\nSERIES & MORE\\nPOLITICO Live\\nFollow us\\n2024 Elections\\nThe latest coverage of the 2024 presidential, House and Senate elections.\\n It's a question being debated in courtrooms across the country: Does the 14th Amendment of the U.S. Constitution bar Trump from running for president again because he supported or “engaged in insurrection or rebellion” for his role in the Jan. 6 attack on the Capitol?\\nRead More »\\nFormer House Speaker Kevin McCarthy has endorsed Trump in his 2024 run, but he hasn't always had the nicest things to say about the former president. By ERICA ORDEN\\n12/14/2023 03:15 PM EST\\nUpdated 12/14/2023 04:06 PM EST\\nNEW YORK — An appeals court on Thursday rejected former President Donald Trump’s effort to overturn the gag order barring him from making comments about the staff of the judge presiding over his $250 million civil fraud trial, dealing him another setback in his attempts to fight the restrictions.\\n | Charlie Neibergall/AP\\nPlaybook Deep Dive\\nHow Hunter Biden, Jack Smith, and Trump’s legal troubles are setting the stage for 2024\\nA week of new developments in impeachment, Donald Trump’s D.C. case, and Hunter Biden’s congressional inquiry showcased how the collision of law and politics will determine much of Republicans’ and Democrats’ political fortunes in 2024.\\n | Francis Chung/POLITICO\\nPolitics\\nCornel West thinks Biden won’t make it to the general election\\nThe independent candidate rejected the idea he could be a “spoiler” for Biden in an exclusive meeting with POLITICO.\\n\",\"score\":0.9069832,\"raw_content\":null},{\"title\":\"DNC 2024 live updates: Walz speaks tonight ahead of Harris' remarks ...\",\"url\":\"https://www.nbcnews.com/politics/2024-election/live-blog/election-2024-dnc-live-updates-rcna165228\",\"content\":\"Latest news and live updates on the Democratic National Convention and the 2024 presidential election campaigns as Harris and ... Navy, Coast Guard, Air Force Space Force, or the United States ...\",\"score\":0.8344069,\"raw_content\":null}]",
+      "name": "tavily_search_results_json",
+      "additional_kwargs": {},
+      "response_metadata": {},
+      "tool_call_id": "call_SRihR0BFFtw3TlHQtiBDPR3v"
+    }
+  ]
+}
+Define Edge Logic¶
+We can define some of the edge logic that is needed to decide what to do based on results of the agents
+
+
+import { AIMessage } from "@langchain/core/messages";
+// Either agent can decide to end
+function router(state: typeof AgentState.State) {
+  const messages = state.messages;
+  const lastMessage = messages[messages.length - 1] as AIMessage;
+  if (lastMessage?.tool_calls && lastMessage.tool_calls.length > 0) {
+    // The previous agent is invoking a tool
+    return "call_tool";
+  }
+  if (
+    typeof lastMessage.content === "string" &&
+    lastMessage.content.includes("FINAL ANSWER")
+  ) {
+    // Any agent decided the work is done
+    return "end";
+  }
+  return "continue";
+}
+Define the Graph¶
+We can now put it all together and define the graph!
+
+
+import { END, START, StateGraph } from "@langchain/langgraph";
+
+// 1. Create the graph
+const workflow = new StateGraph(AgentState)
+   // 2. Add the nodes; these will do the work
+  .addNode("Researcher", researchNode)
+  .addNode("ChartGenerator", chartNode)
+  .addNode("call_tool", toolNode);
+
+// 3. Define the edges. We will define both regular and conditional ones
+// After a worker completes, report to supervisor
+workflow.addConditionalEdges("Researcher", router, {
+  // We will transition to the other agent
+  continue: "ChartGenerator",
+  call_tool: "call_tool",
+  end: END,
+});
+
+workflow.addConditionalEdges("ChartGenerator", router, {
+  // We will transition to the other agent
+  continue: "Researcher",
+  call_tool: "call_tool",
+  end: END,
+});
+
+workflow.addConditionalEdges(
+  "call_tool",
+  // Each agent node updates the 'sender' field
+  // the tool calling node does not, meaning
+  // this edge will route back to the original agent
+  // who invoked the tool
+  (x) => x.sender,
+  {
+    Researcher: "Researcher",
+    ChartGenerator: "ChartGenerator",
+  },
+);
+
+workflow.addEdge(START, "Researcher");
+const graph = workflow.compile();
+Invoke¶
+With the graph created, you can invoke it! Let's have it chart some stats for us.
+
+
+const streamResults = await graph.stream(
+  {
+    messages: [
+      new HumanMessage({
+        content: "Generate a bar chart of the US gdp over the past 3 years.",
+      }),
+    ],
+  },
+  { recursionLimit: 150 },
+);
+
+const prettifyOutput = (output: Record<string, any>) => {
+  const keys = Object.keys(output);
+  const firstItem = output[keys[0]];
+
+  if ("messages" in firstItem && Array.isArray(firstItem.messages)) {
+    const lastMessage = firstItem.messages[firstItem.messages.length - 1];
+    console.dir({
+      type: lastMessage._getType(),
+      content: lastMessage.content,
+      tool_calls: lastMessage.tool_calls,
+    }, { depth: null });
+  }
+
+  if ("sender" in firstItem) {
+    console.log({
+      sender: firstItem.sender,
+    })
+  }
+}
+
+for await (const output of await streamResults) {
+  if (!output?.__end__) {
+    prettifyOutput(output);
+    console.log("----");
+  }
+}
+
+{
+  type: 'ai',
+  content: '',
+  tool_calls: [
+    {
+      name: 'tavily_search_results_json',
+      args: { input: 'US GDP over the past 3 years' },
+      type: 'tool_call',
+      id: 'call_ZrmEsfu4B8SKpDhUJY5vcps8'
+    }
+  ]
+}
+{ sender: 'Researcher' }
+----
+{
+  type: 'tool',
+  content: `[{"title":"United States GDP Annual Growth Rate - TRADING ECONOMICS","url":"https://tradingeconomics.com/united-states/gdp-growth-annual","content":"The Gross Domestic Product (GDP) in the United States expanded 3.10 percent in the second quarter of 2024 over the same quarter of the previous year. This page provides the latest reported value for - United States GDP Annual Growth Rate - plus previous releases, historical high and low, short-term forecast and long-term prediction, economic calendar, survey consensus and news.","score":0.88798404,"raw_content":null},{"title":"U.S. GDP 1960-2024 | MacroTrends","url":"https://www.macrotrends.net/global-metrics/countries/USA/united-states/gdp-gross-domestic-product","content":"U.S. gdp for 2021 was $23,315.08B, a 10.71% increase from 2020. U.S. gdp for 2020 was $21,060.47B, a 1.5% decline from 2019. U.S. gdp for 2019 was $21,380.98B, a 4.13% increase from 2018. GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included ...","score":0.7666432,"raw_content":null},{"title":"U.S. GDP Growth Rate 1960-2024 | MacroTrends","url":"https://www.macrotrends.net/global-metrics/countries/USA/united-states/gdp-growth-rate","content":"U.S. gdp growth rate for 2021 was 5.95%, a 8.71% increase from 2020. U.S. gdp growth rate for 2020 was -2.77%, a 5.06% decline from 2019. U.S. gdp growth rate for 2019 was 2.29%, a 0.65% decline from 2018. Annual percentage growth rate of GDP at market prices based on constant local currency. Aggregates are based on constant 2010 U.S. dollars.","score":0.6904547,"raw_content":null},{"title":"U.S. GDP by Year, Compared to Recessions and Events - The Balance","url":"https://www.thebalancemoney.com/us-gdp-by-year-3305543","content":"U.S. GDP by Year, Compared to Recessions and Events\\nThe Strange Ups and Downs of the U.S. Economy Since 1929\\nThe Balance / Julie Bang\\nU.S. gross domestic product (GDP) by year is a good overview of economic growth in the United States. Rebasing changes the reference year (or base year) for the real (chained dollar and quantity index) estimates and price indexes and expresses GDP and other NIPA aggregates in terms of the prices of one year. You can compare the GDP by year to fiscal and monetary policies to get a complete picture of what works and what doesn't in the U.S. economy.\\n Real GDP is important because without canceling out the effects of inflation, the GDP could appear to grow, when really all that's happened is an increase in prices.\\n Key Takeaways\\nTypes of GDP\\nThe Bureau of Economic Analysis compiles the data.","score":0.5998954,"raw_content":null},{"title":"US GDP over time - USAFacts","url":"https://usafacts.org/data/topics/economy/economic-indicators/gdp/gross-domestic-product/","content":"Data Adjustments\\nIs the economy growing?\\nRelated Metrics\\nAnnual percent change in real GDP\\n5.7%\\n2021\\nAnnual percent change in real GDP\\n5.7%\\n2021\\nExplore Gross domestic product\\nInteract with the data\\nData Adjustments\\nState Display\\nOur nation, in numbers\\nUSAFacts is a not-for-profit, nonpartisan civic initiative making government data easy for all Americans to access and understand.\\n • Check your spelling\\n• Try other search terms\\n• Use fewer words\\nGross domestic product\\nGross domestic product\\nGross domestic product (GDP) is the value of all goods and services produced in the US. All topics\\nExplore articles, data and trends by topic\\nAbout\\nWhat makes USAFacts different\\nWe frequently add data and we're interested in what would be useful to people. Newsletter\\nData delivered to your inbox\\nKeep up with the latest data and most popular content. But only the official BEA inflation-adjusted \\"real GDP\\" value is used to calculate annual percent change in GDP and therefore how well the economy is doing.","score":0.42083758,"raw_content":null}]`,
+  tool_calls: undefined
+}
+----
+{
+  type: 'human',
+  content: 'Here are the U.S. GDP values over the past 3 years:\n' +
+    '\n' +
+    '1. **2021**: $23,315.08 billion\n' +
+    '2. **2022:** No specific value obtained from the search, but we can infer trends from growth rates\n' +
+    '3. **2023:** No specific value obtained from the search, but we can infer trends from growth rates\n' +
+    '\n' +
+    'Given this, further insight can be derived from additional data sources, economic reports, or databases to fill in the missing GDP values for 2022 and 2023.',
+  tool_calls: undefined
+}
+{ sender: 'Researcher' }
+----
+{
+  type: 'ai',
+  content: '',
+  tool_calls: [
+    {
+      name: 'generate_bar_chart',
+      args: {
+        data: [
+          { label: '2021', value: 23315.08 },
+          { label: '2022', value: 25514.3 },
+          { label: '2023', value: 27857.73 }
+        ]
+      },
+      type: 'tool_call',
+      id: 'call_CKH68vipCp9DshSVmw2vIZpK'
+    }
+  ]
+}
+{ sender: 'ChartGenerator' }
+----
+
+
+{
+  type: 'tool',
+  content: 'Chart has been generated and displayed to the user!',
+  tool_calls: undefined
+}
+----
+{
+  type: 'human',
+  content: 'FINAL ANSWER: The bar chart displaying the U.S. GDP over the past 3 years has been generated and displayed. The values used are as follows:\n' +
+    '\n' +
+    '- **2021**: $23,315.08 billion\n' +
+    '- **2022**: $25,514.3 billion (approximate)\n' +
+    '- **2023**: $27,857.73 billion (approximate)\n' +
+    '\n' +
+    'Please refer to the chart for a visual representation of the data.\n',
+  tool_calls: undefined
+}
+{ sender: 'ChartGenerator' }
+----
