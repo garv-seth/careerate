@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { insertTransitionSchema } from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent"; 
-import { findResourcesWithGemini } from "./apis/gemini";
+import { findResourcesWithGemini, generateTransitionOverview } from "./apis/gemini";
 import { FireCrawlLoader } from "@langchain/community/document_loaders/web/firecrawl";
 
 export async function registerRoutes(app: Express): Promise<Server> {
