@@ -1,0 +1,299 @@
+Initializing database tables...
+Database tables already exist
+Predefined role skills seeded
+12:10:05 PM [express] serving on port 5000
+12:10:35 PM [express] GET /api/dashboard/14 404 in 43ms :: {"success":false,"error":"Transition not f…
+12:11:00 PM [express] POST /api/transitions 200 in 94ms :: {"success":true,"transitionId":16,"message…
+12:11:00 PM [express] GET /api/dashboard/16 200 in 225ms :: {"success":true,"transition":{"id":16,"us…
+Clearing all data for transition ID: 16
+Cleared all data for transition ID: 16
+Successfully cleared all data for transition ID: 16
+12:11:00 PM [express] POST /api/clear-data 200 in 299ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 16, clearing existing data...
+Successfully cleared existing data for transition 16
+Starting web scraping for Amazon L5 to Google L6 transition (search_061106 - 2025-03-21)
+Cara is using Perplexity AI to search for career transition data across multiple forums
+12:11:01 PM [express] POST /api/scrape 200 in 121ms :: {"success":true,"message":"Scraping initiated …
+Scraping for Amazon L5 to Google L6 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Cleared existing insights for transition ID: 16 to ensure fresh analysis
+No insights found, generating insights with Perplexity Sonar
+No scraped data found for transition ID: 16, fetching some stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 1 results from Perplexity response
+Analyzing 1 stories with Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Created 5 insights for transition with Perplexity Sonar
+12:11:34 PM [express] GET /api/stories-analysis/16 200 in 30041ms :: {"success":true,"data":{"keyObse…
+Cara is analyzing transition from Amazon L5 to Google L6
+Cara is using Perplexity AI to search for career transition data across multiple forums
+12:11:35 PM [express] POST /api/analyze 200 in 90ms :: {"success":true,"message":"Analysis initiated"}
+Scraping for Amazon L5 to Google L6 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+No skill gaps found, generating skill gaps using Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 1 results from Perplexity response
+Found 1 relevant results about Amazon L5 to Google L6 transitions
+Cara found 1 relevant transition stories from multiple sources
+After filtering duplicates, 1 new stories will be saved
+Saved new scraped data from **: Blind to database
+Limited data, Cara is searching with alternative phrasing
+Scraping for professionals transitioning from Amazon L5 to becoming a Google L6 success stories using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from professionals transitioning from Amazon L5 to becoming a Google L6 success stories experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Found 3 relevant results about Amazon L5 to Google L6 transitions
+Cara found 3 relevant transition stories from multiple sources
+After filtering duplicates, 3 new stories will be saved
+Saved new scraped data from ** Blind to database
+Saved new scraped data from ** Fishbowl to database
+Saved new scraped data from ** Developing.dev to database
+Step 1 complete: Scraped 5 stories from the web
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Created 7 real skill gaps for transition using Perplexity Sonar
+Cara is generating a plan for transition from Amazon L5 to Google L6
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Step 2 complete: Generated insights from transition stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Found 3 relevant results about professionals transitioning from Amazon L5 to becoming a Google L6 success stories transitions
+Found 3 additional stories, 3 are new
+Saved additional data from ** Blind to database
+Saved additional data from ** Fishbowl to database
+Saved additional data from ** Blind to database
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Step 3 complete: Identified 6 skill gaps to address
+12:13:27 PM [express] GET /api/dashboard/1 404 in 41ms :: {"success":false,"error":"Transition not fo…
+Perplexity API error response: {
+  "error": {
+    "message": "The model sonar timed out due to a large amount of traffic. Please try again later.",
+    "type": "model_timeout",
+    "code": 503
+  }
+}
+Error generating plan with Perplexity: Error: Perplexity API error: The model sonar timed out due to a large amount of traffic. Please try again later.
+    at callPerplexity (/home/runner/workspace/server/apis/perplexity-unified.ts:167:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async generatePlan (/home/runner/workspace/server/apis/perplexity-unified.ts:615:22)
+    at async CaraAgent.generatePlan (/home/runner/workspace/server/agents/caraAgent.ts:285:14)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:649:29)
+Error in Cara's plan generation: Error: Failed to generate development plan: Perplexity API error: The model sonar timed out due to a large amount of traffic. Please try again later.
+    at generatePlan (/home/runner/workspace/server/apis/perplexity-unified.ts:652:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async CaraAgent.generatePlan (/home/runner/workspace/server/agents/caraAgent.ts:285:14)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:649:29)
+Error generating plan: Error: Failed to generate development plan: Perplexity API error: The model sonar timed out due to a large amount of traffic. Please try again later.
+    at generatePlan (/home/runner/workspace/server/apis/perplexity-unified.ts:652:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async CaraAgent.generatePlan (/home/runner/workspace/server/agents/caraAgent.ts:285:14)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:649:29)
+12:13:55 PM [express] POST /api/plan 500 in 139300ms :: {"success":false,"error":"Failed to generate …
+Clearing all data for transition ID: 16
+Cleared all data for transition ID: 16
+Successfully cleared all data for transition ID: 16
+12:13:56 PM [express] POST /api/clear-data 200 in 381ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 16, clearing existing data...
+Successfully cleared existing data for transition 16
+Starting web scraping for Amazon L5 to Google L6 transition (search_236419 - 2025-03-21)
+Cara is using Perplexity AI to search for career transition data across multiple forums
+12:13:56 PM [express] POST /api/scrape 200 in 118ms :: {"success":true,"message":"Scraping initiated …
+Scraping for Amazon L5 to Google L6 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Cleared existing insights for transition ID: 16 to ensure fresh analysis
+No insights found, generating insights with Perplexity Sonar
+No scraped data found for transition ID: 16, fetching some stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 1 results from Perplexity response
+Found 1 relevant results about Amazon L5 to Google L6 transitions
+Cara found 1 relevant transition stories from multiple sources
+After filtering duplicates, 1 new stories will be saved
+Saved new scraped data from **: Blind to database
+Limited data, Cara is searching with alternative phrasing
+Scraping for professionals transitioning from Amazon L5 to becoming a Google L6 success stories using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from professionals transitioning from Amazon L5 to becoming a Google L6 success stories experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Analyzing 3 stories with Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Created 6 insights for transition with Perplexity Sonar
+12:14:25 PM [express] GET /api/stories-analysis/16 200 in 25679ms :: {"success":true,"data":{"keyObse…
+Cara is analyzing transition from Amazon L5 to Google L6
+Cara is using Perplexity AI to search for career transition data across multiple forums
+12:14:26 PM [express] POST /api/analyze 200 in 86ms :: {"success":true,"message":"Analysis initiated"}
+Scraping for Amazon L5 to Google L6 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+No skill gaps found, generating skill gaps using Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 1 results from Perplexity response
+Found 1 relevant results about Amazon L5 to Google L6 transitions
+Cara found 1 relevant transition stories from multiple sources
+After filtering duplicates, 0 new stories will be saved
+Limited data, Cara is searching with alternative phrasing
+Scraping for professionals transitioning from Amazon L5 to becoming a Google L6 success stories using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from professionals transitioning from Amazon L5 to becoming a Google L6 success stories experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Created 8 real skill gaps for transition using Perplexity Sonar
+Cara is generating a plan for transition from Amazon L5 to Google L6
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 3 results from Perplexity response
+Found 3 relevant results about professionals transitioning from Amazon L5 to becoming a Google L6 success stories transitions
+Found 3 additional stories, 3 are new
+Saved additional data from ** Blind to database
+Saved additional data from ** Fishbowl to database
+Saved additional data from ** Developing.dev to database
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 1 results from Perplexity response
+Found 1 relevant results about professionals transitioning from Amazon L5 to becoming a Google L6 success stories transitions
+Found 1 additional stories, 0 are new
+Step 1 complete: Scraped 7 stories from the web
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Cara successfully generated a plan with 6 milestones
+12:15:18 PM [express] POST /api/plan 200 in 49295ms :: {"success":true,"planId":17,"milestones":6,"me…
+Cleared all data for transition ID: 16
+Cleared existing data for transition ID: 16 to ensure fresh analysis
+Calculating personalized success rate with Perplexity Sonar
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Error parsing overview response: Error: Incomplete data generated - missing required fields
+    at generateTransitionOverview (/home/runner/workspace/server/apis/perplexity-unified.ts:964:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1255:34)
+Error generating transition overview with Perplexity: Error: Failed to parse transition overview
+    at generateTransitionOverview (/home/runner/workspace/server/apis/perplexity-unified.ts:988:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1255:34)
+Error generating overview details: Error: Failed to generate transition overview: Failed to parse transition overview
+    at generateTransitionOverview (/home/runner/workspace/server/apis/perplexity-unified.ts:992:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1255:34)
+12:15:28 PM [express] GET /api/insights/16 200 in 10144ms :: {"success":true,"insights":{"successRate…
+12:15:28 PM [express] GET /api/dashboard/16 200 in 200ms :: {"success":true,"transition":{"id":16,"us…
+Clearing all data for transition ID: 16
+No scraped data found, generating insights with Perplexity Sonar
+Searching for transition statistics: Amazon L5 to Google L6 career transition statistics, success rate, time frame, common paths
+Sending request to Perplexity API with model: sonar
+Cleared existing insights for transition ID: 16 to ensure fresh analysis
+No insights found, generating insights with Perplexity Sonar
+No scraped data found for transition ID: 16, fetching some stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Cleared all data for transition ID: 16
+Successfully cleared all data for transition ID: 16
+12:15:28 PM [express] POST /api/clear-data 200 in 505ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 16, clearing existing data...
+Successfully cleared existing data for transition 16
+Starting web scraping for Amazon L5 to Google L6 transition (search_329137 - 2025-03-21)
+Cara is using Perplexity AI to search for career transition data across multiple forums
+12:15:29 PM [express] POST /api/scrape 200 in 135ms :: {"success":true,"message":"Scraping initiated …
+Scraping for Amazon L5 to Google L6 using Perplexity Sonar's real-time web search
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Perplexity API response structure: [
+  '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
+  '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '20', '21', '22', '23', '24', '25', '26', '27', '28', '29',
+  '30', '31', '32', '33', '34', '35', '36', '37', '38', '39',
+  '40', '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '50', '51', '52', '53', '54', '55', '56', '57', '58', '59',
+  '60', '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '70', '71', '72', '73', '74', '75', '76', '77', '78', '79',
+  '80', '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '90', '91', '92', '93', '94', '95', '96', '97', '98', '99',
+  ... 316 more items
+]
+First JSON parse attempt failed, trying with sanitization
+Sanitized JSON: {
+  "successRate": 20, // Estimated based on general transition challenges
+  "avgTransitionTime": 12...
+JSON sanitization failed: SyntaxError: Expected double-quoted property name in JSON at position 23
+    at JSON.parse (<anonymous>)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1117:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Fallback to basic transition insights after Perplexity failures
+Sending request to Perplexity API with model: sonar
+Cleared existing insights for transition ID: 16 to ensure fresh analysis
+No insights found, generating insights with Perplexity Sonar
+No scraped data found for transition ID: 16, fetching some stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Searching for career transition stories: Career transition from Amazon L5 to Google L6 experiences, challenges, and success stories
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [] choices length: undefined
+Unexpected API response structure: ""
+Error analyzing transition stories with Perplexity: Error: Perplexity API error: Unexpected response structure from Perplexity API
+    at callPerplexity (/home/runner/workspace/server/apis/perplexity-unified.ts:167:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async analyzeTransitionStories (/home/runner/workspace/server/apis/perplexity-unified.ts:706:22)
+    at async CaraAgent.generateInsights (/home/runner/workspace/server/agents/caraAgent.ts:235:14)
+    at async CaraAgent.analyzeCareerTransition (/home/runner/workspace/server/agents/caraAgent.ts:58:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:234:32)
+Error generating insights: Error: Failed to analyze transition stories: Perplexity API error: Unexpected response structure from Perplexity API
+    at analyzeTransitionStories (/home/runner/workspace/server/apis/perplexity-unified.ts:734:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async CaraAgent.generateInsights (/home/runner/workspace/server/agents/caraAgent.ts:235:14)
+    at async CaraAgent.analyzeCareerTransition (/home/runner/workspace/server/agents/caraAgent.ts:58:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:234:32)
+Error in Cara's analysis: Error: Failed to generate transition insights: Failed to analyze transition stories: Perplexity API error: Unexpected response structure from Perplexity API
+    at CaraAgent.generateInsights (/home/runner/workspace/server/agents/caraAgent.ts:243:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async CaraAgent.analyzeCareerTransition (/home/runner/workspace/server/agents/caraAgent.ts:58:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:234:32)
+Background analysis error: Error: Failed to generate transition insights: Failed to analyze transition stories: Perplexity API error: Unexpected response structure from Perplexity API
+    at CaraAgent.generateInsights (/home/runner/workspace/server/agents/caraAgent.ts:243:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async CaraAgent.analyzeCareerTransition (/home/runner/workspace/server/agents/caraAgent.ts:58:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:234:32)
+Analysis failed, creating default skill gaps based on roles
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+12:15:46 PM [express] GET /api/insights/16 200 in 17679ms :: {"success":true,"insights":{"successRate…
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Parsing forum results from Perplexity response
+Falling back to legacy parsing method
+Successfully parsed 1 results from Perplexity response
+Analyzing 1 stories with Perplexity Sonar
+Sending request to Perplexity API with model: sonar

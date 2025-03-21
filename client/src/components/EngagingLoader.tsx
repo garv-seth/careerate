@@ -193,7 +193,7 @@ const EngagingLoader: React.FC<EngagingLoaderProps> = ({ currentStage, transitio
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-medium text-primary-light">CARA</span>
+                <span className="text-xs font-medium text-primary-light">Cara</span>
               </div>
             </div>
             <div className="ml-4">
@@ -291,7 +291,7 @@ const EngagingLoader: React.FC<EngagingLoaderProps> = ({ currentStage, transitio
             />
           </div>
           <p className="mt-2 text-xs text-text-muted">
-            CARA.AI is gathering real-world data to build your personalized career plan
+            Cara agent is gathering real-world data to build your personalized career plan
           </p>
         </div>
       </div>

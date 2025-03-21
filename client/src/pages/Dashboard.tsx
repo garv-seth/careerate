@@ -184,8 +184,9 @@ const Dashboard: React.FC = () => {
             // Advanced agentic workflow loader with step visualization
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-                <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0">
-                  <span className="text-primary-light">CARA.AI</span> Processing Career Transition
+                <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0 flex items-center">
+                  <span className="text-primary-light">Cara</span>
+                  <span className="ml-2 text-xs px-2 py-1 bg-surface-darker text-text-secondary rounded-md">agent</span>
                 </h1>
                 <div className="flex items-center">
                   <span className="text-sm text-text-secondary mr-2">
@@ -199,7 +200,7 @@ const Dashboard: React.FC = () => {
               
               {/* Agent Workflow Status */}
               <div className="bg-surface-dark border border-primary/20 rounded-xl p-6 shadow-glow">
-                <h2 className="text-lg font-medium mb-4 flex items-center">
+                <h2 className="text-lg font-medium mb-6 flex items-center">
                   <svg 
                     className="mr-2 h-5 w-5 text-primary" 
                     viewBox="0 0 24 24" 
@@ -221,10 +222,13 @@ const Dashboard: React.FC = () => {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <span>CARA.AI Workflow Status</span>
+                  <span>Workflow Status</span>
                 </h2>
                 
-                <div className="space-y-4">
+                {/* Vertical timeline with connecting line */}
+                <div className="relative">
+                  {/* Vertical connecting line */}
+                  <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-primary/20 z-0" aria-hidden="true"></div>
                   {/* Stage 1: Scraping Stories */}
                   <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'stories' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'stories' ? 'bg-primary text-black' : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
