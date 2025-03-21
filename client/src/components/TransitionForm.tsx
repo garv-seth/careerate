@@ -42,8 +42,17 @@ const TransitionForm: React.FC = () => {
   // Submit handler
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      const res = await apiRequest("POST", "/api/submit", values);
-      return res.json();
+      try {
+        const res = await apiRequest("POST", "/api/submit", values);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to submit transition");
+        }
+        return data;
+      } catch (error) {
+        console.error("Error submitting transition:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -63,7 +72,7 @@ const TransitionForm: React.FC = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description: error instanceof Error ? error.message : "Failed to submit transition",
         variant: "destructive",
       });
     },
