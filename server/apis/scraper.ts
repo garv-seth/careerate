@@ -19,19 +19,28 @@ interface ScrapedResult {
 const CAREER_SITES = [
   {
     url: 'reddit.com/r/cscareerquestions',
+    crawlUrl: 'https://www.reddit.com/r/cscareerquestions/',
     source: 'Reddit'
   },
   {
     url: 'teamblind.com',
+    crawlUrl: 'https://www.teamblind.com/',
     source: 'Blind'
   },
   {
     url: 'quora.com/topic/career-transitions',
+    crawlUrl: 'https://www.quora.com/topic/Career-Transitions',
     source: 'Quora'
   },
   {
     url: 'medium.com/tag/career-change',
+    crawlUrl: 'https://medium.com/tag/career-change',
     source: 'Medium'
+  },
+  {
+    url: 'indeed.com/career-advice/finding-a-job/career-change',
+    crawlUrl: 'https://www.indeed.com/career-advice/finding-a-job/career-change',
+    source: 'Indeed'
   }
 ];
 
@@ -62,53 +71,136 @@ export async function scrapeForums(
     
     const results: ScrapedResult[] = [];
     
-    // Try to scrape data using LangChain FireCrawlLoader
+    // First try to use the more effective crawl mode on specific sites
     for (const site of CAREER_SITES) {
-      for (const searchTerm of searchTerms) {
-        try {
-          console.log(`Scraping ${site.source} for "${searchTerm}"`);
-          
-          // Use Firecrawl with LangChain to scrape the site
-          const searchUrl = `${site.url}/search?q=${encodeURIComponent(searchTerm)}`;
-          
-          // Use the FireCrawlLoader from LangChain
-          const loader = new FireCrawlLoader({
-            url: searchUrl,
-            apiKey: process.env.FIRECRAWL_API_KEY,
-            mode: "scrape",
-            params: {
-              scrapeOptions: {
-                formats: ['markdown'],
-              }
-            }
-          });
-          
-          // Load documents using LangChain
-          const docs = await loader.load();
-          
-          // Process each document
-          for (const doc of docs) {
-            const content = doc.pageContent;
-            
-            // Skip if content is too short
-            if (content.length < 100) continue;
-            
-            // Check if content mentions both roles
-            if (content.toLowerCase().includes(formattedCurrentRole) && 
-                content.toLowerCase().includes(formattedTargetRole)) {
-              
-              // Add to results
-              results.push({
-                source: site.source,
-                content: content.substring(0, 5000), // Limit content size
-                url: doc.metadata.sourceURL || searchUrl
-              });
+      try {
+        console.log(`Crawling ${site.source} for career transition information`);
+        
+        // Use Firecrawl with LangChain to crawl the site using crawl mode
+        const loader = new FireCrawlLoader({
+          url: site.crawlUrl,
+          apiKey: process.env.FIRECRAWL_API_KEY,
+          mode: "crawl",
+          params: {
+            crawlParams: {
+              maxPages: 5,
+              shouldCrawl: (url: string) => {
+                // Only crawl URLs that might contain career transition info
+                return url.includes("career") || 
+                      url.includes("transition") || 
+                      url.includes("change") ||
+                      url.includes(currentRole.toLowerCase()) ||
+                      url.includes(targetRole.toLowerCase());
+              },
+              shouldExtract: (url: string) => {
+                // Extract content from pages that might have our specific transition
+                return url.includes(currentRole.toLowerCase()) || 
+                      url.includes(targetRole.toLowerCase()) ||
+                      url.includes("career") ||
+                      url.includes("transition");
+              },
+            },
+            scrapeOptions: {
+              formats: ['markdown'],
             }
           }
-        } catch (siteError) {
-          console.error(`Error scraping ${site.source} for "${searchTerm}":`, siteError);
-          // Continue with next site/term
-          continue;
+        });
+        
+        // Load documents using LangChain
+        const docs = await loader.load();
+        
+        // Process each document from crawl
+        for (const doc of docs) {
+          const content = doc.pageContent;
+          
+          // Skip if content is too short
+          if (content.length < 200) continue;
+          
+          // Check if content mentions roles or transition-related terms
+          if ((content.toLowerCase().includes(currentRole.toLowerCase()) || 
+               content.toLowerCase().includes(targetRole.toLowerCase())) && 
+              (content.toLowerCase().includes('transition') || 
+               content.toLowerCase().includes('career') || 
+               content.toLowerCase().includes('change') || 
+               content.toLowerCase().includes('skills'))) {
+            
+            // Add to results
+            results.push({
+              source: site.source,
+              content: content.substring(0, 5000), // Limit content size
+              url: doc.metadata.source || site.crawlUrl
+            });
+          }
+        }
+      } catch (crawlError) {
+        console.error(`Error crawling ${site.source}:`, crawlError);
+      }
+      
+      // Break early if we found enough results to conserve API calls
+      if (results.length >= 3) {
+        console.log(`Found ${results.length} relevant results from crawling, stopping early`);
+        return results;
+      }
+    }
+    
+    // If crawl mode didn't yield enough results, fall back to search scraping
+    if (results.length < 2) {
+      console.log("Limited results from crawl, trying direct search scraping");
+      
+      // Try to scrape data using specific search terms
+      for (const site of CAREER_SITES) {
+        for (const searchTerm of searchTerms) {
+          try {
+            console.log(`Scraping ${site.source} for "${searchTerm}"`);
+            
+            // Use Firecrawl with LangChain to scrape the site
+            const searchUrl = `${site.url}/search?q=${encodeURIComponent(searchTerm)}`;
+            
+            // Use the FireCrawlLoader from LangChain
+            const loader = new FireCrawlLoader({
+              url: searchUrl,
+              apiKey: process.env.FIRECRAWL_API_KEY,
+              mode: "scrape",
+              params: {
+                scrapeOptions: {
+                  formats: ['markdown'],
+                }
+              }
+            });
+            
+            // Load documents using LangChain
+            const docs = await loader.load();
+            
+            // Process each document
+            for (const doc of docs) {
+              const content = doc.pageContent;
+              
+              // Skip if content is too short
+              if (content.length < 100) continue;
+              
+              // Check if content mentions both roles
+              if (content.toLowerCase().includes(formattedCurrentRole) && 
+                  content.toLowerCase().includes(formattedTargetRole)) {
+                
+                // Add to results
+                results.push({
+                  source: site.source,
+                  content: content.substring(0, 5000), // Limit content size
+                  url: doc.metadata.sourceURL || searchUrl
+                });
+              }
+            }
+          } catch (siteError) {
+            console.error(`Error scraping ${site.source} for "${searchTerm}":`, siteError);
+            // Continue with next site/term
+            continue;
+          }
+          
+          // Break early if we have enough results
+          if (results.length >= 3) {
+            console.log(`Found ${results.length} relevant results, stopping search early`);
+            return results;
+          }
         }
       }
     }
@@ -206,6 +298,49 @@ export async function scrapeForums(
       }
     } catch (extractError) {
       console.error("Error in structured data extraction:", extractError);
+    }
+    
+    // If we found results now, return them
+    if (results.length > 0) {
+      console.log(`Found ${results.length} relevant results from structured data extraction`);
+      return results;
+    }
+    
+    // If still no results, try map mode for more comprehensive analysis
+    try {
+      console.log("Trying map mode for comprehensive career transition data");
+      
+      // Use map mode to analyze a more general career change article
+      const loader = new FireCrawlLoader({
+        url: "https://www.indeed.com/career-advice/finding-a-job/career-change",
+        apiKey: process.env.FIRECRAWL_API_KEY,
+        mode: "map",
+        params: {
+          mapParams: {
+            prompt: `Extract information about transitions from ${currentRole} to ${targetRole}, or similar career changes if that specific transition isn't mentioned.`
+          },
+          scrapeOptions: {
+            formats: ['markdown'],
+          }
+        }
+      });
+      
+      // Load mapped document
+      const docs = await loader.load();
+      
+      // Process mapped data
+      if (docs.length > 0) {
+        console.log(`Found ${docs.length} results from map mode`);
+        docs.forEach(doc => {
+          results.push({
+            source: 'Career Change Guide',
+            content: doc.pageContent,
+            url: doc.metadata.source || 'https://www.indeed.com/career-advice'
+          });
+        });
+      }
+    } catch (mapError) {
+      console.error("Error in map mode extraction:", mapError);
     }
     
     // If we found results now, return them

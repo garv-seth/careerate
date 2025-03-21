@@ -61,12 +61,12 @@ export class SkillAnalysisAgent {
       console.log(`Analyzing skill gaps for transition from ${this.currentRole} to ${this.targetRole}`);
       
       // Combine document content for analysis
-      const combinedContent = this.scrapedData.map(doc => {
+      let analysisContent = this.scrapedData.map(doc => {
         return `Source: ${doc.metadata.source}\n${doc.pageContent}`;
       }).join('\n\n---\n\n');
       
       // Try to gather more data directly using FireCrawlLoader if content is limited
-      if (combinedContent.length < 2000) {
+      if (analysisContent.length < 2000) {
         try {
           console.log("Limited data available, gathering more information using FireCrawlLoader");
           
@@ -95,7 +95,7 @@ export class SkillAnalysisAgent {
             }).join('\n\n---\n\n');
             
             // Append the new content
-            combinedContent += '\n\n' + additionalContent;
+            analysisContent += '\n\n' + additionalContent;
             console.log("Successfully gathered additional data for analysis");
           }
         } catch (error) {
@@ -133,7 +133,7 @@ Return ONLY valid JSON with no explanation or other text.`;
         system: systemPrompt,
         max_tokens: 1500,
         messages: [
-          { role: 'user', content: combinedContent }
+          { role: 'user', content: analysisContent }
         ],
       });
       
