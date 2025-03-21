@@ -166,8 +166,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const extractedSkills = await extractSkills(data.content);
         
         // Update scraped data with extracted skills
+        // We need to create a new object with just the fields from the schema
         await storage.createScrapedData({
-          ...data,
+          transitionId: data.transitionId,
+          source: data.source,
+          content: data.content,
+          url: data.url,
           skillsExtracted: extractedSkills,
         });
 
@@ -175,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Count skill mentions
-      const skillMentionCounts = {};
+      const skillMentionCounts: {[key: string]: number} = {};
       skillsFound.forEach(skill => {
         skillMentionCounts[skill] = (skillMentionCounts[skill] || 0) + 1;
       });
@@ -277,9 +281,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prioritizedSkills = skillGaps
         .sort((a, b) => {
           // Sort by gap level and mention count
-          const gapOrder = { "High": 3, "Medium": 2, "Low": 1 };
+          const gapOrder: {[key: string]: number} = { "High": 3, "Medium": 2, "Low": 1 };
+          // Handle null mention counts
+          const aMentionCount = a.mentionCount || 0;
+          const bMentionCount = b.mentionCount || 0; 
           return (gapOrder[b.gapLevel] - gapOrder[a.gapLevel]) || 
-                 (b.mentionCount - a.mentionCount);
+                 (bMentionCount - aMentionCount);
         })
         .slice(0, 5) // Limit to top 5 skill gaps
         .map(gap => gap.skillName);
@@ -384,8 +391,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get plan and milestones
       const plan = await storage.getPlanByTransitionId(transitionId);
-      let milestones = [];
-      let milestonesWithResources = [];
+      let milestones: any[] = [];
+      let milestonesWithResources: any[] = [];
 
       if (plan) {
         milestones = await storage.getMilestonesByPlanId(plan.id);

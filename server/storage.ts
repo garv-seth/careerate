@@ -126,9 +126,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createScrapedData(insertScrapedData: InsertScrapedData): Promise<ScrapedData> {
+    // Create a properly structured insert object with just the essential fields
     const [data] = await db
       .insert(scrapedData)
-      .values(insertScrapedData)
+      .values({
+        transitionId: insertScrapedData.transitionId,
+        source: insertScrapedData.source,
+        content: insertScrapedData.content,
+        url: insertScrapedData.url,
+        skillsExtracted: Array.isArray(insertScrapedData.skillsExtracted) 
+          ? insertScrapedData.skillsExtracted 
+          : []
+      })
       .returning();
     return data;
   }
