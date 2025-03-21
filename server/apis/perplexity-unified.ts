@@ -189,7 +189,11 @@ export async function searchForums(
       2. Include the EXACT and COMPLETE text of their career transition story
       3. Provide the exact source platform (Reddit, Quora, etc.) with the specific subreddit or forum section
       4. Include the complete URL to the original post (not just the domain)
-      5. Include the exact publication date in YYYY-MM-DD format when available
+      5. Include the exact publication date in YYYY-MM-DD format whenever possible
+         - For Reddit: include the exact post date from the post metadata (not just "2 years ago")
+         - For Quora: include the exact answer date or last updated date
+         - For Blind: include the post date
+         - For Medium/blogs: include the publication date shown on the article
       
       Format each result precisely as:
       Source: [platform name with specific forum/subreddit]
@@ -870,6 +874,9 @@ export async function generateTransitionOverview(
       `SOURCE: ${item.source}\nURL: ${item.url || 'Not available'}\nDATE: ${item.postDate || item.date || 'Not available'}\nCONTENT: ${item.content}\n---\n`
     ).join('\n');
 
+    const totalStories = scrapedContent.length;
+    const maxPossibleCount = Math.max(totalStories, 5); // At most the total number of stories, or 5 if we have fewer
+
     const prompt = `
       You are a career transition analyst.
       
@@ -896,7 +903,9 @@ export async function generateTransitionOverview(
         ]
       }
       
-      The counts should reflect the actual number of times a path was mentioned.
+      IMPORTANT: The "count" value for each path must be a logical number and cannot exceed ${maxPossibleCount}.
+      Make sure the counts are accurate to the actual mentions in the data and additional research.
+      
       Return only the JSON object with no other text.
     `;
 
@@ -920,15 +929,24 @@ export async function generateTransitionOverview(
         throw new Error("Incomplete data generated - missing required fields");
       }
       
+      // Ensure path counts make logical sense
+      const processedPaths = overviewData.commonPaths
+        .filter((item: any) => item && item.path)
+        .map((item: any) => {
+          // Ensure count is between 1 and maxPossibleCount
+          let count = typeof item.count === 'number' ? Math.max(item.count, 1) : 1;
+          count = Math.min(count, maxPossibleCount);
+          
+          return {
+            path: item.path,
+            count: count
+          };
+        });
+      
       return {
         successRate: Math.min(Math.max(overviewData.successRate, 0), 100),
         avgTransitionTime: Math.max(overviewData.avgTransitionTime, 1),
-        commonPaths: overviewData.commonPaths
-          .filter((item: any) => item && item.path)
-          .map((item: any) => ({
-            path: item.path,
-            count: typeof item.count === 'number' ? Math.max(item.count, 1) : 1
-          }))
+        commonPaths: processedPaths
       };
     } catch (parseError) {
       console.error('Error parsing overview response:', parseError);

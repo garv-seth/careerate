@@ -72,12 +72,7 @@ export class CaraAgent {
     try {
       console.log("Cara is using Perplexity AI to search for career transition data across multiple forums");
       
-      // Use the updated scrapeForums function which now leverages Perplexity for comprehensive results
-      this.scrapedData = await scrapeForums(this.currentRole, this.targetRole);
-      console.log(`Cara found ${this.scrapedData.length} relevant transition stories from multiple sources`);
-      
-      // Save the scraped data to the database
-      // First get the transition ID from the database
+      // Get the transition ID from the database
       const transition = await storage.getTransitionByRoles(this.currentRole, this.targetRole);
       
       if (!transition) {
@@ -85,8 +80,23 @@ export class CaraAgent {
         return;
       }
       
-      // Save each scraped item to the database
-      for (const item of this.scrapedData) {
+      // First get existing scraped data to avoid duplicates
+      const existingScrapedData = await storage.getScrapedDataByTransitionId(transition.id);
+      const existingUrls = new Set(existingScrapedData.map(item => item.url).filter(Boolean));
+      
+      // Use the updated scrapeForums function which now leverages Perplexity for comprehensive results
+      this.scrapedData = await scrapeForums(this.currentRole, this.targetRole);
+      console.log(`Cara found ${this.scrapedData.length} relevant transition stories from multiple sources`);
+      
+      // Filter out duplicates based on URL
+      const newItems = this.scrapedData.filter(item => 
+        !item.url || !existingUrls.has(item.url)
+      );
+      
+      console.log(`After filtering duplicates, ${newItems.length} new stories will be saved`);
+      
+      // Save each new scraped item to the database
+      for (const item of newItems) {
         try {
           await storage.createScrapedData({
             transitionId: transition.id,
@@ -96,7 +106,7 @@ export class CaraAgent {
             postDate: item.date || null,
             skillsExtracted: [] // We'll extract skills later
           });
-          console.log(`Saved scraped data from ${item.source} to database`);
+          console.log(`Saved new scraped data from ${item.source} to database`);
         } catch (saveError) {
           console.error("Error saving scraped data to database:", saveError);
         }
@@ -114,13 +124,17 @@ export class CaraAgent {
           );
           
           if (additionalResults.length > 0) {
+            // Filter out duplicates from additional results
+            const newAdditionalItems = additionalResults.filter(item => 
+              !item.url || 
+              (!existingUrls.has(item.url) && 
+               !this.scrapedData.some(existing => existing.url === item.url))
+            );
+            
+            console.log(`Found ${additionalResults.length} additional stories, ${newAdditionalItems.length} are new`);
+            
             // Save additional results to database
-            for (const item of additionalResults) {
-              // Skip any duplicates by URL
-              if (this.scrapedData.some(existing => existing.url === item.url)) {
-                continue;
-              }
-              
+            for (const item of newAdditionalItems) {
               try {
                 await storage.createScrapedData({
                   transitionId: transition.id,
@@ -143,6 +157,9 @@ export class CaraAgent {
           console.error("Error in additional search:", additionalSearchError);
         }
       }
+      
+      // Update this.scrapedData to include all data from the database (for use in subsequent operations)
+      this.scrapedData = await storage.getScrapedDataByTransitionId(transition.id);
     } catch (error) {
       console.error("Error in Cara's web scraping:", error);
       throw error;

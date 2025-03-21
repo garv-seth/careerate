@@ -215,7 +215,7 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
                       <div>
                         <p className="text-sm font-medium">{path.path}</p>
                         <p className="text-xs text-text-muted">
-                          {path.count}/5 successful transitions
+                          {path.count} successful transitions
                         </p>
                       </div>
                     </li>
