@@ -81,7 +81,7 @@ export class SkillAnalysisAgent {
           
           // Add the additional content to our analysis
           if (additionalResults.length > 0) {
-            const additionalContent = additionalResults.map(item => {
+            const additionalContent = additionalResults.map((item: { source: string, content: string }) => {
               return `Source: ${item.source}\n${item.content}`;
             }).join('\n\n---\n\n');
             
@@ -157,120 +157,10 @@ Return ONLY valid JSON with no explanation or other text.`;
       return validationResult.data;
     } catch (error) {
       console.error('Error in skill gap analysis:', error);
-      
-      // Generate a more comprehensive fallback result based on role transition
-      return this.generateFallbackSkillGaps();
+      // With our new approach, we don't use fallback data - we throw errors instead
+      throw new Error(`Failed to analyze skill gaps for ${this.currentRole} to ${this.targetRole}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
-  /**
-   * Generate fallback skill gaps based on roles when AI analysis fails
-   * This ensures we always have some skills to work with
-   */
-  private generateFallbackSkillGaps(): SkillGapAnalysis[] {
-    console.log(`Generating role-based fallback skill gaps for ${this.currentRole} to ${this.targetRole}`);
-    
-    // Common skill gaps based on the target role
-    const roleSpecificSkills: {[key: string]: SkillGapAnalysis[]} = {
-      "Machine Learning Engineer": [
-        {
-          skillName: "Deep Learning",
-          gapLevel: "Medium",
-          confidenceScore: 85,
-          mentionCount: 3,
-          contextSummary: "Deep learning expertise is required for ML Engineering roles beyond basic data science"
-        },
-        {
-          skillName: "MLOps",
-          gapLevel: "High", 
-          confidenceScore: 90,
-          mentionCount: 4,
-          contextSummary: "ML Engineers need to deploy and maintain models in production environments"
-        },
-        {
-          skillName: "Large Scale Distributed Systems",
-          gapLevel: "Medium",
-          confidenceScore: 75,
-          mentionCount: 2,
-          contextSummary: "ML Engineers need to understand how to build systems that scale"
-        }
-      ],
-      "Data Scientist": [
-        {
-          skillName: "Statistical Analysis",
-          gapLevel: "Medium",
-          confidenceScore: 80,
-          mentionCount: 3,
-          contextSummary: "Strong statistical foundation is essential for data science roles"
-        },
-        {
-          skillName: "Data Visualization",
-          gapLevel: "Medium",
-          confidenceScore: 75,
-          mentionCount: 2,
-          contextSummary: "Ability to communicate insights through visualization is key for data scientists"
-        }
-      ],
-      "Software Engineer": [
-        {
-          skillName: "Software Design Patterns",
-          gapLevel: "Medium",
-          confidenceScore: 80,
-          mentionCount: 3,
-          contextSummary: "Understanding design patterns is essential for writing maintainable code"
-        },
-        {
-          skillName: "Algorithms and Data Structures",
-          gapLevel: "Medium",
-          confidenceScore: 85,
-          mentionCount: 4,
-          contextSummary: "Strong algorithmic thinking is required for software engineering roles"
-        }
-      ],
-      "Product Manager": [
-        {
-          skillName: "User Research",
-          gapLevel: "High",
-          confidenceScore: 85,
-          mentionCount: 3,
-          contextSummary: "Understanding user needs is central to product management"
-        },
-        {
-          skillName: "Agile Methodologies",
-          gapLevel: "Medium",
-          confidenceScore: 80,
-          mentionCount: 2,
-          contextSummary: "Product managers need to understand agile workflow and sprint planning"
-        }
-      ]
-    };
-    
-    // Generic fallback skills that apply to most technical transitions
-    const genericSkills: SkillGapAnalysis[] = [
-      {
-        skillName: "Technical Communication",
-        gapLevel: "Medium",
-        confidenceScore: 70,
-        mentionCount: 2,
-        contextSummary: `Effectively communicating technical concepts is essential when transitioning to ${this.targetRole}`
-      },
-      {
-        skillName: "Project Management",
-        gapLevel: "Medium", 
-        confidenceScore: 65,
-        mentionCount: 1,
-        contextSummary: `Managing projects and timelines is important in ${this.targetRole} roles`
-      }
-    ];
-    
-    // Combine role-specific and generic skills
-    let resultSkills = [...genericSkills];
-    
-    // Add role-specific skills if available
-    if (roleSpecificSkills[this.targetRole]) {
-      resultSkills = [...roleSpecificSkills[this.targetRole], ...resultSkills];
-    }
-    
-    return resultSkills;
-  }
+  // No fallback methods - we only use real data from Perplexity searches
 }

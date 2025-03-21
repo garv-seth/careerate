@@ -163,7 +163,7 @@ export class CaraAgent {
   }
   
   /**
-   * Generate insights about the career transition
+   * Generate insights about the career transition using Gemini
    */
   private async generateInsights(): Promise<any> {
     try {
@@ -175,12 +175,13 @@ export class CaraAgent {
       );
     } catch (error) {
       console.error("Error generating insights:", error);
-      return null;
+      // With our no-fallback approach, we throw errors instead of returning null
+      throw new Error(`Failed to generate transition insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
   /**
-   * Extract skills from scraped content
+   * Extract skills from scraped content using Claude
    */
   async extractMentionedSkills(): Promise<string[]> {
     try {
@@ -193,7 +194,13 @@ export class CaraAgent {
           allSkills.push(...skills);
         } catch (extractError) {
           console.error("Error extracting skills from content:", extractError);
+          // Continue trying other content items
         }
+      }
+      
+      // If we couldn't extract any skills at all, that's a problem
+      if (allSkills.length === 0) {
+        throw new Error("Failed to extract any skills from scraped content");
       }
       
       // Return unique skills by filtering duplicates
@@ -202,7 +209,7 @@ export class CaraAgent {
       );
     } catch (error) {
       console.error("Error extracting mentioned skills:", error);
-      return [];
+      throw new Error(`Failed to extract skills: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
