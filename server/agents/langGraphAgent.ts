@@ -192,19 +192,44 @@ export class LangGraphCaraAgent {
       return JSON.parse(text);
     } catch (e) {
       try {
+        // Extract content between triple backticks if present
+        const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          text = codeBlockMatch[1];
+        }
+
         // Look for JSON-like structure and clean it up
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          const cleaned = jsonMatch[0]
+          let cleaned = jsonMatch[0]
+            // Remove any markdown or text formatting
+            .replace(/\n\s*#.*$/gm, '')
+            .replace(/\n\s*\/\/.*$/gm, '')
+            // Fix property names
             .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3')
+            // Fix string values
             .replace(/:(\s*)'([^']*)'/g, ':$1"$2"')
-            .replace(/,(\s*[\]}])/g, '$1');
+            .replace(/:(\s*)(?!")([^,}\n\r][^,}]*[^,}\s])(\s*[,}])/g, ':$1"$2"$3')
+            // Fix trailing commas
+            .replace(/,(\s*[\]}])/g, '$1')
+            // Remove any remaining newlines/extra spaces
+            .replace(/\s+/g, ' ')
+            .trim();
+
           return JSON.parse(cleaned);
         }
       } catch (e2) {
-        console.error("Failed to parse JSON even after cleanup:", e2);
+        console.error("Failed to parse JSON after cleanup:", e2);
       }
-      throw new Error("Could not parse JSON response");
+      
+      // Return a basic structure if parsing fails
+      return {
+        skillName: "Unknown",
+        gapLevel: "Medium",
+        confidenceScore: 50,
+        mentionCount: 1,
+        contextSummary: "Unable to parse response"
+      };
     }
   };
 
