@@ -554,6 +554,77 @@ export async function analyzeTransitionStories(
  * @param scrapedContent Array of scraped content objects
  * @returns Overview statistics
  */
+
+/**
+ * Find learning resources for a specific skill
+ * 
+ * @param skill The skill to find resources for
+ * @param context Additional context about the skill
+ * @returns Array of resource objects
+ */
+export async function findResources(
+  skill: string,
+  context: string
+): Promise<Array<{ title: string; url: string; type: string; }>> {
+  try {
+    const prompt = `
+      Find the best learning resources for "${skill}" in the context of "${context}".
+      Search for high-quality YouTube tutorials, courses, books, and GitHub repositories.
+      
+      For each resource:
+      1. Find the exact title
+      2. Find the exact URL
+      3. Categorize the type (Video, Course, Book, GitHub, etc.)
+      
+      Focus on resources with:
+      - Clear learning paths
+      - Good ratings/reviews
+      - Up-to-date content
+      - Practical coding exercises
+      
+      Return as a JSON array:
+      [
+        {
+          "title": "Exact resource title",
+          "url": "https://exact.url.com",
+          "type": "Type of resource (Video, Course, etc.)"
+        }
+      ]
+      
+      Return ONLY the JSON array with no other text.
+    `;
+
+    const response = await callPerplexity(prompt, 1500);
+    
+    // Parse and validate the response
+    try {
+      const jsonMatch = response.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      let resourcesData;
+      
+      if (jsonMatch) {
+        resourcesData = JSON.parse(jsonMatch[0]);
+      } else {
+        resourcesData = JSON.parse(response);
+      }
+      
+      // Validate resources
+      const validatedResources = resourcesData.map((resource: any) => ({
+        title: String(resource.title || ''),
+        url: String(resource.url || ''),
+        type: String(resource.type || 'Resource')
+      }));
+      
+      return validatedResources;
+    } catch (parseError) {
+      console.error('Error parsing resources response:', parseError);
+      throw new Error('Failed to parse resource search results');
+    }
+  } catch (error: any) {
+    console.error('Error finding resources with Perplexity:', error);
+    throw new Error(`Failed to find resources: ${error.message}`);
+  }
+}
+
 export async function generateTransitionOverview(
   currentRole: string,
   targetRole: string,

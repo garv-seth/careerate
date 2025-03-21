@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { insertTransitionSchema } from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent";
-import { generateTransitionOverview } from "./apis/perplexity-unified";
+import { generateTransitionOverview, findResources } from "./apis/perplexity-unified";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes
@@ -345,37 +345,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test Firecrawl API connection
-  apiRouter.get("/test-firecrawl", async (req, res) => {
+  // Test Perplexity Sonar API connection
+  apiRouter.get("/test-perplexity", async (req, res) => {
     try {
-      console.log("Testing Firecrawl API connection...");
-      console.log("API Key exists:", !!process.env.FIRECRAWL_API_KEY);
+      console.log("Testing Perplexity Sonar API connection...");
+      console.log("API Key exists:", !!process.env.PERPLEXITY_API_KEY);
       
-      // Use a simple test query
-      const loader = new FireCrawlLoader({
-        url: "https://www.google.com/search?q=software+developer+skills",
-        apiKey: process.env.FIRECRAWL_API_KEY,
-        mode: "scrape",
-        params: {
-          formats: ["markdown"]
+      // Use a simple test query with Perplexity Sonar
+      const response = await generateTransitionOverview("Software Developer", "Senior Developer", [
+        {
+          source: "Test Source",
+          content: "This is a test story about career transition.",
+          url: "https://example.com",
+          date: new Date().toISOString().split('T')[0]
         }
-      });
+      ]);
       
-      // Try loading
-      console.log("Attempting to call Firecrawl API...");
-      const docs = await loader.load();
-      console.log(`Firecrawl API test successful! Retrieved ${docs.length} documents.`);
+      console.log("Perplexity Sonar API test successful!");
       
       // Success response
       res.json({ 
         success: true, 
-        message: `Firecrawl API is working properly. Retrieved ${docs.length} documents.` 
+        message: "Perplexity Sonar API is working properly." 
       });
     } catch (error) {
-      console.error("Error testing Firecrawl API:", error);
+      console.error("Error testing Perplexity Sonar API:", error);
       res.status(500).json({ 
         success: false, 
-        error: "Failed to connect to Firecrawl API", 
+        error: "Failed to connect to Perplexity Sonar API", 
         details: error instanceof Error ? error.message : "Unknown error" 
       });
     }
@@ -433,7 +430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 5) // Limit to top 5 skill gaps
         .map(gap => gap.skillName);
 
-      // Generate development plan with milestones using Gemini
+      // Generate development plan with milestones using Perplexity Sonar
       const milestoneData = await cara.generatePlan(prioritizedSkills);
 
       // Store milestones
@@ -450,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           progress: 0,
         });
 
-        // Use resources from Gemini's response directly
+        // Use resources from Perplexity Sonar's response directly
         if (milestone.resources && milestone.resources.length > 0) {
           for (const resource of milestone.resources) {
             await storage.createResource({
@@ -461,8 +458,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } else {
-          // Fallback: find additional resources with Gemini
-          const additionalResources = await findResourcesWithGemini(
+          // Find additional resources with Perplexity Sonar
+          // Note: This situation should be rare as our plan generation includes resources
+          console.log("Finding additional resources for milestone using Perplexity Sonar");
+          const additionalResources = await findResources(
             milestone.title, 
             `${transition.currentRole} to ${transition.targetRole} transition`
           );
@@ -604,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Generate insights from scraped data using Gemini
+      // Generate insights from scraped data using Perplexity Sonar
       try {
         const overviewData = await generateTransitionOverview(
           transition.currentRole,
@@ -616,8 +615,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: true, 
           insights: overviewData
         });
-      } catch (geminiError) {
-        console.error("Error generating insights with Gemini:", geminiError);
+      } catch (error) {
+        console.error("Error generating insights with Perplexity Sonar:", error);
         res.status(500).json({
           success: false,
           error: "Failed to generate insights from transition data"
