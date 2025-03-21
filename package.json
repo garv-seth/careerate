@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
+    "@google/generative-ai": "^0.24.0",
     "@hookform/resolvers": "^3.9.1",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@langchain/community": "^0.3.36",
@@ -62,6 +63,7 @@
     "framer-motion": "^11.13.1",
     "input-otp": "^1.2.4",
     "langchain": "^0.3.19",
+    "llamaindex": "^0.9.11",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
     "openai": "^4.89.0",

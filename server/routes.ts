@@ -3,10 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { insertTransitionSchema } from "@shared/schema";
-import { scrapeForums } from "./apis/scraper";
-import { extractSkills } from "./apis/claude";
-import { generatePlan } from "./apis/openai";
-import { findResources } from "./apis/perplexity";
+import { CaraAgent } from "./agents/caraAgent"; 
+import { findResourcesWithGemini } from "./apis/gemini";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes
