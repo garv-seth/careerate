@@ -1141,7 +1141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (typeof insightsData.successRate !== 'number' || 
                 typeof insightsData.avgTransitionTime !== 'number' ||
                 !Array.isArray(insightsData.commonPaths)) {
-              throw new Error("Invalid data structure from Perplexity response");
+              throw new Error("Invalid data structure from LangGraph response");
             }
             
             // Add skill importance if not present
@@ -1177,16 +1177,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               insights: insightsData
             });
           } catch (parseError) {
-            console.error("Error parsing Perplexity response:", parseError);
+            console.error("Error parsing LangGraph response:", parseError);
             // Fall through to fallback insights
           }
-        } catch (perplexityError) {
-          console.error("Error using Perplexity Sonar for insights:", perplexityError);
+        } catch (langGraphError) {
+          console.error("Error using LangGraph and Tavily for insights:", langGraphError);
           // Fall through to fallback insights
         }
         
-        // Final fallback if all Perplexity calls fail
-        console.log("Fallback to basic transition insights after Perplexity failures");
+        // Final fallback if all LangGraph calls fail
+        console.log("Fallback to basic transition insights after LangGraph failures");
         
         const fallbackInsights = {
           successRate: 70, // conservative estimate
@@ -1217,7 +1217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Generate insights from scraped data using Perplexity Sonar
+      // Generate insights from scraped data using LangGraph and Tavily
       // First, get any existing skill gaps to extract user skills
       const skillGaps = await storage.getSkillGapsByTransitionId(transitionId);
       const userSkills = skillGaps.map(gap => gap.skillName);
@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Try to get personalized success rate first
         try {
-          console.log("Calculating personalized success rate with Perplexity Sonar");
+          console.log("Calculating personalized success rate with LangGraph and Tavily");
           const personalizedData = await calculatePersonalizedSuccessRate(
             transition.currentRole,
             transition.targetRole,
@@ -1298,8 +1298,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               insights: overviewData
             });
           } catch (overviewError) {
-            console.error("Error generating insights with Perplexity Sonar:", overviewError);
-            console.log("Using baseline insights after multiple API failures");
+            console.error("Error generating insights with LangGraph and Tavily:", overviewError);
+            console.log("Using baseline insights after multiple LangGraph API failures");
             
             // Use fallback insights as last resort
             const baselineInsights = {
