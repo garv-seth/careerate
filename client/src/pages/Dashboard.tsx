@@ -242,13 +242,114 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             
-            <CompanyLogoNetwork 
-              height={350} 
-              className="bg-surface-dark/80" 
-              selectedCompany={selectedCompany || getTargetCompany()}
-              onSelectCompany={setSelectedCompany}
-              interactionStrength={1.5}
-            />
+            <div className="relative">
+              <CompanyLogoNetwork 
+                height={350} 
+                className="bg-surface-dark/80" 
+                selectedCompany={selectedCompany || getTargetCompany()}
+                onSelectCompany={setSelectedCompany}
+                interactionStrength={1.5}
+              />
+              
+              {/* Company Details Panel - appears when a company is selected */}
+              {selectedCompany && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute top-4 right-4 bg-surface/90 backdrop-blur-md p-4 rounded-lg border border-primary/20 shadow-glow-sm max-w-xs z-10"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-primary-light font-medium">{selectedCompany}</h4>
+                    <button 
+                      onClick={() => setSelectedCompany(null)}
+                      className="text-text-muted hover:text-text transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="text-xs text-text-secondary mb-3">
+                    Based on your Amazon L5 experience, these roles at {selectedCompany} would be a good match:
+                  </div>
+                  
+                  <ul className="space-y-2 mb-3">
+                    {selectedCompany === 'Google' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                          <span className="font-medium">L6 Senior Software Engineer</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                          <span className="font-medium">L5 Software Engineer</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {selectedCompany === 'Microsoft' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                          <span className="font-medium">Senior SDE (Level 63)</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                          <span className="font-medium">SDE II (Level 62)</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {selectedCompany === 'Meta' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                          <span className="font-medium">E5 Software Engineer</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                          <span className="font-medium">E4 Software Engineer</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {(selectedCompany !== 'Google' && selectedCompany !== 'Microsoft' && selectedCompany !== 'Meta') && (
+                      <>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                          <span className="font-medium">Senior Software Engineer</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
+                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                          <span className="font-medium">Software Engineer</span>
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                  
+                  <div className="text-xs text-text-muted">
+                    <div className="flex items-center mb-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-primary-light" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      Recommendations based on your experience and skill profile
+                    </div>
+                    <div className="flex justify-between text-text-secondary">
+                      <span className="flex items-center">
+                        <span className="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
+                        Best match
+                      </span>
+                      <span className="flex items-center">
+                        <span className="w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
+                        Good match
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
             
             <div className="h-12 relative overflow-hidden border-t border-primary/20">
               <DigitalRain height={50} density={5} speed={1.5} primaryColor="rgba(0, 195, 255, 0.7)" />

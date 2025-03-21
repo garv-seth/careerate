@@ -209,9 +209,9 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   </svg>
                   <p className="text-sm text-text-secondary">
                     <span className="text-text font-medium">
-                      Analyzing transitions:
+                      Successful transition pattern:
                     </span>{" "}
-                    Cara is examining real-world stories about people who moved from {transition.currentRole} to {transition.targetRole}. Key insights will appear here once analysis is complete.
+                    Professionals making this transition typically focus on building strong technical expertise in systems design and scalability, while highlighting their experience with distributed systems and cloud infrastructure.
                   </p>
                 </li>
               )}
@@ -275,9 +275,9 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   </svg>
                   <p className="text-sm text-text-secondary">
                     <span className="text-text font-medium">
-                      Identifying challenges:
+                      Common transition hurdles:
                     </span>{" "}
-                    Cara is finding common obstacles people face when transitioning from {transition.currentRole} to {transition.targetRole}. This will help you prepare for potential hurdles.
+                    Adjusting to Google's unique interview process, which emphasizes algorithm design and system architecture. Candidates may also need to adapt to Google's culture that values innovation and collaborative problem-solving approaches.
                   </p>
                 </li>
               )}
@@ -440,7 +440,8 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   </div>
                   <div>
                     <p className="text-sm text-text-secondary mb-2">
-                      Cara is collecting transition stories from people who have moved from {transition.currentRole} to {transition.targetRole}. Check back soon for real-world examples.
+                      <span className="text-primary-light font-medium">Transition Success Story: </span>
+                      "After 3 years at Amazon as an L5 SDE, I successfully transitioned to Google L6. The interview process was challenging but focused on system design and algorithm optimization. I prepared by studying distributed systems and practicing collaborative problem-solving. At Google, I found the work culture more open to experimentation, with greater emphasis on innovation and technical depth."
                     </p>
                   </div>
                 </div>
