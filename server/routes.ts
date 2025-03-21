@@ -291,6 +291,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test Firecrawl API connection
+  apiRouter.get("/test-firecrawl", async (req, res) => {
+    try {
+      console.log("Testing Firecrawl API connection...");
+      console.log("API Key exists:", !!process.env.FIRECRAWL_API_KEY);
+      
+      // Use a simple test query
+      const loader = new FireCrawlLoader({
+        url: "https://www.google.com/search?q=software+developer+skills",
+        apiKey: process.env.FIRECRAWL_API_KEY,
+        mode: "scrape",
+        params: {
+          enableScripts: true,
+          enableImages: false,
+          wait: 2000
+        }
+      });
+      
+      // Try loading
+      console.log("Attempting to call Firecrawl API...");
+      const docs = await loader.load();
+      console.log(`Firecrawl API test successful! Retrieved ${docs.length} documents.`);
+      
+      // Success response
+      res.json({ 
+        success: true, 
+        message: `Firecrawl API is working properly. Retrieved ${docs.length} documents.` 
+      });
+    } catch (error) {
+      console.error("Error testing Firecrawl API:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to connect to Firecrawl API", 
+        details: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
   // Generate development plan with Cara and Gemini
   apiRouter.post("/plan", async (req, res) => {
     try {
