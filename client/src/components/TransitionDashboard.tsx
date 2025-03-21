@@ -50,6 +50,13 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
   const avgTransitionTime = insights?.avgTransitionTime;
   const commonPaths = insights?.commonPaths || [];
 
+  // Create a comprehensive overview text that summarizes all relevant data
+  const generateOverviewText = () => {
+    if (!insights) return '';
+    
+    return `Your transition from ${transition.currentRole} to ${transition.targetRole} shows ${insights.successRate}% success rate based on analyzed stories. The average transition takes about ${insights.avgTransitionTime} months to complete. ${commonPaths.length > 0 ? `The most successful approach is ${commonPaths[0]?.path}.` : ''} Focus on developing the high-priority skills shown in the Skills Analysis section and follow the personalized development plan to maximize your chances of success.`;
+  };
+
   return (
     <Card className="card rounded-xl p-6 shadow-glow-sm hover:shadow-glow transition duration-300">
       <CardContent className="p-0">
@@ -62,6 +69,14 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
           </span>
         </div>
 
+        {!loading && insights && (
+          <div className="mb-6 p-3 bg-surface-dark/50 rounded-lg border border-border">
+            <p className="text-sm">
+              {generateOverviewText()}
+            </p>
+          </div>
+        )}
+        
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <svg
