@@ -185,51 +185,170 @@ export class LangGraphCaraAgent {
     state.currentStage = 'scraping';
   }
 
-  // Safe JSON parsing function
-  private safeParseJSON = (text: string) => {
+  // Safe JSON parsing function that can handle different input types
+  private safeParseJSON = (text: any) => {
+    // Convert MessageContent to string if needed
+    if (typeof text !== 'string') {
+      console.log("Input is not a string, attempting to convert:", typeof text);
+      try {
+        if (Array.isArray(text)) {
+          // Join array elements with newlines
+          text = text.join("\n");
+        } else if (text && typeof text === 'object') {
+          // Try to stringify the object
+          text = JSON.stringify(text);
+        } else {
+          // Convert to string
+          text = String(text);
+        }
+      } catch (error) {
+        console.error("Failed to convert input to string:", error);
+        text = "";
+      }
+    }
+    // For debugging
+    console.log("Attempting to parse JSON string, first 100 chars:", text.substring(0, 100) + (text.length > 100 ? "..." : ""));
+    
     try {
       // First try direct parsing
       return JSON.parse(text);
     } catch (e) {
       try {
         // Extract content between triple backticks if present
-        const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         if (codeBlockMatch) {
           text = codeBlockMatch[1];
         }
 
-        // Look for JSON-like structure and clean it up
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          let cleaned = jsonMatch[0]
-            // Remove any markdown or text formatting
-            .replace(/\n\s*#.*$/gm, '')
-            .replace(/\n\s*\/\/.*$/gm, '')
-            // Fix property names
-            .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3')
-            // Fix string values
-            .replace(/:(\s*)'([^']*)'/g, ':$1"$2"')
-            .replace(/:(\s*)(?!")([^,}\n\r][^,}]*[^,}\s])(\s*[,}])/g, ':$1"$2"$3')
-            // Fix trailing commas
-            .replace(/,(\s*[\]}])/g, '$1')
-            // Remove any remaining newlines/extra spaces
-            .replace(/\s+/g, ' ')
-            .trim();
-
+        // Find the outermost JSON object or array
+        let jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+        if (!jsonMatch) {
+          console.log("No JSON-like structure found");
+          
+          // Check if it's an array without proper formatting
+          if (text.includes("[") && text.includes("]")) {
+            // Try to extract array content
+            jsonMatch = text.match(/\[([\s\S]*)\]/);
+            if (jsonMatch) {
+              text = "[" + jsonMatch[1] + "]";
+            }
+          } else if (text.includes("{") && text.includes("}")) {
+            // Try to extract object content
+            jsonMatch = text.match(/\{([\s\S]*)\}/);
+            if (jsonMatch) {
+              text = "{" + jsonMatch[1] + "}";
+            }
+          } else {
+            // No JSON structure detected
+            console.log("No valid JSON structure found in the text");
+            
+            // Context-aware fallback based on function call
+            const callerFunction = new Error().stack?.split('\n')[2] || '';
+            
+            if (callerFunction.includes('analyzeSkillGaps')) {
+              console.log("Fallback: Returning empty skill gaps array");
+              return [];
+            } else if (callerFunction.includes('generateInsights')) {
+              console.log("Fallback: Returning empty insights object");
+              return {};
+            } else if (callerFunction.includes('createDevelopmentPlan')) {
+              console.log("Fallback: Returning empty plan with milestones array");
+              return { milestones: [] };
+            } else {
+              // Generic fallback
+              console.log("Fallback: Returning generic object");
+              return {};
+            }
+          }
+        } else {
+          text = jsonMatch[0];
+        }
+        
+        // Apply a series of cleanup operations
+        let cleaned = text
+          // Remove comments and markdown
+          .replace(/```.*?```/gs, '')
+          .replace(/\n\s*#.*$/gm, '')
+          .replace(/\n\s*\/\/.*$/gm, '')
+          
+          // Fix property names (unquoted -> quoted)
+          .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3')
+          
+          // Fix single-quoted strings -> double-quoted
+          .replace(/:(\s*)'([^']*)'(\s*[,}])/g, ':$1"$2"$3')
+          
+          // Fix unquoted string values (but avoid quoting booleans/null/numbers)
+          .replace(/:(\s*)(?!")(true|false|null)(\s*[,}])/gi, ':$1$2$3') // Preserve booleans and null
+          .replace(/:(\s*)(?!")(\d+(?:\.\d+)?)(\s*[,}])/g, ':$1$2$3') // Preserve numbers
+          .replace(/:(\s*)(?!")([^,}\n\r0-9][^,}]*[^,}\s0-9])(\s*[,}])/g, ':$1"$2"$3') // Quote other values
+          
+          // Fix trailing commas
+          .replace(/,(\s*[\]}])/g, '$1')
+          
+          // Fix missing commas between properties
+          .replace(/}(\s*){/g, '},\n{')
+          .replace(/"(\s*){/g, '",\n{')
+          
+          // Fix line breaks in string values
+          .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
+            return match.replace(/\n/g, '\\n');
+          });
+        
+        console.log("Cleaned JSON (first 100 chars):", cleaned.substring(0, 100) + (cleaned.length > 100 ? "..." : ""));
+        
+        try {
+          // Try to parse cleaned JSON
           return JSON.parse(cleaned);
+        } catch (innerError) {
+          console.error("Still failed to parse after initial cleaning:", innerError);
+          
+          // Last resort: Try more aggressive fixes
+          cleaned = cleaned
+            // Handle dangling properties
+            .replace(/([^,{}[\]]\s*)}/g, '$1,}')
+            // Remove all whitespace (except in strings)
+            .replace(/\s+/g, ' ')
+            // Handle potential unclosed arrays or objects
+            .replace(/\[([^\]]*)$/g, '[$1]')
+            .replace(/\{([^}]*)$/g, '{$1}');
+            
+          console.log("Final cleaning attempt (first 100 chars):", cleaned.substring(0, 100) + (cleaned.length > 100 ? "..." : ""));
+          
+          try {
+            return JSON.parse(cleaned);
+          } catch (finalError) {
+            console.error("All JSON parsing attempts failed:", finalError);
+            
+            // Context-aware fallback based on function call
+            const callerFunction = new Error().stack?.split('\n')[2] || '';
+            
+            if (callerFunction.includes('analyzeSkillGaps')) {
+              return [];
+            } else if (callerFunction.includes('generateInsights')) {
+              return {};
+            } else if (callerFunction.includes('createDevelopmentPlan')) {
+              return { milestones: [] };
+            } else {
+              return {};
+            }
+          }
         }
       } catch (e2) {
-        console.error("Failed to parse JSON after cleanup:", e2);
+        console.error("Failed to parse JSON after all cleanup attempts:", e2);
+        
+        // Context-aware fallback based on function call
+        const callerFunction = new Error().stack?.split('\n')[2] || '';
+        
+        if (callerFunction.includes('analyzeSkillGaps')) {
+          return [];
+        } else if (callerFunction.includes('generateInsights')) {
+          return {};
+        } else if (callerFunction.includes('createDevelopmentPlan')) {
+          return { milestones: [] };
+        } else {
+          return {};
+        }
       }
-      
-      // Return a basic structure if parsing fails
-      return {
-        skillName: "Unknown",
-        gapLevel: "Medium",
-        confidenceScore: 50,
-        mentionCount: 1,
-        contextSummary: "Unable to parse response"
-      };
     }
   };
 
@@ -326,7 +445,12 @@ export class LangGraphCaraAgent {
 
     // Parse the response using safeParseJSON
     try {
-      const skillGaps = this.safeParseJSON(skillGapResponse.content);
+      // Extract string content from MessageContent
+      const content = typeof skillGapResponse.content === 'string' 
+        ? skillGapResponse.content 
+        : JSON.stringify(skillGapResponse.content);
+      
+      const skillGaps = this.safeParseJSON(content);
 
       // Save the skill gaps to the database
       for (const gap of skillGaps) {
@@ -398,7 +522,12 @@ export class LangGraphCaraAgent {
 
     // Parse the response using safeParseJSON
     try {
-      const insightsJson = this.safeParseJSON(insightsResponse.content);
+      // Extract string content from MessageContent
+      const content = typeof insightsResponse.content === 'string' 
+        ? insightsResponse.content 
+        : JSON.stringify(insightsResponse.content);
+      
+      const insightsJson = this.safeParseJSON(content);
 
       // Save the insights to the database
       for (const type in insightsJson) {
@@ -470,7 +599,12 @@ export class LangGraphCaraAgent {
 
     // Parse the response using safeParseJSON
     try {
-      const planJson = this.safeParseJSON(planResponse.content);
+      // Extract string content from MessageContent
+      const content = typeof planResponse.content === 'string' 
+        ? planResponse.content 
+        : JSON.stringify(planResponse.content);
+      
+      const planJson = this.safeParseJSON(content);
 
       // Ensure we have milestones
       const milestones = planJson.milestones || [];
