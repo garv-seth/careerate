@@ -45,9 +45,9 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
     loadInsights();
   }, [transition.id, scrapedCount]);
 
-  // Use data from API only
-  const successRate = insights?.successRate || 0;
-  const avgTransitionTime = insights?.avgTransitionTime || 0;
+  // Only use data from API - no fallbacks
+  const successRate = insights?.successRate;
+  const avgTransitionTime = insights?.avgTransitionTime;
   const commonPaths = insights?.commonPaths || [];
 
   return (
@@ -98,7 +98,7 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
               <div className="skill-progress">
                 <div
                   className="skill-progress-bar"
-                  style={{ width: `${successRate}%` }}
+                  style={{ width: typeof successRate === 'number' ? `${successRate}%` : '0%' }}
                 ></div>
               </div>
             </div>
@@ -113,7 +113,7 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
               <div className="skill-progress">
                 <div
                   className="skill-progress-bar"
-                  style={{ width: `${(avgTransitionTime / 6) * 100}%` }}
+                  style={{ width: typeof avgTransitionTime === 'number' ? `${(avgTransitionTime / 6) * 100}%` : '0%' }}
                 ></div>
               </div>
             </div>

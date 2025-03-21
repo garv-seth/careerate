@@ -527,15 +527,22 @@ export async function generateTransitionOverview(
         overviewData = JSON.parse(text);
       }
       
-      // Validate and ensure the data structure is correct
+      // Validate and ensure the data structure is correct - no fallback values
+      if (typeof overviewData.successRate !== 'number' || 
+          typeof overviewData.avgTransitionTime !== 'number' ||
+          !Array.isArray(overviewData.commonPaths)) {
+        throw new Error("Incomplete data generated - missing required fields");
+      }
+      
       return {
-        successRate: typeof overviewData.successRate === 'number' ? Math.min(Math.max(overviewData.successRate, 0), 100) : 75,
-        avgTransitionTime: typeof overviewData.avgTransitionTime === 'number' ? Math.max(overviewData.avgTransitionTime, 1) : 6,
-        commonPaths: Array.isArray(overviewData.commonPaths) ? 
-          overviewData.commonPaths.map(path => ({
-            path: path.path || "Unspecified path",
+        successRate: Math.min(Math.max(overviewData.successRate, 0), 100),
+        avgTransitionTime: Math.max(overviewData.avgTransitionTime, 1),
+        commonPaths: overviewData.commonPaths
+          .filter(path => path && path.path) // Filter out invalid entries
+          .map(path => ({
+            path: path.path,
             count: typeof path.count === 'number' ? Math.max(path.count, 1) : 1
-          })) : []
+          }))
       };
     } catch (parseError) {
       console.error("Error parsing Gemini overview generation:", parseError);
