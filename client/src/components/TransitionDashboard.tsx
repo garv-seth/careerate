@@ -30,11 +30,9 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
 
     const loadInsights = async () => {
       try {
-        const response = await apiRequest(`/api/insights/${transition.id}`, {
-          method: "GET",
-        });
+        const response = await apiRequest(`/api/insights/${transition.id}`);
 
-        if (response?.success && response.insights) {
+        if (response && response.success && response.insights) {
           setInsights(response.insights);
         } else {
           // If API fails, generate some basic insights based on scraped count

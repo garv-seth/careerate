@@ -65,6 +65,7 @@ export interface Insight {
   source: string | null;
   date: string | null;
   experienceYears: number | null;
+  url?: string | null;
 }
 
 // Extended types

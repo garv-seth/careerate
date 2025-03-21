@@ -29,20 +29,16 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
     const loadScrapedData = async () => {
       try {
         // Load scraped data
-        const response = await apiRequest(`/api/scraped-data/${transition.id}`, {
-          method: "GET",
-        });
+        const response = await apiRequest(`/api/scraped-data/${transition.id}`);
 
-        if (response?.success && response.data) {
+        if (response && response.success && response.data) {
           setScrapedData(response.data);
         }
 
         // Load stories analysis data
-        const storiesResponse = await apiRequest(`/api/stories-analysis/${transition.id}`, {
-          method: "GET",
-        });
+        const storiesResponse = await apiRequest(`/api/stories-analysis/${transition.id}`);
 
-        if (storiesResponse?.success && storiesResponse.data) {
+        if (storiesResponse && storiesResponse.success && storiesResponse.data) {
           setStoriesData(storiesResponse.data);
         }
       } catch (error) {
