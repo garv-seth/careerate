@@ -896,7 +896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const observationsPrompt = `What are the key observations about career transitions from ${currentRole} to ${targetRole}? Provide 3 specific, data-backed insights. Answer in a JSON array of strings.`;
             
             try {
-              const observationsResponse = await callPerplexity(observationsPrompt, 800);
+              const observationsResponse = await callLLM(observationsPrompt, 800);
               const observationsMatch = observationsResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
               
               let observations: string[] = [];
@@ -932,7 +932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const challengesPrompt = `What are the main challenges people face when transitioning from ${currentRole} to ${targetRole}? Provide 3 specific challenges. Answer in a JSON array of strings.`;
             
             try {
-              const challengesResponse = await callPerplexity(challengesPrompt, 800);
+              const challengesResponse = await callLLM(challengesPrompt, 800);
               const challengesMatch = challengesResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
               
               let challenges: string[] = [];
@@ -1075,7 +1075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             Return only the JSON, with no additional text.
           `;
           
-          const perplexityResponse = await callPerplexity(perplexityPrompt, 1000);
+          const perplexityResponse = await callLLM(perplexityPrompt, 1000);
           
           try {
             // Debug the structure of the response
@@ -1146,7 +1146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const skillPrompt = `What are the most important skills for a ${transition.currentRole} transitioning to ${transition.targetRole}? 
               Return a JSON array of objects with "skill" and "importance" (1-10) properties. Include at least 4 skills.`;
               
-              const skillResponse = await callPerplexity(skillPrompt, 800);
+              const skillResponse = await callLLM(skillPrompt, 800);
               const skillsMatch = skillResponse.match(/\[\s*\{[\s\S]*\}\s*\]/);
               
               if (skillsMatch) {
@@ -1160,7 +1160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const factorsPrompt = `What are the key success factors for transitioning from ${transition.currentRole} to ${transition.targetRole}? 
               Return a JSON array of strings with at least 4 factors.`;
               
-              const factorsResponse = await callPerplexity(factorsPrompt, 800);
+              const factorsResponse = await callLLM(factorsPrompt, 800);
               const factorsMatch = factorsResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
               
               if (factorsMatch) {
