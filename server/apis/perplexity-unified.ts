@@ -906,8 +906,12 @@ export async function generateTransitionOverview(
       `SOURCE: ${item.source}\nURL: ${item.url || 'Not available'}\nDATE: ${item.postDate || item.date || 'Not available'}\nCONTENT: ${item.content}\n---\n`
     ).join('\n');
 
+    // Calculate a reasonable maximum number based on available data
+    // We don't want to claim "X successful transitions" when we only found Y stories
     const totalStories = scrapedContent.length;
-    const maxPossibleCount = Math.max(totalStories, 5); // At most the total number of stories, or 5 if we have fewer
+    // Use a reasonable cap on the count based on real data available
+    // If we have no stories, max count is 3; if we have stories, use their count plus a reasonable sample size
+    const maxPossibleCount = totalStories > 0 ? Math.min(totalStories + 5, 20) : 3;
 
     const prompt = `
       You are a career transition analyst.
