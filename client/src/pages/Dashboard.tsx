@@ -269,12 +269,12 @@ const Dashboard: React.FC = () => {
                     }`}></div>
                   </div>
                   {/* Stage 1: Scraping Stories */}
-                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
                     loadingStage === 'stories' 
-                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
                       : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics'
-                        ? 'bg-green-500/5 border border-green-500/10' 
-                        : 'border border-surface-lighter'
+                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
+                        : 'p-4 border border-surface-lighter'
                   }`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
                       loadingStage === 'stories' 
@@ -313,7 +313,7 @@ const Dashboard: React.FC = () => {
                         )}
                       </div>
                       {/* Only show details for active or current stage */}
-                      {(loadingStage === 'stories' || !loadingStage) && (
+                      {loadingStage === 'stories' && (
                         <p className="text-sm text-text-secondary mt-2">
                           Scraping web forums and platforms for real stories from professionals who made the transition from {data?.transition.currentRole || "current role"} to {data?.transition.targetRole || "target role"}
                         </p>
@@ -322,12 +322,12 @@ const Dashboard: React.FC = () => {
                   </div>
                   
                   {/* Stage 2: Analyze Insights */}
-                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
                     loadingStage === 'insights' 
-                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
                       : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics'
-                        ? 'bg-green-500/5 border border-green-500/10' 
-                        : 'border border-surface-lighter'
+                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
+                        : 'p-4 border border-surface-lighter'
                   }`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
                       loadingStage === 'insights' 
@@ -375,12 +375,12 @@ const Dashboard: React.FC = () => {
                   </div>
                   
                   {/* Stage 3: Analyze Skills */}
-                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
                     loadingStage === 'skills' 
-                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
                       : loadingStage === 'plan' || loadingStage === 'metrics'
-                        ? 'bg-green-500/5 border border-green-500/10' 
-                        : 'border border-surface-lighter'
+                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
+                        : 'p-4 border border-surface-lighter'
                   }`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
                       loadingStage === 'skills' 
@@ -428,12 +428,12 @@ const Dashboard: React.FC = () => {
                   </div>
                   
                   {/* Stage 4: Create Career Plan */}
-                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
                     loadingStage === 'plan' 
-                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
                       : loadingStage === 'metrics'
-                        ? 'bg-green-500/5 border border-green-500/10' 
-                        : 'border border-surface-lighter'
+                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
+                        : 'p-4 border border-surface-lighter'
                   }`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
                       loadingStage === 'plan' 
@@ -481,10 +481,10 @@ const Dashboard: React.FC = () => {
                   </div>
                   
                   {/* Stage 5: Metrics & Success Rate */}
-                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
                     loadingStage === 'metrics' 
-                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
-                      : 'border border-surface-lighter'
+                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      : 'p-4 border border-surface-lighter'
                   }`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
                       loadingStage === 'metrics' 
@@ -521,7 +521,7 @@ const Dashboard: React.FC = () => {
               {/* Simple progress indicator */}
               <div className="bg-surface-dark/80 border border-primary/10 rounded-xl p-4 text-center">
                 <p className="text-sm text-text-secondary">
-                  Cara agent is gathering real-world data to build your personalized career plan
+                  Cara<sup className="text-xs opacity-70 ml-0.5">agent</sup> is gathering real-world data to build your personalized career plan
                 </p>
                 <div className="w-full bg-surface-darkest/50 h-2 rounded-full overflow-hidden mt-3">
                   <div className="h-full bg-gradient-to-r from-primary-dark via-primary to-primary-light w-full animate-pulse" />
@@ -683,7 +683,7 @@ const Dashboard: React.FC = () => {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <span>CARA.AI CAREER NETWORK</span>
+                  <span>Cara<sup className="text-xs opacity-70 ml-0.5">agent</sup> CAREER NETWORK</span>
                 </h2>
                 <p className="text-sm text-text-secondary">
                   Mapping transition paths from {data.transition.currentRole} to {data.transition.targetRole}
