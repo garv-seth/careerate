@@ -126,19 +126,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createScrapedData(insertScrapedData: InsertScrapedData): Promise<ScrapedData> {
-    // Convert skillsExtracted from array to string JSON representation if needed
-    let valuesToInsert = insertScrapedData;
-    if (insertScrapedData.skillsExtracted && Array.isArray(insertScrapedData.skillsExtracted)) {
-      valuesToInsert = {
-        ...insertScrapedData,
-        skillsExtracted: insertScrapedData.skillsExtracted as any
-      };
-    }
-  
+    // For simplicity, let's avoid the type issue by serializing and parsing the array
+    // This is a workaround for the TypeScript error
+    const emptyArray: string[] = [];
+    const skills = insertScrapedData.skillsExtracted || emptyArray;
+    const serializedSkills = JSON.stringify(skills);
+    const parsedSkills = JSON.parse(serializedSkills);
+    
+    // Use type assertion to bypass TypeScript error
+    const valueToInsert = {
+      transitionId: insertScrapedData.transitionId,
+      source: insertScrapedData.source,
+      content: insertScrapedData.content,
+      url: insertScrapedData.url || null,
+      skillsExtracted: parsedSkills
+    } as any;
+    
     const [data] = await db
       .insert(scrapedData)
-      .values(valuesToInsert)
+      .values(valueToInsert)
       .returning();
+    
     return data;
   }
 
