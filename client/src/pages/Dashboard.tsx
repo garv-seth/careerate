@@ -1,11 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 import TransitionDashboard from "@/components/TransitionDashboard";
 import SkillGapAnalysis from "@/components/SkillGapAnalysis";
 import CareerTrajectory from "@/components/CareerTrajectory";
 import ScrapedInsights from "@/components/ScrapedInsights";
+import CompanyLogoNetwork from "@/components/CompanyLogoNetwork";
+import DigitalRain from "@/components/DigitalRain";
 import { apiRequest } from "@/lib/queryClient";
 import { DashboardData } from "@/types";
 
@@ -15,6 +18,7 @@ const Dashboard: React.FC = () => {
   const transitionId = params?.transitionId;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
 
   // Redirect if no transitionId
   useEffect(() => {
@@ -136,6 +140,21 @@ const Dashboard: React.FC = () => {
     return null;
   }
 
+  // Helper function to determine target company from transition data
+  const getTargetCompany = () => {
+    const { targetRole } = data.transition;
+    
+    // Extract company name from target role, if present
+    if (targetRole.includes('Google')) return 'Google';
+    if (targetRole.includes('Amazon')) return 'Amazon';  
+    if (targetRole.includes('Microsoft')) return 'Microsoft';
+    if (targetRole.includes('Apple')) return 'Apple';
+    if (targetRole.includes('Meta')) return 'Meta';
+    
+    // Default to a likely tech company if none found
+    return 'Google';
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
@@ -155,6 +174,92 @@ const Dashboard: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Company Logo Network with Matrix-style data visualization - shows career path connections */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="relative bg-surface-dark border border-primary/20 rounded-lg overflow-hidden mb-8"
+        >
+          <div className="absolute inset-0 bg-cyber-grid bg-20 opacity-5"></div>
+          
+          <div className="flex flex-col">
+            <div className="p-4 border-b border-primary/20 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-medium flex items-center">
+                  <svg 
+                    className="mr-2 h-5 w-5 text-primary" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path 
+                      d="M2 22L12 2L22 22M6 16H18M9 11H15" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>CARA.AI CAREER NETWORK</span>
+                </h2>
+                <p className="text-sm text-text-secondary">
+                  Mapping transition paths from {data.transition.currentRole} to {data.transition.targetRole}
+                </p>
+              </div>
+              
+              {selectedCompany && (
+                <div className="bg-surface/70 backdrop-blur-sm rounded-lg px-3 py-1 border border-primary/30">
+                  <span className="text-sm">Selected: <span className="text-primary-light">{selectedCompany}</span></span>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-2 text-xs text-center text-text-secondary border-b border-primary/20">
+              <div className="mb-2">Interactive company network - click any company to explore career paths</div>
+              <div className="flex justify-center space-x-4 flex-wrap">
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-[#00c3ff]80 mr-1"></span>
+                  <span>Tech</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-[#4caf50]80 mr-1"></span>
+                  <span>Enterprise</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-[#ff9800]80 mr-1"></span>
+                  <span>Fintech</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-[#e91e63]80 mr-1"></span>
+                  <span>Consumer</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-block w-3 h-3 rounded-full bg-[#9c27b0]80 mr-1"></span>
+                  <span>Social</span>
+                </div>
+              </div>
+            </div>
+            
+            <CompanyLogoNetwork 
+              height={350} 
+              className="bg-surface-dark/80" 
+              selectedCompany={selectedCompany || getTargetCompany()}
+              onSelectCompany={setSelectedCompany}
+              interactionStrength={1.5}
+            />
+            
+            <div className="h-12 relative overflow-hidden border-t border-primary/20">
+              <DigitalRain height={50} density={5} speed={1.5} primaryColor="rgba(0, 195, 255, 0.7)" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-xs text-primary-light font-mono tracking-wider opacity-70">
+                  CARA.AI.AGENT // ANALYZING INTERCONNECTED CAREER PATHS
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {!data.isComplete ? (
           <div className="card rounded-xl p-6 shadow-glow mb-6">

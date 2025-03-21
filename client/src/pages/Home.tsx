@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import TransitionForm from "@/components/TransitionForm";
 import { Link } from "wouter";
+import DigitalRain from "@/components/DigitalRain";
 
 const Home: React.FC = () => {
   return (
@@ -139,6 +140,32 @@ const Home: React.FC = () => {
         </div>
       </section>
       
+      {/* Digital Rain Transition Element */}
+      <div className="relative py-8">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+          className="pointer-events-none"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent z-0"></div>
+          <DigitalRain height={100} primaryColor="rgba(0, 195, 255, 1)" density={3} speed={1.2} />
+        </motion.div>
+        <div className="container mx-auto px-6 py-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+            viewport={{ once: true }}
+            className="text-center"
+          >
+            <span className="text-primary-light font-medium tracking-wide">CARA AI AGENT</span>
+            <h3 className="text-lg text-text-secondary">Analyzing career paths, processing transition data</h3>
+          </motion.div>
+        </div>
+      </div>
+
       {/* Form Section */}
       <section className="py-16 relative">
         <div className="container mx-auto px-6">
