@@ -230,8 +230,20 @@ const Dashboard: React.FC = () => {
                   {/* Vertical connecting line */}
                   <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-primary/20 z-0" aria-hidden="true"></div>
                   {/* Stage 1: Scraping Stories */}
-                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'stories' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'stories' ? 'bg-primary text-black' : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                    loadingStage === 'stories' 
+                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics'
+                        ? 'bg-green-500/5 border border-green-500/10' 
+                        : 'border border-surface-lighter'
+                  }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
+                      loadingStage === 'stories' 
+                        ? 'bg-primary text-black' 
+                        : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
+                          ? 'bg-green-500/20 text-green-500' 
+                          : 'bg-surface-lighter text-text-secondary'
+                    }`}>
                       {loadingStage === 'stories' ? (
                         <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -245,7 +257,13 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${loadingStage === 'stories' ? 'text-primary-light' : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                        <h3 className={`font-medium ${
+                          loadingStage === 'stories' 
+                            ? 'text-primary-light' 
+                            : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
+                              ? 'text-green-500' 
+                              : 'text-text'
+                        }`}>
                           Finding Career Transition Stories
                         </h3>
                         {loadingStage === 'stories' && (
@@ -255,15 +273,30 @@ const Dashboard: React.FC = () => {
                           <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
                         )}
                       </div>
-                      <p className="text-sm text-text-secondary mt-1">
-                        Scraping web forums and platforms for real stories from professionals who made the transition from {data?.transition.currentRole || "current role"} to {data?.transition.targetRole || "target role"}
-                      </p>
+                      {/* Only show details for active or current stage */}
+                      {(loadingStage === 'stories' || !loadingStage) && (
+                        <p className="text-sm text-text-secondary mt-2">
+                          Scraping web forums and platforms for real stories from professionals who made the transition from {data?.transition.currentRole || "current role"} to {data?.transition.targetRole || "target role"}
+                        </p>
+                      )}
                     </div>
                   </div>
                   
                   {/* Stage 2: Analyze Insights */}
-                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'insights' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'insights' ? 'bg-primary text-black' : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                    loadingStage === 'insights' 
+                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics'
+                        ? 'bg-green-500/5 border border-green-500/10' 
+                        : 'border border-surface-lighter'
+                  }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
+                      loadingStage === 'insights' 
+                        ? 'bg-primary text-black' 
+                        : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
+                          ? 'bg-green-500/20 text-green-500' 
+                          : 'bg-surface-lighter text-text-secondary'
+                    }`}>
                       {loadingStage === 'insights' ? (
                         <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -277,7 +310,13 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${loadingStage === 'insights' ? 'text-primary-light' : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                        <h3 className={`font-medium ${
+                          loadingStage === 'insights' 
+                            ? 'text-primary-light' 
+                            : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
+                              ? 'text-green-500' 
+                              : 'text-text'
+                        }`}>
                           Extracting Key Observations & Challenges
                         </h3>
                         {loadingStage === 'insights' && (
@@ -287,15 +326,30 @@ const Dashboard: React.FC = () => {
                           <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
                         )}
                       </div>
-                      <p className="text-sm text-text-secondary mt-1">
-                        Analyzing transition stories to identify key observations, challenges, and success patterns
-                      </p>
+                      {/* Only show details for active stage */}
+                      {loadingStage === 'insights' && (
+                        <p className="text-sm text-text-secondary mt-2">
+                          Analyzing transition stories to identify key observations, challenges, and success patterns
+                        </p>
+                      )}
                     </div>
                   </div>
                   
                   {/* Stage 3: Analyze Skills */}
-                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'skills' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'skills' ? 'bg-primary text-black' : loadingStage === 'plan' || loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                    loadingStage === 'skills' 
+                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      : loadingStage === 'plan' || loadingStage === 'metrics'
+                        ? 'bg-green-500/5 border border-green-500/10' 
+                        : 'border border-surface-lighter'
+                  }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
+                      loadingStage === 'skills' 
+                        ? 'bg-primary text-black' 
+                        : loadingStage === 'plan' || loadingStage === 'metrics' 
+                          ? 'bg-green-500/20 text-green-500' 
+                          : 'bg-surface-lighter text-text-secondary'
+                    }`}>
                       {loadingStage === 'skills' ? (
                         <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -309,7 +363,13 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${loadingStage === 'skills' ? 'text-primary-light' : loadingStage === 'plan' || loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                        <h3 className={`font-medium ${
+                          loadingStage === 'skills' 
+                            ? 'text-primary-light' 
+                            : loadingStage === 'plan' || loadingStage === 'metrics' 
+                              ? 'text-green-500' 
+                              : 'text-text'
+                        }`}>
                           Analyzing Skill Requirements & Gaps
                         </h3>
                         {loadingStage === 'skills' && (
@@ -319,15 +379,30 @@ const Dashboard: React.FC = () => {
                           <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
                         )}
                       </div>
-                      <p className="text-sm text-text-secondary mt-1">
-                        Identifying critical skills needed and determining skill gaps based on transition requirements
-                      </p>
+                      {/* Only show details for active stage */}
+                      {loadingStage === 'skills' && (
+                        <p className="text-sm text-text-secondary mt-2">
+                          Identifying critical skills needed and determining skill gaps based on transition requirements
+                        </p>
+                      )}
                     </div>
                   </div>
                   
                   {/* Stage 4: Create Career Plan */}
-                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'plan' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'plan' ? 'bg-primary text-black' : loadingStage === 'metrics' ? 'bg-green-500/20 text-green-500' : 'bg-surface-lighter text-text-secondary'}`}>
+                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                    loadingStage === 'plan' 
+                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      : loadingStage === 'metrics'
+                        ? 'bg-green-500/5 border border-green-500/10' 
+                        : 'border border-surface-lighter'
+                  }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
+                      loadingStage === 'plan' 
+                        ? 'bg-primary text-black' 
+                        : loadingStage === 'metrics' 
+                          ? 'bg-green-500/20 text-green-500' 
+                          : 'bg-surface-lighter text-text-secondary'
+                    }`}>
                       {loadingStage === 'plan' ? (
                         <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -341,7 +416,13 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${loadingStage === 'plan' ? 'text-primary-light' : loadingStage === 'metrics' ? 'text-green-500' : 'text-text'}`}>
+                        <h3 className={`font-medium ${
+                          loadingStage === 'plan' 
+                            ? 'text-primary-light' 
+                            : loadingStage === 'metrics' 
+                              ? 'text-green-500' 
+                              : 'text-text'
+                        }`}>
                           Creating Career Trajectory Plan
                         </h3>
                         {loadingStage === 'plan' && (
@@ -351,15 +432,26 @@ const Dashboard: React.FC = () => {
                           <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
                         )}
                       </div>
-                      <p className="text-sm text-text-secondary mt-1">
-                        Building a personalized career transition roadmap with specific milestones and learning resources
-                      </p>
+                      {/* Only show details for active stage */}
+                      {loadingStage === 'plan' && (
+                        <p className="text-sm text-text-secondary mt-2">
+                          Building a personalized career transition roadmap with specific milestones and learning resources
+                        </p>
+                      )}
                     </div>
                   </div>
                   
                   {/* Stage 5: Metrics & Success Rate */}
-                  <div className={`flex items-start p-3 rounded-lg ${loadingStage === 'metrics' ? 'bg-primary/10 border border-primary/20' : 'border border-surface-lighter'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${loadingStage === 'metrics' ? 'bg-primary text-black' : 'bg-surface-lighter text-text-secondary'}`}>
+                  <div className={`flex items-start p-4 rounded-lg mb-3 transition-all duration-300 ${
+                    loadingStage === 'metrics' 
+                      ? 'bg-primary/10 border border-primary/20 shadow-glow-sm' 
+                      : 'border border-surface-lighter'
+                  }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
+                      loadingStage === 'metrics' 
+                        ? 'bg-primary text-black' 
+                        : 'bg-surface-lighter text-text-secondary'
+                    }`}>
                       {loadingStage === 'metrics' ? (
                         <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -376,9 +468,12 @@ const Dashboard: React.FC = () => {
                           <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
                         )}
                       </div>
-                      <p className="text-sm text-text-secondary mt-1">
-                        Estimating transition success rate, timeline, and generating personalized metrics
-                      </p>
+                      {/* Only show details for active stage */}
+                      {loadingStage === 'metrics' && (
+                        <p className="text-sm text-text-secondary mt-2">
+                          Estimating transition success rate, timeline, and generating personalized metrics
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
