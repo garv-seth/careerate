@@ -1,0 +1,47 @@
+Initializing database tables...
+Database tables already exist
+Predefined role skills seeded
+8:02:42 AM [express] serving on port 5000
+8:03:03 AM [express] GET /api/dashboard/1 404 in 49ms :: {"success":false,"error":"Transition not fo…
+8:03:11 AM [express] POST /api/transitions 200 in 88ms :: {"success":true,"transitionId":11,"message…
+8:03:11 AM [express] GET /api/dashboard/11 200 in 223ms :: {"success":true,"transition":{"id":11,"us…
+Cara is using Perplexity AI to search for career transition data across multiple forums
+Scraping for Microsoft Level 63 to Google L6 using Perplexity Sonar's real-time web search
+Sending request to Perplexity API with model: sonar
+8:03:11 AM [express] POST /api/scrape 200 in 51ms :: {"success":true,"message":"Scraping initiated"}
+Cara is analyzing transition from Microsoft Level 63 to Google L6
+Cara is using Perplexity AI to search for career transition data across multiple forums
+Scraping for Microsoft Level 63 to Google L6 using Perplexity Sonar's real-time web search
+Sending request to Perplexity API with model: sonar
+8:03:11 AM [express] POST /api/analyze 200 in 116ms :: {"success":true,"message":"Analysis initiated…
+8:03:12 AM [express] POST /api/plan 404 in 88ms :: {"success":false,"error":"No skill gaps found for…
+Perplexity API response structure: [] choices length: undefined
+Unexpected API response structure: ""
+Error searching forums with Perplexity: Error: Perplexity API error: Unexpected response structure from Perplexity API
+    at callPerplexity (/home/runner/workspace/server/apis/perplexity-unified.ts:167:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async searchForums (/home/runner/workspace/server/apis/perplexity-unified.ts:206:22)
+    at async scrapeForums (/home/runner/workspace/server/apis/scraper.ts:35:21)
+    at async CaraAgent.scrapeWebContent (/home/runner/workspace/server/agents/caraAgent.ts:76:26)
+Error in forum search: Error: Failed to search forums: Perplexity API error: Unexpected response structure from Perplexity API
+    at searchForums (/home/runner/workspace/server/apis/perplexity-unified.ts:210:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async scrapeForums (/home/runner/workspace/server/apis/scraper.ts:35:21)
+    at async CaraAgent.scrapeWebContent (/home/runner/workspace/server/agents/caraAgent.ts:76:26)
+Error in Cara's web scraping: Error: Failed to scrape transition data: Failed to search forums: Perplexity API error: Unexpected response structure from Perplexity API
+    at scrapeForums (/home/runner/workspace/server/apis/scraper.ts:51:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async CaraAgent.scrapeWebContent (/home/runner/workspace/server/agents/caraAgent.ts:76:26)
+Background scraping error: Error: Failed to scrape transition data: Failed to search forums: Perplexity API error: Unexpected response structure from Perplexity API
+    at scrapeForums (/home/runner/workspace/server/apis/scraper.ts:51:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async CaraAgent.scrapeWebContent (/home/runner/workspace/server/agents/caraAgent.ts:76:26)
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Found 3 markdown-formatted blocks to parse
+Successfully parsed 1 results from Perplexity response
+Found 1 relevant results about Microsoft Level 63 to Google L6 transitions
+Cara found 1 relevant transition stories from multiple sources
+Saved scraped data from TeamBlind to database
+Limited data, Cara is searching with alternative phrasing
+Scraping for professionals transitioning from Microsoft Level 63 to becoming a Google L6 success stories using Perplexity Sonar's real-time web search
+Sending request to Perplexity API with model: sonar
