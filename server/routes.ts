@@ -594,69 +594,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get scraped data count
+      // Get scraped data
       const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
       const scrapedCount = scrapedData.length;
       
-      // Calculate success rate based on scraped count (or use Cara's analysis)
-      const insights = await storage.getInsightsByTransitionId(transitionId);
-      
-      // Extract success rate from insights if available
-      let successRate = Math.min(65 + (scrapedCount * 5), 90);
-      let avgTransitionTime = 4.5;
-      
-      for (const insight of insights) {
-        if (insight.type === "observation" && insight.content.includes("Success rate")) {
-          const match = insight.content.match(/approximately (\d+)%/);
-          if (match && match[1]) {
-            successRate = parseInt(match[1]);
-          }
-        }
-        
-        if (insight.type === "observation" && insight.content.includes("transition time")) {
-          const match = insight.content.match(/around (\d+\.?\d*)/);
-          if (match && match[1]) {
-            avgTransitionTime = parseFloat(match[1]);
-          }
-        }
+      if (scrapedCount === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "No scraped data found for this transition"
+        });
       }
       
-      // Extract common paths from insights
-      const commonPaths = [];
-      for (const insight of insights) {
-        if (insight.type === "story" && insight.content.includes("Common transition approach")) {
-          const match = insight.content.match(/approach: (.*?) \(mentioned (\d+)/);
-          if (match && match[1] && match[2]) {
-            commonPaths.push({
-              path: match[1],
-              count: parseInt(match[2])
-            });
-          }
-        }
-      }
-      
-      // Add default paths if none found
-      if (commonPaths.length === 0) {
-        commonPaths.push(
-          {
-            path: "Direct application after skill development",
-            count: 3
-          },
-          {
-            path: "Via internal referral or networking",
-            count: 2
-          }
+      // Generate insights from scraped data using Gemini
+      try {
+        const overviewData = await generateTransitionOverview(
+          transition.currentRole,
+          transition.targetRole,
+          scrapedData
         );
+        
+        res.json({ 
+          success: true, 
+          insights: overviewData
+        });
+      } catch (geminiError) {
+        console.error("Error generating insights with Gemini:", geminiError);
+        res.status(500).json({
+          success: false,
+          error: "Failed to generate insights from transition data"
+        });
       }
-      
-      res.json({ 
-        success: true, 
-        insights: {
-          successRate,
-          avgTransitionTime,
-          commonPaths
-        }
-      });
     } catch (error) {
       console.error("Error fetching insights:", error);
       res.status(500).json({ 

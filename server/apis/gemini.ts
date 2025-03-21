@@ -434,7 +434,8 @@ export async function analyzeTransitionStories(
       ]
     }
     
-    If the scraped data is insufficient, use your knowledge of typical career transitions in this domain to provide realistic insights.
+    Base your analysis exclusively on the provided stories. Do not make up or invent data.
+    If there's insufficient data for any field, provide a conservative estimate based only on the available information.
     Return only the JSON object.`;
     
     const result = await model.generateContent(prompt);
@@ -451,18 +452,97 @@ export async function analyzeTransitionStories(
       return JSON.parse(text);
     } catch (parseError) {
       console.error("Error parsing Gemini insights analysis:", parseError);
-      return {
-        successRate: 80,
-        avgTransitionTime: 6,
-        commonPaths: [
-          { path: "Skills-based transition", count: 3 }
-        ],
-        keyObservations: ["Technical skill development is critical"],
-        commonChallenges: ["Learning new technical skills"]
-      };
+      throw new Error("Failed to generate insights from scraped content");
     }
   } catch (error) {
     console.error("Error analyzing transition stories with Gemini:", error);
-    return null;
+    throw error;
+  }
+}
+
+/**
+ * Generate transition overview statistics based on scraped data
+ * 
+ * @param currentRole Current role
+ * @param targetRole Target role
+ * @param scrapedContent Array of scraped content objects
+ * @returns Overview statistics
+ */
+export async function generateTransitionOverview(
+  currentRole: string,
+  targetRole: string,
+  scrapedContent: any[]
+): Promise<{
+  successRate: number;
+  avgTransitionTime: number;
+  commonPaths: Array<{ path: string; count: number }>;
+}> {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    
+    // Combine all content for analysis
+    const combinedContent = scrapedContent.map(item => 
+      `SOURCE: ${item.source}\nURL: ${item.url || 'Not available'}\nCONTENT: ${item.content}\n---\n`
+    ).join('\n');
+    
+    const prompt = `You are Cara, an AI career transition analyst.
+    
+    I have ${scrapedContent.length} real stories from people who transitioned from ${currentRole} to ${targetRole}.
+    
+    Here are the stories:
+    
+    ${combinedContent}
+    
+    Based ONLY on this real data (do not invent statistics), provide:
+    1. Success Rate (percentage) - estimate how many transitions were successful
+    2. Average Transition Time (in months) - time it took to complete the transition
+    3. Common Paths - list the most common strategies people used to transition
+    
+    Format your response as JSON:
+    {
+      "successRate": number,
+      "avgTransitionTime": number,
+      "commonPaths": [
+        { "path": "description", "count": number }
+      ]
+    }
+    
+    The counts should reflect the actual number of times a path was mentioned in the stories.
+    Your analysis must be 100% based on the provided stories only. Don't invent data.
+    Return only the JSON object.`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Parse the JSON response
+    try {
+      // Try to extract JSON
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      let overviewData;
+      
+      if (jsonMatch) {
+        overviewData = JSON.parse(jsonMatch[0]);
+      } else {
+        overviewData = JSON.parse(text);
+      }
+      
+      // Validate and ensure the data structure is correct
+      return {
+        successRate: typeof overviewData.successRate === 'number' ? Math.min(Math.max(overviewData.successRate, 0), 100) : 75,
+        avgTransitionTime: typeof overviewData.avgTransitionTime === 'number' ? Math.max(overviewData.avgTransitionTime, 1) : 6,
+        commonPaths: Array.isArray(overviewData.commonPaths) ? 
+          overviewData.commonPaths.map(path => ({
+            path: path.path || "Unspecified path",
+            count: typeof path.count === 'number' ? Math.max(path.count, 1) : 1
+          })) : []
+      };
+    } catch (parseError) {
+      console.error("Error parsing Gemini overview generation:", parseError);
+      throw new Error("Failed to generate transition overview from scraped content");
+    }
+  } catch (error) {
+    console.error("Error generating transition overview with Gemini:", error);
+    throw error;
   }
 }
