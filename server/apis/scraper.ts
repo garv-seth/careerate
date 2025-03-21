@@ -92,9 +92,9 @@ async function scrapeReddit(searchQuery: string): Promise<ScrapedResult[]> {
     
     console.log(`Found ${results.length} relevant Reddit results`);
     return results;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error scraping Reddit:", error);
-    return [];
+    throw new Error(`Failed to scrape Reddit: ${error?.message || 'Unknown error'}`);
   }
 }
 
@@ -156,9 +156,9 @@ async function scrapeQuora(searchQuery: string): Promise<ScrapedResult[]> {
     
     console.log(`Found ${results.length} relevant Quora results`);
     return results;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error scraping Quora:", error);
-    return [];
+    throw new Error(`Failed to scrape Quora: ${error?.message || 'Unknown error'}`);
   }
 }
 
@@ -205,9 +205,9 @@ async function searchForums(searchQuery: string): Promise<ScrapedResult[]> {
     
     console.log(`Found ${results.length} relevant forum results`);
     return results;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error searching forums:", error);
-    return [];
+    throw new Error(`Failed to search forums: ${error?.message || 'Unknown error'}`);
   }
 }
 
@@ -267,22 +267,32 @@ export async function scrapeForums(
     
     // If Firecrawl failed, use alternative APIs
     if (results.length === 0) {
+      console.log("Firecrawl didn't return results, trying alternative APIs");
       // Create career transition specific search queries
       const redditQuery = `${currentRole} to ${targetRole} career transition experience reddit`;
       const quoraQuery = `How to transition from ${currentRole} to ${targetRole}`;
       const forumsQuery = `${currentRole} to ${targetRole} career change advice forums`;
       
-      // Use all three APIs in parallel to maximize our chances of getting data
-      const [redditResults, quoraResults, forumResults] = await Promise.all([
-        scrapeReddit(redditQuery),
-        scrapeQuora(quoraQuery),
-        searchForums(forumsQuery)
-      ]);
-      
-      // Add results from all sources
-      results.push(...redditResults);
-      results.push(...quoraResults);
-      results.push(...forumResults);
+      // Try each API sequentially to ensure we get at least one result
+      try {
+        // First try Reddit
+        const redditResults = await scrapeReddit(redditQuery);
+        results.push(...redditResults);
+        
+        // If we still don't have results, try Quora
+        if (results.length === 0) {
+          const quoraResults = await scrapeQuora(quoraQuery);
+          results.push(...quoraResults);
+        }
+        
+        // If we still don't have results, try Forums
+        if (results.length === 0) {
+          const forumResults = await searchForums(forumsQuery);
+          results.push(...forumResults);
+        }
+      } catch (apiError: any) {
+        console.error("Error with alternative APIs:", apiError?.message);
+      }
     }
     
     // If still no results, try Indeed career advice as a last resort
@@ -310,16 +320,20 @@ export async function scrapeForums(
             url: docs[0].metadata.source || 'https://www.indeed.com/career-advice'
           });
         }
-      } catch (indeedError) {
-        console.error("Error scraping Indeed:", indeedError);
+      } catch (indeedError: any) {
+        console.error("Error scraping Indeed:", indeedError?.message);
       }
     }
     
-    // Return whatever results we have, even if empty
+    // If we still have no results after trying everything, throw an error
+    if (results.length === 0) {
+      throw new Error(`Failed to retrieve any career transition content for ${currentRole} to ${targetRole} from any source`);
+    }
+    
     console.log(`Returning ${results.length} results`);
     return results;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in web scraping:", error);
-    return [];
+    throw new Error(`Failed to scrape web content: ${error?.message || 'Unknown error'}`);
   }
 }

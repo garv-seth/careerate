@@ -308,13 +308,15 @@ export async function findResourcesWithGemini(
         const resources = JSON.parse(text);
         return Array.isArray(resources) ? resources.slice(0, 3) : [];
       }
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("Error parsing Gemini resources response:", parseError);
-      throw new Error(`Failed to parse resources for ${skill}: ${parseError.message}`);
+      const errorMessage = parseError?.message || 'Unknown parsing error';
+      throw new Error(`Failed to parse resources for ${skill}: ${errorMessage}`);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error finding resources for ${skill}:`, error);
-    throw new Error(`Failed to find resources for ${skill}: ${error.message}`);
+    const errorMessage = error?.message || 'Unknown error';
+    throw new Error(`Failed to find resources for ${skill}: ${errorMessage}`);
   }
 }
 
@@ -383,11 +385,12 @@ export async function analyzeTransitionStories(
         return JSON.parse(jsonMatch[0]);
       }
       return JSON.parse(text);
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("Error parsing Gemini insights analysis:", parseError);
-      throw new Error("Failed to generate insights from scraped content");
+      const errorMessage = parseError?.message || 'Unknown parsing error';
+      throw new Error(`Failed to generate insights from scraped content: ${errorMessage}`);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error analyzing transition stories with Gemini:", error);
     throw error;
   }
@@ -471,17 +474,18 @@ export async function generateTransitionOverview(
         successRate: Math.min(Math.max(overviewData.successRate, 0), 100),
         avgTransitionTime: Math.max(overviewData.avgTransitionTime, 1),
         commonPaths: overviewData.commonPaths
-          .filter(path => path && path.path) // Filter out invalid entries
-          .map(path => ({
-            path: path.path,
-            count: typeof path.count === 'number' ? Math.max(path.count, 1) : 1
+          .filter((item: any) => item && item.path) // Filter out invalid entries
+          .map((item: any) => ({
+            path: item.path,
+            count: typeof item.count === 'number' ? Math.max(item.count, 1) : 1
           }))
       };
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("Error parsing Gemini overview generation:", parseError);
-      throw new Error("Failed to generate transition overview from scraped content");
+      const errorMessage = parseError?.message || 'Unknown parsing error';
+      throw new Error(`Failed to generate transition overview from scraped content: ${errorMessage}`);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating transition overview with Gemini:", error);
     throw error;
   }
