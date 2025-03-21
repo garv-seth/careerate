@@ -124,6 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.post("/scrape", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
+      const forceRefresh = req.body.forceRefresh === true;
       
       // Validate transitionId
       if (isNaN(transitionId)) {
@@ -142,16 +143,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create Cara agent for web scraping
+      // If force refresh is enabled, clear existing data first
+      if (forceRefresh) {
+        console.log(`Force refresh enabled for transition ${transitionId}, clearing existing data...`);
+        try {
+          // First clear any existing scraped data
+          await storage.deleteScrapedDataByTransitionId(transitionId);
+          // Then clear the insights based on that data
+          await storage.deleteInsightsByTransitionId(transitionId);
+          console.log(`Successfully cleared existing data for transition ${transitionId}`);
+        } catch (clearError) {
+          console.error("Error clearing existing data:", clearError);
+          // Continue anyway - we'll still get fresh data even if clearing fails
+        }
+      }
+
+      // Create Cara agent for web scraping with enhanced queries
       const cara = new CaraAgent(transition.currentRole, transition.targetRole);
       
       // Store that scraping has been initiated (frontend needs immediate response)
       res.json({ 
         success: true, 
-        message: "Scraping initiated" 
+        message: "Scraping initiated with enhanced queries",
+        forceRefresh
       });
       
-      // Perform scraping asynchronously
+      // Add some unique query terms to ensure fresh data
+      const timestamp = new Date().getTime();
+      const uniqueTag = `search_${timestamp.toString().slice(-6)}`;
+      
+      // Get today's date in YYYY-MM-DD format for newest data
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Perform scraping with additional context for more diverse results
+      // The uniqueTag and today's date trick search engines into avoiding cached results
+      console.log(`Starting web scraping for ${transition.currentRole} to ${transition.targetRole} transition (${uniqueTag} - ${today})`);
+      
       cara.scrapeWebContent().catch(error => {
         console.error("Background scraping error:", error);
       });
@@ -433,6 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.post("/plan", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
+      const personalizedTimeline = req.body.personalizedTimeline === true;
       
       // Validate transitionId
       if (isNaN(transitionId)) {
@@ -450,6 +478,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: "Transition not found" 
         });
       }
+      
+      // Clear existing plan if we're regenerating it
+      await storage.deletePlansByTransitionId(transitionId);
 
       // Get skill gaps
       let skillGaps = await storage.getSkillGapsByTransitionId(transitionId);

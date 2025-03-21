@@ -23,24 +23,34 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
   const [storiesData, setStoriesData] = useState<TransitionStoriesData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load real scraped data from the server
+  // Load real scraped data from the server with refresh capability
   useEffect(() => {
     if (!transition.id) return;
 
     const loadScrapedData = async () => {
       try {
-        // Load scraped data
-        const response = await apiRequest(`/api/scraped-data/${transition.id}`);
-
-        if (response && response.success && response.data) {
-          setScrapedData(response.data);
-        }
-
-        // Load stories analysis data
-        const storiesResponse = await apiRequest(`/api/stories-analysis/${transition.id}`);
+        setLoading(true);
+        
+        // Force a fresh analysis to ensure most current data
+        // This uses a timestamp query parameter to bypass any caching
+        const timestamp = new Date().getTime();
+        
+        // Load stories analysis data first - this generates fresh insights
+        const storiesResponse = await apiRequest(
+          `/api/stories-analysis/${transition.id}?refresh=${timestamp}`
+        );
 
         if (storiesResponse && storiesResponse.success && storiesResponse.data) {
           setStoriesData(storiesResponse.data);
+        }
+        
+        // Then load the actual scraped data that was used for the analysis
+        const response = await apiRequest(
+          `/api/scraped-data/${transition.id}?refresh=${timestamp}`
+        );
+
+        if (response && response.success && response.data) {
+          setScrapedData(response.data);
         }
       } catch (error) {
         console.error("Error loading scraped data:", error);
