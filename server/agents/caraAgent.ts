@@ -39,6 +39,12 @@ export class CaraAgent {
   
   /**
    * Main method to perform a complete career transition analysis
+   * Following the logical order: 
+   * 1. Scrape stories
+   * 2. Process stories to extract observations/challenges
+   * 3. Extract skills and analyze gaps
+   * 4. Generate plan based on gaps
+   * 5. Generate final metrics based on all collected data
    */
   async analyzeCareerTransition(existingSkills: string[] = []): Promise<CaraAnalysisResult> {
     try {
@@ -46,12 +52,15 @@ export class CaraAgent {
       
       // Step 1: Scrape relevant content from the web using Perplexity AI
       await this.scrapeWebContent();
+      console.log(`Step 1 complete: Scraped ${this.scrapedData.length} stories from the web`);
       
-      // Step 2: Perform skill gap analysis
-      const skillGaps = await this.analyzeSkillGaps(existingSkills);
-      
-      // Step 3: Generate transition insights
+      // Step 2: Generate insights first as they rely on the raw stories
       const insights = await this.generateInsights();
+      console.log("Step 2 complete: Generated insights from transition stories");
+      
+      // Step 3: Perform skill gap analysis using the story data as context
+      const skillGaps = await this.analyzeSkillGaps(existingSkills);
+      console.log(`Step 3 complete: Identified ${skillGaps.length} skill gaps to address`);
       
       return {
         skillGaps,

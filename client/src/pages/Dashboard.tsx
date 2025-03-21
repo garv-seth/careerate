@@ -88,9 +88,14 @@ const Dashboard: React.FC = () => {
         });
         
         // Process the scraped stories to generate key observations and challenges
+        // This is crucial to do BEFORE skill gap analysis, as it provides context
         const storiesAnalysisResult = await apiRequest("/api/stories-analysis/" + transitionId);
         
+        // Short delay to ensure stories analysis is completely processed
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // STEP 3: Analyze skill gaps using the stories data as context
+        // This relies on the story analysis being complete first
         setLoadingStage('skills');
         toast({
           title: "Analyzing skill gaps",
@@ -102,12 +107,16 @@ const Dashboard: React.FC = () => {
           method: "POST",
           data: { 
             transitionId,
-            useScrapedData: true, // Use the freshly scraped data
+            useScrapedData: true, // Use the freshly scraped data and story analysis
             priority: "accuracy" // Prioritize accuracy over speed
           }
         });
         
+        // Short delay to ensure skill gap analysis is completely processed
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // STEP 4: Generate personalized career trajectory based on skills analysis
+        // This depends on having skill gaps identified first
         setLoadingStage('plan');
         toast({
           title: "Creating career trajectory",
@@ -125,6 +134,7 @@ const Dashboard: React.FC = () => {
         });
         
         // STEP 5: Generate final metrics and insights using all collected data
+        // This depends on having all previous data available
         setLoadingStage('metrics');
         toast({
           title: "Calculating personalized metrics",
