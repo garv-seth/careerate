@@ -9,50 +9,46 @@ interface SkillGapAnalysisProps {
   skillGaps: SkillGap[];
 }
 
-// Mock resume skills - these would normally come from user profile
-// In a real implementation, this would be stored in the user profile
-const userSkills = [
-  "C#", "Azure", ".NET", "SQL Server", "Agile Methodology", 
-  "Team Leadership", "Architecture Design", "REST APIs",
-  "Performance Optimization", "Microservices"
-];
+// Extract unique skills from skill gaps
+interface MatchingSkill {
+  name: string;
+  strength: number;
+  relevance: string;
+  mentionCount: number;
+}
 
-// Target role skills - these would normally come from role definitions
-// In a real implementation, this would be fetched from the database
-const targetRoleSkills = [
-  "Python", "System Design", "Distributed Systems", "Algorithm Optimization", 
-  "TensorFlow", "Kubernetes", "Leadership", "Go", "Java", "Mentorship",
-  "Architecture Design", "REST APIs", "Agile Methodology", "Team Leadership"
-];
+interface SkillToImprove {
+  name: string;
+  priority: string;
+  mentionCount: number;
+}
+
+const extractSkillsFromGaps = (gaps: SkillGap[]): string[] => {
+  return [...new Set(gaps.map(gap => gap.skillName))];
+};
 
 const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("matching");
 
-  // Find matching skills (skills that appear in both user and target role)
-  const matchingSkills = userSkills.filter(skill => 
-    targetRoleSkills.includes(skill)
-  ).map(skill => ({
-    name: skill,
-    strength: Math.floor(Math.random() * 3) + 3, // Mock strength score (3-5)
-    relevance: "High"
-  }));
+  // Create matching skills directly from skill gaps with lower priority
+  const matchingSkills = skillGaps
+    .filter(gap => gap.gapLevel === "Low")
+    .map(gap => ({
+      name: gap.skillName,
+      strength: 4, // Higher strength for low gap skills
+      relevance: "High",
+      mentionCount: gap.mentionCount || 1
+    }));
 
-  // Find skills to improve (skills from target role not in user skills)
-  const skillsToImprove = targetRoleSkills
-    .filter(skill => !userSkills.includes(skill))
-    .map(skill => {
-      // Find if this skill is also in the skill gaps analysis
-      const matchedGap = skillGaps.find(gap => 
-        gap.skillName.toLowerCase() === skill.toLowerCase()
-      );
-      
-      return {
-        name: skill,
-        priority: matchedGap?.gapLevel || "Medium",
-        mentionCount: matchedGap?.mentionCount || Math.floor(Math.random() * 4) + 1
-      };
-    });
+  // Create skills to improve directly from skill gaps with medium to high priority
+  const skillsToImprove = skillGaps
+    .filter(gap => gap.gapLevel === "Medium" || gap.gapLevel === "High")
+    .map(gap => ({
+      name: gap.skillName,
+      priority: gap.gapLevel,
+      mentionCount: gap.mentionCount || 1
+    }));
 
   // Sort skills to improve by priority
   const sortedImprovementSkills = [...skillsToImprove].sort((a, b) => {
