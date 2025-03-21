@@ -645,8 +645,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 5) // Limit to top 5 skill gaps
         .map(gap => gap.skillName);
 
-      // Generate development plan with milestones using Perplexity Sonar
-      const milestoneData = await cara.generatePlan(prioritizedSkills);
+      // Generate development plan with milestones using the Cara agent
+      // Since the new agent doesn't have a separate generatePlan method, we'll need to
+      // perform a full analysis and extract the plan data from the results
+      const analysisResult = await cara.analyzeCareerTransition(prioritizedSkills);
+      
+      // For compatibility with the existing code, construct milestone data from the analysis result
+      const milestoneData = analysisResult.insights?.plan?.milestones || [];
 
       // Store milestones
       const storedMilestones = [];
