@@ -279,39 +279,10 @@ export async function analyzeSkillGaps(
   existingSkills: string[] = []
 ): Promise<SkillGapAnalysis[]> {
   try {
-    // Generate a mock resume for a Microsoft Level 63 employee (as requested)
-    const mockResume = `
-      RESUME - Microsoft Level 63 Software Engineer
-      
-      EXPERIENCE:
-      Microsoft Corporation
-      Principal Software Engineer (Level 63) | 2018 - Present
-      - Lead architecture for high-scale distributed systems handling millions of transactions
-      - Designed and implemented microservices architecture for critical payment systems
-      - Mentored junior engineers and led technical design reviews
-      - Technologies: C#, .NET Core, Azure, SQL Server, Redis, Kubernetes
-      
-      Senior Software Engineer (Level 62) | 2015 - 2018
-      - Developed scalable backend services for Microsoft Office products
-      - Implemented performance optimizations improving response time by 40%
-      - Technologies: C#, ASP.NET, SQL Server, RabbitMQ
-      
-      PREVIOUS EXPERIENCE:
-      Amazon Web Services
-      Software Development Engineer II | 2012 - 2015
-      - Built cloud infrastructure services for AWS customers
-      - Technologies: Java, Spring, AWS Services, DynamoDB
-      
-      EDUCATION:
-      Master of Science, Computer Science
-      Stanford University | 2012
-      
-      Bachelor of Science, Computer Engineering
-      University of Washington | 2010
-      
-      SKILLS:
-      ${existingSkills.join(', ')}
-    `;
+    // Combine existing skills for analysis
+    const skillsContext = existingSkills.length > 0 
+      ? `The person currently has the following skills: ${existingSkills.join(', ')}`
+      : `We need to determine what skills someone in ${currentRole} would need to acquire to become ${targetRole}`;
 
     // Combine scraped content
     const combinedContent = scrapedContent
@@ -324,8 +295,7 @@ export async function analyzeSkillGaps(
       CURRENT ROLE: ${currentRole}
       TARGET ROLE: ${targetRole}
       
-      Here is the resume of someone in the current role:
-      ${mockResume}
+      ${skillsContext}
       
       Here is data about people who have made this transition:
       ${combinedContent}
