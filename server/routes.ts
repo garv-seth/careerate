@@ -494,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate development plan with Cara and Perplexity Sonar
+  // Generate development plan with Cara and LangGraph
   apiRouter.post("/plan", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
@@ -523,9 +523,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get skill gaps
       let skillGaps = await storage.getSkillGapsByTransitionId(transitionId);
       
-      // If no skill gaps exist, create ones based on real role information from Perplexity
+      // If no skill gaps exist, create ones based on real role information using LangGraph
       if (skillGaps.length === 0) {
-        console.log("No skill gaps found, generating skill gaps using Perplexity Sonar");
+        console.log("No skill gaps found, generating skill gaps using LangGraph");
         
         // Get transition details
         const { currentRole, targetRole } = transition;
@@ -552,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               date: item.postDate || ''
             }));
             
-            // Use Perplexity to analyze skill gaps
+            // Use LangGraph to analyze skill gaps
             generatedSkillGaps = await analyzeSkillGaps(
               currentRole,
               targetRole,
