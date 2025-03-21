@@ -57,8 +57,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Scrape forums for transition data
-  apiRouter.post("/scrape", async (req, res) => {
+  // Integrate Cara AI Agent for comprehensive career analysis
+  apiRouter.post("/analyze-career", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
       
@@ -79,169 +79,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Scrape forums for data
-      const scrapedResults = await scrapeForums(
-        transition.currentRole,
-        transition.targetRole
-      );
-
-      // Store scraped data
-      const savedData = [];
-      for (const result of scrapedResults) {
-        const savedItem = await storage.createScrapedData({
-          transitionId,
-          source: result.source,
-          content: result.content,
-          url: result.url,
-          skillsExtracted: [],
-        });
-        savedData.push(savedItem);
-      }
-
-      res.json({ 
-        success: true, 
-        count: savedData.length,
-        message: "Scraped and stored forum data" 
-      });
-    } catch (error) {
-      console.error("Error scraping forums:", error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Failed to scrape forum data" 
-      });
-    }
-  });
-
-  // Analyze skills from scraped data
-  apiRouter.post("/analyze", async (req, res) => {
-    try {
-      const transitionId = parseInt(req.body.transitionId);
-      
-      // Validate transitionId
-      if (isNaN(transitionId)) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Invalid transition ID" 
-        });
-      }
-
-      // Get transition
-      const transition = await storage.getTransition(transitionId);
-      if (!transition) {
-        return res.status(404).json({ 
-          success: false, 
-          error: "Transition not found" 
-        });
-      }
-
-      // Get scraped data
-      const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
-      if (scrapedData.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          error: "No scraped data found for this transition" 
-        });
-      }
-
       // Get current role skills
       const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
       const currentSkills = currentRoleSkills.map(item => item.skillName);
 
-      // Get target role skills
-      const targetRoleSkills = await storage.getRoleSkills(transition.targetRole);
-      const targetSkills = targetRoleSkills.map(item => item.skillName);
-
-      // Extract skills from scraped content
-      const skillsFound = [];
-      for (const data of scrapedData) {
-        // Skip if already processed
-        if (data.skillsExtracted && data.skillsExtracted.length > 0) {
-          skillsFound.push(...data.skillsExtracted);
-          continue;
-        }
-
-        // Extract skills using Claude API
-        const extractedSkills = await extractSkills(data.content);
-        
-        // Update scraped data with extracted skills
-        // We need to create a new object with just the fields from the schema
-        await storage.createScrapedData({
-          transitionId: data.transitionId,
-          source: data.source,
-          content: data.content,
-          url: data.url,
-          skillsExtracted: extractedSkills,
-        });
-
-        skillsFound.push(...extractedSkills);
+      console.log(`Starting Cara analysis for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      
+      // Create Cara agent instance
+      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      
+      // Perform comprehensive analysis
+      const analysisResult = await cara.analyzeCareerTransition(currentSkills);
+      
+      // Store scraped data
+      if (analysisResult.scrapedCount > 0) {
+        // Note: Scraped data is already stored in the agent process
+        console.log(`Cara found ${analysisResult.scrapedCount} relevant transition stories`);
       }
-
-      // Count skill mentions
-      const skillMentionCounts: {[key: string]: number} = {};
-      skillsFound.forEach(skill => {
-        skillMentionCounts[skill] = (skillMentionCounts[skill] || 0) + 1;
-      });
-
-      // Identify skill gaps
-      const gapResults = [];
-      for (const targetSkill of targetSkills) {
-        const hasCurrentSkill = currentSkills.includes(targetSkill);
-        const mentionCount = skillMentionCounts[targetSkill] || 0;
-        
-        // Calculate gap level
-        let gapLevel = "Low";
-        if (!hasCurrentSkill && mentionCount >= 3) {
-          gapLevel = "High";
-        } else if (!hasCurrentSkill && mentionCount > 0) {
-          gapLevel = "Medium";
-        } else if (hasCurrentSkill && mentionCount >= 3) {
-          gapLevel = "Medium";
-        }
-
-        // Store skill gap
-        const skillGap = await storage.createSkillGap({
+      
+      // Store skill gaps
+      const storedSkillGaps = [];
+      for (const skillGap of analysisResult.skillGaps) {
+        const stored = await storage.createSkillGap({
           transitionId,
-          skillName: targetSkill,
-          gapLevel,
-          confidenceScore: mentionCount > 0 ? 70 + (mentionCount * 5) : 50,
-          mentionCount,
+          skillName: skillGap.skillName,
+          gapLevel: skillGap.gapLevel as "Low" | "Medium" | "High",
+          confidenceScore: skillGap.confidenceScore,
+          mentionCount: skillGap.mentionCount || 0
         });
-
-        gapResults.push(skillGap);
+        storedSkillGaps.push(stored);
       }
-
-      // Add skills from scraped data that aren't in predefined lists
-      for (const skill of Object.keys(skillMentionCounts)) {
-        if (!targetSkills.includes(skill) && skillMentionCounts[skill] >= 2) {
-          const gapLevel = currentSkills.includes(skill) ? "Low" : "Medium";
-          
-          const skillGap = await storage.createSkillGap({
+      
+      // Store insights
+      if (analysisResult.insights) {
+        const insights = analysisResult.insights;
+        
+        // Store success rate as observation
+        if (insights.successRate) {
+          await storage.createInsight({
             transitionId,
-            skillName: skill,
-            gapLevel,
-            confidenceScore: 60 + (skillMentionCounts[skill] * 5),
-            mentionCount: skillMentionCounts[skill],
+            type: "observation",
+            content: `Success rate for this transition path is approximately ${insights.successRate}% based on analyzed stories.`,
+            source: "Cara Analysis",
+            date: new Date().toISOString().split('T')[0],
+            experienceYears: null,
           });
-
-          gapResults.push(skillGap);
+        }
+        
+        // Store transition time as observation
+        if (insights.avgTransitionTime) {
+          await storage.createInsight({
+            transitionId,
+            type: "observation",
+            content: `Average transition time is around ${insights.avgTransitionTime} months.`,
+            source: "Cara Analysis",
+            date: new Date().toISOString().split('T')[0],
+            experienceYears: null,
+          });
+        }
+        
+        // Store common paths
+        if (insights.commonPaths && insights.commonPaths.length > 0) {
+          for (const path of insights.commonPaths.slice(0, 2)) {
+            await storage.createInsight({
+              transitionId,
+              type: "story",
+              content: `Common transition approach: ${path.path} (mentioned ${path.count} times)`,
+              source: "Cara Analysis",
+              date: new Date().toISOString().split('T')[0],
+              experienceYears: null,
+            });
+          }
+        }
+        
+        // Store challenges
+        if (insights.commonChallenges && insights.commonChallenges.length > 0) {
+          for (const challenge of insights.commonChallenges.slice(0, 2)) {
+            await storage.createInsight({
+              transitionId,
+              type: "challenge",
+              content: challenge,
+              source: "Cara Analysis",
+              date: new Date().toISOString().split('T')[0],
+              experienceYears: null,
+            });
+          }
         }
       }
 
       res.json({ 
         success: true, 
-        skillGaps: gapResults,
-        message: "Skill gap analysis completed" 
+        skillGaps: storedSkillGaps,
+        scrapedCount: analysisResult.scrapedCount,
+        message: "Cara's career analysis completed successfully" 
       });
     } catch (error) {
-      console.error("Error analyzing skills:", error);
+      console.error("Error in Cara's career analysis:", error);
       res.status(500).json({ 
         success: false, 
-        error: "Failed to analyze skills" 
+        error: "Failed to complete career analysis with Cara" 
       });
     }
   });
 
-  // Generate development plan
+  // Generate development plan with Cara and Gemini
   apiRouter.post("/plan", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
@@ -275,7 +216,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create plan
       const plan = await storage.createPlan({ transitionId });
 
-      // Generate milestones using OpenAI
+      // Create Cara agent for plan generation
+      console.log(`Cara is generating a plan for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      
+      // Prioritize skills
       const prioritizedSkills = skillGaps
         .sort((a, b) => {
           // Sort by gap level and mention count
@@ -289,12 +234,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 5) // Limit to top 5 skill gaps
         .map(gap => gap.skillName);
 
-      // Generate development plan with milestones
-      const milestoneData = await generatePlan(
-        transition.currentRole,
-        transition.targetRole,
-        prioritizedSkills
-      );
+      // Generate development plan with milestones using Gemini
+      const milestoneData = await cara.generatePlan(prioritizedSkills);
 
       // Store milestones
       const storedMilestones = [];
@@ -310,40 +251,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           progress: 0,
         });
 
-        // Find resources for this milestone
-        const resources = await findResources(milestone.title, milestone.description);
-
-        // Store resources
-        for (const resource of resources) {
-          await storage.createResource({
-            milestoneId: storedMilestone.id,
-            title: resource.title,
-            url: resource.url,
-            type: resource.type,
-          });
+        // Use resources from Gemini's response directly
+        if (milestone.resources && milestone.resources.length > 0) {
+          for (const resource of milestone.resources) {
+            await storage.createResource({
+              milestoneId: storedMilestone.id,
+              title: resource.title,
+              url: resource.url,
+              type: resource.type,
+            });
+          }
+        } else {
+          // Fallback: find additional resources with Gemini
+          const additionalResources = await findResourcesWithGemini(
+            milestone.title, 
+            `${transition.currentRole} to ${transition.targetRole} transition`
+          );
+          
+          for (const resource of additionalResources) {
+            await storage.createResource({
+              milestoneId: storedMilestone.id,
+              title: resource.title,
+              url: resource.url,
+              type: resource.type,
+            });
+          }
         }
 
         storedMilestones.push(storedMilestone);
       }
 
-      // Extract insights from scraped data
-      const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
+      console.log(`Cara successfully generated a plan with ${storedMilestones.length} milestones`);
       
-      // Store a few insights
-      for (let i = 0; i < Math.min(scrapedData.length, 3); i++) {
-        const content = scrapedData[i].content;
-        if (content.length > 50) {
-          await storage.createInsight({
-            transitionId,
-            type: i === 0 ? "observation" : i === 1 ? "challenge" : "story",
-            content: content.substring(0, 300) + (content.length > 300 ? "..." : ""),
-            source: scrapedData[i].source,
-            date: "2023",
-            experienceYears: 3 + i,
-          });
-        }
-      }
-
       // Mark transition as complete
       await storage.updateTransitionStatus(transitionId, true);
 
@@ -351,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true, 
         planId: plan.id,
         milestones: storedMilestones.length,
-        message: "Development plan generated successfully" 
+        message: "Cara generated your development plan successfully" 
       });
     } catch (error) {
       console.error("Error generating plan:", error);

@@ -23,7 +23,9 @@ export async function generatePlanWithGemini(
 
   try {
     // Get a unique set of skills (no duplicates)
-    const uniqueSkills = [...new Set(skills)];
+    const uniqueSkills = skills.filter((skill, index) => 
+      skills.indexOf(skill) === index
+    );
     
     // Create a model instance with safety settings
     const model = genAI.getGenerativeModel({
@@ -91,7 +93,7 @@ Return only valid JSON with no additional explanation.`;
       }
       
       // Verify each milestone has the required fields
-      milestones = milestones.map(milestone => {
+      milestones = milestones.map((milestone: any) => {
         return {
           title: milestone.title,
           description: milestone.description || "No description provided",
@@ -100,7 +102,7 @@ Return only valid JSON with no additional explanation.`;
           order: milestone.order || 1,
           progress: 0, // Default progress
           resources: Array.isArray(milestone.resources) ? 
-            milestone.resources.map(resource => ({
+            milestone.resources.map((resource: any) => ({
               title: resource.title || "Resource",
               url: resource.url || "https://www.youtube.com/",
               type: resource.type || "YouTube"

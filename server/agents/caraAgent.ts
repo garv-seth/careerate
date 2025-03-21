@@ -1,7 +1,7 @@
 // Cara - Career Transition AI Agent
 import { Document } from '@langchain/core/documents';
 import { FireCrawlLoader } from '@langchain/community/document_loaders/web/firecrawl';
-import { SimpleDirectoryReader } from 'llamaindex';
+// SimpleDirectoryReader is not needed for the current implementation
 import { extractSkills } from '../apis/claude';
 import { scrapeForums } from '../apis/scraper';
 import { generatePlanWithGemini, findResourcesWithGemini, analyzeTransitionStories } from '../apis/gemini';
@@ -182,8 +182,10 @@ export class CaraAgent {
         }
       }
       
-      // Return unique skills
-      return [...new Set(allSkills)];
+      // Return unique skills by filtering duplicates
+      return allSkills.filter((skill, index) => 
+        allSkills.indexOf(skill) === index
+      );
     } catch (error) {
       console.error("Error extracting mentioned skills:", error);
       return [];
