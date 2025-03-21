@@ -838,7 +838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
               }
             } else {
-              // Fallback observation if Perplexity didn't return any
+              // Fallback observation if LangGraph didn't return any
               await storage.createInsight({
                 transitionId,
                 type: "observation",
@@ -862,7 +862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
               }
             } else {
-              // Fallback challenge if Perplexity didn't return any
+              // Fallback challenge if LangGraph didn't return any
               await storage.createInsight({
                 transitionId,
                 type: "challenge",
@@ -893,10 +893,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
           } else {
-            // Fallback insights if Perplexity search returned no results
-            console.log("No transition stories found with Perplexity, creating fallback insights");
+            // Fallback insights if Tavily search returned no results
+            console.log("No transition stories found with Tavily, creating fallback insights");
             
-            // Create fallback observations using Perplexity general knowledge
+            // Create fallback observations using LangGraph analysis
             const observationsPrompt = `What are the key observations about career transitions from ${currentRole} to ${targetRole}? Provide 3 specific, data-backed insights. Answer in a JSON array of strings.`;
             
             try {
@@ -914,13 +914,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   transitionId,
                   type: "observation",
                   content: observation,
-                  source: "Perplexity Analysis",
+                  source: "LangGraph Analysis",
                   date: new Date().toISOString().split('T')[0],
                   experienceYears: null
                 });
               }
             } catch (error) {
-              console.error("Failed to generate observations with Perplexity:", error);
+              console.error("Failed to generate observations with LangGraph:", error);
               // Add one fallback observation
               await storage.createInsight({
                 transitionId,
@@ -932,7 +932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             }
             
-            // Create fallback challenges using Perplexity general knowledge
+            // Create fallback challenges using LangGraph analysis
             const challengesPrompt = `What are the main challenges people face when transitioning from ${currentRole} to ${targetRole}? Provide 3 specific challenges. Answer in a JSON array of strings.`;
             
             try {
@@ -950,7 +950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   transitionId,
                   type: "challenge",
                   content: challenge,
-                  source: "Perplexity Analysis",
+                  source: "LangGraph Analysis",
                   date: new Date().toISOString().split('T')[0],
                   experienceYears: null
                 });
