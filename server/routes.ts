@@ -969,14 +969,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const perplexityResponse = await callPerplexity(perplexityPrompt, 1000);
           
           try {
-            // Extract and parse the JSON
-            const jsonMatch = perplexityResponse.match(/\{[\s\S]*\}/);
+            // Debug the structure of the response
+            console.log("Perplexity API response structure:", Object.keys(perplexityResponse));
+            
             let insightsData;
             
-            if (jsonMatch) {
-              insightsData = JSON.parse(jsonMatch[0]);
-            } else {
+            // First, check if the response is already JSON
+            try {
               insightsData = JSON.parse(perplexityResponse);
+            } catch (jsonError) {
+              // If direct parsing fails, try to extract JSON from text
+              const jsonMatch = perplexityResponse.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                try {
+                  insightsData = JSON.parse(jsonMatch[0]);
+                } catch (matchJsonError) {
+                  // If that also fails, try to sanitize the JSON first
+                  const sanitized = jsonMatch[0]
+                    .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Ensure property names have double quotes
+                    .replace(/'/g, '"'); // Replace single quotes with double quotes
+                  insightsData = JSON.parse(sanitized);
+                }
+              } else {
+                throw new Error("No JSON object found in response");
+              }
             }
             
             // Validate the structure and ensure all required fields are present
@@ -1064,9 +1080,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const skillGaps = await storage.getSkillGapsByTransitionId(transitionId);
       const userSkills = skillGaps.map(gap => gap.skillName);
       
-      // Clear existing transition data 
+      // Clear existing transition data to ensure we get fresh results
       await storage.clearTransitionData(transitionId);
-      console.log(`Cleared existing data for transition ID: ${transitionId}`);
+      console.log(`Cleared existing data for transition ID: ${transitionId} to ensure fresh analysis`);
       
       try {
         // Convert scrapedData to compatible format for analysis
