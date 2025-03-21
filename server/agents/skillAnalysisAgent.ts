@@ -1,5 +1,5 @@
 // Skill Analysis Agent using Claude
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 
@@ -98,7 +98,8 @@ Return ONLY valid JSON with no explanation or other text.`;
       });
       
       // Extract and parse the JSON response
-      const responseContent = response.content[0].text;
+      const contentBlock = response.content[0];
+      const responseContent = 'text' in contentBlock ? contentBlock.text : '';
       let skillsData;
       
       try {
@@ -106,7 +107,7 @@ Return ONLY valid JSON with no explanation or other text.`;
         skillsData = JSON.parse(responseContent);
       } catch (parseError) {
         // If direct parsing fails, try to extract JSON from the response
-        const jsonMatch = responseContent.match(/\[\s*\{.*\}\s*\]/s);
+        const jsonMatch = responseContent.match(/\[\s*\{[\s\S]*\}\s*\]/);
         if (jsonMatch) {
           skillsData = JSON.parse(jsonMatch[0]);
         } else {
