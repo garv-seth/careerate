@@ -15,7 +15,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seed some predefined role skills if they don't exist
   await seedRoleSkills();
 
-  // Handle transition submission
+  // Handle unified transition creation, scraping, and analysis
+  apiRouter.post("/transition", async (req, res) => {
+    try {
+      // Validate request body
+      const validatedData = insertTransitionSchema.parse({
+        currentRole: req.body.currentRole,
+        targetRole: req.body.targetRole,
+      });
+
+      // Check if this transition already exists
+      let transition = await storage.getTransitionByRoles(
+        validatedData.currentRole,
+        validatedData.targetRole
+      );
+
+      if (!transition) {
+        // Create new transition if it doesn't exist
+        transition = await storage.createTransition(validatedData);
+      }
+      
+      console.log(`Starting scraping and analysis process for transition ${transition.id}`);
+      
+      // Create Cara agent and start both processes
+      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      
+      // Start the scraping process
+      cara.scrapeWebContent().catch(error => {
+        console.error("Background scraping error:", error);
+      });
+      
+      // Return the transition ID right away so UI can redirect
+      res.json({ 
+        success: true, 
+        transitionId: transition.id,
+        message: "Transition submitted successfully. Scraping and analysis started." 
+      });
+      
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ 
+          success: false, 
+          error: "Invalid input data", 
+          details: error.errors 
+        });
+      } else {
+        console.error("Error in unified transition processing:", error);
+        res.status(500).json({ 
+          success: false, 
+          error: "Failed to process transition" 
+        });
+      }
+    }
+  });
+
+  // Handle transition submission (original route kept for compatibility)  
   apiRouter.post("/transitions", async (req, res) => {
     try {
       // Validate request body

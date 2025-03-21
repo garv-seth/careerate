@@ -214,9 +214,7 @@ export async function scrapeForums(
         apiKey: process.env.FIRECRAWL_API_KEY,
         mode: "scrape",
         params: {
-          enableScripts: true,
-          enableImages: false,
-          wait: 2000
+          formats: ["markdown"]
         }
       });
       
@@ -267,9 +265,7 @@ export async function scrapeForums(
         apiKey: process.env.FIRECRAWL_API_KEY,
         mode: "scrape",
         params: {
-          enableScripts: true,
-          enableImages: false,
-          wait: 2000
+          formats: ["markdown"]
         }
       });
       
@@ -306,12 +302,8 @@ export async function scrapeForums(
         apiKey: process.env.FIRECRAWL_API_KEY,
         mode: "map",
         params: {
-          mapParams: {
-            prompt: `Extract information about transitions from ${currentRole} to ${targetRole}, or similar career changes if that specific transition isn't mentioned.`
-          },
-          enableScripts: true,
-          enableImages: false,
-          wait: 2000
+          mapPrompt: `Extract information about transitions from ${currentRole} to ${targetRole}, or similar career changes if that specific transition isn't mentioned.`,
+          formats: ["markdown"]
         }
       });
       
@@ -366,9 +358,7 @@ export async function scrapeForums(
           apiKey: process.env.FIRECRAWL_API_KEY,
           mode: "scrape",
           params: {
-            enableScripts: true,
-            enableImages: false,
-            wait: 2000
+            formats: ["markdown"]
           }
         });
         
