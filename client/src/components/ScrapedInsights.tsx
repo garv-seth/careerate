@@ -62,8 +62,10 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
       ? item.content.substring(0, 300) + "..." 
       : item.content,
     source: item.source,
-    // Use the creation date from the data or default to the current date
-    date: item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    // Use the post date if available, otherwise creation date, or default to the current date
+    date: item.postDate ? item.postDate : 
+          (item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : 
+          new Date().toISOString().split('T')[0]),
     // Don't use randomized experience years
     experienceYears: null,
     url: item.url

@@ -19,6 +19,7 @@ export interface ScrapedData {
   source: string;
   content: string;
   url: string | null;
+  postDate: string | null; // Date when the content was originally published
   skillsExtracted: string[];
   createdAt: string;
 }
