@@ -15,7 +15,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await seedRoleSkills();
 
   // Handle transition submission
-  apiRouter.post("/submit", async (req, res) => {
+  apiRouter.post("/transitions", async (req, res) => {
     try {
       // Validate request body
       const validatedData = insertTransitionSchema.parse({
