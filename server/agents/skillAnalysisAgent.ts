@@ -1,7 +1,16 @@
-// Skill Analysis Agent using Perplexity Sonar and LangChain
+// Skill Analysis Agent using LangGraph and LangChain
 import { Document } from '@langchain/core/documents';
 import { z } from 'zod';
-import { analyzeSkillGaps, SkillGapAnalysis } from '../apis/perplexity-unified';
+import { analyzeSkillGaps } from '../helpers/langGraphHelpers';
+
+// Define our own skill gap analysis interface
+export interface SkillGapAnalysis {
+  skillName: string;
+  gapLevel: 'Low' | 'Medium' | 'High';
+  confidenceScore: number;
+  mentionCount: number;
+  contextSummary: string;
+}
 
 // Zod schema for validating skill data structure
 const skillSchema = z.object({
@@ -17,7 +26,7 @@ const skillsArraySchema = z.array(skillSchema);
 /**
  * Agent to analyze scraped data and identify skill gaps
  * 
- * This uses Document structures and Perplexity Sonar for analysis
+ * This uses Document structures and LangGraph for analysis
  */
 export class SkillAnalysisAgent {
   private currentRole: string;
@@ -39,7 +48,7 @@ export class SkillAnalysisAgent {
   }
 
   /**
-   * Process the scraped data to extract skill gaps using Perplexity Sonar
+   * Process the scraped data to extract skill gaps using LangGraph
    */
   async analyzeSkillGaps(existingSkills: string[]): Promise<SkillGapAnalysis[]> {
     try {
@@ -51,7 +60,7 @@ export class SkillAnalysisAgent {
         content: doc.pageContent
       }));
       
-      // Use the unified Perplexity API for skill gap analysis
+      // Use the LangGraph helpers for skill gap analysis
       const skillGapsData = await analyzeSkillGaps(
         this.currentRole,
         this.targetRole,
@@ -74,6 +83,4 @@ export class SkillAnalysisAgent {
       throw new Error(`Failed to analyze skill gaps for ${this.currentRole} to ${this.targetRole}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
-  
-  // No fallback methods - we only use real data from Perplexity searches
 }

@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "bash", "web", "postgresql-16", "nodejs-23", "nodejs-22", "python-3.9", "python-3.8", "typescript-language-server", "vue-node-20"]
+modules = ["nodejs-20", "bash", "web", "postgresql-16", "nodejs-23", "nodejs-22", "python-3.9", "python-3.8", "typescript-language-server", "vue-node-20", "vue-node-18", "pyright", "nodejs-with-prybar-18", "python-with-prybar-3.10", "docker", "swift-5.6", "svelte-kit-node-20", "nix", "angular-node-20"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 

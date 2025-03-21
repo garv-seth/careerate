@@ -1,5 +1,5 @@
-// Web scraping service - using Perplexity Sonar model for comprehensive search
-import { searchForums as perplexitySearchForums } from './perplexity-unified';
+// Web scraping service - using LangGraph + Tavily for comprehensive search
+import { searchForums } from '../helpers/langGraphHelpers';
 
 // Interface for scraped data
 export interface ScrapedResult {
@@ -10,7 +10,7 @@ export interface ScrapedResult {
 }
 
 /**
- * Scrape forums for career transition stories using Perplexity Sonar's real-time web search
+ * Scrape forums for career transition stories using Tavily search and LangGraph
  * This approach provides comprehensive results from multiple platforms including:
  * - Reddit
  * - Quora
@@ -29,20 +29,20 @@ export async function scrapeForums(
   targetRole: string
 ): Promise<ScrapedResult[]> {
   try {
-    console.log(`Scraping for ${currentRole} to ${targetRole} using Perplexity Sonar's real-time web search`);
+    console.log(`Searching for transition stories from ${currentRole} to ${targetRole} using Tavily`);
     
-    // Use Perplexity Sonar to search across multiple forums simultaneously with real-time data
-    const results = await perplexitySearchForums(currentRole, targetRole);
+    // Use Tavily search via LangGraph helpers to find career transition stories
+    const results = await searchForums(currentRole, targetRole);
     
     console.log(`Found ${results.length} relevant results about ${currentRole} to ${targetRole} transitions`);
     
     // Process and clean up results
     const processedResults = results.map(result => ({
-      source: result.source,
+      source: result.source || "Web search",
       // Limit content size to 5000 chars to avoid excessive database storage
       content: result.content.substring(0, 5000),
-      url: result.url,
-      date: result.date
+      url: result.url || "",
+      date: result.date || new Date().toISOString().split('T')[0]
     }));
     
     return processedResults;
