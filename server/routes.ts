@@ -535,8 +535,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Try to get target role skills from our predefined list first as a starting point
           const targetRoleSkills = await storage.getRoleSkills(targetRole);
           
-          // Create a Cara agent to help with the real-time analysis
-          const cara = new CaraAgent(currentRole, targetRole);
+          // Create an ImprovedCara agent with LangGraph capabilities for real-time analysis
+          const cara = new ImprovedCaraAgent(currentRole, targetRole);
           
           // Find scraped data for this transition
           const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
@@ -617,9 +617,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create plan
       const plan = await storage.createPlan({ transitionId });
 
-      // Create Cara agent for plan generation
-      console.log(`Cara is generating a plan for transition from ${transition.currentRole} to ${transition.targetRole}`);
-      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      // Create ImprovedCara agent for plan generation with LangGraph
+      console.log(`Using ImprovedCara with LangGraph Plan-Execute pattern for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
       
       // Prioritize skills
       const prioritizedSkills = skillGaps
