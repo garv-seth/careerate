@@ -5,6 +5,7 @@ import { z } from "zod";
 import { insertTransitionSchema } from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent"; 
 import { findResourcesWithGemini } from "./apis/gemini";
+import { FireCrawlLoader } from "@langchain/community/document_loaders/web/firecrawl";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes
@@ -303,9 +304,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.FIRECRAWL_API_KEY,
         mode: "scrape",
         params: {
-          enableScripts: true,
-          enableImages: false,
-          wait: 2000
+          javascript: true,
+          waitTime: 2000
         }
       });
       
