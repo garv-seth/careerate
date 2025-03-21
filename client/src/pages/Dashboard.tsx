@@ -278,52 +278,138 @@ const Dashboard: React.FC = () => {
                   <ul className="space-y-2 mb-3">
                     {selectedCompany === 'Google' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                          <span className="font-medium">L6 Senior Software Engineer</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">L6 Senior SWE</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$265K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                          <span className="font-medium">L5 Software Engineer</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium">L5 SWE</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$218K</span>
                         </li>
                       </>
                     )}
                     
                     {selectedCompany === 'Microsoft' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                          <span className="font-medium">Senior SDE (Level 63)</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">Senior SDE (63)</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$210K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                          <span className="font-medium">SDE II (Level 62)</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium">SDE II (62)</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$180K</span>
                         </li>
                       </>
                     )}
                     
                     {selectedCompany === 'Meta' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                          <span className="font-medium">E5 Software Engineer</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">E5 Software Engineer</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$270K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                          <span className="font-medium">E4 Software Engineer</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium">E4 Software Engineer</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$210K</span>
                         </li>
                       </>
                     )}
                     
-                    {(selectedCompany !== 'Google' && selectedCompany !== 'Microsoft' && selectedCompany !== 'Meta') && (
+                    {selectedCompany === 'Apple' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                          <span className="font-medium">Senior Software Engineer</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">ICT4 Software Engineer</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$240K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center">
-                          <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                          <span className="font-medium">Software Engineer</span>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium">ICT3 Software Engineer</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$193K</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {selectedCompany === 'Amazon' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">L6 SDE III</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$245K</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">L5 SDE II</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$190K</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {selectedCompany === 'Netflix' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">Senior SWE</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$425K</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium">SWE</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$325K</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {(selectedCompany !== 'Google' && 
+                      selectedCompany !== 'Microsoft' && 
+                      selectedCompany !== 'Meta' && 
+                      selectedCompany !== 'Apple' && 
+                      selectedCompany !== 'Amazon' && 
+                      selectedCompany !== 'Netflix') && (
+                      <>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium">Senior Software Engineer</span>
+                          </div>
+                          <span className="text-xs text-text-muted">Varies</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium">Software Engineer</span>
+                          </div>
+                          <span className="text-xs text-text-muted">Varies</span>
                         </li>
                       </>
                     )}
