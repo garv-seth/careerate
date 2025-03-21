@@ -22,6 +22,86 @@ const getHeaders = () => ({
 });
 
 /**
+ * Normalize and standardize various date formats to ISO format (YYYY-MM-DD)
+ * Handles:
+ * - ISO dates
+ * - MM/DD/YYYY or DD/MM/YYYY
+ * - Month DD, YYYY
+ * - Relative dates (X days/months/years ago)
+ * 
+ * @param dateStr The date string to normalize
+ * @returns Normalized date in YYYY-MM-DD format or original string if parsing fails
+ */
+function normalizeDate(dateStr: string): string {
+  if (!dateStr) return '';
+  
+  const date = dateStr.trim();
+  
+  // Already in YYYY-MM-DD or YYYY/MM/DD format
+  if (date.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/)) {
+    return date.replace(/\//g, '-');
+  } 
+  
+  // In MM-DD-YYYY or DD-MM-YYYY format
+  if (date.match(/\d{1,2}[-/]\d{1,2}[-/]\d{4}/)) {
+    const parts = date.replace(/\//g, '-').split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+    }
+  }
+  
+  // In Month DD, YYYY format (e.g., "January 1, 2023")
+  if (date.match(/[A-Za-z]+\s+\d{1,2},?\s+\d{4}/)) {
+    try {
+      const d = new Date(date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+    } catch (e) {
+      console.log('Failed to parse date:', date);
+    }
+  }
+  
+  // Handle relative dates like "2 months ago", "1 year ago", etc.
+  if (date.toLowerCase().includes('ago') || 
+      date.toLowerCase().includes('month') || 
+      date.toLowerCase().includes('year') || 
+      date.toLowerCase().includes('day')) {
+    const now = new Date();
+    
+    if (date.toLowerCase().includes('year')) {
+      const yearMatch = date.match(/(\d+)\s*year/);
+      if (yearMatch && yearMatch[1]) {
+        const years = parseInt(yearMatch[1]);
+        now.setFullYear(now.getFullYear() - years);
+        return now.toISOString().split('T')[0];
+      }
+    } 
+    
+    if (date.toLowerCase().includes('month')) {
+      const monthMatch = date.match(/(\d+)\s*month/);
+      if (monthMatch && monthMatch[1]) {
+        const months = parseInt(monthMatch[1]);
+        now.setMonth(now.getMonth() - months);
+        return now.toISOString().split('T')[0];
+      }
+    } 
+    
+    if (date.toLowerCase().includes('day')) {
+      const dayMatch = date.match(/(\d+)\s*day/);
+      if (dayMatch && dayMatch[1]) {
+        const days = parseInt(dayMatch[1]);
+        now.setDate(now.getDate() - days);
+        return now.toISOString().split('T')[0];
+      }
+    }
+  }
+  
+  // Return original if no patterns match
+  return date;
+}
+
+/**
  * Generic function to make calls to Perplexity API with the Sonar model
  * 
  * @param prompt The prompt to send to Perplexity
@@ -374,7 +454,7 @@ export async function analyzeSkillGaps(
 
     // Combine scraped content
     const combinedContent = scrapedContent
-      .map(item => `Source: ${item.source}\n${item.content}`)
+      .map(item => `Source: ${item.source}\nDate: ${item.postDate || item.date || 'Unknown'}\n${item.content}`)
       .join('\n\n---\n\n');
 
     const prompt = `
