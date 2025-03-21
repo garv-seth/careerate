@@ -956,7 +956,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
               }
             } catch (error) {
-              console.error("Failed to generate challenges with Perplexity:", error);
+              console.error("Failed to generate challenges with LangGraph:", error);
               // Add one fallback challenge
               await storage.createInsight({
                 transitionId,
@@ -970,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
         } catch (error) {
-          console.error("Error generating insights with Perplexity:", error);
+          console.error("Error generating insights with LangGraph:", error);
           
           // Create minimal fallback insights if all else fails
           await storage.createInsight({
@@ -994,7 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Retrieve the newly created insights
         insights = await storage.getInsightsByTransitionId(transitionId);
-        console.log(`Created ${insights.length} insights for transition with Perplexity Sonar`);
+        console.log(`Created ${insights.length} insights for transition with LangGraph and Tavily`);
       }
       
       // Process insights to get key observations and challenges
@@ -1049,11 +1049,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const scrapedCount = scrapedData.length;
       
       if (scrapedCount === 0) {
-        // Generate insights with Perplexity real-time search when we don't have scraped data
-        console.log("No scraped data found, generating insights with Perplexity Sonar");
+        // Generate insights with LangGraph and Tavily when we don't have scraped data
+        console.log("No scraped data found, generating insights with LangGraph and Tavily");
         
         try {
-          // Create a transition query for Perplexity to search
+          // Create a transition query for LangGraph to search
           const transitionQuery = `${transition.currentRole} to ${transition.targetRole} career transition statistics, success rate, time frame, common paths`;
           
           console.log(`Searching for transition statistics: ${transitionQuery}`);
@@ -1117,7 +1117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     console.error("JSON sanitization failed:", sanitizeError);
                     
                     // Last resort: provide a fallback structure
-                    console.log("Fallback to basic transition insights after Perplexity failures");
+                    console.log("Fallback to basic transition insights after LangGraph failures");
                     insightsData = {
                       successRate: 70,
                       avgTransitionTime: 6,
