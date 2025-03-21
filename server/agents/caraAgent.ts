@@ -1,6 +1,7 @@
-// Cara - Career Transition AI Agent using LangGraph for orchestration
+// Cara - Career Transition AI Agent using LangGraph's Plan-Execute pattern
 import { storage } from '../storage';
-import { LangGraphCaraAgent, SkillGapAnalysis } from './langGraphAgent';
+import { SkillGapAnalysis } from './langGraphAgent';
+import { CaraPlanExecuteAgent } from './caraPlanExecuteAgent';
 
 // Interface for Cara's analysis results
 export interface CaraAnalysisResult {
@@ -19,31 +20,32 @@ export interface CaraAnalysisResult {
  * 4. Plan generation with OpenAI
  * 
  * All AI functions are powered by LangGraph + OpenAI with Tavily for real-time web search
+ * Uses the Plan-Execute pattern for systematic analysis
  */
 export class CaraAgent {
   private currentRole: string;
   private targetRole: string;
-  private langGraphAgent: LangGraphCaraAgent | null = null;
+  private planExecuteAgent: CaraPlanExecuteAgent;
   
   constructor(currentRole: string, targetRole: string) {
     this.currentRole = currentRole;
     this.targetRole = targetRole;
+    this.planExecuteAgent = new CaraPlanExecuteAgent();
   }
   
   /**
    * Main method to perform a complete career transition analysis
-   * This method now delegates to the LangGraph implementation
+   * This method now uses the Plan-Execute pattern for more systematic analysis
    * 
-   * The workflow steps remain the same:
-   * 1. Scrape stories using Tavily
-   * 2. Process stories to extract observations/challenges
-   * 3. Extract skills and analyze gaps
-   * 4. Generate plan based on gaps
-   * 5. Generate final metrics based on all collected data
+   * The Plan-Execute workflow:
+   * 1. Planning: Create a detailed multi-step plan for the analysis
+   * 2. Execution: Execute each plan step using specialized tools
+   * 3. Replanning: Evaluate progress and update the plan as needed
+   * 4. Collection: Gather all insights, skill gaps, and metrics
    */
   async analyzeCareerTransition(existingSkills: string[] = []): Promise<CaraAnalysisResult> {
     try {
-      console.log(`Cara is analyzing transition from ${this.currentRole} to ${this.targetRole}`);
+      console.log(`Cara is analyzing transition from ${this.currentRole} to ${this.targetRole} using Plan-Execute pattern`);
       
       // Get the transition ID from the database
       const transition = await storage.getTransitionByRoles(this.currentRole, this.targetRole);
@@ -52,23 +54,19 @@ export class CaraAgent {
         throw new Error(`Transition not found for ${this.currentRole} to ${this.targetRole}`);
       }
       
-      // Create a LangGraph Cara agent
-      this.langGraphAgent = new LangGraphCaraAgent(
+      // Run the Plan-Execute workflow
+      const result = await this.planExecuteAgent.analyzeCareerTransition(
         this.currentRole,
         this.targetRole,
-        transition.id
+        transition.id,
+        existingSkills
       );
       
-      // Run the LangGraph workflow
-      const result = await this.langGraphAgent.analyzeCareerTransition(existingSkills);
-      console.log(`LangGraph Cara analysis complete with ${result.skillGaps.length} skill gaps identified`);
-      
-      // Update the transition to mark it as complete
-      await storage.updateTransitionStatus(transition.id, true);
+      console.log(`Plan-Execute analysis complete with ${result.skillGaps.length} skill gaps identified`);
       
       return result;
     } catch (error) {
-      console.error("Error in Cara's analysis:", error);
+      console.error("Error in Cara's Plan-Execute analysis:", error);
       throw error;
     }
   }
