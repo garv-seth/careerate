@@ -57,6 +57,7 @@ export const scrapedData = pgTable("scraped_data", {
   source: text("source").notNull(), // e.g., "reddit", "quora"
   content: text("content").notNull(),
   url: text("url"),
+  postDate: text("post_date"), // Date when the content was originally published
   skillsExtracted: json("skills_extracted").$type<string[]>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -66,6 +67,7 @@ export const insertScrapedDataSchema = createInsertSchema(scrapedData).pick({
   source: true,
   content: true,
   url: true,
+  postDate: true,
   skillsExtracted: true,
 });
 
