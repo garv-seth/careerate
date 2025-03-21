@@ -782,12 +782,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
           
           // Convert DB data to the format expected by analyzeTransitionStories
-          let formattedData = scrapedData.map(item => ({
-            source: item.source,
-            content: item.content,
-            url: item.url || "",
-            date: item.postDate || new Date().toISOString().split('T')[0]
-          }));
+          let formattedData: { source: string; content: string; url: string; date: string }[] = 
+            scrapedData.map(item => ({
+              source: item.source,
+              content: item.content,
+              url: item.url || "", // Empty string fallback for null values
+              date: item.postDate || new Date().toISOString().split('T')[0] // Today's date as fallback
+            }));
           
           // If no scraped data exists yet, only then do a quick search
           if (formattedData.length === 0) {
