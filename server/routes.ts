@@ -378,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate development plan with Cara and Gemini
+  // Generate development plan with Cara and Perplexity Sonar
   apiRouter.post("/plan", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
