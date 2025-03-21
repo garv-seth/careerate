@@ -1,5 +1,6 @@
-// Skill Analysis Agent using Claude
+// Skill Analysis Agent using Claude and LangChain
 import { Document } from '@langchain/core/documents';
+import { FireCrawlLoader } from '@langchain/community/document_loaders/web/firecrawl';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 
@@ -63,6 +64,45 @@ export class SkillAnalysisAgent {
       const combinedContent = this.scrapedData.map(doc => {
         return `Source: ${doc.metadata.source}\n${doc.pageContent}`;
       }).join('\n\n---\n\n');
+      
+      // Try to gather more data directly using FireCrawlLoader if content is limited
+      if (combinedContent.length < 2000) {
+        try {
+          console.log("Limited data available, gathering more information using FireCrawlLoader");
+          
+          // Create search terms for targeted role skill information
+          const searchTerm = `${this.targetRole} required skills`;
+          
+          // Use LangChain FireCrawlLoader to get skill information
+          const loader = new FireCrawlLoader({
+            url: `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`,
+            apiKey: process.env.FIRECRAWL_API_KEY,
+            mode: "scrape",
+            params: {
+              scrapeOptions: {
+                formats: ['markdown'],
+              }
+            }
+          });
+          
+          // Load documents using LangChain
+          const additionalDocs = await loader.load();
+          
+          // Add the additional content to our analysis
+          if (additionalDocs.length > 0) {
+            const additionalContent = additionalDocs.map(doc => {
+              return `Source: Additional Search\n${doc.pageContent}`;
+            }).join('\n\n---\n\n');
+            
+            // Append the new content
+            combinedContent += '\n\n' + additionalContent;
+            console.log("Successfully gathered additional data for analysis");
+          }
+        } catch (error) {
+          console.error("Error gathering additional skill data:", error);
+          // Continue with original data if there's an error
+        }
+      }
       
       // Create system prompt for skill extraction with context
       const systemPrompt = `You are a technical career transition analyst specializing in identifying skill gaps.

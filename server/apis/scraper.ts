@@ -1,5 +1,7 @@
 // Web scraping service - using Firecrawl API for real data
 import FirecrawlApp from '@mendable/firecrawl-js';
+import { FireCrawlLoader } from '@langchain/community/document_loaders/web/firecrawl';
+import { Document } from '@langchain/core/documents';
 
 // Configure Firecrawl with API key
 const firecrawlApp = new FirecrawlApp({ 
@@ -60,28 +62,33 @@ export async function scrapeForums(
     
     const results: ScrapedResult[] = [];
     
-    // Try to scrape data from each site with each search term
+    // Try to scrape data using LangChain FireCrawlLoader
     for (const site of CAREER_SITES) {
       for (const searchTerm of searchTerms) {
         try {
           console.log(`Scraping ${site.source} for "${searchTerm}"`);
           
-          // Use Firecrawl to scrape the site
+          // Use Firecrawl with LangChain to scrape the site
           const searchUrl = `${site.url}/search?q=${encodeURIComponent(searchTerm)}`;
           
-          // Scrape with Firecrawl
-          const scrapeResult = await firecrawlApp.scrapeUrl(searchUrl, {
-            limit: 3, // Limit to 3 pages per search to avoid overloading
-            scrapeOptions: {
-              formats: ['markdown'],
-              includeLinks: true,
-              removeReferences: true
+          // Use the FireCrawlLoader from LangChain
+          const loader = new FireCrawlLoader({
+            url: searchUrl,
+            apiKey: process.env.FIRECRAWL_API_KEY,
+            mode: "scrape",
+            params: {
+              scrapeOptions: {
+                formats: ['markdown'],
+              }
             }
           });
           
-          if (scrapeResult && scrapeResult.url && scrapeResult.markdown) {
-            // Check if the content is relevant to our search
-            const content = scrapeResult.markdown;
+          // Load documents using LangChain
+          const docs = await loader.load();
+          
+          // Process each document
+          for (const doc of docs) {
+            const content = doc.pageContent;
             
             // Skip if content is too short
             if (content.length < 100) continue;
@@ -94,7 +101,7 @@ export async function scrapeForums(
               results.push({
                 source: site.source,
                 content: content.substring(0, 5000), // Limit content size
-                url: scrapeResult.url
+                url: doc.metadata.sourceURL || searchUrl
               });
             }
           }
@@ -112,22 +119,34 @@ export async function scrapeForums(
       return results;
     }
     
-    // If no results, try using domain-specific search
+    // If no results, try using Google search
     try {
       console.log("Trying domain-specific search with Firecrawl");
       
       const searchTerm = `${currentRole} to ${targetRole} career transition`;
-      const domainResults = await firecrawlApp.scrapeUrl(`https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`, {
-        limit: 5,
-        scrapeOptions: {
-          formats: ['markdown'],
-          includeLinks: true
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`;
+      
+      // Use the FireCrawlLoader from LangChain for Google search
+      const loader = new FireCrawlLoader({
+        url: searchUrl,
+        apiKey: process.env.FIRECRAWL_API_KEY,
+        mode: "scrape",
+        params: {
+          scrapeOptions: {
+            formats: ['markdown'],
+          }
         }
       });
       
-      if (domainResults && domainResults.markdown) {
-        // Process the results to extract relevant content
-        const content = domainResults.markdown;
+      // Load documents using LangChain
+      const docs = await loader.load();
+      
+      // Process each document
+      for (const doc of docs) {
+        const content = doc.pageContent;
+        
+        // Skip if content is too short
+        if (content.length < 200) continue;
         
         // Split by sections or links
         const sections = content.split(/\n\n|\n---\n/);
@@ -141,7 +160,7 @@ export async function scrapeForums(
             results.push({
               source: 'Google Search',
               content: section.substring(0, 5000),
-              url: domainResults.url || 'https://www.google.com'
+              url: doc.metadata.sourceURL || searchUrl
             });
           }
         }
@@ -156,7 +175,46 @@ export async function scrapeForums(
       return results;
     }
     
-    // If still no results, use fallback
+    // If still no results, try to extract structured data from career websites
+    try {
+      console.log("Trying structured data extraction with Firecrawl");
+      
+      // We'll use scrape mode since "extract" mode isn't available in the current version
+      const loader = new FireCrawlLoader({
+        url: "https://www.indeed.com/career-advice/finding-a-job/career-change",
+        apiKey: process.env.FIRECRAWL_API_KEY,
+        mode: "scrape",
+        params: {
+          scrapeOptions: {
+            formats: ['markdown'],
+          }
+        }
+      });
+      
+      // Load documents using LangChain
+      const docs = await loader.load();
+      
+      // Process extracted data
+      if (docs.length > 0) {
+        docs.forEach(doc => {
+          results.push({
+            source: 'Indeed Career Advice',
+            content: doc.pageContent,
+            url: doc.metadata.sourceURL || 'https://www.indeed.com/career-advice'
+          });
+        });
+      }
+    } catch (extractError) {
+      console.error("Error in structured data extraction:", extractError);
+    }
+    
+    // If we found results now, return them
+    if (results.length > 0) {
+      console.log(`Found ${results.length} relevant results from structured data extraction`);
+      return results;
+    }
+    
+    // If still no results, use fallback data - but note this should be extremely rare
     console.log("No relevant results found, using fallback data");
     return generateFallbackResults(currentRole, targetRole);
   } catch (error) {
