@@ -100,9 +100,9 @@ export async function scrapeForums(
                       url.includes("transition");
               },
             },
-            scrapeOptions: {
-              formats: ['markdown'],
-            }
+            enableScripts: true,
+            enableImages: false,
+            wait: 2000
           }
         });
         
@@ -162,9 +162,9 @@ export async function scrapeForums(
               apiKey: process.env.FIRECRAWL_API_KEY,
               mode: "scrape",
               params: {
-                scrapeOptions: {
-                  formats: ['markdown'],
-                }
+                enableScripts: true,
+                enableImages: false,
+                wait: 2000
               }
             });
             
@@ -224,9 +224,9 @@ export async function scrapeForums(
         apiKey: process.env.FIRECRAWL_API_KEY,
         mode: "scrape",
         params: {
-          scrapeOptions: {
-            formats: ['markdown'],
-          }
+          enableScripts: true,
+          enableImages: false,
+          wait: 2000
         }
       });
       
@@ -277,9 +277,9 @@ export async function scrapeForums(
         apiKey: process.env.FIRECRAWL_API_KEY,
         mode: "scrape",
         params: {
-          scrapeOptions: {
-            formats: ['markdown'],
-          }
+          enableScripts: true,
+          enableImages: false,
+          wait: 2000
         }
       });
       
@@ -319,9 +319,9 @@ export async function scrapeForums(
           mapParams: {
             prompt: `Extract information about transitions from ${currentRole} to ${targetRole}, or similar career changes if that specific transition isn't mentioned.`
           },
-          scrapeOptions: {
-            formats: ['markdown'],
-          }
+          enableScripts: true,
+          enableImages: false,
+          wait: 2000
         }
       });
       
@@ -349,29 +349,74 @@ export async function scrapeForums(
       return results;
     }
     
-    // If still no results, use fallback data - but note this should be extremely rare
-    console.log("No relevant results found, using fallback data");
-    return generateFallbackResults(currentRole, targetRole);
+    // If still no results, try more generic search terms for general career transitions
+    console.log("No relevant results found, trying more generic search terms");
+    
+    // Generic career transition search terms
+    const genericSearchTerms = [
+      "software engineer career transition",
+      "tech career switching tips",
+      "changing jobs in tech industry",
+      "software career path progression",
+      "moving between tech companies",
+      "tech job promotion skills"
+    ];
+    
+    // Try each generic search term
+    for (const searchTerm of genericSearchTerms) {
+      try {
+        console.log(`Searching for generic term: "${searchTerm}"`);
+        
+        // Use Google search with the more generic term
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`;
+        
+        // Use the FireCrawlLoader from LangChain
+        const loader = new FireCrawlLoader({
+          url: searchUrl,
+          apiKey: process.env.FIRECRAWL_API_KEY,
+          mode: "scrape",
+          params: {
+            enableScripts: true,
+            enableImages: false,
+            wait: 2000
+          }
+        });
+        
+        // Load documents using LangChain
+        const docs = await loader.load();
+        
+        // Process each document
+        for (const doc of docs) {
+          const content = doc.pageContent;
+          
+          // Skip if content is too short
+          if (content.length < 200) continue;
+          
+          // Add relevant content to results
+          results.push({
+            source: 'Career Transition Guide',
+            content: content.substring(0, 5000),
+            url: doc.metadata.source || searchUrl
+          });
+          
+          // If we have enough results, return
+          if (results.length >= 2) {
+            console.log(`Found ${results.length} results using generic search terms`);
+            return results;
+          }
+        }
+      } catch (error) {
+        console.error(`Error searching for generic term "${searchTerm}":`, error);
+      }
+    }
+    
+    // If we still found no results, return an empty array
+    // We won't use any synthetic data as per user's request
+    console.log("No relevant results found, returning empty array");
+    return [];
   } catch (error) {
     console.error("Error in forum scraping:", error);
-    return generateFallbackResults(currentRole, targetRole);
+    // Return empty array instead of fallback data
+    return [];
   }
-}
-
-/**
- * Generate fallback results if scraping fails
- */
-function generateFallbackResults(currentRole: string, targetRole: string): ScrapedResult[] {
-  return [
-    {
-      source: 'reddit',
-      content: `I recently transitioned from ${currentRole} to ${targetRole}. The biggest challenges were learning new technical skills like Python and system design. I spent about 3 months preparing with online courses and practicing coding problems. The interview process was challenging but focused on algorithms and system design. My background in project management helped me show leadership skills that were valuable in the new role.`,
-      url: 'https://www.reddit.com/r/cscareerquestions/'
-    },
-    {
-      source: 'quora',
-      content: `Moving from ${currentRole} to ${targetRole} requires focusing on distributed systems knowledge and coding skills. I found that the most important areas to study were system design patterns, algorithm optimization, and Python programming. The interview process tests your ability to think at scale and optimize code efficiently. Having a good understanding of cloud technologies also helped make the transition smoother.`,
-      url: 'https://www.quora.com/Career-Advice'
-    }
-  ];
 }
