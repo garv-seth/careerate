@@ -6,6 +6,7 @@ import { extractSkills } from '../apis/claude';
 import { scrapeForums } from '../apis/scraper';
 import { generatePlanWithGemini, findResourcesWithGemini, analyzeTransitionStories } from '../apis/gemini';
 import { SkillAnalysisAgent, SkillGapAnalysis } from './skillAnalysisAgent';
+import { storage } from '../storage';
 
 // Interface for Cara's analysis results
 export interface CaraAnalysisResult {
@@ -62,13 +63,38 @@ export class CaraAgent {
   }
   
   /**
-   * Scrape relevant content about career transitions
+   * Scrape relevant content about career transitions and save to database
    */
   async scrapeWebContent(): Promise<void> {
     try {
       // Use improved scraper to get real transition stories
       this.scrapedData = await scrapeForums(this.currentRole, this.targetRole);
       console.log(`Cara found ${this.scrapedData.length} relevant transition stories`);
+      
+      // Save the scraped data to the database
+      // First get the transition ID from the database
+      const transition = await storage.getTransitionByRoles(this.currentRole, this.targetRole);
+      
+      if (!transition) {
+        console.error("Transition not found for", this.currentRole, "to", this.targetRole);
+        return;
+      }
+      
+      // Save each scraped item to the database
+      for (const item of this.scrapedData) {
+        try {
+          await storage.createScrapedData({
+            transitionId: transition.id,
+            source: item.source,
+            content: item.content,
+            url: item.url || null,
+            skillsExtracted: [] // We'll extract skills later
+          });
+          console.log(`Saved scraped data from ${item.source} to database`);
+        } catch (saveError) {
+          console.error("Error saving scraped data to database:", saveError);
+        }
+      }
       
       // If we have very limited data, try direct search with more specific terms
       if (this.scrapedData.length < 2) {
@@ -91,9 +117,7 @@ export class CaraAgent {
                 apiKey: process.env.FIRECRAWL_API_KEY,
                 mode: "scrape",
                 params: {
-                  scrapeOptions: {
-                    formats: ['markdown'],
-                  }
+                  formats: ["markdown"]
                 }
               });
               
@@ -102,15 +126,32 @@ export class CaraAgent {
               
               // Process found documents
               if (docs.length > 0) {
-                docs.forEach(doc => {
+                for (const doc of docs) {
                   if (doc.pageContent.length > 200) {
-                    this.scrapedData.push({
+                    const item = {
                       source: 'Google Search Results',
                       content: doc.pageContent.substring(0, 5000),
                       url: doc.metadata.source || 'https://www.google.com/'
-                    });
+                    };
+                    
+                    // Add to in-memory collection
+                    this.scrapedData.push(item);
+                    
+                    // Save to database
+                    try {
+                      await storage.createScrapedData({
+                        transitionId: transition.id,
+                        source: item.source,
+                        content: item.content,
+                        url: item.url || null,
+                        skillsExtracted: [] // We'll extract skills later
+                      });
+                      console.log(`Saved additional scraped data from Google to database`);
+                    } catch (saveError) {
+                      console.error("Error saving additional scraped data to database:", saveError);
+                    }
                   }
-                });
+                }
               }
               
               // If we found enough data, stop searching
