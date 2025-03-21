@@ -55,14 +55,23 @@ export async function generatePlan(
     const responseContent = response.choices[0].message.content;
     const parsedResponse = JSON.parse(responseContent);
     
+    let milestones = [];
+    
     if (Array.isArray(parsedResponse.milestones)) {
-      return parsedResponse.milestones;
+      milestones = parsedResponse.milestones;
     } else if (Array.isArray(parsedResponse)) {
-      return parsedResponse;
+      milestones = parsedResponse;
     } else {
       console.error("Unexpected response format from OpenAI:", parsedResponse);
       return [];
     }
+    
+    // Ensure each milestone has valid durationWeeks
+    return milestones.map(milestone => ({
+      ...milestone,
+      durationWeeks: typeof milestone.durationWeeks === 'number' ? 
+        milestone.durationWeeks : (parseInt(milestone.durationWeeks) || 3) // Default to 3 weeks if invalid
+    }));
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
     
