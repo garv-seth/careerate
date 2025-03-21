@@ -1,7 +1,5 @@
-// Cara - Career Transition AI Agent
+// Cara - Career Transition AI Agent using Perplexity for comprehensive internet search
 import { Document } from '@langchain/core/documents';
-import { FireCrawlLoader } from '@langchain/community/document_loaders/web/firecrawl';
-// SimpleDirectoryReader is not needed for the current implementation
 import { extractSkills } from '../apis/claude';
 import { scrapeForums } from '../apis/scraper';
 import { generatePlanWithGemini, findResourcesWithGemini, analyzeTransitionStories } from '../apis/gemini';
@@ -19,7 +17,7 @@ export interface CaraAnalysisResult {
  * Cara - AI Career Transition Agent
  * 
  * This agent orchestrates the entire career transition analysis process:
- * 1. Web scraping with Firecrawl
+ * 1. Web scraping with Perplexity AI (searches across Reddit, Quora, Blind, and more)
  * 2. Skill gap analysis with Claude
  * 3. Resource discovery with Gemini
  * 4. Plan generation with Gemini
@@ -42,7 +40,7 @@ export class CaraAgent {
     try {
       console.log(`Cara is analyzing transition from ${this.currentRole} to ${this.targetRole}`);
       
-      // Step 1: Scrape relevant content from the web using Firecrawl
+      // Step 1: Scrape relevant content from the web using Perplexity AI
       await this.scrapeWebContent();
       
       // Step 2: Perform skill gap analysis
@@ -63,13 +61,16 @@ export class CaraAgent {
   }
   
   /**
-   * Scrape relevant content about career transitions and save to database
+   * Scrape relevant content about career transitions using Perplexity's internet search capabilities
+   * and save to database
    */
   async scrapeWebContent(): Promise<void> {
     try {
-      // Use improved scraper to get real transition stories
+      console.log("Cara is using Perplexity AI to search for career transition data across multiple forums");
+      
+      // Use the updated scrapeForums function which now leverages Perplexity for comprehensive results
       this.scrapedData = await scrapeForums(this.currentRole, this.targetRole);
-      console.log(`Cara found ${this.scrapedData.length} relevant transition stories`);
+      console.log(`Cara found ${this.scrapedData.length} relevant transition stories from multiple sources`);
       
       // Save the scraped data to the database
       // First get the transition ID from the database
@@ -96,72 +97,44 @@ export class CaraAgent {
         }
       }
       
-      // If we have very limited data, try direct search with more specific terms
+      // If we have very limited data, try additional queries with varied wording
       if (this.scrapedData.length < 2) {
         try {
-          console.log("Limited data, Cara is searching for more specific information");
+          console.log("Limited data, Cara is searching with alternative phrasing");
           
-          // Use LlamaIndex + Firecrawl combination for better data gathering
-          const searchTerms = [
-            `${this.currentRole} to ${this.targetRole} career transition experience`,
-            `${this.targetRole} job skills for ${this.currentRole} background`,
-            `how to move from ${this.currentRole} to ${this.targetRole}`
-          ];
+          // Create alternative search queries
+          const additionalResults = await scrapeForums(
+            `professionals transitioning from ${this.currentRole}`,
+            `becoming a ${this.targetRole} success stories`
+          );
           
-          // Try each search term
-          for (const searchTerm of searchTerms) {
-            try {
-              // Use the Firecrawl loader from LangChain
-              const loader = new FireCrawlLoader({
-                url: `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`,
-                apiKey: process.env.FIRECRAWL_API_KEY,
-                mode: "scrape",
-                params: {
-                  formats: ["markdown"]
-                }
-              });
-              
-              // Get documents
-              const docs = await loader.load();
-              
-              // Process found documents
-              if (docs.length > 0) {
-                for (const doc of docs) {
-                  if (doc.pageContent.length > 200) {
-                    const item = {
-                      source: 'Google Search Results',
-                      content: doc.pageContent.substring(0, 5000),
-                      url: doc.metadata.source || 'https://www.google.com/'
-                    };
-                    
-                    // Add to in-memory collection
-                    this.scrapedData.push(item);
-                    
-                    // Save to database
-                    try {
-                      await storage.createScrapedData({
-                        transitionId: transition.id,
-                        source: item.source,
-                        content: item.content,
-                        url: item.url || null,
-                        skillsExtracted: [] // We'll extract skills later
-                      });
-                      console.log(`Saved additional scraped data from Google to database`);
-                    } catch (saveError) {
-                      console.error("Error saving additional scraped data to database:", saveError);
-                    }
-                  }
-                }
+          if (additionalResults.length > 0) {
+            // Save additional results to database
+            for (const item of additionalResults) {
+              // Skip any duplicates by URL
+              if (this.scrapedData.some(existing => existing.url === item.url)) {
+                continue;
               }
               
-              // If we found enough data, stop searching
-              if (this.scrapedData.length >= 3) break;
-            } catch (searchError) {
-              console.error(`Error in Cara's search for ${searchTerm}:`, searchError);
+              try {
+                await storage.createScrapedData({
+                  transitionId: transition.id,
+                  source: item.source,
+                  content: item.content,
+                  url: item.url || null,
+                  skillsExtracted: []
+                });
+                
+                // Add to in-memory collection
+                this.scrapedData.push(item);
+                console.log(`Saved additional data from ${item.source} to database`);
+              } catch (saveError) {
+                console.error("Error saving additional data to database:", saveError);
+              }
             }
           }
-        } catch (searchError) {
-          console.error("Error in Cara's additional search:", searchError);
+        } catch (additionalSearchError) {
+          console.error("Error in additional search:", additionalSearchError);
         }
       }
     } catch (error) {

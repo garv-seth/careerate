@@ -65,38 +65,29 @@ export class SkillAnalysisAgent {
         return `Source: ${doc.metadata.source}\n${doc.pageContent}`;
       }).join('\n\n---\n\n');
       
-      // Try to gather more data directly using FireCrawlLoader if content is limited
+      // Try to gather more data using Perplexity if content is limited
       if (analysisContent.length < 2000) {
         try {
-          console.log("Limited data available, gathering more information using FireCrawlLoader");
+          console.log("Limited data available, gathering more information using Perplexity AI");
           
-          // Create search terms for targeted role skill information
-          const searchTerm = `${this.targetRole} required skills`;
+          // Import the searchForums function directly here to avoid circular dependencies
+          const { searchForums } = require('../apis/perplexity');
           
-          // Use LangChain FireCrawlLoader to get skill information
-          const loader = new FireCrawlLoader({
-            url: `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`,
-            apiKey: process.env.FIRECRAWL_API_KEY,
-            mode: "scrape",
-            params: {
-              scrapeOptions: {
-                formats: ['markdown'],
-              }
-            }
-          });
-          
-          // Load documents using LangChain
-          const additionalDocs = await loader.load();
+          // Create search terms targeting specific skills for the role
+          const additionalResults = await searchForums(
+            this.currentRole, 
+            `${this.targetRole} required skills and qualifications`
+          );
           
           // Add the additional content to our analysis
-          if (additionalDocs.length > 0) {
-            const additionalContent = additionalDocs.map(doc => {
-              return `Source: Additional Search\n${doc.pageContent}`;
+          if (additionalResults.length > 0) {
+            const additionalContent = additionalResults.map(item => {
+              return `Source: ${item.source}\n${item.content}`;
             }).join('\n\n---\n\n');
             
             // Append the new content
             analysisContent += '\n\n' + additionalContent;
-            console.log("Successfully gathered additional data for analysis");
+            console.log("Successfully gathered additional skill data for analysis using Perplexity");
           }
         } catch (error) {
           console.error("Error gathering additional skill data:", error);
