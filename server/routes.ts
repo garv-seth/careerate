@@ -57,6 +57,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Scrape forums for transition data - simplified endpoint for frontend
+  apiRouter.post("/scrape", async (req, res) => {
+    try {
+      const transitionId = parseInt(req.body.transitionId);
+      
+      // Validate transitionId
+      if (isNaN(transitionId)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid transition ID" 
+        });
+      }
+
+      // Get transition
+      const transition = await storage.getTransition(transitionId);
+      if (!transition) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Transition not found" 
+        });
+      }
+
+      // Create Cara agent for web scraping
+      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      
+      // Store that scraping has been initiated (frontend needs immediate response)
+      res.json({ 
+        success: true, 
+        message: "Scraping initiated" 
+      });
+      
+      // Perform scraping asynchronously
+      cara.scrapeWebContent().catch(error => {
+        console.error("Background scraping error:", error);
+      });
+      
+    } catch (error) {
+      console.error("Error in scraping:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to scrape transition data" 
+      });
+    }
+  });
+
+  // Analyze skill gaps - simplified endpoint for frontend
+  apiRouter.post("/analyze", async (req, res) => {
+    try {
+      const transitionId = parseInt(req.body.transitionId);
+      
+      // Validate transitionId
+      if (isNaN(transitionId)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid transition ID" 
+        });
+      }
+
+      // Get transition
+      const transition = await storage.getTransition(transitionId);
+      if (!transition) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Transition not found" 
+        });
+      }
+      
+      // Get current role skills
+      const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
+      const currentSkills = currentRoleSkills.map(item => item.skillName);
+      
+      // Note: This endpoint just acknowledges the request
+      // We'll use analyze-career for the actual implementation
+      res.json({ 
+        success: true, 
+        message: "Analysis initiated" 
+      });
+      
+      // Call the comprehensive analysis endpoint asynchronously
+      try {
+        // Create Cara agent 
+        const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+        
+        // Perform analysis
+        const analysisResult = await cara.analyzeCareerTransition(currentSkills);
+        
+        // Store skill gaps
+        for (const skillGap of analysisResult.skillGaps) {
+          await storage.createSkillGap({
+            transitionId,
+            skillName: skillGap.skillName,
+            gapLevel: skillGap.gapLevel as "Low" | "Medium" | "High",
+            confidenceScore: skillGap.confidenceScore,
+            mentionCount: skillGap.mentionCount || 0
+          });
+        }
+      } catch (analysisError) {
+        console.error("Background analysis error:", analysisError);
+      }
+      
+    } catch (error) {
+      console.error("Error in analysis:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to analyze transition data" 
+      });
+    }
+  });
+
   // Integrate Cara AI Agent for comprehensive career analysis
   apiRouter.post("/analyze-career", async (req, res) => {
     try {

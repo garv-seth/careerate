@@ -1,45 +1,33 @@
 import React from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import Logo from "./Logo";
 
 const Header: React.FC = () => {
+  const [location] = useLocation();
+  
   return (
     <header className="bg-background border-b border-primary/20 shadow-md">
       <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
-        <Link href="/">
-          <a className="flex items-center mb-4 md:mb-0">
+        <div className="mb-4 md:mb-0">
+          <Link href="/">
             <Logo />
-            <h1 className="text-2xl font-heading font-bold text-white">
-              <span className="text-primary-light glow-text">Carrer</span>
-              <span className="text-primary">ate</span>
-            </h1>
-          </a>
-        </Link>
+          </Link>
+        </div>
         <nav>
-          <ul className="flex space-x-6">
+          <ul className="flex space-x-4">
             <li>
               <Link href="/">
-                <a className="text-text-secondary hover:text-primary transition duration-200">
+                <span className={`px-3 py-2 inline-block rounded-md ${location === '/' ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:text-primary'} transition duration-200 cursor-pointer`}>
                   Home
-                </a>
+                </span>
               </Link>
             </li>
             <li>
-              <Link href="/dashboard">
-                <a className="text-text-secondary hover:text-primary transition duration-200">
+              <Link href="/dashboard/1">
+                <span className={`px-3 py-2 inline-block rounded-md ${location.startsWith('/dashboard') ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:text-primary'} transition duration-200 cursor-pointer`}>
                   Dashboard
-                </a>
+                </span>
               </Link>
-            </li>
-            <li>
-              <a href="#" className="text-text-secondary hover:text-primary transition duration-200">
-                Resources
-              </a>
-            </li>
-            <li>
-              <a href="#" className="text-text-secondary hover:text-primary transition duration-200">
-                Help
-              </a>
             </li>
           </ul>
         </nav>

@@ -64,7 +64,7 @@ export class CaraAgent {
   /**
    * Scrape relevant content about career transitions
    */
-  private async scrapeWebContent(): Promise<void> {
+  async scrapeWebContent(): Promise<void> {
     try {
       // Use improved scraper to get real transition stories
       this.scrapedData = await scrapeForums(this.currentRole, this.targetRole);
