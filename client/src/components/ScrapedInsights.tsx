@@ -329,7 +329,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                         <h4 className="text-sm font-medium mr-2">
                           {transition.currentRole} → {transition.targetRole}
                         </h4>
-                        <span className="text-xs text-text-muted">
+                        <span className="text-xs text-text-muted opacity-70 font-light">
                           from {story.source}
                         </span>
                       </div>
@@ -415,7 +415,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <h4 className="text-sm font-medium mr-2">
                         {transition.currentRole} → {transition.targetRole}
                       </h4>
-                      <span className="text-xs text-text-muted">retrieving data</span>
+                      <span className="text-xs text-text-muted opacity-70 font-light">retrieving data</span>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">
                       Loading transition stories from real sources...

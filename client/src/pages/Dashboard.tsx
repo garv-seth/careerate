@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import TransitionDashboard from "@/components/TransitionDashboard";
 import SkillGapAnalysis from "@/components/SkillGapAnalysis";
-import DevelopmentPlan from "@/components/DevelopmentPlan";
+import CareerTrajectory from "@/components/CareerTrajectory";
 import ScrapedInsights from "@/components/ScrapedInsights";
 import { apiRequest } from "@/lib/queryClient";
 import { DashboardData } from "@/types";
@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
         // Step 3: Generate plan
         toast({
           title: "Generating plan",
-          description: "Creating your personalized development plan...",
+          description: "Creating your personalized career trajectory plan...",
           duration: 3000,
         });
         
@@ -185,7 +185,7 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-center text-text-secondary mt-4">
               We're scraping forums, analyzing skill gaps, and creating your
-              personalized development plan. This may take a minute.
+              personalized career trajectory plan. This may take a minute.
             </p>
           </div>
         ) : (
@@ -196,7 +196,7 @@ const Dashboard: React.FC = () => {
                 scrapedCount={data.scrapedCount}
               />
               <SkillGapAnalysis skillGaps={data.skillGaps} />
-              <DevelopmentPlan
+              <CareerTrajectory
                 milestones={data.milestones}
                 plan={data.plan}
               />
