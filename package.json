@@ -60,7 +60,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "firecrawl": "^1.20.1",
-    "framer-motion": "^11.13.1",
+    "framer-motion": "^11.18.2",
     "input-otp": "^1.2.4",
     "langchain": "^0.3.19",
     "llamaindex": "^0.9.11",

@@ -102,8 +102,8 @@ export default {
           to: { height: "0" },
         },
         "pulse-slow": {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0.8 },
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.8' },
         },
         "pulse-glow": {
           '0%, 100%': { 
@@ -150,7 +150,7 @@ export default {
         '10': '10px 10px',
         '20': '20px 20px',
         '40': '40px 40px',
-      },
+      } as Record<string, string>,
     },
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],

@@ -1,36 +1,110 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import Logo from "./Logo";
+import { motion } from "framer-motion";
 
 const Header: React.FC = () => {
   const [location] = useLocation();
   
   return (
-    <header className="bg-background border-b border-primary/20 shadow-md">
-      <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
-        <div className="mb-4 md:mb-0">
-          <Link href="/">
-            <Logo />
-          </Link>
+    <header className="relative bg-background border-b border-primary/10 backdrop-blur-sm z-10">
+      <div className="absolute inset-0 bg-cyber-grid bg-20 opacity-5"></div>
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex justify-between items-center">
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="cursor-pointer"
+          >
+            <Link href="/">
+              <Logo />
+            </Link>
+          </motion.div>
+          
+          <motion.nav 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="hidden md:block"
+          >
+            <ul className="flex items-center space-x-8">
+              <li>
+                <Link href="/">
+                  <div className={`relative px-3 py-2 font-medium text-sm tracking-wide transition-all duration-300 ease-in-out cursor-pointer ${
+                    location === '/' 
+                      ? 'text-primary' 
+                      : 'text-text-secondary hover:text-primary'
+                  }`}>
+                    HOME
+                    {location === '/' && (
+                      <motion.span
+                        layoutId="nav-indicator"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </div>
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard/1">
+                  <div className={`relative px-3 py-2 font-medium text-sm tracking-wide transition-all duration-300 ease-in-out cursor-pointer ${
+                    location.startsWith('/dashboard') 
+                      ? 'text-primary' 
+                      : 'text-text-secondary hover:text-primary'
+                  }`}>
+                    DASHBOARD
+                    {location.startsWith('/dashboard') && (
+                      <motion.span
+                        layoutId="nav-indicator"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </div>
+                </Link>
+              </li>
+            </ul>
+          </motion.nav>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="hidden md:block"
+          >
+            <Link href="/">
+              <div className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer">
+                <span className="mr-2">GET STARTED</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </Link>
+          </motion.div>
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button className="p-2 rounded-md text-text-secondary hover:text-primary focus:outline-none">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <nav>
-          <ul className="flex space-x-4">
-            <li>
-              <Link href="/">
-                <span className={`px-3 py-2 inline-block rounded-md ${location === '/' ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:text-primary'} transition duration-200 cursor-pointer`}>
-                  Home
-                </span>
-              </Link>
-            </li>
-            <li>
-              <Link href="/dashboard/1">
-                <span className={`px-3 py-2 inline-block rounded-md ${location.startsWith('/dashboard') ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:text-primary'} transition duration-200 cursor-pointer`}>
-                  Dashboard
-                </span>
-              </Link>
-            </li>
-          </ul>
-        </nav>
+      </div>
+      
+      {/* Animated scan line effect */}
+      <div className="absolute top-0 left-0 right-0 h-full overflow-hidden pointer-events-none opacity-10">
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-primary animate-scan-line"></div>
       </div>
     </header>
   );
