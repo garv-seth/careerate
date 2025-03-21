@@ -1,0 +1,100 @@
+You are tasked with building an MVP for a career technology platform called "Careerate" (Accelerate your Career). Careerate helps professionals transition between specific roles (e.g., Microsoft Level 63 to Google L6) by scraping career transition data from forums, analyzing skill gaps, and generating personalized development plans with milestones and resources. The MVP must be functional, simple, and demonstrate proof of concept. Use only the most critical features outlined below, avoiding unnecessary complexity. Build it with a plain, modern, usable UI.
+
+### Core MVP Functionality
+1. **User Input**: 
+   - A form where users enter their current role (e.g., "Microsoft Level 63") and target role (e.g., "Google L6").
+2. **Data Scraping**: 
+   - Scrape transition stories from Reddit and Quora (e.g., posts about moving from Microsoft to Google) using keywords from user input. Limit to 5-10 relevant posts for the MVP.
+3. **Skill Gap Analysis**: 
+   - Extract skills mentioned in scraped posts (e.g., "system design," "Python") and compare them to a predefined skill set for the current role (stored in the database).
+4. **Development Plan**: 
+   - Generate a simple plan with 3-5 milestones (e.g., "Learn system design in 4 weeks") and link to free resources (e.g., YouTube URLs, GitHub repos).
+5. **Dashboard**: 
+   - Display the transition path, skill gaps, and plan in a clean, readable format.
+
+### Technical Requirements
+- **Language**: Use Node.js with Express for the backend and vanilla JavaScript/HTML/CSS for the frontend.
+- **Database**: Use Replit’s integrated PostgreSQL database to store:
+  - User inputs (current role, target role).
+  - Predefined skill sets for common roles (e.g., Microsoft Level 63: "C#, Azure"; Google L6: "Python, system design").
+  - Scraped posts and extracted skills.
+  - Generated plans.
+  - Schema example:
+users (id, current_role, target_role, created_at)
+role_skills (role_name, skill_name)
+scraped_data (id, user_id, source, content, skills_extracted)
+plans (id, user_id, milestone_text, resource_url)
+
+text
+
+Collapse
+
+Unwrap
+
+Copy
+- **AI Integrations**: 
+- Use Claude (via Anthropic API) for NLP to extract skills from scraped posts.
+- Use OpenAI (via API) to generate milestone text and resource suggestions.
+- Use Perplexity (via API) to search for free learning resources based on skills.
+- **Scraping**: Use firecrawl to scrape Reddit, Quora, blind etc. Handle basic rate limits and errors gracefully.
+- **SSO**: Use Replit’s built-in authentication for simplicity (no external SSO needed for MVP).
+- **UI**: 
+- Simple, modern design with Tailwind CSS.
+- Single-page app with:
+- Input form at the top.
+- Dashboard below showing transition path, skill gaps, and plan in collapsible sections.
+- **External Integrations**: 
+- Optional Google Calendar API to schedule milestones (only if time allows; prioritize core features first).
+
+### Dependencies
+- Install via npm:
+- `express` (backend server)
+- `firecrawl` (scraping)
+- `@anthropic-ai/sdk` (Claude API)
+- `openai` (OpenAI API)
+- `axios` (for Perplexity API calls)
+- `pg` (PostgreSQL client)
+- `tailwindcss` (via CDN for simplicity)
+
+### Implementation Steps
+1. **Setup**:
+- Initialize a Node.js project with Express.
+- Configure PostgreSQL with the schema above.
+- Add Replit authentication middleware.
+2. **Backend**:
+- `/api/submit`: Accept user input, store in DB, trigger scraping and analysis.
+- `/api/scrape`: Use firecrawl to scrape Reddit and Quora based on role keywords (e.g., "Microsoft Level 63 to Google L6"). Store results in DB.
+- `/api/analyze`: Call Claude to extract skills from posts, compare with DB skills, store gaps.
+- `/api/plan`: Call OpenAI to generate milestones, Perplexity to find resources, store in DB.
+- `/api/dashboard`: Fetch and return user data for frontend.
+3. **Frontend**:
+- Build a single HTML page with Tailwind CSS.
+- Form with two text inputs (current role, target role) and a submit button.
+- Dashboard with sections: "Your Transition," "Skill Gaps," "Your Plan" (collapsible, populated via fetch calls).
+4. **AI Calls**:
+- Claude: "Extract key skills from this text: [scraped post]"
+- OpenAI: "Generate 3-5 milestones for learning [skill gaps] over 8 weeks."
+- Perplexity: "Find free online resources for learning [skill]."
+5. **Error Handling**:
+- Graceful fallbacks (e.g., "No data found" if scraping fails).
+- Log errors to console, not user-facing.
+
+### Constraints
+- Focus only on Reddit and Quora for scraping (ignore LinkedIn, Blind for MVP due to auth complexity).
+- Predefine 3-5 role skill sets in DB (e.g., Microsoft Level 63, Google L6) instead of dynamic scraping.
+- Limit plan to 3-5 milestones to keep it simple.
+- No advanced features (e.g., Google Drive, Slack) unless core is complete.
+
+### Deliverables
+- A running Replit app with:
+- Functional backend APIs.
+- Simple frontend dashboard.
+- DB populated with sample data.
+- Console logs showing AI API responses for debugging.
+
+### Notes
+- Use environment variables in Replit for API keys (Claude, OpenAI, Perplexity).
+- Test with a sample transition (e.g., Microsoft Level 63 to Google L6) to ensure end-to-end flow.
+- Keep UI plain but usable—focus on functionality over polish.
+
+Start building now, and provide feedback if you hit blockers!
