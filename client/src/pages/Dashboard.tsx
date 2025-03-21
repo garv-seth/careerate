@@ -278,17 +278,17 @@ const Dashboard: React.FC = () => {
                   <ul className="space-y-2 mb-3">
                     {selectedCompany === 'Google' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">L6 Senior SWE</span>
+                            <span className="font-medium text-white">L6 Senior SWE</span>
                           </div>
                           <span className="text-xs text-text-muted">~$265K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium">L5 SWE</span>
+                            <span className="font-medium text-white">L5 SWE</span>
                           </div>
                           <span className="text-xs text-text-muted">~$218K</span>
                         </li>
@@ -297,17 +297,17 @@ const Dashboard: React.FC = () => {
                     
                     {selectedCompany === 'Microsoft' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">Senior SDE (63)</span>
+                            <span className="font-medium text-white">Senior SDE (63)</span>
                           </div>
                           <span className="text-xs text-text-muted">~$210K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium">SDE II (62)</span>
+                            <span className="font-medium text-white">SDE II (62)</span>
                           </div>
                           <span className="text-xs text-text-muted">~$180K</span>
                         </li>
@@ -316,17 +316,17 @@ const Dashboard: React.FC = () => {
                     
                     {selectedCompany === 'Meta' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">E5 Software Engineer</span>
+                            <span className="font-medium text-white">E5 Software Engineer</span>
                           </div>
                           <span className="text-xs text-text-muted">~$270K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium">E4 Software Engineer</span>
+                            <span className="font-medium text-white">E4 Software Engineer</span>
                           </div>
                           <span className="text-xs text-text-muted">~$210K</span>
                         </li>
@@ -335,17 +335,17 @@ const Dashboard: React.FC = () => {
                     
                     {selectedCompany === 'Apple' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">ICT4 Software Engineer</span>
+                            <span className="font-medium text-white">ICT4 Software Engineer</span>
                           </div>
                           <span className="text-xs text-text-muted">~$240K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium">ICT3 Software Engineer</span>
+                            <span className="font-medium text-white">ICT3 Software Engineer</span>
                           </div>
                           <span className="text-xs text-text-muted">~$193K</span>
                         </li>
@@ -354,17 +354,17 @@ const Dashboard: React.FC = () => {
                     
                     {selectedCompany === 'Amazon' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">L6 SDE III</span>
+                            <span className="font-medium text-white">L6 SDE III</span>
                           </div>
                           <span className="text-xs text-text-muted">~$245K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">L5 SDE II</span>
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium text-white">L5 SDE II</span>
                           </div>
                           <span className="text-xs text-text-muted">~$190K</span>
                         </li>
@@ -373,19 +373,76 @@ const Dashboard: React.FC = () => {
                     
                     {selectedCompany === 'Netflix' && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">Senior SWE</span>
+                            <span className="font-medium text-white">Senior SWE</span>
                           </div>
                           <span className="text-xs text-text-muted">~$425K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium">SWE</span>
+                            <span className="font-medium text-white">SWE</span>
                           </div>
                           <span className="text-xs text-text-muted">~$325K</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {selectedCompany === 'AMD' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium text-white">Principal Engineer</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$220K</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium text-white">Senior Engineer II</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$180K</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {selectedCompany === 'LinkedIn' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium text-white">Staff SWE (IC5)</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$290K</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium text-white">Senior SWE (IC4)</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$224K</span>
+                        </li>
+                      </>
+                    )}
+                    
+                    {selectedCompany === 'Salesforce' && (
+                      <>
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            <span className="font-medium text-white">Lead MTS (Senior)</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$235K</span>
+                        </li>
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span className="font-medium text-white">Member of Technical Staff</span>
+                          </div>
+                          <span className="text-xs text-text-muted">~$185K</span>
                         </li>
                       </>
                     )}
@@ -395,21 +452,24 @@ const Dashboard: React.FC = () => {
                       selectedCompany !== 'Meta' && 
                       selectedCompany !== 'Apple' && 
                       selectedCompany !== 'Amazon' && 
-                      selectedCompany !== 'Netflix') && (
+                      selectedCompany !== 'Netflix' &&
+                      selectedCompany !== 'AMD' &&
+                      selectedCompany !== 'LinkedIn' &&
+                      selectedCompany !== 'Salesforce') && (
                       <>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium">Senior Software Engineer</span>
+                            <span className="font-medium text-white">Senior Software Engineer</span>
                           </div>
-                          <span className="text-xs text-text-muted">Varies</span>
+                          <span className="text-xs text-text-muted">$170K-$240K</span>
                         </li>
-                        <li className="text-sm bg-surface-dark/60 p-2 rounded flex items-center justify-between">
+                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
                           <div className="flex items-center">
                             <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium">Software Engineer</span>
+                            <span className="font-medium text-white">Software Engineer</span>
                           </div>
-                          <span className="text-xs text-text-muted">Varies</span>
+                          <span className="text-xs text-text-muted">$130K-$180K</span>
                         </li>
                       </>
                     )}
