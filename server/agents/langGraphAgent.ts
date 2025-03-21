@@ -189,36 +189,56 @@ export class LangGraphCaraAgent {
   private safeParseJSON = (text: any) => {
     // Convert MessageContent to string if needed
     if (typeof text !== 'string') {
-      console.log("Input is not a string, attempting to convert:", typeof text);
       try {
-        if (Array.isArray(text)) {
-          // Join array elements with newlines
-          text = text.join("\n");
-        } else if (text && typeof text === 'object') {
-          // Try to stringify the object
-          text = JSON.stringify(text);
-        } else {
-          // Convert to string
-          text = String(text);
-        }
+        text = typeof text === 'object' ? JSON.stringify(text) : String(text);
       } catch (error) {
         console.error("Failed to convert input to string:", error);
         text = "";
       }
     }
-    // For debugging
-    console.log("Attempting to parse JSON string, first 100 chars:", text.substring(0, 100) + (text.length > 100 ? "..." : ""));
+
+    // Remove markdown code blocks
+    text = text.replace(/```(?:json)?\s*([\s\S]*?)\s*```/g, '$1');
     
     try {
       // First try direct parsing
       return JSON.parse(text);
     } catch (e) {
       try {
-        // Extract content between triple backticks if present
-        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (codeBlockMatch) {
-          text = codeBlockMatch[1];
+        // Clean the text
+        let cleaned = text
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+          .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+          .replace(/\/\/.*/g, '') // Remove single-line comments
+          .replace(/\s*"(\w+)"\s*:/g, '"$1":') // Normalize property names
+          .replace(/,\s*([\]}])/g, '$1') // Remove trailing commas
+          .replace(/:\s*'([^']*)'/g, ':"$1"') // Convert single to double quotes
+          .replace(/:\s*"([^"]*)"\s*([,}])/g, ':"$1"$2') // Fix spacing around values
+          .trim();
+
+        // Handle potential unclosed structures
+        let openBraces = (cleaned.match(/\{/g) || []).length;
+        let closeBraces = (cleaned.match(/\}/g) || []).length;
+        let openBrackets = (cleaned.match(/\[/g) || []).length;
+        let closeBrackets = (cleaned.match(/\]/g) || []).length;
+
+        // Add missing closing braces/brackets
+        while (openBraces > closeBraces) {
+          cleaned += '}';
+          closeBraces++;
         }
+        while (openBrackets > closeBrackets) {
+          cleaned += ']';
+          closeBrackets++;
+        }
+
+        return JSON.parse(cleaned);
+      } catch (finalError) {
+        console.error("All JSON parsing attempts failed:", finalError);
+        return {};
+      }
+    }
+  };
 
         // Find the outermost JSON object or array
         let jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
