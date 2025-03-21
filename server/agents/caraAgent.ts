@@ -1,7 +1,7 @@
 // Cara - Career Transition AI Agent using LangGraph's Plan-Execute pattern
 import { storage } from '../storage';
 import { SkillGapAnalysis } from './langGraphAgent';
-import { CaraPlanExecuteAgent } from './caraPlanExecuteAgent';
+import { CaraPlanExecuteAgent } from './caraPlanExecuteAgent-fixed';
 
 // Interface for Cara's analysis results
 export interface CaraAnalysisResult {

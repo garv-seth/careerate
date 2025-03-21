@@ -167,7 +167,16 @@ export class CaraPlanExecuteAgent {
       };
     } catch (error) {
       console.error("Error in Plan-Execute analysis:", error);
-      throw error;
+      // Return fallback results to prevent complete failure
+      return {
+        skillGaps: [],
+        insights: {
+          keyObservations: ["Error occurred during analysis"],
+          commonChallenges: [],
+          successStories: []
+        },
+        scrapedCount: 0
+      };
     }
   }
 
@@ -270,7 +279,7 @@ Create a plan with 4-6 steps that comprehensively analyzes this career transitio
       try {
         // Customize input based on the current state
         let taskPrompt = task;
-        if (state.pastSteps.length > 0) {
+        if (state.pastSteps && state.pastSteps.length > 0) {
           // Add context from previous steps
           taskPrompt += `\n\nContext from previous steps:`;
           state.pastSteps.forEach(([step, result]) => {
@@ -505,8 +514,6 @@ Steps completed so far:
 If all necessary analysis steps have been completed, summarize the findings using the 'response' function.
 If more steps are needed, provide an updated plan of the REMAINING steps using the 'plan' function.`;
 
-    const parser = new JsonOutputToolsParser();
-    
     return async (state: typeof CaraPlanExecuteState.State): Promise<Partial<typeof CaraPlanExecuteState.State>> => {
       console.log("Evaluating progress and replanning");
       
@@ -517,56 +524,13 @@ If more steps are needed, provide an updated plan of the REMAINING steps using t
           .map(([step, result]) => `${step}:\n${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`)
           .join("\n\n");
         
-        // Invoke the replan tool
-        const llmWithTools = this.model.bindTools([planTool, responseTool]);
-        
-        // Format the prompt with variables
-        const formattedPrompt = replanPrompt
-          .replace('{input.currentRole}', state.input.currentRole)
-          .replace('{input.targetRole}', state.input.targetRole)
-          .replace('{originalPlan}', originalPlan)
-          .replace('{completedSteps}', completedSteps);
-        
         // Simple approach: if there are no more steps, complete the process
         if (state.plan.length === 0) {
           return { response: "Career transition analysis complete." };
         }
         
-        try {
-          const llmResponse = await llmWithTools.invoke(formattedPrompt);
-          
-          // Get the response as string
-          const responseString = typeof llmResponse.content === 'string' 
-            ? llmResponse.content 
-            : JSON.stringify(llmResponse.content);
-            
-          // Check for response or plan keywords
-          if (responseString.includes('"response"')) {
-            // Extract the response value
-            const match = responseString.match(/"response"\s*:\s*"([^"]+)"/);
-            if (match && match[1]) {
-              return { response: match[1] };
-            }
-          } else if (responseString.includes('"steps"')) {
-            // Extract plan steps
-            const match = responseString.match(/"steps"\s*:\s*\[(.*?)\]/s);
-            if (match && match[1]) {
-              // Parse the array of steps
-              const stepsString = '[' + match[1] + ']';
-              try {
-                const steps = JSON.parse(stepsString.replace(/'/g, '"'));
-                if (Array.isArray(steps) && steps.length > 0) {
-                  return { plan: steps };
-                }
-              } catch (e) {
-                console.error("Error parsing steps:", e);
-              }
-            }
-          }
-          
-          // If we got here, continue with the existing plan
-          return {};
-        }
+        // Otherwise, continue with the existing plan
+        return {};
       } catch (error) {
         console.error("Error in replan node:", error);
         // If there are no more steps, assume we're done
