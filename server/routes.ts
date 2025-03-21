@@ -579,9 +579,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             skillGaps.push(newSkillGap);
           }
           
-          console.log(`Created ${skillGaps.length} real skill gaps for transition using Perplexity Sonar`);
+          console.log(`Created ${skillGaps.length} real skill gaps for transition using LangGraph`);
         } catch (error) {
-          console.error("Error generating skill gaps with Perplexity:", error);
+          console.error("Error generating skill gaps with LangGraph:", error);
           
           // As a true fallback, use target role data from our database only in case of API failure
           const targetRoleSkills = await storage.getRoleSkills(targetRole);
@@ -608,7 +608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               skillGaps.push(newSkillGap);
             }
             
-            console.log(`Created ${skillGaps.length} role-based skill gaps after Perplexity API failure`);
+            console.log(`Created ${skillGaps.length} role-based skill gaps after LangGraph API failure`);
           }
         }
       }
@@ -660,7 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           progress: 0,
         });
 
-        // Use resources from Perplexity Sonar's response directly
+        // Use resources from LangGraph's response directly
         if (milestone.resources && milestone.resources.length > 0) {
           for (const resource of milestone.resources) {
             await storage.createResource({
@@ -671,9 +671,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } else {
-          // Find additional resources with Perplexity Sonar
+          // Find additional resources with Tavily search
           // Note: This situation should be rare as our plan generation includes resources
-          console.log("Finding additional resources for milestone using Perplexity Sonar");
+          console.log("Finding additional resources for milestone using Tavily search");
           const additionalResources = await findResources(
             milestone.title, 
             `${transition.currentRole} to ${transition.targetRole} transition`
@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get insights (should be empty after deletion)
       let insights: any[] = [];
       if (insights.length === 0) {
-        console.log("No insights found, generating insights with Perplexity Sonar");
+        console.log("No insights found, generating insights with LangGraph and Tavily");
         
         const { currentRole, targetRole } = transition;
         
@@ -816,16 +816,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
           
-          // Now analyze the data with Perplexity
+          // Now analyze the data with LangGraph
           if (formattedData.length > 0) {
-            console.log(`Analyzing ${formattedData.length} stories with Perplexity Sonar`);
+            console.log(`Analyzing ${formattedData.length} stories with LangGraph and Tavily`);
             const analysisResult = await analyzeTransitionStories(
               currentRole, 
               targetRole, 
               formattedData
             );
             
-            // Store observations from Perplexity Sonar
+            // Store observations from LangGraph analysis
             if (analysisResult.keyObservations && analysisResult.keyObservations.length > 0) {
               for (const observation of analysisResult.keyObservations) {
                 await storage.createInsight({
@@ -849,7 +849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             }
             
-            // Store challenges from Perplexity Sonar
+            // Store challenges from LangGraph analysis
             if (analysisResult.commonChallenges && analysisResult.commonChallenges.length > 0) {
               for (const challenge of analysisResult.commonChallenges) {
                 await storage.createInsight({
