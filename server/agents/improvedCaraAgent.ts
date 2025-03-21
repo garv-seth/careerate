@@ -60,9 +60,10 @@ export class ImprovedCaraAgent {
         transition = await storage.createTransition({
           currentRole: this.currentRole,
           targetRole: this.targetRole,
-          userId: null,
-          isComplete: false
+          userId: null
         });
+        // Set the transition to not complete
+        await storage.updateTransitionStatus(transition.id, false);
         console.log(`Created new transition ID: ${transition.id}`);
       } else {
         console.log(`Found existing transition ID: ${transition.id}`);

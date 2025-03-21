@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { insertTransitionSchema } from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent";
+import { ImprovedCaraAgent } from "./agents/improvedCaraAgent";
 import {
   searchForums,
   analyzeSkillGaps,
@@ -42,10 +43,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transition = await storage.createTransition(validatedData);
       }
       
-      console.log(`Starting scraping and analysis process for transition ${transition.id}`);
+      console.log(`Starting improved scraping and analysis process for transition ${transition.id}`);
       
-      // Create Cara agent and start both processes
-      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      // Create ImprovedCara agent that uses the Plan-Execute agent with LangGraph
+      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
       
       // Start the analysis process (includes scraping)
       cara.analyzeCareerTransition().catch(error => {
@@ -157,13 +158,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create Cara agent for web scraping with enhanced queries
-      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      // Create ImprovedCara agent for web scraping with enhanced LangGraph capabilities
+      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
       
       // Store that scraping has been initiated (frontend needs immediate response)
       res.json({ 
         success: true, 
-        message: "Scraping initiated with enhanced queries",
+        message: "Scraping initiated with enhanced LangGraph Plan-Execute agent",
         forceRefresh
       });
       
@@ -226,10 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Call the comprehensive analysis endpoint asynchronously
       try {
-        // Create Cara agent 
-        const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+        // Create ImprovedCara agent with LangGraph capabilities
+        const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
         
-        // Perform analysis
+        // Perform analysis with improved multi-agent system
         const analysisResult = await cara.analyzeCareerTransition(currentSkills);
         
         // Store skill gaps
@@ -372,12 +373,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
       const currentSkills = currentRoleSkills.map(item => item.skillName);
 
-      console.log(`Starting Cara analysis for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      console.log(`Starting improved Cara analysis for transition from ${transition.currentRole} to ${transition.targetRole}`);
       
-      // Create Cara agent instance
-      const cara = new CaraAgent(transition.currentRole, transition.targetRole);
+      // Create ImprovedCara agent instance that uses LangGraph Plan-Execute pattern
+      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
       
-      // Perform comprehensive analysis
+      // Perform comprehensive analysis using the improved multi-agent system
       const analysisResult = await cara.analyzeCareerTransition(currentSkills);
       
       // Store scraped data
