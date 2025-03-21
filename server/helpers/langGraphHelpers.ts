@@ -91,7 +91,7 @@ export async function searchForums(
 export async function analyzeSkillGaps(
   currentRole: string,
   targetRole: string,
-  scrapedContent: Array<{ source: string; content: string; url: string; date: string }>,
+  scrapedContent: Array<{ source: string; content: string; url?: string; date?: string; postDate?: string }>,
   existingSkills: string[] = []
 ): Promise<SkillGapAnalysis[]> {
   try {
@@ -160,7 +160,7 @@ export async function analyzeSkillGaps(
 export async function analyzeTransitionStories(
   currentRole: string,
   targetRole: string,
-  scrapedContent: Array<{ source: string; content: string; url: string; date: string }>
+  scrapedContent: Array<{ source: string; content: string; url?: string; date?: string; postDate?: string }>
 ): Promise<{ keyObservations: string[]; commonChallenges: string[] }> {
   try {
     console.log(`Analyzing transition stories from ${currentRole} to ${targetRole}`);
@@ -362,7 +362,7 @@ export async function calculatePersonalizedSuccessRate(
 export async function generateTransitionOverview(
   currentRole: string,
   targetRole: string,
-  scrapedContent: Array<{ source: string; content: string; url: string; date: string }>
+  scrapedContent: Array<{ source: string; content: string; url?: string; date?: string; postDate?: string }>
 ): Promise<{
   successRate: number;
   avgTransitionTime: number;

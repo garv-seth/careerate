@@ -1227,9 +1227,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const formattedData = scrapedData.map(item => ({
           source: item.source,
           content: item.content,
-          url: item.url || undefined,
-          postDate: item.postDate || undefined,
-          date: undefined
+          url: item.url || item.postDate || new Date().toISOString().split('T')[0],
+          date: item.postDate || new Date().toISOString().split('T')[0],
+          postDate: item.postDate || undefined
         }));
         
         // Try to get personalized success rate first
