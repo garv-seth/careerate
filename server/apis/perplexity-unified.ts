@@ -37,6 +37,9 @@ async function callPerplexity(
       throw new Error('PERPLEXITY_API_KEY environment variable is not set');
     }
 
+    // Debug: Log the request (without API key)
+    console.log('Sending request to Perplexity API with model: sonar');
+
     const response = await axios.post(
       PERPLEXITY_API_URL,
       {
@@ -49,14 +52,38 @@ async function callPerplexity(
       { headers: getHeaders() }
     );
 
-    if (response.data && response.data.choices && response.data.choices.length > 0) {
+    // Debug: Log structure of response (without sensitive content)
+    console.log('Perplexity API response structure:', 
+      Object.keys(response.data),
+      'choices length:', response.data.choices?.length);
+
+    // Check if the response has the expected structure
+    if (response.data && 
+        response.data.choices && 
+        Array.isArray(response.data.choices) && 
+        response.data.choices.length > 0 && 
+        response.data.choices[0].message && 
+        response.data.choices[0].message.content) {
+      
+      // Return the content from the first choice
       return response.data.choices[0].message.content;
     } else {
+      console.error('Unexpected API response structure:', JSON.stringify(response.data, null, 2));
       throw new Error('Unexpected response structure from Perplexity API');
     }
   } catch (error: any) {
-    console.error('Error calling Perplexity API:', error);
-    const errorMessage = error.response?.data?.error?.message || error.message || 'Unknown error';
+    // Handle specific API errors
+    const errorResponse = error.response?.data;
+    
+    if (errorResponse) {
+      console.error('Perplexity API error response:', JSON.stringify(errorResponse, null, 2));
+    }
+    
+    const errorMessage = errorResponse?.error?.message || 
+                        error.response?.statusText || 
+                        error.message || 
+                        'Unknown error';
+    
     throw new Error(`Perplexity API error: ${errorMessage}`);
   }
 }
@@ -204,7 +231,7 @@ export async function extractSkills(text: string): Promise<string[]> {
       return JSON.parse(response);
     } catch (parseError) {
       // If direct parsing fails, try to extract JSON array from text
-      const match = response.match(/\[(.*)\]/s);
+      const match = response.match(/\[([\s\S]*)\]/);
       if (match) {
         return JSON.parse(`[${match[1]}]`);
       }
@@ -345,7 +372,13 @@ export async function analyzeSkillGaps(
       if (jsonMatch) {
         skillGapsData = JSON.parse(jsonMatch[0]);
       } else {
-        skillGapsData = JSON.parse(response);
+        try {
+          skillGapsData = JSON.parse(response);
+        } catch (err) {
+          console.error('Failed to parse JSON response directly:', err);
+          console.log('Raw response:', response);
+          throw new Error('Failed to parse API response');
+        }
       }
       
       // Validate the structure
