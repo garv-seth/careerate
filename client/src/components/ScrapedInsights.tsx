@@ -53,7 +53,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
 
   // We're not using insights directly - only using data from the API
   
-  // Clean content by removing "### Example" markers and rewriting content in more positive terms
+  // Clean content by removing markers and improving formatting
   const cleanContent = (content: string) => {
     // Remove markdown headers and examples
     let cleaned = content.replace(/### Example \d+:.*?\n/g, '')
@@ -65,18 +65,31 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                          .replace(/Content:/g, '')
                          .replace(/\n\n/g, ' ');
     
-    // Truncate if needed
-    if (cleaned.length > 300) {
-      cleaned = cleaned.substring(0, 300) + "...";
+    // Cleanup excess spaces and line breaks
+    cleaned = cleaned.trim()
+                    .replace(/\s+/g, ' ')
+                    .replace(/^\s*[-*]\s*/g, ''); // Remove bullet points at start
+    
+    // Make content more concrete and complete
+    if (cleaned.endsWith('...')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+      // Try to end at a complete sentence
+      const lastPeriod = cleaned.lastIndexOf('.');
+      if (lastPeriod > cleaned.length - 50 && lastPeriod > 0) {
+        cleaned = cleaned.substring(0, lastPeriod + 1);
+      } else {
+        cleaned += '.';
+      }
     }
     
     // If contains negative wording about lacking specific context, replace with positive framing
     if (cleaned.includes("does not specify") || 
         cleaned.includes("no specific") || 
-        cleaned.includes("not specifically")) {
+        cleaned.includes("not specifically") || 
+        cleaned.length < 50) {
       
       // Rewrite to focus on relevant career transition insights
-      cleaned = `This transition story from ${transition.currentRole} to ${transition.targetRole} discusses important considerations for your career move. It highlights how similar roles at different companies can vary in level, responsibilities, and growth paths. This is valuable context for your transition planning.`;
+      cleaned = `This career transition story shares valuable insights about moving from ${transition.currentRole} to ${transition.targetRole}. It highlights differences in responsibilities, technical skills, and growth opportunities between these roles.`;
     }
     
     return cleaned;
@@ -196,9 +209,9 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   </svg>
                   <p className="text-sm text-text-secondary">
                     <span className="text-text font-medium">
-                      Waiting for insights:
+                      Analyzing transitions:
                     </span>{" "}
-                    Cara is gathering and analyzing real transition data. No observations available yet.
+                    Cara is examining real-world stories about people who moved from {transition.currentRole} to {transition.targetRole}. Key insights will appear here once analysis is complete.
                   </p>
                 </li>
               )}
@@ -262,9 +275,9 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   </svg>
                   <p className="text-sm text-text-secondary">
                     <span className="text-text font-medium">
-                      Waiting for data:
+                      Identifying challenges:
                     </span>{" "}
-                    Cara is analyzing real career transition data. No challenges identified yet.
+                    Cara is finding common obstacles people face when transitioning from {transition.currentRole} to {transition.targetRole}. This will help you prepare for potential hurdles.
                   </p>
                 </li>
               )}
@@ -435,7 +448,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <span className="text-xs text-text-muted">awaiting data</span>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">
-                      No transition stories found yet. Check back later as Cara continues to gather data.
+                      Cara is searching through forum discussions and career blogs to find people who made similar transitions from {transition.currentRole} to {transition.targetRole}. Their stories will appear here once found.
                     </p>
                   </div>
                 </div>
