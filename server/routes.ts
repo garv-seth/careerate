@@ -778,20 +778,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { currentRole, targetRole } = transition;
         
         try {
-          // Create a mini search query for transition stories
-          const searchQuery = `Career transition from ${currentRole} to ${targetRole} experiences, challenges, and success stories`;
+          // Get existing scraped data first - use what was already scraped
+          const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
           
-          console.log(`Searching for career transition stories: ${searchQuery}`);
-          const perplexityResponse = await searchForums(currentRole, targetRole);
+          // Convert DB data to the format expected by analyzeTransitionStories
+          let formattedData = scrapedData.map(item => ({
+            source: item.source,
+            content: item.content,
+            url: item.url || "",
+            date: item.postDate || new Date().toISOString().split('T')[0]
+          }));
           
-          // If we have results from Perplexity, use them to generate insights
-          if (perplexityResponse && perplexityResponse.length > 0) {
-            // Analyze the scraped content to generate observations and challenges
-            console.log(`Analyzing ${perplexityResponse.length} stories with Perplexity Sonar`);
+          // If no scraped data exists yet, only then do a quick search
+          if (formattedData.length === 0) {
+            console.log(`No scraped data found for transition ID: ${transitionId}, fetching some stories`);
+            const searchQuery = `Career transition from ${currentRole} to ${targetRole} experiences, challenges, and success stories`;
+            
+            console.log(`Searching for career transition stories: ${searchQuery}`);
+            const searchResults = await searchForums(currentRole, targetRole);
+            
+            // The search results are already in the correct format for analyzeTransitionStories
+            formattedData = searchResults;
+            
+            // Save these stories to the database so they're available for later steps
+            for (const item of formattedData) {
+              try {
+                await storage.createScrapedData({
+                  transitionId,
+                  source: item.source,
+                  content: item.content,
+                  url: item.url || null,
+                  postDate: item.date || null,
+                  skillsExtracted: [] 
+                });
+              } catch (saveError) {
+                console.error("Error saving scraped data:", saveError);
+              }
+            }
+          }
+          
+          // Now analyze the data with Perplexity
+          if (formattedData.length > 0) {
+            console.log(`Analyzing ${formattedData.length} stories with Perplexity Sonar`);
             const analysisResult = await analyzeTransitionStories(
               currentRole, 
               targetRole, 
-              perplexityResponse
+              formattedData
             );
             
             // Store observations from Perplexity Sonar
@@ -843,7 +875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Add transition stories directly from scraped data
-            for (const story of perplexityResponse.slice(0, 2)) {
+            for (const story of formattedData.slice(0, 2)) {
               // Clean/truncate content to a reasonable length for stories
               let storyContent = story.content;
               if (storyContent.length > 500) {
