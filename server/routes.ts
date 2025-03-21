@@ -3,9 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { insertTransitionSchema } from "@shared/schema";
-import { CaraAgent } from "./agents/caraAgent"; 
-import { findResourcesWithGemini, generateTransitionOverview } from "./apis/gemini";
-import { FireCrawlLoader } from "@langchain/community/document_loaders/web/firecrawl";
+import { CaraAgent } from "./agents/caraAgent";
+import { generateTransitionOverview } from "./apis/perplexity-unified";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes

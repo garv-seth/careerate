@@ -229,7 +229,7 @@ export async function extractSkills(text: string): Promise<string[]> {
 /**
  * Interface for skill gap analysis
  */
-interface SkillGapAnalysis {
+export interface SkillGapAnalysis {
   skillName: string;
   gapLevel: 'Low' | 'Medium' | 'High';
   confidenceScore: number;

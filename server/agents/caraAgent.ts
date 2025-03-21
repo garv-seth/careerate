@@ -31,7 +31,6 @@ export class CaraAgent {
   private currentRole: string;
   private targetRole: string;
   private scrapedData: any[] = [];
-  private skillAnalyzer: SkillAnalysisAgent | null = null;
   
   constructor(currentRole: string, targetRole: string) {
     this.currentRole = currentRole;
