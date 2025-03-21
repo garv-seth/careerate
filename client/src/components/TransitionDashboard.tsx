@@ -54,7 +54,30 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
   const generateOverviewText = () => {
     if (!insights) return '';
     
-    return `Your transition from ${transition.currentRole} to ${transition.targetRole} shows ${insights.successRate}% success rate based on analyzed stories. The average transition takes about ${insights.avgTransitionTime} months to complete. ${commonPaths.length > 0 ? `The most successful approach is ${commonPaths[0]?.path}.` : ''} Focus on developing the high-priority skills shown in the Skills Analysis section and follow the personalized development plan to maximize your chances of success.`;
+    // Build a more useful summary even if exact match data is limited
+    let overview = `Based on analyzed career transitions from ${transition.currentRole} to ${transition.targetRole} and similar roles, `;
+    
+    // Add success rate context
+    if (insights.successRate > 0) {
+      overview += `approximately ${insights.successRate}% of professionals successfully made this transition. `;
+    } else {
+      overview += `transitions are possible but require specific preparation and strategy. `;
+    }
+    
+    // Add time context
+    overview += `The average transition typically takes about ${insights.avgTransitionTime} months to complete. `;
+    
+    // Add strategy context
+    if (commonPaths.length > 0) {
+      overview += `The most effective approach is: ${commonPaths[0]?.path}. `;
+    } else {
+      overview += `Successful transitions often involve building relevant skills and networking with professionals in the target role. `;
+    }
+    
+    // Add actionable advice
+    overview += `To maximize your chances of success, focus on developing the high-priority skills shown in the Skills Analysis section and follow the personalized Career Trajectory Plan.`;
+    
+    return overview;
   };
 
   return (

@@ -136,7 +136,7 @@ const CareerTrajectory: React.FC<CareerTrajectoryProps> = ({
           ) : (
             <div className="text-center py-4">
               <p className="text-text-secondary">
-                Creating your development plan...
+                Creating your career trajectory plan...
               </p>
               <div className="mt-2 flex justify-center">
                 <svg
