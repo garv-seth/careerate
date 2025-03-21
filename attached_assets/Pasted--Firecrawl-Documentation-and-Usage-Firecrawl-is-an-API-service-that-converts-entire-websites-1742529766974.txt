@@ -1,0 +1,59 @@
+### Firecrawl Documentation and Usage
+
+**Firecrawl** is an API service that converts entire websites into clean markdown or structured data, making it ready for use with Large Language Models (LLMs). Here's a summary of its capabilities and how to use it:
+
+1. **Key Features**:
+   - **Web Crawling**: Firecrawl can crawl a website and all its accessible subpages without needing a sitemap. It provides clean markdown or structured data for each page .
+   - **Real-Time Data Extraction**: Using WebSocket-based methods, Firecrawl can extract and monitor data in real-time. You can customize the crawl with options like page limits and output formats .
+   - **Integration**: Firecrawl integrates with various LLM frameworks like Langchain (Python and JavaScript), Llama Index, and others .
+
+2. **Usage**:
+   - **API Access**: To use Firecrawl, you need to sign up and get an API key. You can then use this key to access the API and start crawling websites .
+   - **Python Example**:
+     ```python
+     from firecrawl import FirecrawlApp
+     app = FirecrawlApp(api_key="fc-YOUR_API_KEY")
+     crawl_status = app.crawl_url(
+         'https://firecrawl.dev',
+         params={
+             'limit': 100,
+             'scrapeOptions': {'formats': ['markdown', 'html']}
+         },
+         poll_interval=30
+     )
+     print(crawl_status)
+     ```
+   - **JavaScript Example**:
+     ```javascript
+     import FirecrawlApp from '@mendable/firecrawl-js';
+     const app = new FirecrawlApp({ apiKey: "fc-YOUR_API_KEY" });
+     await app.scrapeUrl('firecrawl.dev');
+     ```
+
+3. **Documentation**:
+   - You can find detailed documentation and a playground on the [Firecrawl documentation site](https://docs.firecrawl.dev/introduction) .
+
+### LangChain Documentation and Usage
+
+**LangChain** is a framework designed to help developers build applications powered by Large Language Models (LLMs). Here's an overview of its features and how to get started:
+
+1. **Key Features**:
+   - **Composable Components**: LangChain provides a suite of composable components for building LLM-powered applications, including chains, agents, and integrations with various model providers .
+   - **Integrations**: LangChain supports integrations with a wide range of tools, vector stores, and retrievers, making it easy to connect LLMs to diverse data sources .
+   - **LangGraph**: An extension of LangChain aimed at building robust and stateful multi-actor applications with LLMs by modeling steps as edges and nodes in a graph .
+
+2. **Usage**:
+   - **Getting Started**: You can explore LangChain's tutorials and how-to guides to learn how to build applications with chat models, vector stores, and other components .
+   - **Python Example**:
+     ```python
+     from langchain_core.documents import Document
+     document = Document(
+         page_content="Hello, world!",
+         metadata={"source": "https://example.com"}
+     )
+     ```
+
+3. **Documentation**:
+   - Comprehensive documentation for LangChain can be found on the [LangChain Python documentation site](https://python.langchain.com/docs/introduction/) .
+
+For more detailed information, you can refer to the respective documentation sites or explore the provided examples.
