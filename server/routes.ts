@@ -832,7 +832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   transitionId,
                   type: "observation",
                   content: observation,
-                  source: "Perplexity Search",
+                  source: "Tavily Search",
                   date: new Date().toISOString().split('T')[0],
                   experienceYears: null
                 });
@@ -843,7 +843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 transitionId,
                 type: "observation",
                 content: `Professionals transitioning from ${currentRole} to ${targetRole} often succeed by focusing on transferable skills and relevant project work.`,
-                source: "Perplexity Analysis",
+                source: "LangGraph Analysis",
                 date: new Date().toISOString().split('T')[0],
                 experienceYears: null
               });
@@ -856,7 +856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   transitionId,
                   type: "challenge",
                   content: challenge,
-                  source: "Perplexity Search",
+                  source: "Tavily Search",
                   date: new Date().toISOString().split('T')[0],
                   experienceYears: null
                 });
@@ -867,7 +867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 transitionId,
                 type: "challenge",
                 content: `The most common challenge in transitioning from ${currentRole} to ${targetRole} is demonstrating equivalent experience in the new domain.`,
-                source: "Perplexity Analysis",
+                source: "LangGraph Analysis",
                 date: new Date().toISOString().split('T')[0],
                 experienceYears: null
               });
