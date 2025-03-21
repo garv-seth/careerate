@@ -108,7 +108,7 @@ function normalizeDate(dateStr: string): string {
  * @param maxTokens Maximum tokens for the response
  * @returns The API response text
  */
-async function callPerplexity(
+export async function callPerplexity(
   prompt: string, 
   maxTokens: number = 1000
 ): Promise<string> {

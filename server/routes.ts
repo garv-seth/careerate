@@ -4,7 +4,13 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { insertTransitionSchema } from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent";
-import { generateTransitionOverview, findResources } from "./apis/perplexity-unified";
+import { 
+  generateTransitionOverview, 
+  findResources,
+  searchForums,
+  analyzeTransitionStories,
+  callPerplexity
+} from "./apis/perplexity-unified";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes

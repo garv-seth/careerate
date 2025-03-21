@@ -162,6 +162,7 @@ export const insights = pgTable("insights", {
   source: text("source"),
   date: text("date"),
   experienceYears: integer("experience_years"),
+  url: text("url"),
 });
 
 export const insertInsightSchema = createInsertSchema(insights).pick({
@@ -171,6 +172,7 @@ export const insertInsightSchema = createInsertSchema(insights).pick({
   source: true,
   date: true,
   experienceYears: true,
+  url: true,
 });
 
 export type InsertInsight = z.infer<typeof insertInsightSchema>;
