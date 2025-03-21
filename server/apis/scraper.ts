@@ -6,19 +6,11 @@ const firecrawlApp = new FirecrawlApp({
   apiKey: process.env.FIRECRAWL_API_KEY || "" 
 });
 
-// Interface for scraped result
+// Interface for scraped data
 interface ScrapedResult {
   source: string;
   content: string;
   url: string;
-}
-
-// Define Firecrawl response type
-interface FirecrawlResponse {
-  url?: string;
-  markdown?: string;
-  html?: string;
-  error?: string;
 }
 
 // Sites to target for career transition stories
