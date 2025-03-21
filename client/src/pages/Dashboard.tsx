@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import TransitionDashboard from "@/components/TransitionDashboard";
 import SkillGapAnalysis from "@/components/SkillGapAnalysis";
 import CareerTrajectory from "@/components/CareerTrajectory";
-import ScrapedInsights from "@/components/ScrapedInsights";
+import ScrapedInsights from "@/components/ImprovedScrapedInsights";
 import CompanyLogoNetwork from "@/components/CompanyLogoNetwork";
 import DigitalRain from "@/components/DigitalRain";
 import { apiRequest } from "@/lib/queryClient";
