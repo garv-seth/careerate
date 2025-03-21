@@ -650,17 +650,18 @@ export async function analyzeTransitionStories(
       2. Common challenges - difficulties most people faced during the transition
       
       For each point:
-      - Include a direct quote or reference from the stories when possible
+      - Be concise and complete (do not end with "...")
       - Include the source platform (Reddit, Quora, etc.)
       - Focus on actionable insights that would help someone make this transition
+      - Write in a natural narrative style without quotes or stars
       
       Format your response as JSON:
       {
         "keyObservations": [
-          "Key insight: [observation text with quote] Source: [platform]"
+          "One professional transitioning from ${currentRole} to ${targetRole} mentioned that... Source: [platform]"
         ],
         "commonChallenges": [
-          "Challenge: [challenge text with quote] Source: [platform]"
+          "Many professionals found that... Source: [platform]"
         ]
       }
       

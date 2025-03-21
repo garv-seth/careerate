@@ -605,10 +605,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate insights from scraped data using Perplexity Sonar
       try {
+        // Convert scrapedData to compatible format for generateTransitionOverview
+        const formattedData = scrapedData.map(item => ({
+          source: item.source,
+          content: item.content,
+          url: item.url || undefined,
+          postDate: item.postDate || undefined,
+          date: undefined
+        }));
+        
         const overviewData = await generateTransitionOverview(
           transition.currentRole,
           transition.targetRole,
-          scrapedData
+          formattedData
         );
         
         res.json({ 

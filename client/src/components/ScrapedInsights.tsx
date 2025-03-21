@@ -126,9 +126,6 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       />
                     </svg>
                     <p className="text-sm text-text-secondary">
-                      <span className="text-text font-medium">
-                        Key insight:
-                      </span>{" "}
                       {observation.content}
                     </p>
                   </li>
@@ -195,9 +192,6 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       />
                     </svg>
                     <p className="text-sm text-text-secondary">
-                      <span className="text-text font-medium">
-                        Challenge:
-                      </span>{" "}
                       {challenge.content}
                     </p>
                   </li>
@@ -277,7 +271,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                         </span>
                       </div>
                       <p className="text-sm text-text-secondary mb-2">
-                        "{story.content}"
+                        {story.content}
                       </p>
                       <div className="flex flex-wrap items-center text-xs text-text-muted">
                         <span className="inline-flex items-center mr-4 mb-1">
@@ -361,7 +355,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <span className="text-xs text-text-muted">retrieving data</span>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">
-                      "Loading transition stories from real sources..."
+                      Loading transition stories from real sources...
                     </p>
                   </div>
                 </div>
@@ -391,7 +385,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <span className="text-xs text-text-muted">awaiting data</span>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">
-                      "No transition stories found yet. Check back later as Cara continues to gather data."
+                      No transition stories found yet. Check back later as Cara continues to gather data.
                     </p>
                   </div>
                 </div>
