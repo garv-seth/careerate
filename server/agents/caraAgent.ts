@@ -93,6 +93,7 @@ export class CaraAgent {
             source: item.source,
             content: item.content,
             url: item.url || null,
+            postDate: item.date || null,
             skillsExtracted: [] // We'll extract skills later
           });
           console.log(`Saved scraped data from ${item.source} to database`);
@@ -126,6 +127,7 @@ export class CaraAgent {
                   source: item.source,
                   content: item.content,
                   url: item.url || null,
+                  postDate: item.date || null,
                   skillsExtracted: []
                 });
                 

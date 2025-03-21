@@ -101,26 +101,29 @@ export async function searchForums(
 ): Promise<{ source: string; content: string; url: string; date: string }[]> {
   try {
     const searchQuery = `
-      I need detailed stories from people who have transitioned from ${currentRole} to ${targetRole} careers.
-      Search across Reddit, Quora, Blind, and any relevant forums.
+      Find detailed stories from people who have successfully transitioned from "${currentRole}" to "${targetRole}" careers.
+      Search across Reddit, Quora, Blind, HackerNews, Medium, LinkedIn and other relevant professional forums.
       
-      For each story you find:
-      1. Include the EXACT full text of the person's story
-      2. Provide the exact source (Reddit, Quora, etc.) and complete URL
-      3. Include the publication date of the post
-      4. Make sure the story is from someone who has ACTUALLY made this career transition
+      For each story:
+      1. Provide ONLY stories from people who have ACTUALLY completed this specific career transition
+      2. Include the EXACT and COMPLETE text of their career transition story
+      3. Provide the exact source platform (Reddit, Quora, etc.) with the specific subreddit or forum section
+      4. Include the complete URL to the original post (not just the domain)
+      5. Include the exact publication date in YYYY-MM-DD format when available
       
-      Format each result as:
-      - Source: [platform name]
-      - URL: [complete URL]
-      - Date: [publication date]
-      - Content: [full text of the transition story]
+      Format each result precisely as:
+      Source: [platform name with specific forum/subreddit]
+      URL: [complete URL to the specific post]
+      Date: [YYYY-MM-DD or most specific date available]
+      Content:
+      [The complete text of the transition story]
       
-      Return at least 3-5 real examples with full citations. 
-      Format your response so I can easily parse each story with its metadata.
+      Return at least 3-5 highly relevant examples with proper citations.
+      Do NOT generate or fabricate stories. Only return real examples you can cite with URLs.
+      Use triple backticks as delimiters between different stories to make them easy to parse.
     `;
 
-    const response = await callPerplexity(searchQuery);
+    const response = await callPerplexity(searchQuery, 1500);
     return parseForumResults(response);
   } catch (error: any) {
     console.error('Error searching forums with Perplexity:', error);
@@ -135,64 +138,134 @@ function parseForumResults(responseText: string): { source: string; content: str
   try {
     const results: { source: string; content: string; url: string; date: string }[] = [];
     
-    // Split the text by story entries (looking for "Source:" as the delimiter)
-    const storyBlocks = responseText.split(/(?=Source:|SOURCE:)/g).filter(block => block.trim().length > 0);
+    // First try to split by markdown code blocks which is our preferred format
+    const markdownBlocks = responseText.split(/```(?:markdown)?|```/).filter(block => block.trim().length > 0);
     
-    for (const block of storyBlocks) {
-      let source = '';
-      let url = '';
-      let date = '';
-      let content = '';
+    // If we have markdown blocks, process them
+    if (markdownBlocks.length > 1) {
+      console.log(`Found ${markdownBlocks.length} markdown-formatted blocks to parse`);
+      
+      for (const block of markdownBlocks) {
+        if (!block.includes('Source:') && !block.includes('URL:')) continue;
+        
+        let source = '';
+        let url = '';
+        let date = '';
+        let content = '';
 
-      // Extract source
-      const sourceMatch = block.match(/Source:?\s*([^\n]+)/i);
-      if (sourceMatch && sourceMatch[1]) {
-        source = sourceMatch[1].trim();
-      }
+        // Extract source
+        const sourceMatch = block.match(/Source:?\s*([^\n]+)/i);
+        if (sourceMatch && sourceMatch[1]) {
+          source = sourceMatch[1].trim();
+        }
 
-      // Extract URL
-      const urlMatch = block.match(/URL:?\s*([^\n]+)/i);
-      if (urlMatch && urlMatch[1]) {
-        url = urlMatch[1].trim();
-      }
+        // Extract URL
+        const urlMatch = block.match(/URL:?\s*([^\n]+)/i);
+        if (urlMatch && urlMatch[1]) {
+          url = urlMatch[1].trim();
+        }
 
-      // Extract date
-      const dateMatch = block.match(/Date:?\s*([^\n]+)/i);
-      if (dateMatch && dateMatch[1]) {
-        date = dateMatch[1].trim();
-      }
-
-      // Extract content - everything after "Content:" or after all metadata
-      const contentMatch = block.match(/Content:?\s*([\s\S]+)/i);
-      if (contentMatch && contentMatch[1]) {
-        content = contentMatch[1].trim();
-      } else {
-        // If no Content label, try to extract content after all metadata
-        const lines = block.split('\n').filter(line => line.trim().length > 0);
-        // Skip metadata lines and join the rest as content
-        let contentStarted = false;
-        for (const line of lines) {
-          if (contentStarted) {
-            content += line + '\n';
-          } else if (!line.match(/^(Source|URL|Date):/i)) {
-            contentStarted = true;
-            content += line + '\n';
+        // Extract date - try to match YYYY-MM-DD format first
+        const dateMatch = block.match(/Date:?\s*([^\n]+)/i);
+        if (dateMatch && dateMatch[1]) {
+          date = dateMatch[1].trim();
+          
+          // Try to standardize date format if possible
+          if (date.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/)) {
+            // Already in YYYY-MM-DD or YYYY/MM/DD format
+            date = date.replace(/\//g, '-');
+          } else if (date.match(/\d{1,2}[-/]\d{1,2}[-/]\d{4}/)) {
+            // In MM-DD-YYYY or DD-MM-YYYY format
+            const parts = date.replace(/\//g, '-').split('-');
+            if (parts.length === 3) {
+              date = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+            }
           }
         }
-        content = content.trim();
-      }
 
-      // Only add if we have at least source and content
-      if (source && content) {
-        results.push({
-          source,
-          content,
-          url: url || 'Not provided',
-          date: date || 'Not provided'
-        });
+        // Extract content - everything after "Content:" and before the next section
+        const contentMatch = block.match(/Content:?\s*([\s\S]+)/i);
+        if (contentMatch && contentMatch[1]) {
+          content = contentMatch[1].trim();
+        }
+
+        // Only add if we have minimum required data
+        if (source && content && content.length > 50) {
+          results.push({
+            source,
+            content,
+            url: url || 'Not provided',
+            date: date || 'Not provided'
+          });
+        }
+      }
+    } 
+    
+    // If no results from markdown blocks, fall back to the original method
+    if (results.length === 0) {
+      console.log('Falling back to legacy parsing method');
+      
+      // Split by "Source:" sections
+      const storyBlocks = responseText.split(/(?=Source:|SOURCE:)/g).filter(block => block.trim().length > 0);
+      
+      for (const block of storyBlocks) {
+        let source = '';
+        let url = '';
+        let date = '';
+        let content = '';
+
+        // Extract source
+        const sourceMatch = block.match(/Source:?\s*([^\n]+)/i);
+        if (sourceMatch && sourceMatch[1]) {
+          source = sourceMatch[1].trim();
+        }
+
+        // Extract URL
+        const urlMatch = block.match(/URL:?\s*([^\n]+)/i);
+        if (urlMatch && urlMatch[1]) {
+          url = urlMatch[1].trim();
+        }
+
+        // Extract date
+        const dateMatch = block.match(/Date:?\s*([^\n]+)/i);
+        if (dateMatch && dateMatch[1]) {
+          date = dateMatch[1].trim();
+        }
+
+        // Extract content - everything after "Content:" or after all metadata
+        const contentMatch = block.match(/Content:?\s*([\s\S]+)/i);
+        if (contentMatch && contentMatch[1]) {
+          content = contentMatch[1].trim();
+        } else {
+          // If no Content label, try to extract content after all metadata
+          const lines = block.split('\n').filter(line => line.trim().length > 0);
+          // Skip metadata lines and join the rest as content
+          let contentStarted = false;
+          for (const line of lines) {
+            if (contentStarted) {
+              content += line + '\n';
+            } else if (!line.match(/^(Source|URL|Date):/i)) {
+              contentStarted = true;
+              content += line + '\n';
+            }
+          }
+          content = content.trim();
+        }
+
+        // Only add if we have at least source and content
+        if (source && content && content.length > 50) {
+          results.push({
+            source,
+            content,
+            url: url || 'Not provided',
+            date: date || 'Not provided'
+          });
+        }
       }
     }
 
+    console.log(`Successfully parsed ${results.length} results from Perplexity response`);
+    
     // Filter out results that don't have sufficient data
     return results.filter(result => 
       result.source && 
@@ -218,10 +291,13 @@ export async function extractSkills(text: string): Promise<string[]> {
       Analyze the following text about a career transition and extract a list of technical and soft skills 
       that are mentioned or implied as important for the target role:
 
-      ${text.substring(0, 10000)} // Limiting text length to avoid token limits
+      ${text.substring(0, 10000)}
 
-      Return ONLY a JSON array of skill names, nothing else. 
-      Example response format: ["Python", "System Design", "Leadership", "Distributed Systems"]
+      Return ONLY a JSON array of skill names, nothing else. Format your response as:
+      ["Python", "System Design", "Leadership", "Distributed Systems"]
+      
+      Do not include any explanatory text, markdown formatting, or additional information.
+      Only provide the JSON array.
     `;
 
     const response = await callPerplexity(prompt);
