@@ -9,6 +9,7 @@ import CareerTrajectory from "@/components/CareerTrajectory";
 import ScrapedInsights from "@/components/ImprovedScrapedInsights";
 import CompanyLogoNetwork from "@/components/CompanyLogoNetwork";
 import DigitalRain from "@/components/DigitalRain";
+import EngagingLoader from "@/components/EngagingLoader";
 import { apiRequest } from "@/lib/queryClient";
 import { DashboardData } from "@/types";
 
@@ -33,56 +34,91 @@ const Dashboard: React.FC = () => {
     enabled: !!transitionId,
   });
 
-  // Process API if transition is not complete
+  // State for tracking loading stages
+  const [loadingStage, setLoadingStage] = useState<'stories' | 'skills' | 'plan' | 'insights' | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Process API if transition is not complete - with improved sequencing to ensure data dependencies
   useEffect(() => {
     const processApiSteps = async () => {
-      if (!data || data.isComplete) return;
+      if (!data || data.isComplete || isProcessing) return;
 
+      setIsProcessing(true);
+      
       try {
-        // Step 1: Scrape forums
+        // Step 1: Scrape forums - this needs to happen first to get real stories
+        setLoadingStage('stories');
         toast({
-          title: "Scraping forums",
-          description: "Finding similar career transitions...",
+          title: "Finding transition stories",
+          description: "Collecting real-world career transition data...",
           duration: 3000,
         });
         
-        await apiRequest("/api/scrape", {
+        const scrapeResult = await apiRequest("/api/scrape", {
           method: "POST",
-          data: { transitionId }
+          data: { 
+            transitionId,
+            forceRefresh: true // Force new data each time for better personalization
+          }
         });
         
-        // Step 2: Analyze skills
+        // Short delay to ensure scraping completes
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Step 2: Analyze skills - now we have stories to analyze against
+        setLoadingStage('skills');
         toast({
-          title: "Analyzing skills",
-          description: "Identifying skill gaps...",
+          title: "Analyzing skill gaps",
+          description: "Identifying critical skills for your transition...",
           duration: 3000,
         });
         
         await apiRequest("/api/analyze", {
           method: "POST",
-          data: { transitionId }
+          data: { 
+            transitionId,
+            useScrapedData: true // Explicitly use the new scraped data
+          }
         });
         
-        // Step 3: Generate plan
+        // Step 3: Generate plan - tailored to the specific user's skill gaps
+        setLoadingStage('plan');
         toast({
-          title: "Generating plan",
-          description: "Creating your personalized career trajectory plan...",
+          title: "Creating career plan",
+          description: "Designing your personalized transition roadmap...",
           duration: 3000,
         });
         
         await apiRequest("/api/plan", {
           method: "POST",
-          data: { transitionId }
+          data: { 
+            transitionId,
+            personalizedTimeline: true // Make sure the plan includes personalized timeline
+          }
         });
+
+        // Step 4: Generate insights - combines all previous data
+        setLoadingStage('insights');
+        toast({
+          title: "Generating insights",
+          description: "Extracting key learnings from similar transitions...",
+          duration: 3000,
+        });
+
+        // This will generate the stories analysis
+        await apiRequest("/api/stories-analysis/" + transitionId);
         
-        // Refresh dashboard data
+        // Refresh dashboard data with all the new content
         queryClient.invalidateQueries({ queryKey: [`/api/dashboard/${transitionId}`] });
         
         toast({
           title: "Analysis complete",
-          description: "Your career transition plan is ready!",
+          description: "Your personalized career transition plan is ready!",
           duration: 5000,
         });
+        
+        setLoadingStage(null);
+        setIsProcessing(false);
       } catch (error) {
         console.error("Error processing API steps:", error);
         toast({
@@ -91,25 +127,59 @@ const Dashboard: React.FC = () => {
           variant: "destructive",
           duration: 5000,
         });
+        setLoadingStage(null);
+        setIsProcessing(false);
       }
     };
 
     processApiSteps();
-  }, [data, transitionId, toast, queryClient]);
+  }, [data, transitionId, toast, queryClient, isProcessing]);
 
-  if (isLoading) {
+  // EngagingLoader component is already imported at the top of the file
+
+  // Show engaging loader when data is loading or being processed
+  if (isLoading || loadingStage) {
+    // Different loading states for initial data load vs processing steps
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-surface-dark rounded w-3/4"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="h-64 bg-surface-dark rounded"></div>
-              <div className="h-64 bg-surface-dark rounded"></div>
-              <div className="h-64 bg-surface-dark rounded"></div>
+          {loadingStage ? (
+            // Engaging loader with interactive content during processing
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+                <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0">
+                  Processing Your Career Data
+                </h1>
+                <div className="flex items-center">
+                  <span className="text-sm text-text-secondary mr-2">
+                    Current stage:
+                  </span>
+                  <span className="text-sm text-primary-light font-medium">
+                    {loadingStage === 'stories' && "Finding Transition Stories"}
+                    {loadingStage === 'skills' && "Analyzing Skill Requirements"}
+                    {loadingStage === 'plan' && "Creating Career Plan"}
+                    {loadingStage === 'insights' && "Extracting Key Insights"}
+                  </span>
+                </div>
+              </div>
+              
+              <EngagingLoader 
+                currentStage={loadingStage}
+                transition={data?.transition || { currentRole: "", targetRole: "" }}
+              />
             </div>
-            <div className="h-96 bg-surface-dark rounded"></div>
-          </div>
+          ) : (
+            // Simple skeleton loader for initial page load
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-surface-dark rounded w-3/4"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="h-64 bg-surface-dark rounded"></div>
+                <div className="h-64 bg-surface-dark rounded"></div>
+                <div className="h-64 bg-surface-dark rounded"></div>
+              </div>
+              <div className="h-96 bg-surface-dark rounded"></div>
+            </div>
+          )}
         </div>
       </div>
     );
