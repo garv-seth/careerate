@@ -113,7 +113,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
         type: "story" as "observation" | "challenge" | "story",
         content: cleanContent(part),
         source: item.source || "Career Transition Story",
-        date: item.postDate || (item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
+        date: item.postDate || 'Date unavailable',
         experienceYears: null,
         url: item.url
       }));
@@ -125,7 +125,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
         type: "story" as "observation" | "challenge" | "story",
         content: cleanContent(item.content),
         source: item.source || "Career Transition Story",
-        date: item.postDate || (item.createdAt ? new Date(item.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]),
+        date: item.postDate || 'Date unavailable',
         experienceYears: null,
         url: item.url
       }];
@@ -350,7 +350,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                               clipRule="evenodd"
                             />
                           </svg>
-                          {story.date || "2023"}
+                          {story.date}
                         </span>
                         {story.experienceYears && (
                           <span className="inline-flex items-center mr-4 mb-1">
@@ -398,28 +398,26 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-primary-light animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                      className="h-5 w-5 text-primary-light animate-pulse"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
                     >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 6v6l4 2" />
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
-                  <div>
-                    <div className="flex items-center mb-1">
-                      <h4 className="text-sm font-medium mr-2">
-                        {transition.currentRole} → {transition.targetRole}
-                      </h4>
-                      <span className="text-xs text-text-muted opacity-70 font-light">retrieving data</span>
+                  <div className="w-full">
+                    <div className="h-4 bg-primary/10 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-primary/10 rounded w-full mb-1"></div>
+                    <div className="h-3 bg-primary/10 rounded w-4/5 mb-1"></div>
+                    <div className="h-3 bg-primary/10 rounded w-5/6 mb-2"></div>
+                    <div className="flex">
+                      <div className="h-2 bg-primary/10 rounded w-16 mr-2"></div>
+                      <div className="h-2 bg-primary/10 rounded w-12"></div>
                     </div>
-                    <p className="text-sm text-text-secondary mb-2">
-                      Loading transition stories from real sources...
-                    </p>
                   </div>
                 </div>
               </div>
@@ -435,20 +433,14 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                     >
                       <path
                         fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                         clipRule="evenodd"
                       />
                     </svg>
                   </div>
                   <div>
-                    <div className="flex items-center mb-1">
-                      <h4 className="text-sm font-medium mr-2">
-                        {transition.currentRole} → {transition.targetRole}
-                      </h4>
-                      <span className="text-xs text-text-muted">awaiting data</span>
-                    </div>
                     <p className="text-sm text-text-secondary mb-2">
-                      Cara is searching through forum discussions and career blogs to find people who made similar transitions from {transition.currentRole} to {transition.targetRole}. Their stories will appear here once found.
+                      Cara is collecting transition stories from people who have moved from {transition.currentRole} to {transition.targetRole}. Check back soon for real-world examples.
                     </p>
                   </div>
                 </div>
@@ -458,25 +450,41 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
             {allStories.length > 1 && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="w-full py-2 text-sm text-primary-light hover:text-primary flex items-center justify-center"
+                className="text-sm text-primary-light hover:underline flex items-center mt-2"
               >
-                <span>
-                  {expanded ? "Show less" : "View more transition stories"}
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-4 w-4 ml-1 transform ${
-                    expanded ? "rotate-180" : ""
-                  }`}
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                {expanded ? (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Show less stories
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-1"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Show {allStories.length - 1} more stories
+                  </>
+                )}
               </button>
             )}
           </div>
