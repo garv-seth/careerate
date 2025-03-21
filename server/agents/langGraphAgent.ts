@@ -9,7 +9,15 @@ import { ChatOpenAI } from "@langchain/openai";
 import { StructuredTool } from "@langchain/core/tools";
 import { storage } from "../storage";
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
-import { SkillGapAnalysis } from "../apis/perplexity-unified";
+
+// Define our own skill gap analysis interface to avoid dependency on the Perplexity API file
+export interface SkillGapAnalysis {
+  skillName: string;
+  gapLevel: 'Low' | 'Medium' | 'High';
+  confidenceScore: number;
+  mentionCount: number;
+  contextSummary: string;
+}
 
 // System prompts for different stages
 const caraSystemPrompts = {

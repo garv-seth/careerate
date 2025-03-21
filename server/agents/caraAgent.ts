@@ -1,9 +1,6 @@
 // Cara - Career Transition AI Agent using LangGraph for orchestration
-import { 
-  SkillGapAnalysis 
-} from '../apis/perplexity-unified';
 import { storage } from '../storage';
-import { LangGraphCaraAgent } from './langGraphAgent';
+import { LangGraphCaraAgent, SkillGapAnalysis } from './langGraphAgent';
 
 // Interface for Cara's analysis results
 export interface CaraAnalysisResult {
