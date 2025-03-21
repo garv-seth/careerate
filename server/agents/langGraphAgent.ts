@@ -290,7 +290,7 @@ export class LangGraphCaraAgent {
           .replace(/"(\s*){/g, '",\n{')
           
           // Fix line breaks in string values
-          .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
+          .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match: string) => {
             return match.replace(/\n/g, '\\n');
           });
         
