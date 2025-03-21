@@ -12,6 +12,7 @@ import {
   callPerplexity,
   calculatePersonalizedSuccessRate
 } from "./apis/perplexity-unified";
+import { scrapeForums } from "./apis/scraper";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes
