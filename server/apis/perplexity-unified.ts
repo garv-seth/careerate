@@ -230,6 +230,18 @@ function parseForumResults(responseText: string): { source: string; content: str
         const dateMatch = block.match(/Date:?\s*([^\n]+)/i);
         if (dateMatch && dateMatch[1]) {
           date = dateMatch[1].trim();
+          
+          // Try to standardize date format if possible
+          if (date.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/)) {
+            // Already in YYYY-MM-DD or YYYY/MM/DD format
+            date = date.replace(/\//g, '-');
+          } else if (date.match(/\d{1,2}[-/]\d{1,2}[-/]\d{4}/)) {
+            // In MM-DD-YYYY or DD-MM-YYYY format
+            const parts = date.replace(/\//g, '-').split('-');
+            if (parts.length === 3) {
+              date = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+            }
+          }
         }
 
         // Extract content - everything after "Content:" or after all metadata
@@ -563,7 +575,7 @@ export async function analyzeTransitionStories(
   try {
     // Combine content for analysis
     const combinedContent = scrapedContent.map(item => 
-      `SOURCE: ${item.source}\nURL: ${item.url || 'Not available'}\nCONTENT: ${item.content}\n---\n`
+      `SOURCE: ${item.source}\nURL: ${item.url || 'Not available'}\nDATE: ${item.postDate || item.date || 'Not available'}\nCONTENT: ${item.content}\n---\n`
     ).join('\n');
 
     const prompt = `
@@ -716,7 +728,7 @@ export async function generateTransitionOverview(
   try {
     // Combine content for analysis
     const combinedContent = scrapedContent.map(item => 
-      `SOURCE: ${item.source}\nURL: ${item.url || 'Not available'}\nCONTENT: ${item.content}\nDATE: ${item.date || 'Not available'}\n---\n`
+      `SOURCE: ${item.source}\nURL: ${item.url || 'Not available'}\nDATE: ${item.postDate || item.date || 'Not available'}\nCONTENT: ${item.content}\n---\n`
     ).join('\n');
 
     const prompt = `
