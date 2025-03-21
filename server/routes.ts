@@ -9,7 +9,8 @@ import {
   findResources,
   searchForums,
   analyzeTransitionStories,
-  callPerplexity
+  callPerplexity,
+  calculatePersonalizedSuccessRate
 } from "./apis/perplexity-unified";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -481,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }));
             
             // Use Perplexity to analyze skill gaps
-            generatedSkillGaps = await analyzeSkillGaps(
+            generatedSkillGaps = await scrapeForums(
               currentRole,
               targetRole,
               formattedData,
@@ -697,7 +698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const searchQuery = `Career transition from ${currentRole} to ${targetRole} experiences, challenges, and success stories`;
           
           console.log(`Searching for career transition stories: ${searchQuery}`);
-          const perplexityResponse = await searchForums(currentRole, targetRole, 3);
+          const perplexityResponse = await searchForums(currentRole, targetRole);
           
           // If we have results from Perplexity, use them to generate insights
           if (perplexityResponse && perplexityResponse.length > 0) {
@@ -938,11 +939,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           // Create a transition query for Perplexity to search
-          const transitionQuery = `${currentRole} to ${targetRole} career transition statistics, success rate, time frame, common paths`;
+          const transitionQuery = `${transition.currentRole} to ${transition.targetRole} career transition statistics, success rate, time frame, common paths`;
           
           console.log(`Searching for transition statistics: ${transitionQuery}`);
           const perplexityPrompt = `
-            You are a career transition analyst studying transitions from ${currentRole} to ${targetRole}.
+            You are a career transition analyst studying transitions from ${transition.currentRole} to ${transition.targetRole}.
             
             Search for real data and statistics about this specific career transition path.
             Look for:
@@ -986,7 +987,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Add skill importance if not present
             if (!insightsData.skillImportance) {
               // Generate skill importance using transition roles
-              const skillPrompt = `What are the most important skills for a ${currentRole} transitioning to ${targetRole}? 
+              const skillPrompt = `What are the most important skills for a ${transition.currentRole} transitioning to ${transition.targetRole}? 
               Return a JSON array of objects with "skill" and "importance" (1-10) properties. Include at least 4 skills.`;
               
               const skillResponse = await callPerplexity(skillPrompt, 800);
@@ -1000,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Add key factors if not present
             if (!insightsData.keyFactors) {
               // Generate key success factors
-              const factorsPrompt = `What are the key success factors for transitioning from ${currentRole} to ${targetRole}? 
+              const factorsPrompt = `What are the key success factors for transitioning from ${transition.currentRole} to ${transition.targetRole}? 
               Return a JSON array of strings with at least 4 factors.`;
               
               const factorsResponse = await callPerplexity(factorsPrompt, 800);
