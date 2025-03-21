@@ -152,7 +152,7 @@ export class CaraAgent {
   /**
    * Analyze skill gaps between current and target roles using Perplexity Sonar
    */
-  private async analyzeSkillGaps(existingSkills: string[]): Promise<SkillGapAnalysis[]> {
+  async analyzeSkillGaps(existingSkills: string[]): Promise<SkillGapAnalysis[]> {
     try {
       // Use Perplexity Sonar directly to analyze skill gaps
       return await analyzeSkillGaps(

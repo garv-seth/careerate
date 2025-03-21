@@ -10,7 +10,8 @@ import {
   searchForums,
   analyzeTransitionStories,
   callPerplexity,
-  calculatePersonalizedSuccessRate
+  calculatePersonalizedSuccessRate,
+  analyzeSkillGaps
 } from "./apis/perplexity-unified";
 import { scrapeForums } from "./apis/scraper";
 
@@ -483,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }));
             
             // Use Perplexity to analyze skill gaps
-            generatedSkillGaps = await scrapeForums(
+            generatedSkillGaps = await analyzeSkillGaps(
               currentRole,
               targetRole,
               formattedData,
