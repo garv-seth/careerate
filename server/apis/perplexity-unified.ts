@@ -180,34 +180,33 @@ export async function searchForums(
   targetRole: string
 ): Promise<{ source: string; content: string; url: string; date: string }[]> {
   try {
-    const searchQuery = `
-      Find detailed stories from people who have successfully transitioned from "${currentRole}" to "${targetRole}" careers.
-      Search across Reddit, Quora, Blind, HackerNews, Medium, LinkedIn and other relevant professional forums.
+    const searchQuery = `Career transition from ${currentRole} to ${targetRole} experiences, challenges, and success stories`;
+    console.log(`Searching for career transition stories: ${searchQuery}`);
+    
+    // Create Perplexity Sonar search query
+    const prompt = `
+      Find real stories from people who have transitioned from "${currentRole}" to "${targetRole}" careers.
+      
+      Search across Reddit, Quora, Blind, HackerNews, Medium, LinkedIn and tech forums.
       
       For each story:
-      1. Provide ONLY stories from people who have ACTUALLY completed this specific career transition
-      2. Include the EXACT and COMPLETE text of their career transition story
-      3. Provide the exact source platform (Reddit, Quora, etc.) with the specific subreddit or forum section
-      4. Include the complete URL to the original post (not just the domain)
-      5. Include the exact publication date in YYYY-MM-DD format whenever possible
-         - For Reddit: include the exact post date from the post metadata (not just "2 years ago")
-         - For Quora: include the exact answer date or last updated date
-         - For Blind: include the post date
-         - For Medium/blogs: include the publication date shown on the article
+      1. Include only REAL stories from people who completed this career transition
+      2. Include the complete text of their story
+      3. Provide the source platform (Reddit, Quora, etc.)
+      4. Include the URL to the original post
+      5. Include the publication date
       
-      Format each result precisely as:
-      Source: [platform name with specific forum/subreddit]
-      URL: [complete URL to the specific post]
-      Date: [YYYY-MM-DD or most specific date available]
-      Content:
-      [The complete text of the transition story]
+      Format each story with:
+      Source: (platform name)
+      URL: (complete URL)
+      Date: (date in YYYY-MM-DD format if possible)
+      Content: (the transition story)
       
-      Return at least 3-5 highly relevant examples with proper citations.
-      Do NOT generate or fabricate stories. Only return real examples you can cite with URLs.
-      Use triple backticks as delimiters between different stories to make them easy to parse.
+      Return 3-5 relevant examples from different platforms.
+      Only return real examples with URLs.
     `;
 
-    const response = await callPerplexity(searchQuery, 1500);
+    const response = await callPerplexity(prompt, 2000);
     return parseForumResults(response);
   } catch (error: any) {
     console.error('Error searching forums with Perplexity:', error);
