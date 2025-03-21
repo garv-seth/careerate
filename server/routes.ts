@@ -48,9 +48,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create Cara agent and start both processes
       const cara = new CaraAgent(transition.currentRole, transition.targetRole);
       
-      // Start the scraping process
-      cara.scrapeWebContent().catch(error => {
-        console.error("Background scraping error:", error);
+      // Start the analysis process (includes scraping)
+      cara.analyzeCareerTransition().catch(error => {
+        console.error("Background analysis error:", error);
       });
       
       // Return the transition ID right away so UI can redirect
@@ -179,8 +179,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // The uniqueTag and today's date trick search engines into avoiding cached results
       console.log(`Starting web scraping for ${transition.currentRole} to ${transition.targetRole} transition (${uniqueTag} - ${today})`);
       
-      cara.scrapeWebContent().catch(error => {
-        console.error("Background scraping error:", error);
+      cara.analyzeCareerTransition().catch(error => {
+        console.error("Background analysis error:", error);
       });
       
     } catch (error) {
@@ -571,10 +571,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               targetRoleSkills.map(s => s.skillName)
             );
           } else {
-            // If no scraped data yet, use Perplexity to make a real-time analysis
-            // This triggers a fresh web search through Perplexity Sonar
-            await cara.scrapeWebContent();
-            generatedSkillGaps = await cara.analyzeSkillGaps(targetRoleSkills.map(s => s.skillName));
+            // If no scraped data yet, use the new Cara agent to perform a full analysis
+            // This triggers a fresh web search and skill gap analysis
+            const analysisResult = await cara.analyzeCareerTransition(targetRoleSkills.map(s => s.skillName));
+            generatedSkillGaps = analysisResult.skillGaps;
           }
           
           // Store the generated skill gaps
