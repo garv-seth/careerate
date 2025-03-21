@@ -299,6 +299,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Integrate Cara AI Agent for comprehensive career analysis
+  // Clear and refresh all data for a transition
+  apiRouter.post("/clear-data", async (req, res) => {
+    try {
+      const transitionId = parseInt(req.body.transitionId);
+
+      if (!transitionId || isNaN(transitionId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid or missing transitionId",
+        });
+      }
+
+      // Get the transition to verify it exists
+      const transition = await storage.getTransition(transitionId);
+      
+      if (!transition) {
+        return res.status(404).json({
+          success: false,
+          message: "Transition not found",
+        });
+      }
+      
+      console.log(`Clearing all data for transition ID: ${transitionId}`);
+      
+      // Clear all data related to this transition
+      await storage.clearTransitionData(transitionId);
+      
+      // Set transition to incomplete to trigger new data generation
+      await storage.updateTransitionStatus(transitionId, false);
+
+      console.log(`Successfully cleared all data for transition ID: ${transitionId}`);
+      
+      return res.json({
+        success: true,
+        message: "All transition data cleared successfully",
+        transition: {
+          ...transition,
+          isComplete: false
+        }
+      });
+    } catch (error) {
+      console.error("Error clearing data:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error clearing data",
+      });
+    }
+  });
+
   apiRouter.post("/analyze-career", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
