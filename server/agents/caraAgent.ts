@@ -1,9 +1,12 @@
-// Cara - Career Transition AI Agent using Perplexity for comprehensive internet search
-import { Document } from '@langchain/core/documents';
-import { extractSkills } from '../apis/claude';
+// Cara - Career Transition AI Agent using Perplexity Sonar for real-time web search and analysis
 import { scrapeForums } from '../apis/scraper';
-import { generatePlanWithGemini, findResourcesWithGemini, analyzeTransitionStories } from '../apis/gemini';
-import { SkillAnalysisAgent, SkillGapAnalysis } from './skillAnalysisAgent';
+import { 
+  extractSkills,
+  generatePlan,
+  analyzeTransitionStories,
+  analyzeSkillGaps,
+  SkillGapAnalysis
+} from '../apis/perplexity-unified';
 import { storage } from '../storage';
 
 // Interface for Cara's analysis results
@@ -17,10 +20,12 @@ export interface CaraAnalysisResult {
  * Cara - AI Career Transition Agent
  * 
  * This agent orchestrates the entire career transition analysis process:
- * 1. Web scraping with Perplexity AI (searches across Reddit, Quora, Blind, and more)
- * 2. Skill gap analysis with Claude
- * 3. Resource discovery with Gemini
- * 4. Plan generation with Gemini
+ * 1. Web scraping with Perplexity Sonar (searches across Reddit, Quora, Blind, and more)
+ * 2. Skill gap analysis with Perplexity Sonar
+ * 3. Resource discovery with Perplexity Sonar
+ * 4. Plan generation with Perplexity Sonar
+ * 
+ * All AI functions are powered by Perplexity Sonar model with real-time web search
  */
 export class CaraAgent {
   private currentRole: string;
@@ -144,18 +149,17 @@ export class CaraAgent {
   }
   
   /**
-   * Analyze skill gaps between current and target roles
+   * Analyze skill gaps between current and target roles using Perplexity Sonar
    */
   private async analyzeSkillGaps(existingSkills: string[]): Promise<SkillGapAnalysis[]> {
     try {
-      // Use the SkillAnalysisAgent to analyze the scraped data
-      this.skillAnalyzer = new SkillAnalysisAgent(
-        this.currentRole, 
-        this.targetRole, 
-        this.scrapedData
+      // Use Perplexity Sonar directly to analyze skill gaps
+      return await analyzeSkillGaps(
+        this.currentRole,
+        this.targetRole,
+        this.scrapedData,
+        existingSkills
       );
-      
-      return await this.skillAnalyzer.analyzeSkillGaps(existingSkills);
     } catch (error) {
       console.error("Error in Cara's skill gap analysis:", error);
       throw error;
@@ -163,11 +167,11 @@ export class CaraAgent {
   }
   
   /**
-   * Generate insights about the career transition using Gemini
+   * Generate insights about the career transition using Perplexity Sonar
    */
   private async generateInsights(): Promise<any> {
     try {
-      // Use Gemini to analyze transition stories and provide structured insights
+      // Use Perplexity Sonar to analyze transition stories and provide structured insights
       return await analyzeTransitionStories(
         this.currentRole,
         this.targetRole,
@@ -181,7 +185,7 @@ export class CaraAgent {
   }
   
   /**
-   * Extract skills from scraped content using Claude
+   * Extract skills from scraped content using Perplexity Sonar
    */
   async extractMentionedSkills(): Promise<string[]> {
     try {
@@ -214,11 +218,11 @@ export class CaraAgent {
   }
   
   /**
-   * Generate a career transition plan
+   * Generate a career transition plan using Perplexity Sonar
    */
   async generatePlan(skills: string[]): Promise<any[]> {
     try {
-      return await generatePlanWithGemini(
+      return await generatePlan(
         this.currentRole,
         this.targetRole,
         skills
