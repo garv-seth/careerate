@@ -686,10 +686,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get insights
-      let insights = await storage.getInsightsByTransitionId(transitionId);
+      // Clear existing insights to ensure fresh data
+      await storage.deleteInsightsByTransitionId(transitionId);
+      console.log(`Cleared existing insights for transition ID: ${transitionId} to ensure fresh analysis`);
       
-      // If no insights exist, create default ones
+      // Get insights (should be empty after deletion)
+      let insights = [];
       if (insights.length === 0) {
         console.log("No insights found, generating insights with Perplexity Sonar");
         

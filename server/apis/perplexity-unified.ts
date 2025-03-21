@@ -220,7 +220,39 @@ export async function searchForums(
  */
 function parseForumResults(responseText: string): { source: string; content: string; url: string; date: string }[] {
   try {
+    // Debug
+    console.log('Parsing forum results from Perplexity response');
+    
     const results: { source: string; content: string; url: string; date: string }[] = [];
+    
+    // Check if we received a JSON structure first
+    try {
+      // Try to find a JSON array in the response
+      const jsonMatch = responseText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (jsonMatch) {
+        const jsonData = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(jsonData)) {
+          console.log(`Found JSON array with ${jsonData.length} entries`);
+          
+          for (const item of jsonData) {
+            if (item.source && item.content) {
+              results.push({
+                source: item.source,
+                content: item.content,
+                url: item.url || 'Not provided',
+                date: item.date ? normalizeDate(item.date) : 'Not provided'
+              });
+            }
+          }
+          
+          if (results.length > 0) {
+            return results;
+          }
+        }
+      }
+    } catch (jsonError) {
+      console.log('Failed to parse as JSON, trying markdown format');
+    }
     
     // First try to split by markdown code blocks which is our preferred format
     const markdownBlocks = responseText.split(/```(?:markdown)?|```/).filter(block => block.trim().length > 0);

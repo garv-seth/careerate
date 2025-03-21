@@ -82,16 +82,49 @@ export class CaraAgent {
       
       // First get existing scraped data to avoid duplicates
       const existingScrapedData = await storage.getScrapedDataByTransitionId(transition.id);
+      
+      // Create sets for URL and content comparison to avoid duplicates
       const existingUrls = new Set(existingScrapedData.map(item => item.url).filter(Boolean));
+      const existingContentHashes = new Set(
+        existingScrapedData.map(item => 
+          // Create a simple hash of the content by taking first 100 chars
+          item.content.substring(0, 100).toLowerCase().replace(/\s+/g, ' ').trim()
+        )
+      );
+      
+      // Helper function to normalize URLs for comparison
+      const normalizeUrl = (url: string): string => {
+        if (!url || url === 'Not provided') return '';
+        
+        // Remove protocol, www, trailing slashes, and query parameters for more robust comparison
+        return url.toLowerCase()
+          .replace(/^https?:\/\//, '')
+          .replace(/^www\./, '')
+          .replace(/\/$/, '')
+          .split('?')[0];
+      };
+      
+      // Prepare normalized existing URLs for comparison
+      const normalizedExistingUrls = new Set(
+        Array.from(existingUrls).map(url => normalizeUrl(url as string))
+      );
       
       // Use the updated scrapeForums function which now leverages Perplexity for comprehensive results
       this.scrapedData = await scrapeForums(this.currentRole, this.targetRole);
       console.log(`Cara found ${this.scrapedData.length} relevant transition stories from multiple sources`);
       
-      // Filter out duplicates based on URL
-      const newItems = this.scrapedData.filter(item => 
-        !item.url || !existingUrls.has(item.url)
-      );
+      // Filter out duplicates based on URL or content similarity
+      const newItems = this.scrapedData.filter(item => {
+        // Skip if URL already exists (after normalization)
+        const normalizedUrl = normalizeUrl(item.url);
+        if (normalizedUrl && normalizedExistingUrls.has(normalizedUrl)) return false;
+        
+        // Skip if content is too similar to existing content
+        const contentHash = item.content.substring(0, 100).toLowerCase().replace(/\s+/g, ' ').trim();
+        if (existingContentHashes.has(contentHash)) return false;
+        
+        return true;
+      });
       
       console.log(`After filtering duplicates, ${newItems.length} new stories will be saved`);
       
