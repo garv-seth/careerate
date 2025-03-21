@@ -85,9 +85,54 @@ const TransitionForm: React.FC = () => {
   return (
     <Card className="max-w-3xl mx-auto card rounded-xl shadow-glow">
       <CardContent className="pt-6">
-        <h2 className="text-xl font-heading font-semibold mb-6">
-          Plan Your Career Transition
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-heading font-semibold">
+            Plan Your Career Transition
+          </h2>
+          <div className="flex items-center text-primary text-sm bg-primary/5 px-3 py-1.5 rounded-full">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="18" 
+              height="18" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className="mr-1.5"
+            >
+              <path d="M12 8V4H8" />
+              <rect width="16" height="12" x="4" y="8" rx="2" />
+              <path d="M2 14h2" />
+              <path d="M20 14h2" />
+              <path d="M15 13v2" />
+              <path d="M9 13v2" />
+            </svg>
+            <span>Powered by Cara AI</span>
+          </div>
+        </div>
+        
+        <div className="text-sm mb-6 p-4 bg-muted/50 rounded-lg border border-border">
+          <p className="flex items-start">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="18" 
+              height="18" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className="mr-2 mt-0.5 text-primary"
+            >
+              <path d="m7.7 11.4 4.1 2.2c.1 0 .2.1.3.1h.6l4.3-2.3c.2-.1.3-.1.5 0l3.5 2.2c.2.1.5 0 .6-.2.1-.1.1-.2.1-.3V6.8c0-.2-.1-.4-.1-.4l-3-1.8c-.1-.1-.3-.1-.5 0l-3.6 1.8c-.1.1-.3.1-.4.1h-.6L9.9 4.3c-.1-.1-.3-.1-.4 0l-3 1.8a.4.4 0 0 0-.2.4v6.5c0 .2.1.4.3.5.2.1.5 0 .6-.2l.5-.9" />
+              <path d="M4.8 13.9c0 .9.5 1.4 1.4 1.4.4 0 .7-.1 1-.3l.7-.6" />
+            </svg>
+            <span>Cara will analyze your career transition using real-world data from the web, identify skill gaps, and create a personalized development plan with YouTube learning resources.</span>
+          </p>
+        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -201,19 +246,23 @@ const TransitionForm: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <span>Analyze Career Path</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="18" 
+                      height="18" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="mr-1.5"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 16v-4"/>
+                      <path d="M12 8h.01"/>
                     </svg>
+                    <span>Let Cara Analyze My Path</span>
                   </>
                 )}
               </Button>
