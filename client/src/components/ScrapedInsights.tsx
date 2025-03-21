@@ -150,9 +150,9 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   </svg>
                   <p className="text-sm text-text-secondary">
                     <span className="text-text font-medium">
-                      Interview focus shift:
+                      Waiting for insights:
                     </span>{" "}
-                    {transition.currentRole} interviews typically emphasize different skills than {transition.targetRole}.
+                    Cara is gathering and analyzing real transition data. No observations available yet.
                   </p>
                 </li>
               )}
@@ -219,9 +219,9 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                   </svg>
                   <p className="text-sm text-text-secondary">
                     <span className="text-text font-medium">
-                      Technical challenges:
+                      Waiting for data:
                     </span>{" "}
-                    Transitioning from {transition.currentRole} to {transition.targetRole} involves adapting to new technical expectations and requirements.
+                    Cara is analyzing real career transition data. No challenges identified yet.
                   </p>
                 </li>
               )}
