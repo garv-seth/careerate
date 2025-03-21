@@ -153,10 +153,13 @@ export class LangGraphCaraAgent {
       
       console.log(`Career transition analysis complete: ${state.currentStage}`);
       
-      // Return the results
+      // Return the results including plan data
       return {
         skillGaps: state.skillGaps || [],
-        insights: state.insights || {},
+        insights: {
+          ...state.insights || {},
+          plan: state.plan || {}
+        },
         scrapedCount: state.searchResults?.scrapedCount || 0
       };
     } catch (error) {

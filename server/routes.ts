@@ -640,7 +640,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysisResult = await cara.analyzeCareerTransition(prioritizedSkills);
       
       // For compatibility with the existing code, construct milestone data from the analysis result
-      const milestoneData = analysisResult.insights?.plan?.milestones || [];
+      // In LangGraph implementation, check both possible locations of milestones
+      const milestoneData = 
+        analysisResult.insights?.plan?.milestones || // Original expected location
+        (analysisResult.insights?.plan && 'milestones' in analysisResult.insights.plan ? 
+          analysisResult.insights.plan.milestones : []);
 
       // Store milestones
       const storedMilestones = [];
