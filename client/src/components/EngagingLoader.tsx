@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DigitalRain from './DigitalRain';
 
-type LoadingStage = 'stories' | 'skills' | 'plan' | 'insights';
+type LoadingStage = 'stories' | 'skills' | 'plan' | 'insights' | 'metrics';
 
 interface EngagingLoaderProps {
   currentStage?: LoadingStage;
@@ -162,6 +162,8 @@ const EngagingLoader: React.FC<EngagingLoaderProps> = ({ currentStage, transitio
     loadingMessage = "Creating your personalized development plan...";
   } else if (currentStage === 'insights') {
     loadingMessage = "Generating key insights for your career move...";
+  } else if (currentStage === 'metrics') {
+    loadingMessage = "Calculating personalized success metrics...";
   }
 
   return (

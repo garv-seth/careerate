@@ -35,10 +35,10 @@ const Dashboard: React.FC = () => {
   });
 
   // State for tracking loading stages
-  const [loadingStage, setLoadingStage] = useState<'stories' | 'skills' | 'plan' | 'insights' | null>(null);
+  const [loadingStage, setLoadingStage] = useState<'stories' | 'skills' | 'plan' | 'insights' | 'metrics' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Process API if transition is not complete - with improved sequencing to ensure data dependencies
+  // Process API with corrected logical sequence to ensure proper data flow
   useEffect(() => {
     const processApiSteps = async () => {
       if (!data || data.isComplete || isProcessing) return;
@@ -46,7 +46,15 @@ const Dashboard: React.FC = () => {
       setIsProcessing(true);
       
       try {
-        // Step 1: Scrape forums - this needs to happen first to get real stories
+        // Clear any existing data first to ensure true fresh start
+        const clearResult = await apiRequest("/api/clear-data", {
+          method: "POST",
+          data: { 
+            transitionId
+          }
+        });
+        
+        // STEP 1: Scrape real-world transition stories using Perplexity
         setLoadingStage('stories');
         toast({
           title: "Finding transition stories",
@@ -54,66 +62,81 @@ const Dashboard: React.FC = () => {
           duration: 3000,
         });
         
+        // Force refresh to ensure we're getting truly fresh data
         const scrapeResult = await apiRequest("/api/scrape", {
           method: "POST",
           data: { 
             transitionId,
-            forceRefresh: true // Force new data each time for better personalization
+            forceRefresh: true 
           }
         });
         
-        // Short delay to ensure scraping completes
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Proper delay to ensure stories are completely scraped and stored
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // Step 2: Analyze skills - now we have stories to analyze against
-        setLoadingStage('skills');
+        // STEP 2: Generate key observations and challenges based on these stories
+        // This step processes the scraped stories to extract meaningful insights
+        setLoadingStage('insights');
         toast({
-          title: "Analyzing skill gaps",
-          description: "Identifying critical skills for your transition...",
+          title: "Analyzing transition patterns",
+          description: "Discovering successful strategies from similar transitions...",
           duration: 3000,
         });
         
-        await apiRequest("/api/analyze", {
+        // Process the scraped stories to generate key observations and challenges
+        const storiesAnalysisResult = await apiRequest("/api/stories-analysis/" + transitionId);
+        
+        // STEP 3: Analyze skill gaps using the stories data as context
+        setLoadingStage('skills');
+        toast({
+          title: "Analyzing skill gaps",
+          description: "Identifying critical skills based on real transition data...",
+          duration: 3000,
+        });
+        
+        const skillsResult = await apiRequest("/api/analyze", {
           method: "POST",
           data: { 
             transitionId,
-            useScrapedData: true // Explicitly use the new scraped data
+            useScrapedData: true, // Use the freshly scraped data
+            priority: "accuracy" // Prioritize accuracy over speed
           }
         });
         
-        // Step 3: Generate plan - tailored to the specific user's skill gaps
+        // STEP 4: Generate personalized career trajectory based on skills analysis
         setLoadingStage('plan');
         toast({
-          title: "Creating career plan",
+          title: "Creating career trajectory",
           description: "Designing your personalized transition roadmap...",
           duration: 3000,
         });
         
-        await apiRequest("/api/plan", {
+        const planResult = await apiRequest("/api/plan", {
           method: "POST",
           data: { 
             transitionId,
-            personalizedTimeline: true // Make sure the plan includes personalized timeline
+            personalizedTimeline: true,
+            includeContext: true // Include the stories and skill gaps context
           }
         });
-
-        // Step 4: Generate insights - combines all previous data
-        setLoadingStage('insights');
+        
+        // STEP 5: Generate final metrics and insights using all collected data
+        setLoadingStage('metrics');
         toast({
-          title: "Generating insights",
-          description: "Extracting key learnings from similar transitions...",
+          title: "Calculating personalized metrics",
+          description: "Creating your personalized success probability...",
           duration: 3000,
         });
-
-        // This will generate the stories analysis
-        await apiRequest("/api/stories-analysis/" + transitionId);
         
-        // Refresh dashboard data with all the new content
+        // Generate personalized metrics based on all previous data
+        const metricsResult = await apiRequest("/api/insights/" + transitionId);
+        
+        // Refresh the dashboard with all our newly generated data
         queryClient.invalidateQueries({ queryKey: [`/api/dashboard/${transitionId}`] });
         
         toast({
           title: "Analysis complete",
-          description: "Your personalized career transition plan is ready!",
+          description: "Your real-time personalized career transition data is ready!",
           duration: 5000,
         });
         
@@ -159,6 +182,7 @@ const Dashboard: React.FC = () => {
                     {loadingStage === 'skills' && "Analyzing Skill Requirements"}
                     {loadingStage === 'plan' && "Creating Career Plan"}
                     {loadingStage === 'insights' && "Extracting Key Insights"}
+                    {loadingStage === 'metrics' && "Calculating Success Metrics"}
                   </span>
                 </div>
               </div>
