@@ -250,17 +250,8 @@ function parseForumResults(responseText: string): { source: string; content: str
         if (dateMatch && dateMatch[1]) {
           date = dateMatch[1].trim();
           
-          // Try to standardize date format if possible
-          if (date.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/)) {
-            // Already in YYYY-MM-DD or YYYY/MM/DD format
-            date = date.replace(/\//g, '-');
-          } else if (date.match(/\d{1,2}[-/]\d{1,2}[-/]\d{4}/)) {
-            // In MM-DD-YYYY or DD-MM-YYYY format
-            const parts = date.replace(/\//g, '-').split('-');
-            if (parts.length === 3) {
-              date = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
-            }
-          }
+          // Use normalizeDate utility function for consistent date handling
+          date = normalizeDate(date);
         }
 
         // Extract content - everything after "Content:" and before the next section
@@ -311,17 +302,8 @@ function parseForumResults(responseText: string): { source: string; content: str
         if (dateMatch && dateMatch[1]) {
           date = dateMatch[1].trim();
           
-          // Try to standardize date format if possible
-          if (date.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/)) {
-            // Already in YYYY-MM-DD or YYYY/MM/DD format
-            date = date.replace(/\//g, '-');
-          } else if (date.match(/\d{1,2}[-/]\d{1,2}[-/]\d{4}/)) {
-            // In MM-DD-YYYY or DD-MM-YYYY format
-            const parts = date.replace(/\//g, '-').split('-');
-            if (parts.length === 3) {
-              date = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
-            }
-          }
+          // Use normalizeDate utility function for consistent date handling
+          date = normalizeDate(date);
         }
 
         // Extract content - everything after "Content:" or after all metadata
@@ -443,7 +425,7 @@ export interface SkillGapAnalysis {
 export async function analyzeSkillGaps(
   currentRole: string,
   targetRole: string,
-  scrapedContent: { source: string; content: string }[],
+  scrapedContent: { source: string; content: string; postDate?: string; date?: string }[],
   existingSkills: string[] = []
 ): Promise<SkillGapAnalysis[]> {
   try {
@@ -647,7 +629,7 @@ export async function generatePlan(
 export async function analyzeTransitionStories(
   currentRole: string,
   targetRole: string,
-  scrapedContent: any[]
+  scrapedContent: { source: string; content: string; url?: string; postDate?: string; date?: string }[]
 ): Promise<{
   keyObservations: string[];
   commonChallenges: string[];
@@ -799,7 +781,7 @@ export async function findResources(
 export async function generateTransitionOverview(
   currentRole: string,
   targetRole: string,
-  scrapedContent: any[]
+  scrapedContent: { source: string; content: string; url?: string; postDate?: string; date?: string }[]
 ): Promise<{
   successRate: number;
   avgTransitionTime: number;
