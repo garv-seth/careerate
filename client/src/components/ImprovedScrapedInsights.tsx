@@ -39,6 +39,17 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
       
       // First request new real-time scraping if forcing a refresh
       if (forceRefresh) {
+        console.log("Clearing data and requesting fresh analysis...");
+        
+        // Clear all existing data using our new endpoint
+        await apiRequest("/api/clear-data", {
+          method: "POST",
+          data: { 
+            transitionId: transition.id
+          }
+        });
+        
+        // Then request new scraping
         console.log("Requesting fresh data scraping...");
         await apiRequest("/api/scrape", {
           method: "POST",
