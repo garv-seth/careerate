@@ -1089,10 +1089,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // First, check if the response is already JSON
             try {
-              insightsData = JSON.parse(perplexityResponse);
+              insightsData = JSON.parse(langGraphResponse);
             } catch (jsonError) {
               // If direct parsing fails, try to extract JSON from text
-              const jsonMatch = perplexityResponse.match(/\{[\s\S]*\}/);
+              const jsonMatch = langGraphResponse.match(/\{[\s\S]*\}/);
               if (jsonMatch) {
                 try {
                   insightsData = JSON.parse(jsonMatch[0]);
