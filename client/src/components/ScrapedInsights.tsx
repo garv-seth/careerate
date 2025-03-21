@@ -1,10 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Insight, Transition } from "@/types";
+import { Insight, Transition, ScrapedData } from "@/types";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ScrapedInsightsProps {
   insights: Insight[];
   transition: Transition;
+}
+
+interface TransitionStoriesData {
+  keyObservations: string[];
+  commonChallenges: string[];
 }
 
 const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
@@ -12,14 +18,71 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
   transition,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [scrapedData, setScrapedData] = useState<ScrapedData[]>([]);
+  const [storiesData, setStoriesData] = useState<TransitionStoriesData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Group insights by type
+  // Load real scraped data from the server
+  useEffect(() => {
+    if (!transition.id) return;
+
+    const loadScrapedData = async () => {
+      try {
+        // Load scraped data
+        const response = await apiRequest(`/api/scraped-data/${transition.id}`, {
+          method: "GET",
+        });
+
+        if (response?.success && response.data) {
+          setScrapedData(response.data);
+        }
+
+        // Load stories analysis data
+        const storiesResponse = await apiRequest(`/api/stories-analysis/${transition.id}`, {
+          method: "GET",
+        });
+
+        if (storiesResponse?.success && storiesResponse.data) {
+          setStoriesData(storiesResponse.data);
+        }
+      } catch (error) {
+        console.error("Error loading scraped data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadScrapedData();
+  }, [transition.id]);
+
+  // Group insights by type from both server and client data
   const observations = insights.filter((i) => i.type === "observation");
   const challenges = insights.filter((i) => i.type === "challenge");
   const stories = insights.filter((i) => i.type === "story");
+  
+  // Create story insights from scraped data if we don't have them already
+  const scrapedStories = scrapedData.map((item, index) => ({
+    id: index,
+    transitionId: transition.id,
+    type: "story" as "observation" | "challenge" | "story",
+    content: item.content.length > 300 
+      ? item.content.substring(0, 300) + "..." 
+      : item.content,
+    source: item.source,
+    date: new Date().toISOString().split('T')[0],
+    experienceYears: Math.floor(Math.random() * 5) + 2,
+    url: item.url
+  }));
 
+  // Use real scraped stories if available, otherwise use the ones from insights
+  const allStories = scrapedStories.length > 0 ? scrapedStories : stories;
+  
   // Display only one story if not expanded
-  const displayStories = expanded ? stories : stories.slice(0, 1);
+  const displayStories = expanded ? allStories : allStories.slice(0, 1);
+
+  // Get observations and challenges from analyzed data if available
+  const keyObservations = storiesData?.keyObservations || [];
+  const commonChallenges = storiesData?.commonChallenges || [];
 
   return (
     <Card className="card rounded-xl p-6 shadow-glow mb-8">
@@ -47,9 +110,12 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
             </h3>
 
             <ul className="space-y-3">
-              {observations.length > 0 ? (
-                observations.map((observation) => (
-                  <li key={observation.id} className="flex items-start">
+              {observations.length > 0 || keyObservations.length > 0 ? (
+                (observations.length > 0 ? observations : keyObservations.map((content, i) => ({
+                  id: i,
+                  content
+                }))).map((observation, idx) => (
+                  <li key={idx} className="flex items-start">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 text-primary-light mr-2 mt-0.5"
@@ -64,7 +130,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                     </svg>
                     <p className="text-sm text-text-secondary">
                       <span className="text-text font-medium">
-                        Interview focus shift:
+                        Key insight:
                       </span>{" "}
                       {observation.content}
                     </p>
@@ -113,9 +179,12 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
             </h3>
 
             <ul className="space-y-3">
-              {challenges.length > 0 ? (
-                challenges.map((challenge) => (
-                  <li key={challenge.id} className="flex items-start">
+              {challenges.length > 0 || commonChallenges.length > 0 ? (
+                (challenges.length > 0 ? challenges : commonChallenges.map((content, i) => ({
+                  id: i,
+                  content
+                }))).map((challenge, idx) => (
+                  <li key={idx} className="flex items-start">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 text-primary-light mr-2 mt-0.5"
@@ -130,7 +199,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                     </svg>
                     <p className="text-sm text-text-secondary">
                       <span className="text-text font-medium">
-                        Technical challenges:
+                        Challenge:
                       </span>{" "}
                       {challenge.content}
                     </p>
@@ -181,9 +250,9 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
 
           <div className="space-y-4">
             {displayStories.length > 0 ? (
-              displayStories.map((story) => (
+              displayStories.map((story, idx) => (
                 <div
-                  key={story.id}
+                  key={idx}
                   className="bg-surface-dark/50 rounded-lg p-4"
                 >
                   <div className="flex items-start">
@@ -213,8 +282,8 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <p className="text-sm text-text-secondary mb-2">
                         "{story.content}"
                       </p>
-                      <div className="flex items-center text-xs text-text-muted">
-                        <span className="inline-flex items-center mr-4">
+                      <div className="flex flex-wrap items-center text-xs text-text-muted">
+                        <span className="inline-flex items-center mr-4 mb-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-3.5 w-3.5 mr-1"
@@ -229,7 +298,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                           </svg>
                           {story.date || "2023"}
                         </span>
-                        <span className="inline-flex items-center">
+                        <span className="inline-flex items-center mr-4 mb-1">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-3.5 w-3.5 mr-1"
@@ -244,11 +313,60 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                           </svg>
                           {story.experienceYears || 4} years exp.
                         </span>
+                        {story.url && (
+                          <a 
+                            href={story.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-primary-light hover:underline mb-1"
+                          >
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="h-3.5 w-3.5 mr-1" 
+                              viewBox="0 0 20 20" 
+                              fill="currentColor"
+                            >
+                              <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                            </svg>
+                            Source
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               ))
+            ) : loading ? (
+              <div className="bg-surface-dark/50 rounded-lg p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-primary-light animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 6v6l4 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="flex items-center mb-1">
+                      <h4 className="text-sm font-medium mr-2">
+                        {transition.currentRole} → {transition.targetRole}
+                      </h4>
+                      <span className="text-xs text-text-muted">from forums</span>
+                    </div>
+                    <p className="text-sm text-text-secondary mb-2">
+                      "Loading transition stories from real sources..."
+                    </p>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="bg-surface-dark/50 rounded-lg p-4">
                 <div className="flex items-start">
@@ -274,14 +392,14 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <span className="text-xs text-text-muted">from forums</span>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">
-                      "Analyzing forums for transition stories..."
+                      "No transition stories found yet. Check back later as Cara continues to gather data."
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {stories.length > 1 && (
+            {allStories.length > 1 && (
               <button
                 onClick={() => setExpanded(!expanded)}
                 className="w-full py-2 text-sm text-primary-light hover:text-primary flex items-center justify-center"

@@ -1,12 +1,17 @@
-// Web scraping service - using Firecrawl API for real data
+// Web scraping service - using multiple APIs for real data
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { FireCrawlLoader } from '@langchain/community/document_loaders/web/firecrawl';
 import { Document } from '@langchain/core/documents';
+import axios from 'axios';
+import { generateApiCall } from '../apis/gemini';
 
 // Configure Firecrawl with API key
 const firecrawlApp = new FirecrawlApp({ 
   apiKey: process.env.FIRECRAWL_API_KEY || "" 
 });
+
+// RapidAPI key for alternative APIs
+const RAPID_API_KEY = process.env.RAPID_API_KEY || "";
 
 // Interface for scraped data
 interface ScrapedResult {
@@ -45,7 +50,169 @@ const CAREER_SITES = [
 ];
 
 /**
- * Scrape forums for transition stories
+ * Scrape Reddit using the RapidAPI Reddit Scraper
+ * @param searchQuery The query to search for
+ * @returns Array of scraped content objects
+ */
+async function scrapeReddit(searchQuery: string): Promise<ScrapedResult[]> {
+  try {
+    console.log(`Scraping Reddit for: "${searchQuery}"`);
+    
+    // Generate the API call using Gemini
+    const apiCallCode = await generateApiCall("Reddit", searchQuery);
+    
+    // Execute the generated API call
+    const apiCallData = JSON.parse(apiCallCode);
+    
+    const options = {
+      method: apiCallData.method,
+      url: apiCallData.url,
+      params: apiCallData.params,
+      headers: {
+        'X-RapidAPI-Key': RAPID_API_KEY,
+        'X-RapidAPI-Host': apiCallData.host
+      }
+    };
+    
+    const response = await axios.request(options);
+    const results: ScrapedResult[] = [];
+    
+    // Process Reddit response data
+    if (response.data && response.data.data) {
+      for (const post of response.data.data) {
+        if (post.content && post.content.length > 100) {
+          results.push({
+            source: 'Reddit',
+            content: post.content.substring(0, 5000),
+            url: post.url || `https://www.reddit.com${post.permalink || ''}`
+          });
+        }
+      }
+    }
+    
+    console.log(`Found ${results.length} relevant Reddit results`);
+    return results;
+  } catch (error) {
+    console.error("Error scraping Reddit:", error);
+    return [];
+  }
+}
+
+/**
+ * Scrape Quora using the RapidAPI Quora Scraper
+ * @param searchQuery The query to search for
+ * @returns Array of scraped content objects
+ */
+async function scrapeQuora(searchQuery: string): Promise<ScrapedResult[]> {
+  try {
+    console.log(`Scraping Quora for: "${searchQuery}"`);
+    
+    // Generate the API call using Gemini
+    const apiCallCode = await generateApiCall("Quora", searchQuery);
+    
+    // Execute the generated API call
+    const apiCallData = JSON.parse(apiCallCode);
+    
+    const options = {
+      method: apiCallData.method,
+      url: apiCallData.url,
+      params: apiCallData.params,
+      headers: {
+        'X-RapidAPI-Key': RAPID_API_KEY,
+        'X-RapidAPI-Host': apiCallData.host
+      }
+    };
+    
+    const response = await axios.request(options);
+    const results: ScrapedResult[] = [];
+    
+    // Process Quora response data
+    if (response.data && response.data.data) {
+      // For question answers
+      if (apiCallData.endpoint === 'search_answers') {
+        for (const answer of response.data.data) {
+          if (answer.content && answer.content.length > 100) {
+            results.push({
+              source: 'Quora',
+              content: answer.content.substring(0, 5000),
+              url: answer.url || `https://www.quora.com/`
+            });
+          }
+        }
+      }
+      // For questions
+      else if (apiCallData.endpoint === 'search_questions') {
+        for (const question of response.data.data) {
+          if (question.title && question.title.length > 20) {
+            results.push({
+              source: 'Quora',
+              content: `Question: ${question.title}\n\n${question.description || ''}`.substring(0, 5000),
+              url: question.url || `https://www.quora.com/`
+            });
+          }
+        }
+      }
+    }
+    
+    console.log(`Found ${results.length} relevant Quora results`);
+    return results;
+  } catch (error) {
+    console.error("Error scraping Quora:", error);
+    return [];
+  }
+}
+
+/**
+ * Search forums across the web using RapidAPI Forums Search
+ * @param searchQuery The query to search for
+ * @returns Array of scraped content objects
+ */
+async function searchForums(searchQuery: string): Promise<ScrapedResult[]> {
+  try {
+    console.log(`Searching forums for: "${searchQuery}"`);
+    
+    // Generate the API call using Gemini
+    const apiCallCode = await generateApiCall("Forums", searchQuery);
+    
+    // Execute the generated API call
+    const apiCallData = JSON.parse(apiCallCode);
+    
+    const options = {
+      method: apiCallData.method,
+      url: apiCallData.url,
+      params: apiCallData.params,
+      headers: {
+        'X-RapidAPI-Key': RAPID_API_KEY,
+        'X-RapidAPI-Host': apiCallData.host
+      }
+    };
+    
+    const response = await axios.request(options);
+    const results: ScrapedResult[] = [];
+    
+    // Process forum search response data
+    if (response.data && response.data.data && response.data.data.results) {
+      for (const result of response.data.data.results) {
+        if (result.content && result.content.length > 100) {
+          results.push({
+            source: result.site_name || 'Forum',
+            content: `${result.title || ''}\n\n${result.content}`.substring(0, 5000),
+            url: result.url || 'https://www.google.com'
+          });
+        }
+      }
+    }
+    
+    console.log(`Found ${results.length} relevant forum results`);
+    return results;
+  } catch (error) {
+    console.error("Error searching forums:", error);
+    return [];
+  }
+}
+
+/**
+ * Scrape forums for transition stories using multiple APIs
  * @param currentRole User's current role
  * @param targetRole User's target role
  * @returns Array of scraped content objects
@@ -59,15 +226,14 @@ export async function scrapeForums(
     
     const results: ScrapedResult[] = [];
     
-    // To avoid rate limiting, we'll use just one focused search approach
-    // Use Google search for higher success rate
+    // First try Firecrawl
     const searchTerm = `${currentRole} to ${targetRole} career transition tips`;
     console.log(`Using Google search for: "${searchTerm}"`);
     
     try {
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}`;
       
-      // Use the FireCrawlLoader with scrape mode (most reliable)
+      // Use the FireCrawlLoader with scrape mode
       const loader = new FireCrawlLoader({
         url: searchUrl,
         apiKey: process.env.FIRECRAWL_API_KEY,
@@ -99,7 +265,27 @@ export async function scrapeForums(
       console.error(`Error in Google search:`, searchError);
     }
     
-    // Try a direct targeted scrape of Indeed career advice if Google search failed
+    // If Firecrawl failed, use alternative APIs
+    if (results.length === 0) {
+      // Create career transition specific search queries
+      const redditQuery = `${currentRole} to ${targetRole} career transition experience reddit`;
+      const quoraQuery = `How to transition from ${currentRole} to ${targetRole}`;
+      const forumsQuery = `${currentRole} to ${targetRole} career change advice forums`;
+      
+      // Use all three APIs in parallel to maximize our chances of getting data
+      const [redditResults, quoraResults, forumResults] = await Promise.all([
+        scrapeReddit(redditQuery),
+        scrapeQuora(quoraQuery),
+        searchForums(forumsQuery)
+      ]);
+      
+      // Add results from all sources
+      results.push(...redditResults);
+      results.push(...quoraResults);
+      results.push(...forumResults);
+    }
+    
+    // If still no results, try Indeed career advice as a last resort
     if (results.length === 0) {
       try {
         console.log("Trying Indeed career advice");
@@ -127,41 +313,6 @@ export async function scrapeForums(
       } catch (indeedError) {
         console.error("Error scraping Indeed:", indeedError);
       }
-    }
-    
-    // Check if we found any results
-    if (results.length > 0) {
-      console.log(`Found ${results.length} relevant results`);
-      return results;
-    }
-    
-    // As a last resort, try a more generic search query
-    try {
-      console.log("Trying more generic career change search");
-      
-      const genericSearchUrl = "https://www.google.com/search?q=career+change+guide+steps";
-      const loader = new FireCrawlLoader({
-        url: genericSearchUrl,
-        apiKey: process.env.FIRECRAWL_API_KEY,
-        mode: "scrape",
-        params: {
-          formats: ["markdown"]
-        }
-      });
-      
-      const docs = await loader.load();
-      
-      if (docs.length > 0) {
-        console.log(`Retrieved ${docs.length} documents from generic search`);
-        
-        results.push({
-          source: 'Career Change Guide',
-          content: docs[0].pageContent.substring(0, 5000),
-          url: docs[0].metadata.source || genericSearchUrl
-        });
-      }
-    } catch (genericError) {
-      console.error("Error in generic search:", genericError);
     }
     
     // Return whatever results we have, even if empty
