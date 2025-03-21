@@ -42,7 +42,10 @@ const Dashboard: React.FC = () => {
           duration: 3000,
         });
         
-        await apiRequest("POST", "/api/scrape", { transitionId });
+        await apiRequest("/api/scrape", {
+          method: "POST",
+          data: { transitionId }
+        });
         
         // Step 2: Analyze skills
         toast({
@@ -51,7 +54,10 @@ const Dashboard: React.FC = () => {
           duration: 3000,
         });
         
-        await apiRequest("POST", "/api/analyze", { transitionId });
+        await apiRequest("/api/analyze", {
+          method: "POST",
+          data: { transitionId }
+        });
         
         // Step 3: Generate plan
         toast({
@@ -60,7 +66,10 @@ const Dashboard: React.FC = () => {
           duration: 3000,
         });
         
-        await apiRequest("POST", "/api/plan", { transitionId });
+        await apiRequest("/api/plan", {
+          method: "POST",
+          data: { transitionId }
+        });
         
         // Refresh dashboard data
         queryClient.invalidateQueries({ queryKey: [`/api/dashboard/${transitionId}`] });
