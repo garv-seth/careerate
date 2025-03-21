@@ -304,8 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.FIRECRAWL_API_KEY,
         mode: "scrape",
         params: {
-          javascript: true,
-          waitTime: 2000
+          formats: ["markdown"]
         }
       });
       

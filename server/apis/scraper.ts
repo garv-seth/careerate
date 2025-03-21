@@ -82,27 +82,19 @@ export async function scrapeForums(
           apiKey: process.env.FIRECRAWL_API_KEY,
           mode: "crawl",
           params: {
-            crawlParams: {
-              maxPages: 5,
-              shouldCrawl: (url: string) => {
-                // Only crawl URLs that might contain career transition info
-                return url.includes("career") || 
-                      url.includes("transition") || 
-                      url.includes("change") ||
-                      url.includes(currentRole.toLowerCase()) ||
-                      url.includes(targetRole.toLowerCase());
-              },
-              shouldExtract: (url: string) => {
-                // Extract content from pages that might have our specific transition
-                return url.includes(currentRole.toLowerCase()) || 
-                      url.includes(targetRole.toLowerCase()) ||
-                      url.includes("career") ||
-                      url.includes("transition");
-              },
+            limit: 5,
+            // Use filter functions to look for career transition content
+            filter: (url: string) => {
+              // Only crawl URLs that might contain career transition info
+              return url.includes("career") || 
+                    url.includes("transition") || 
+                    url.includes("change") ||
+                    url.includes(currentRole.toLowerCase()) || 
+                    url.includes(targetRole.toLowerCase());
             },
-            enableScripts: true,
-            enableImages: false,
-            wait: 2000
+            scrapeOptions: {
+              formats: ["markdown"]
+            }
           }
         });
         
@@ -162,9 +154,7 @@ export async function scrapeForums(
               apiKey: process.env.FIRECRAWL_API_KEY,
               mode: "scrape",
               params: {
-                enableScripts: true,
-                enableImages: false,
-                wait: 2000
+                formats: ["markdown"]
               }
             });
             
