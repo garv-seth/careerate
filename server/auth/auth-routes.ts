@@ -107,8 +107,10 @@ router.post('/login', (req: Request, res: Response, next) => {
     // Validate request body
     loginSchema.parse(req.body);
     
+    // Use a wrapped passport.authenticate to avoid double response issues
     passport.authenticate('local', (err: Error, user: any, info: any) => {
       if (err) {
+        console.error('Login error:', err);
         return res.status(500).json({
           success: false,
           error: 'Internal Server Error'
@@ -116,48 +118,59 @@ router.post('/login', (req: Request, res: Response, next) => {
       }
       
       if (!user) {
-        console.error('Login failed:', info.message || 'No specific error message');
+        console.error('Login failed:', info?.message || 'No specific error message');
         return res.status(401).json({
           success: false,
-          error: info.message || 'Incorrect email or password'
+          error: info?.message || 'Incorrect email or password'
         });
       }
       
       // Log in the user
-      req.logIn(user, (err) => {
-        if (err) {
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error('Login error during req.logIn:', loginErr);
           return res.status(500).json({
             success: false,
             error: 'Failed to login'
           });
         }
         
-        // Generate JWT token
-        const token = jwt.sign(
-          { id: user.id, email: user.email },
-          process.env.JWT_SECRET || 'careerate-secret-key',
-          { expiresIn: '1d' }
-        );
-        
-        // Return user without password and token
-        const { password: _, ...userWithoutPassword } = user;
-        
-        res.json({
-          success: true,
-          user: userWithoutPassword,
-          token
-        });
+        try {
+          // Generate JWT token
+          const token = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET || 'careerate-secret-key',
+            { expiresIn: '1d' }
+          );
+          
+          // Return user without password and token
+          const { password: _, ...userWithoutPassword } = user;
+          
+          return res.json({
+            success: true,
+            user: userWithoutPassword,
+            token
+          });
+        } catch (tokenErr) {
+          console.error('Token generation error:', tokenErr);
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to generate authentication token'
+          });
+        }
       });
     })(req, res, next);
   } catch (error) {
+    // This block handles validation errors only
     if (error instanceof z.ZodError) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         error: 'Validation Error',
         details: error.errors
       });
     } else {
-      res.status(500).json({
+      console.error('Unexpected login error:', error);
+      return res.status(500).json({
         success: false,
         error: 'An error occurred during login'
       });
