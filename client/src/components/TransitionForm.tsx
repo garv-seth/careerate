@@ -171,30 +171,34 @@ const TransitionForm: React.FC = () => {
     }
   }, [targetRoleId, form]);
   
-  // Format current role when all selections are made
+  // Format current role when all selections are made using path parameters
   const currentLevelId = form.watch("currentLevelId");
   const { data: currentRoleFormat } = useQuery<FormatRoleResponse>({
-    queryKey: [`/api/format-role?companyId=${currentCompanyId}&roleId=${currentRoleId}&levelId=${currentLevelId}`],
+    queryKey: [`/api/format-role/${currentCompanyId}/${currentRoleId}/${currentLevelId}`],
     enabled: !!currentCompanyId && !!currentRoleId && !!currentLevelId,
   });
   
-  // Format target role when all selections are made
+  // Format target role when all selections are made using path parameters
   const targetLevelId = form.watch("targetLevelId");
   const { data: targetRoleFormat } = useQuery<FormatRoleResponse>({
-    queryKey: [`/api/format-role?companyId=${targetCompanyId}&roleId=${targetRoleId}&levelId=${targetLevelId}`],
+    queryKey: [`/api/format-role/${targetCompanyId}/${targetRoleId}/${targetLevelId}`],
     enabled: !!targetCompanyId && !!targetRoleId && !!targetLevelId,
   });
   
   // Update hidden fields when formatted roles are available
   useEffect(() => {
+    console.log("Current role format:", currentRoleFormat);
     if (currentRoleFormat?.success && currentRoleFormat.formattedRole) {
       form.setValue("currentRole", currentRoleFormat.formattedRole);
+      console.log("Set current role to:", currentRoleFormat.formattedRole);
     }
   }, [currentRoleFormat, form]);
   
   useEffect(() => {
+    console.log("Target role format:", targetRoleFormat);
     if (targetRoleFormat?.success && targetRoleFormat.formattedRole) {
       form.setValue("targetRole", targetRoleFormat.formattedRole);
+      console.log("Set target role to:", targetRoleFormat.formattedRole);
     }
   }, [targetRoleFormat, form]);
   
@@ -511,7 +515,6 @@ const TransitionForm: React.FC = () => {
               <Button
                 type="submit"
                 disabled={mutation.isPending || 
-                  !form.formState.isValid || 
                   !currentCompanyId || 
                   !currentRoleId || 
                   !currentLevelId || 
