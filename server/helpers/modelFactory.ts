@@ -65,6 +65,11 @@ export function createChatModel(options: {
  * This is a simpler alternative to the built-in parsers
  */
 export class SimpleJsonOutputParser<T extends z.ZodTypeAny> extends BaseOutputParser<z.infer<T>> {
+  static lc_name() {
+    return "SimpleJsonOutputParser";
+  }
+  
+  lc_namespace = ["langchain", "output_parsers", "simple_json"];
   private schema: T;
 
   constructor(schema: T) {
@@ -105,7 +110,8 @@ export function getJsonParser<T extends z.ZodTypeAny>(schema: T) {
   if (LLM_PROVIDER === "gemini" || LLM_PROVIDER === "google") {
     return new SimpleJsonOutputParser(schema);
   } else {
-    return JsonOutputToolsParser.fromZodSchema(schema);
+    // For OpenAI, use a similar approach to SimpleJsonOutputParser for consistency
+    return new SimpleJsonOutputParser(schema);
   }
 }
 

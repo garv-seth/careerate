@@ -369,14 +369,26 @@ Plan for 4-8 total steps that comprehensively analyze this career transition.`;
       console.log("Creating detailed career transition analysis plan");
       
       try {
-        const plannerWithSchema = this.plannerModel.withStructuredOutput(planFunction);
+        // Create the plan schema using zod
+        const planSchema = z.object({
+          steps: z.array(z.string())
+            .describe("different steps to follow, should be in sorted order")
+        });
+        
+        // Get the appropriate parser based on the current provider
+        const parser = getJsonParser(planSchema);
         
         // Format the prompt with variables
         const formattedPrompt = plannerPrompt
           .replace(/{input.currentRole}/g, state.input.currentRole)
           .replace(/{input.targetRole}/g, state.input.targetRole);
         
-        const result = await plannerWithSchema.invoke(formattedPrompt);
+        // Add format instructions for the parser
+        const promptWithInstructions = `${formattedPrompt}\n\n${parser.getFormatInstructions()}`;
+        
+        // Run the model and parse the output
+        const response = await this.plannerModel.invoke(promptWithInstructions);
+        const result = await parser.parse(response.content.toString());
 
         return { 
           plan: result.steps,
