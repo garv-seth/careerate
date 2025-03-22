@@ -44,13 +44,13 @@ const SignUp = () => {
       if (response.success) {
         toast({
           title: "Registration successful!",
-          description: "Welcome to Careerate! Redirecting to your profile...",
+          description: "Welcome to Careerate! Redirecting to the setup wizard...",
           variant: "default"
         });
         
-        // Redirect to profile page after successful registration
+        // Redirect to onboarding wizard after successful registration
         setTimeout(() => {
-          navigate("/profile");
+          navigate("/onboarding");
         }, 1500);
       } else {
         toast({

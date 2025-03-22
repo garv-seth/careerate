@@ -8,6 +8,7 @@ import Dashboard from "@/pages/Dashboard";
 import SignUp from "@/pages/SignUp";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
+import OnboardingWizard from "@/pages/OnboardingWizard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
           <Route path="/profile" component={Profile} />
+          <Route path="/onboarding" component={OnboardingWizard} />
           <Route component={NotFound} />
         </Switch>
       </main>
