@@ -5,8 +5,9 @@ import { eq, and } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
+  username: text("username").notNull(),
   password: text("password").notNull(),
+  email: text("email").notNull().unique(),
   currentRole: text("current_role"),
   profileCompleted: boolean("profile_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull()
