@@ -2,7 +2,15 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { insertTransitionSchema } from "@shared/schema";
+import { 
+  insertTransitionSchema,
+  companies,
+  companyRoles,
+  roleLevels,
+  Company,
+  CompanyRole,
+  RoleLevel
+} from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent";
 import { ImprovedCaraAgent } from "./agents/improvedCaraAgent";
 import {
@@ -14,8 +22,9 @@ import {
   generateTransitionOverview,
   callLLM
 } from "./helpers/langGraphHelpers";
-import { companies, getCompanyById, getRolesByCompanyId, getLevelsByCompanyAndRoleId } from "@shared/companyData";
+import { getCompanyById, getRolesByCompanyId, getLevelsByCompanyAndRoleId } from "@shared/companyData";
 import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes
@@ -28,11 +37,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company data API endpoints
   apiRouter.get("/companies", async (req, res) => {
     try {
-      const companies = await db.select({ id: 'id', name: 'name' }).from('companies');
+      const companiesResult = await db.select({
+        id: companies.id,
+        name: companies.name
+      }).from(companies);
       
       res.json({
         success: true,
-        data: companies
+        data: companiesResult
       });
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -48,9 +60,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { companyId } = req.params;
       
       const roles = await db
-        .select({ id: 'id', title: 'title' })
-        .from('company_roles')
-        .where('company_id', '=', companyId);
+        .select({
+          id: companyRoles.id,
+          title: companyRoles.title
+        })
+        .from(companyRoles)
+        .where(eq(companyRoles.company_id, companyId));
       
       if (roles.length === 0) {
         return res.status(404).json({
@@ -77,12 +92,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { companyId, roleId } = req.params;
       
       const levels = await db
-        .select({ id: 'id', name: 'name' })
-        .from('role_levels')
-        .where({
-          company_id: companyId,
-          role_id: roleId
-        });
+        .select({
+          id: roleLevels.id,
+          name: roleLevels.name
+        })
+        .from(roleLevels)
+        .where(
+          and(
+            eq(roleLevels.company_id, companyId),
+            eq(roleLevels.role_id, roleId)
+          )
+        );
       
       if (levels.length === 0) {
         return res.status(404).json({
@@ -111,9 +131,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get company name
       const companyResults = await db
-        .select({ name: 'name' })
-        .from('companies')
-        .where('id', '=', companyId);
+        .select({
+          name: companies.name
+        })
+        .from(companies)
+        .where(eq(companies.id, companyId));
       
       if (companyResults.length === 0) {
         return res.status(404).json({
@@ -124,12 +146,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get role title
       const roleResults = await db
-        .select({ title: 'title' })
-        .from('company_roles')
-        .where({
-          'company_id': companyId,
-          'id': roleId
-        });
+        .select({
+          title: companyRoles.title
+        })
+        .from(companyRoles)
+        .where(
+          and(
+            eq(companyRoles.company_id, companyId),
+            eq(companyRoles.id, roleId)
+          )
+        );
       
       if (roleResults.length === 0) {
         return res.status(404).json({
@@ -140,13 +166,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get level name
       const levelResults = await db
-        .select({ name: 'name' })
-        .from('role_levels')
-        .where({
-          'company_id': companyId,
-          'role_id': roleId,
-          'id': levelId
-        });
+        .select({
+          name: roleLevels.name
+        })
+        .from(roleLevels)
+        .where(
+          and(
+            eq(roleLevels.company_id, companyId),
+            eq(roleLevels.role_id, roleId),
+            eq(roleLevels.id, levelId)
+          )
+        );
       
       if (levelResults.length === 0) {
         return res.status(404).json({

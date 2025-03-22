@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, json, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, json, timestamp, boolean, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
@@ -178,3 +178,36 @@ export const insertInsightSchema = createInsertSchema(insights).pick({
 
 export type InsertInsight = z.infer<typeof insertInsightSchema>;
 export type Insight = typeof insights.$inferSelect;
+
+// Company data tables
+export const companies = pgTable("companies", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull()
+});
+
+export const companyRoles = pgTable("company_roles", {
+  id: text("id").notNull(),
+  company_id: text("company_id").notNull(),
+  title: text("title").notNull()
+}, (table) => ({
+  // Combined primary key of company_id and id
+  // This ensures roles can have the same ID across different companies
+  // but are unique within each company
+  pk: primaryKey({ columns: [table.company_id, table.id] })
+}));
+
+export const roleLevels = pgTable("role_levels", {
+  id: text("id").notNull(),
+  company_id: text("company_id").notNull(),
+  role_id: text("role_id").notNull(),
+  name: text("name").notNull()
+}, (table) => ({
+  // Combined primary key of company_id, role_id, and id
+  // This ensures levels can have the same ID across different roles
+  // but are unique within each company+role combination
+  pk: primaryKey({ columns: [table.company_id, table.role_id, table.id] })
+}));
+
+export type Company = typeof companies.$inferSelect;
+export type CompanyRole = typeof companyRoles.$inferSelect;
+export type RoleLevel = typeof roleLevels.$inferSelect;
