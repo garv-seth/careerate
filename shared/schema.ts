@@ -5,18 +5,16 @@ import { eq, and } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email").unique(),
   currentRole: text("current_role"),
   profileCompleted: boolean("profile_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
   email: true,
+  password: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

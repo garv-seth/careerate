@@ -10,14 +10,13 @@ const router = Router();
 
 // Schema validation for registration
 const registerSchema = z.object({
-  username: z.string().min(3).max(50),
-  password: z.string().min(6),
-  email: z.string().email().optional()
+  email: z.string().email(),
+  password: z.string().min(6)
 });
 
 // Schema validation for login
 const loginSchema = z.object({
-  username: z.string(),
+  email: z.string().email(),
   password: z.string()
 });
 
