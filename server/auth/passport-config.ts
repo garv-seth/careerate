@@ -69,7 +69,9 @@ export async function registerUser(email: string, password: string): Promise<any
     // Check if email is already taken
     const existingUser = await storage.getUserByEmail(email);
     if (existingUser) {
-      throw new Error('Email already taken');
+      const error = new Error('Email already taken');
+      error.name = 'UserExistsError';
+      throw error;
     }
 
     // Hash password
@@ -99,18 +101,17 @@ export async function registerUser(email: string, password: string): Promise<any
 
 
 export async function loginUser(email: string, password: string) {
-  const user = await storage.getUser(email);
-  if (!user || !password) {
-    throw new Error('Incorrect email or password');
-  }
-
   try {
+    const user = await storage.getUserByEmail(email);
+    if (!user) {
+      throw new Error('Incorrect email or password');
+    }
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       throw new Error('Incorrect email or password');
     }
     return user;
   } catch (error) {
-    throw new Error('Incorrect email or password');
+    throw error;
   }
 }

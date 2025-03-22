@@ -41,6 +41,16 @@ router.post('/register', async (req: Request, res: Response) => {
     // Validate request body
     const data = registerSchema.parse(req.body);
     
+    // Check if user exists first
+    const existingUser = await storage.getUserByEmail(data.email);
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Registration failed',
+        message: 'This email is already registered. Please login instead.'
+      });
+    }
+    
     // Register user using email as identifier
     const user = await registerUser(data.email, data.password);
     
