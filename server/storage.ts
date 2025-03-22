@@ -99,10 +99,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const [user] = await db
         .insert(users)
-        .values({
-          ...insertUser,
-          username: insertUser.email // Use email as username
-        })
+        .values(insertUser)
         .returning();
       console.log('User successfully inserted:', user);
       return user;
