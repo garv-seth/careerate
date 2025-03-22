@@ -47,11 +47,11 @@ export class ImprovedPlanExecuteAgent {
   private buildGraph() {
     // Define the agent state type
     const AgentStateType = Annotation.object({
-      messages: Annotation.array(Annotation.any()),
-      currentStage: Annotation.string(),
-      searchResults: Annotation.array(Annotation.any()),
-      plan: Annotation.any(),
-      nextAction: Annotation.string()
+      messages: Annotation.array(z.any()),
+      currentStage: z.string(),
+      searchResults: Annotation.array(z.any()),
+      plan: z.any(),
+      nextAction: z.string()
     });
 
     // Create nodes
