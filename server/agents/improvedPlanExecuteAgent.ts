@@ -222,7 +222,9 @@ export class ImprovedPlanExecuteAgent {
         if (event.planner) {
           console.log("Plan created:", event.planner.plan);
         } else if (event.agent) {
-          const step = event.agent.pastSteps[event.agent.pastSteps.length - 1];
+          const step = event.agent.pastSteps && Array.isArray(event.agent.pastSteps) && event.agent.pastSteps.length > 0 
+            ? event.agent.pastSteps[event.agent.pastSteps.length - 1] 
+            : null;
           if (step) {
             console.log(`Executed step: ${step[0]}`);
           }
@@ -275,7 +277,9 @@ export class ImprovedPlanExecuteAgent {
       .addConditionalEdges(
         "agent",
         (state) => {
-          const lastMessage = state.pastSteps[state.pastSteps.length - 1];
+          const lastMessage = state.pastSteps && Array.isArray(state.pastSteps) && state.pastSteps.length > 0 
+            ? state.pastSteps[state.pastSteps.length - 1] 
+            : null;
           // If message suggests search is needed, go to search agent
           if (lastMessage && (
               lastMessage[0].toLowerCase().includes("search") || 
@@ -402,15 +406,18 @@ Plan for 4-8 total steps that comprehensively analyze this career transition.`;
           taskPrompt += `Existing Skills: ${state.input.existingSkills.join(", ")}\n\n`;
         }
         
-        // Add context from previous steps
-        if (state.pastSteps.length > 0) {
+        // Add context from previous steps - with null checks
+        if (state.pastSteps && Array.isArray(state.pastSteps) && state.pastSteps.length > 0) {
           taskPrompt += `Context from previous steps:\n`;
-          state.pastSteps.forEach(([step, result]) => {
-            // Include a shortened version of the previous results to save on context
-            const shortResult = result.length > 500 
-              ? result.substring(0, 500) + '...' 
-              : result;
-            taskPrompt += `- ${step}:\n${shortResult}\n\n`;
+          state.pastSteps.forEach(entry => {
+            if (Array.isArray(entry) && entry.length === 2) {
+              const [step, result] = entry;
+              // Include a shortened version of the previous results to save on context
+              const shortResult = result && typeof result === 'string' && result.length > 500 
+                ? result.substring(0, 500) + '...' 
+                : (result || 'No result');
+              taskPrompt += `- ${step || 'Step'}:\n${shortResult}\n\n`;
+            }
           });
         }
         
@@ -784,7 +791,7 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
       
       try {
         // Count iterations to prevent infinite loops
-        const iterationCount = state.pastSteps.length;
+        const iterationCount = state.pastSteps && Array.isArray(state.pastSteps) ? state.pastSteps.length : 0;
         
         // If we've gone through too many iterations, force completion
         if (iterationCount > 10) {
@@ -888,7 +895,7 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
         console.error("Error in replan node:", error);
         // If an error occurs, move to completion if we've done several iterations
         // otherwise return a basic next step
-        if (state.pastSteps.length > 5) {
+        if (state.pastSteps && Array.isArray(state.pastSteps) && state.pastSteps.length > 5) {
           return { 
             response: "Analysis complete. All necessary information has been gathered."
           };
