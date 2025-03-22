@@ -5,12 +5,12 @@
  * while preserving all the functionality needed for career transition analysis.
  */
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, AIMessage, BaseMessage, SystemMessage } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { StateGraph, Annotation } from "@langchain/langgraph";
 import { storage } from "../storage";
 import { z } from "zod";
+import { createChatModel, getModelInfo } from "../helpers/modelFactory";
 import { RunnableConfig } from "@langchain/core/runnables";
 
 // Interface for skill gap analysis results
@@ -97,7 +97,7 @@ export class SimplifiedLangGraphAgent {
   private targetRole: string;
   private transitionId: number;
   private existingSkills: string[] = [];
-  private model: ChatOpenAI;
+  private model: any; // Changed from ChatOpenAI to use modelFactory
   private tools: TavilySearchResults[];
   private workflow: any;
 
@@ -106,12 +106,12 @@ export class SimplifiedLangGraphAgent {
     this.targetRole = targetRole;
     this.transitionId = transitionId;
 
-    // Initialize the model
-    this.model = new ChatOpenAI({
+    // Initialize the model using model factory
+    this.model = createChatModel({
       temperature: 0.7,
-      modelName: "gpt-4-turbo-preview",
       streaming: false,
     });
+    console.log(`Using model: ${getModelInfo()}`);
 
     // Initialize the search tool
     this.tools = [

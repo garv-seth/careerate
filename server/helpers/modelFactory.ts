@@ -120,7 +120,7 @@ export function getJsonParser<T extends z.ZodTypeAny>(schema: T) {
  */
 export function getModelInfo(): string {
   if (LLM_PROVIDER === "gemini" || LLM_PROVIDER === "google") {
-    return "Google Gemini Pro";
+    return "Google Gemini 1.5 Pro";
   } else {
     return "OpenAI GPT-4 Turbo";
   }
