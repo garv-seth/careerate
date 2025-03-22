@@ -1,157 +1,80 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage, SystemMessage, AIMessage } from "@langchain/core/messages";
-import { StateGraph, Annotation } from "@langchain/langgraph";
-import { RunnableSequence } from "@langchain/core/runnables";
-import { StructuredTool } from "@langchain/core/tools";
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import { createChatModel } from "../helpers/modelFactory";
+import { BaseMessage, HumanMessage, SystemMessage, AIMessage } from "@langchain/core/messages";
+import { z } from "zod";
+import { RunnableSequence } from "@langchain/core/runnables";
+import { MessagesState, createReactAgent } from "@langchain/langgraph/prebuilt";
 
-// Tool for career transition search
-class CareerTransitionSearch extends StructuredTool {
-  name = "career_search";
-  description = "Search for career transition information and experiences";
-
-  async _call(query: string) {
-    const searcher = new TavilySearchResults({
-      apiKey: process.env.TAVILY_API_KEY,
-      maxResults: 10
-    });
-    return await searcher.invoke(query);
-  }
-}
-
-// Define agent state
-interface AgentState {
-  messages: any[];
-  currentStage: string;
-  searchResults: any[];
-  plan: any;
-  nextAction: string;
-}
-
+/**
+ * A simplified Plan-Execute agent that uses the createReactAgent from LangGraph
+ * This is a more straightforward implementation that avoids the complex StateGraph setup
+ */
 export class ImprovedPlanExecuteAgent {
-  private model: ChatOpenAI;
-  private tools: StructuredTool[];
-  private graph: any;
+  private agent: any;
 
   constructor() {
-    this.model = createChatModel({
-      temperature: 0.7,
-      modelName: "gpt-4-turbo-preview"
+    // Initialize tools
+    const searchTool = new TavilySearchResults({
+      maxResults: 5
     });
 
-    this.tools = [new CareerTransitionSearch()];
-    this.graph = this.buildGraph();
+    // Create a model with appropriate temperature for planning
+    const model = createChatModel({
+      temperature: 0.2,  // Lower temperature for more consistent results
+      modelName: "gpt-4o"
+    });
+
+    // Create the agent using prebuilt React agent pattern
+    this.agent = createReactAgent({
+      llm: model, 
+      tools: [searchTool],
+      // Add human-like thinking with system message
+      systemMessage: `You are a career transition planning and analysis agent.
+
+Your goal is to analyze career transitions between different roles and industries.
+For any career transition query:
+1. Break down the analysis into clear steps
+2. Search for relevant information about the transition
+3. Identify skill gaps, challenges, and success factors
+4. Provide concrete recommendations
+5. Format your final response as JSON with these keys:
+   - skillGaps: array of {skillName, gapLevel, confidenceScore, mentionCount, contextSummary}
+   - insights: object with key observations about the transition
+   - success factors: array of most important factors for success
+
+Always search for accurate and up-to-date information. Do not make up data.`
+    });
   }
 
-  private buildGraph() {
-    // Define the agent state type
-    const AgentStateType = Annotation.object({
-      messages: Annotation.array(z.any()),
-      currentStage: z.string(),
-      searchResults: Annotation.array(z.any()),
-      plan: z.any(),
-      nextAction: z.string()
-    });
-
-    // Create nodes
-    const planNode = RunnableSequence.from([
-      {
-        messages: (state: AgentState) => [
-          new SystemMessage("You are a career transition planning agent. Create a detailed plan."),
-          ...state.messages
-        ]
-      },
-      this.model,
-      (output) => ({
-        messages: output.content,
-        plan: JSON.parse(output.content),
-        nextAction: "execute"
-      })
-    ]);
-
-    const executeNode = RunnableSequence.from([
-      {
-        messages: (state: AgentState) => [
-          new SystemMessage("Execute the plan step by step. Use tools when needed."),
-          new AIMessage(JSON.stringify(state.plan)),
-          ...state.messages
-        ]
-      },
-      this.model,
-      async (output) => {
-        if (output.additional_kwargs?.tool_calls) {
-          const toolResults = await Promise.all(
-            output.additional_kwargs.tool_calls.map(async (call: any) => {
-              const tool = this.tools.find(t => t.name === call.function.name);
-              if (tool) {
-                return await tool._call(call.function.arguments);
-              }
-              return null;
-            })
-          );
-          return {
-            messages: [...output.content],
-            searchResults: toolResults,
-            nextAction: "analyze"
-          };
-        }
-        return {
-          messages: [...output.content],
-          nextAction: "complete"
-        };
-      }
-    ]);
-
-    const analyzeNode = RunnableSequence.from([
-      {
-        messages: (state: AgentState) => [
-          new SystemMessage("Analyze the search results and provide insights."),
-          ...state.messages,
-          new AIMessage(JSON.stringify(state.searchResults))
-        ]
-      },
-      this.model,
-      (output) => ({
-        messages: [...output.content],
-        nextAction: "complete"
-      })
-    ]);
-
-    // Build the graph
-    const workflow = new StateGraph({
-      channels: AgentStateType
-    });
-
-    // Add nodes
-    workflow.addNode("plan", planNode);
-    workflow.addNode("execute", executeNode);
-    workflow.addNode("analyze", analyzeNode);
-
-    // Add edges
-    workflow.addEdge("plan", "execute");
-    workflow.addEdge("execute", "analyze");
-    workflow.setFinishCondition((state) => state.nextAction === "complete");
-
-    return workflow.compile();
-  }
-
-  // Main method to run the agent
-  async run(query: string) {
+  /**
+   * Run the agent to analyze a career transition
+   * 
+   * @param query The career transition query to analyze
+   * @returns The agent's response with skill gaps and insights
+   */
+  async run(query: string): Promise<any> {
     try {
-      const initialState = {
-        messages: [new HumanMessage(query)],
-        currentStage: "planning",
-        searchResults: [],
-        plan: null,
-        nextAction: "plan"
+      console.log(`Running ImprovedPlanExecuteAgent with query: ${query}`);
+      
+      // Create the initial state with messages
+      const initialState: MessagesState = {
+        messages: [new HumanMessage(query)]
       };
 
-      const result = await this.graph.invoke(initialState);
-      return result;
+      // Invoke the agent with the initial state
+      const result = await this.agent.invoke(initialState);
+      
+      // Process the result
+      const finalMessage = result.messages[result.messages.length - 1];
+      
+      console.log("Agent execution completed successfully");
+      return {
+        messages: result.messages,
+        content: finalMessage.content
+      };
     } catch (error) {
-      console.error("Error in plan-execute agent:", error);
-      throw error;
+      console.error("Error in ImprovedPlanExecuteAgent.run:", error);
+      throw new Error(`Failed to analyze career transition: ${error.message}`);
     }
   }
 }
