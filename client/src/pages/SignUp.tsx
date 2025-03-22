@@ -38,7 +38,7 @@ const SignUp = () => {
     try {
       const response = await apiRequest("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify(data)
+        data: data
       });
 
       if (response.success) {

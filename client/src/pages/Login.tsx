@@ -36,7 +36,7 @@ const Login = () => {
     try {
       const response = await apiRequest("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify(data)
+        data: data
       });
 
       if (response.success) {
