@@ -5,6 +5,8 @@ import { storage } from '../storage';
 import jwt from 'jsonwebtoken';
 import { requireAuth } from './replit-auth';
 import { z } from 'zod';
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 
@@ -33,6 +35,17 @@ const userSkillSchema = z.object({
   skillName: z.string().min(1),
   proficiencyLevel: z.enum(['Beginner', 'Intermediate', 'Advanced', 'Expert']).optional(),
   yearsOfExperience: z.number().int().min(0).optional()
+});
+
+// Schema validation for forgot password
+const forgotPasswordSchema = z.object({
+  email: z.string().email()
+});
+
+// Schema validation for reset password
+const resetPasswordSchema = z.object({
+  token: z.string(),
+  password: z.string().min(6)
 });
 
 // Register a new user
@@ -421,6 +434,160 @@ router.put('/current-role', requireAuth, async (req: Request, res: Response) => 
       success: false,
       error: 'Failed to update current role'
     });
+  }
+});
+
+// Request password reset
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    // Validate request body
+    const data = forgotPasswordSchema.parse(req.body);
+    
+    // Check if user exists
+    const user = await storage.getUserByEmail(data.email);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found with this email'
+      });
+    }
+    
+    // Generate reset token
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    // Set token expiration (24 hours)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+    
+    // Save token to database
+    await storage.createPasswordResetToken(user.id, token, expiresAt);
+    
+    // Return success with token (in a real production app, you would send this via email)
+    res.json({
+      success: true,
+      message: 'Password reset link sent. Please check your email.',
+      // For easier testing, include token in response - remove this in production
+      // and send it via email instead
+      token
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        success: false,
+        error: 'Validation Error',
+        details: error.errors
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to request password reset'
+      });
+    }
+  }
+});
+
+// Verify reset token
+router.get('/verify-reset-token/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token is required'
+      });
+    }
+    
+    // Check if token exists and is valid
+    const resetToken = await storage.getPasswordResetToken(token);
+    
+    if (!resetToken) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invalid or expired token'
+      });
+    }
+    
+    // Check if token is expired
+    if (new Date() > new Date(resetToken.expiresAt)) {
+      await storage.deletePasswordResetToken(token);
+      return res.status(400).json({
+        success: false,
+        error: 'Token has expired'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Token is valid'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to verify token'
+    });
+  }
+});
+
+// Reset password using token
+router.post('/reset-password', async (req: Request, res: Response) => {
+  try {
+    // Validate request body
+    const data = resetPasswordSchema.parse(req.body);
+    
+    // Check if token exists and is valid
+    const resetToken = await storage.getPasswordResetToken(data.token);
+    
+    if (!resetToken) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invalid or expired token'
+      });
+    }
+    
+    // Check if token is expired
+    if (new Date() > new Date(resetToken.expiresAt)) {
+      await storage.deletePasswordResetToken(data.token);
+      return res.status(400).json({
+        success: false,
+        error: 'Token has expired'
+      });
+    }
+    
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    
+    // Update user password
+    const user = await storage.updatePassword(resetToken.userId, hashedPassword);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
+    // Delete the token
+    await storage.deletePasswordResetToken(data.token);
+    
+    res.json({
+      success: true,
+      message: 'Password has been reset successfully'
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        success: false,
+        error: 'Validation Error',
+        details: error.errors
+      });
+    } else {
+      console.error('Password reset error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to reset password'
+      });
+    }
   }
 });
 

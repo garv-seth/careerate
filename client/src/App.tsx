@@ -9,6 +9,8 @@ import SignUp from "@/pages/SignUp";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
 import OnboardingWizard from "@/pages/OnboardingWizard";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -24,6 +26,8 @@ function Router() {
           <Route path="/login" component={Login} />
           <Route path="/profile" component={Profile} />
           <Route path="/onboarding" component={OnboardingWizard} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route component={NotFound} />
         </Switch>
       </main>
