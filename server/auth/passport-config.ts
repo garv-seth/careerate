@@ -8,31 +8,37 @@ import { InsertUser } from '@shared/schema';
  * Configure passport for authentication
  */
 export function configurePassport() {
-  // Configure passport to use local strategy
+  // Configure passport to use local strategy with custom fields
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      try {
-        // Try to find the user by username
-        const user = await storage.getUserByUsername(username);
-        
-        // If user not found, return error
-        if (!user) {
-          return done(null, false, { message: 'Incorrect username or password' });
+    new LocalStrategy(
+      {
+        usernameField: 'email', // Use email field for authentication
+        passwordField: 'password'
+      },
+      async (email, password, done) => {
+        try {
+          // Try to find the user by email
+          const user = await storage.getUserByEmail(email);
+          
+          // If user not found, return error
+          if (!user) {
+            return done(null, false, { message: 'Incorrect email or password' });
+          }
+          
+          // Check if password is correct
+          const isValid = await bcrypt.compare(password, user.password);
+          
+          if (!isValid) {
+            return done(null, false, { message: 'Incorrect email or password' });
+          }
+          
+          // Return user if successful
+          return done(null, user);
+        } catch (error) {
+          return done(error);
         }
-        
-        // Check if password is correct
-        const isValid = await bcrypt.compare(password, user.password);
-        
-        if (!isValid) {
-          return done(null, false, { message: 'Incorrect username or password' });
-        }
-        
-        // Return user if successful
-        return done(null, user);
-      } catch (error) {
-        return done(error);
       }
-    })
+    )
   );
   
   // Serialize user to session
@@ -54,32 +60,23 @@ export function configurePassport() {
 }
 
 /**
- * Register a new user
+ * Register a new user with email
  */
-export async function registerUser(username: string, password: string, email?: string): Promise<any> {
+export async function registerUser(email: string, password: string): Promise<any> {
   try {
-    // Check if username is already taken
-    const existingUser = await storage.getUserByUsername(username);
-    if (existingUser) {
-      throw new Error('Username already taken');
-    }
-    
     // Check if email is already taken
-    if (email) {
-      const existingEmail = await storage.getUserByEmail(email);
-      if (existingEmail) {
-        throw new Error('Email already taken');
-      }
+    const existingEmail = await storage.getUserByEmail(email);
+    if (existingEmail) {
+      throw new Error('Email already taken');
     }
     
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Create user
+    // Create user with email as the identifier
     const userData: InsertUser = {
-      username,
-      password: hashedPassword,
-      email
+      email,
+      password: hashedPassword
     };
     
     const newUser = await storage.createUser(userData);

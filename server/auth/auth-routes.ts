@@ -41,12 +41,12 @@ router.post('/register', async (req: Request, res: Response) => {
     // Validate request body
     const data = registerSchema.parse(req.body);
     
-    // Register user
-    const user = await registerUser(data.username, data.password, data.email);
+    // Register user using email as identifier
+    const user = await registerUser(data.email, data.password);
     
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, email: user.email },
       process.env.JWT_SECRET || 'careerate-secret-key',
       { expiresIn: '1d' }
     );
@@ -105,7 +105,7 @@ router.post('/login', (req: Request, res: Response, next) => {
         
         // Generate JWT token
         const token = jwt.sign(
-          { id: user.id, username: user.username },
+          { id: user.id, email: user.email },
           process.env.JWT_SECRET || 'careerate-secret-key',
           { expiresIn: '1d' }
         );

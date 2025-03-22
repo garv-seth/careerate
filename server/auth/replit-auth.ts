@@ -62,8 +62,9 @@ export async function handleReplitAuth(req: Request, res: Response, next: NextFu
       return next();
     }
     
-    // Check if user exists in our database
-    let user = await storage.getUserByUsername(identity.name);
+    // Check if user exists in our database by email
+    const email = identity.email || `${identity.name}@replit.user`; // Fallback email if not provided
+    let user = await storage.getUserByEmail(email);
     
     if (!user) {
       // User doesn't exist, create new user
@@ -73,7 +74,7 @@ export async function handleReplitAuth(req: Request, res: Response, next: NextFu
       
       try {
         // Create user with Replit identity
-        user = await registerUser(identity.name, randomPassword, identity.email);
+        user = await registerUser(email, randomPassword);
       } catch (error) {
         console.error('Error creating user from Replit identity:', error);
         return next();
@@ -85,7 +86,7 @@ export async function handleReplitAuth(req: Request, res: Response, next: NextFu
     
     // JWT token for API authentication (for client-side API calls)
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, email: user.email },
       process.env.JWT_SECRET || 'careerate-secret-key',
       { expiresIn: '1d' }
     );
