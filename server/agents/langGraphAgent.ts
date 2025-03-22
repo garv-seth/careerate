@@ -5,10 +5,10 @@
  * orchestrated agents with controllable actions and flows.
  */
 import { BaseMessage, AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { ChatOpenAI } from "@langchain/openai";
 import { StructuredTool } from "@langchain/core/tools";
 import { storage } from "../storage";
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
+import { createChatModel, getModelInfo } from "../helpers/modelFactory";
 
 // Define our own skill gap analysis interface to avoid dependency on the Perplexity API file
 export interface SkillGapAnalysis {
@@ -78,7 +78,7 @@ export class LangGraphCaraAgent {
   private targetRole: string;
   private transitionId: number;
   private existingSkills: string[] = [];
-  private model: ChatOpenAI;
+  private model: any; // Changed from ChatOpenAI to any for model factory support
   private tools: StructuredTool[];
 
   constructor(currentRole: string, targetRole: string, transitionId: number) {
@@ -86,12 +86,12 @@ export class LangGraphCaraAgent {
     this.targetRole = targetRole;
     this.transitionId = transitionId;
 
-    // Initialize the OpenAI model
-    this.model = new ChatOpenAI({
+    // Initialize the model using model factory
+    this.model = createChatModel({
       temperature: 0.7,
-      modelName: "gpt-4-turbo-preview",
       streaming: false,
     });
+    console.log(`Using model: ${getModelInfo()}`);
 
     // Initialize tools
     this.tools = [
