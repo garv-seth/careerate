@@ -1,16 +1,15 @@
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import { createChatModel } from "../helpers/modelFactory";
-import { BaseMessage, HumanMessage, SystemMessage, AIMessage } from "@langchain/core/messages";
+import { BaseMessage, HumanMessage } from "@langchain/core/messages";
 import { z } from "zod";
-import { RunnableSequence } from "@langchain/core/runnables";
-import { MessagesState, createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
 
 /**
  * A simplified Plan-Execute agent that uses the createReactAgent from LangGraph
  * This is a more straightforward implementation that avoids the complex StateGraph setup
  */
 export class ImprovedPlanExecuteAgent {
-  private agent: any;
+  agent: any;
 
   constructor() {
     // Initialize tools
@@ -21,28 +20,15 @@ export class ImprovedPlanExecuteAgent {
     // Create a model with appropriate temperature for planning
     const model = createChatModel({
       temperature: 0.2,  // Lower temperature for more consistent results
-      modelName: "gpt-4o"
+      modelName: "gpt-4-turbo-preview"
     });
 
     // Create the agent using prebuilt React agent pattern
     this.agent = createReactAgent({
       llm: model, 
       tools: [searchTool],
-      // Add human-like thinking with system message
-      systemMessage: `You are a career transition planning and analysis agent.
-
-Your goal is to analyze career transitions between different roles and industries.
-For any career transition query:
-1. Break down the analysis into clear steps
-2. Search for relevant information about the transition
-3. Identify skill gaps, challenges, and success factors
-4. Provide concrete recommendations
-5. Format your final response as JSON with these keys:
-   - skillGaps: array of {skillName, gapLevel, confidenceScore, mentionCount, contextSummary}
-   - insights: object with key observations about the transition
-   - success factors: array of most important factors for success
-
-Always search for accurate and up-to-date information. Do not make up data.`
+      // System message
+      agentType: "chat"
     });
   }
 
@@ -57,8 +43,25 @@ Always search for accurate and up-to-date information. Do not make up data.`
       console.log(`Running ImprovedPlanExecuteAgent with query: ${query}`);
       
       // Create the initial state with messages
-      const initialState: MessagesState = {
-        messages: [new HumanMessage(query)]
+      const initialState = {
+        messages: [
+          new HumanMessage(`You are a career transition planning and analysis agent.
+
+Your goal is to analyze career transitions between different roles and industries.
+For any career transition query:
+1. Break down the analysis into clear steps
+2. Search for relevant information about the transition
+3. Identify skill gaps, challenges, and success factors
+4. Provide concrete recommendations
+5. Format your final response as JSON with these keys:
+   - skillGaps: array of {skillName, gapLevel, confidenceScore, mentionCount, contextSummary}
+   - insights: object with key observations about the transition
+   - success factors: array of most important factors for success
+
+Always search for accurate and up-to-date information. Do not make up data.
+
+Now analyze this transition: ${query}`)
+        ]
       };
 
       // Invoke the agent with the initial state
@@ -72,7 +75,7 @@ Always search for accurate and up-to-date information. Do not make up data.`
         messages: result.messages,
         content: finalMessage.content
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in ImprovedPlanExecuteAgent.run:", error);
       throw new Error(`Failed to analyze career transition: ${error.message}`);
     }
