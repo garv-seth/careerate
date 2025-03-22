@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import SignUp from "@/pages/SignUp";
+import Login from "@/pages/Login";
+import Profile from "@/pages/Profile";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -16,6 +19,9 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/dashboard/:transitionId" component={Dashboard} />
+          <Route path="/signup" component={SignUp} />
+          <Route path="/login" component={Login} />
+          <Route path="/profile" component={Profile} />
           <Route component={NotFound} />
         </Switch>
       </main>
