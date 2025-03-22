@@ -16,14 +16,34 @@
  * Ensures that no nulls are passed to source field to avoid database errors
  */
 async function safeCreateScrapedData(transitionId: number, story: any) {
-  return await storage.createScrapedData({
-    transitionId,
-    source: story.source || "Extracted Story", // Ensure source is never null
-    content: story.content || "No content available",
-    url: story.url || null,
-    postDate: story.date || new Date().toISOString().split('T')[0],
-    skillsExtracted: []
-  });
+  try {
+    // Ensure we have valid data for the database
+    const safeSource = story.source || "Search Result"; // Ensure source is never null
+    const safeContent = story.content || "No content available";
+    const safeDate = story.date || new Date().toISOString().split('T')[0];
+    
+    return await storage.createScrapedData({
+      transitionId,
+      source: safeSource,
+      content: safeContent,
+      url: story.url || null,
+      postDate: safeDate || null,
+      skillsExtracted: []
+    });
+  } catch (error) {
+    console.error("Error saving scraped data to database:", error);
+    // Return a basic object to avoid further errors
+    return {
+      id: 0,
+      transitionId,
+      source: "Error Saving",
+      content: "Failed to save content to database",
+      url: null,
+      postDate: null,
+      skillsExtracted: [],
+      createdAt: new Date().toISOString()
+    };
+  }
 }
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
@@ -391,7 +411,10 @@ Plan for 4-8 total steps that comprehensively analyze this career transition.`;
       state: typeof CaraImprovedState.State,
       config?: RunnableConfig,
     ): Promise<Partial<typeof CaraImprovedState.State>> => {
-      const task = state.plan[0];
+      // Safely get the first task or use a default one if plan is undefined or empty
+      const task = state.plan && Array.isArray(state.plan) && state.plan.length > 0 
+        ? state.plan[0] 
+        : "Analyze career transition requirements";
       console.log(`Executing plan step: ${task}`);
 
       try {
@@ -516,8 +539,10 @@ You are analyzing a transition from ${state.input.currentRole} to ${state.input.
       console.log(`Executing search using specialized search agent`);
       
       try {
-        // Extract the task from the current step
-        const currentTask = state.plan[0];
+        // Extract the task from the current step with null check
+        const currentTask = state.plan && Array.isArray(state.plan) && state.plan.length > 0
+          ? state.plan[0]
+          : "Search for transition stories and experiences";
         
         // Initialize empty array if searchMessages is undefined
         const currentSearchMessages = Array.isArray(state.searchMessages) ? state.searchMessages : [];
@@ -555,12 +580,21 @@ Collect at least 3-5 detailed transition stories.`)
         };
       } catch (error) {
         console.error("Error in search agent:", error);
-        const currentTask = state.plan[0];
+        
+        // Get current task with null check
+        const currentTask = state.plan && Array.isArray(state.plan) && state.plan.length > 0
+          ? state.plan[0]
+          : "Search for transition stories and experiences";
+        
+        // Get next plan steps with null check
+        const nextSteps = state.plan && Array.isArray(state.plan) && state.plan.length > 1
+          ? state.plan.slice(1)
+          : [];
         
         // Return a generic result to avoid breaking the workflow
         return {
           pastSteps: [[currentTask, "Search agent encountered an error. Unable to retrieve search results. Moving to next step."]],
-          plan: state.plan.slice(1),
+          plan: nextSteps,
           agentType: "planner"
         };
       }
@@ -705,59 +739,77 @@ Collect at least 3-5 detailed transition stories.`)
         }
       }
       
-      // If we couldn't parse structured data, try to extract stories using pattern matching
-      if (stories.length === 0) {
-        // Look for story patterns in the text
-        const storyPattern = /(?:Story|Example)\s*\d+:\s*([^]*?)(?=(?:Story|Example)\s*\d+:|$)/gi;
-        const forumPostPattern = /(?:Forum Post|Post|Thread).*?:\s*([^]*?)(?=(?:Forum Post|Post|Thread).*?:|$)/gi;
-        
-        // Try to extract using the story pattern
-        let match;
-        while ((match = storyPattern.exec(searchResults)) !== null) {
-          if (match[1] && match[1].trim().length > 100) { // Ensure it's substantial content
-            const story = {
-              source: "Extracted Story",
-              content: match[1].trim(),
-              url: "",
-              date: new Date().toISOString().split('T')[0]
+      // Process the parsedStories if we successfully extracted them
+      if (parsedStories) {
+        // Handle different formats of parsed stories
+        if (Array.isArray(parsedStories)) {
+          // We have an array of stories
+          for (const story of parsedStories) {
+            if (story && (story.content || story.text)) {
+              const newStory = {
+                source: story.source || story.title || "Search Result",
+                content: story.content || story.text || "",
+                url: story.url || "",
+                date: story.date || new Date().toISOString().split('T')[0]
+              };
+              
+              stories.push(newStory);
+              
+              // Also save to the database
+              await safeCreateScrapedData(state.input.transitionId, newStory);
+            }
+          }
+        } else if (typeof parsedStories === 'object') {
+          // Check if it's an object with a stories/results/posts array
+          const storyArray = parsedStories.stories || parsedStories.results || parsedStories.posts;
+          
+          if (Array.isArray(storyArray)) {
+            // Process each story in the array
+            for (const story of storyArray) {
+              if (story && (story.content || story.text)) {
+                const newStory = {
+                  source: story.source || story.title || "Search Result",
+                  content: story.content || story.text || "",
+                  url: story.url || "",
+                  date: story.date || new Date().toISOString().split('T')[0]
+                };
+                
+                stories.push(newStory);
+                
+                // Also save to the database
+                await safeCreateScrapedData(state.input.transitionId, newStory);
+              }
+            }
+          } else if (parsedStories.content || parsedStories.text) {
+            // It's a single story object
+            const newStory = {
+              source: parsedStories.source || parsedStories.title || "Search Result",
+              content: parsedStories.content || parsedStories.text || "",
+              url: parsedStories.url || "",
+              date: parsedStories.date || new Date().toISOString().split('T')[0]
             };
             
-            stories.push(story);
+            stories.push(newStory);
             
             // Also save to the database
-            await storage.createScrapedData({
-              transitionId: state.input.transitionId,
-              source: story.source,
-              content: story.content,
-              url: null,
-              postDate: story.date,
-              skillsExtracted: []
-            });
+            await safeCreateScrapedData(state.input.transitionId, newStory);
           }
         }
+      }
+      
+      // If we couldn't parse structured data, try to extract stories using our improved pattern matching
+      if (stories.length === 0) {
+        // Use our improved text extraction method
+        const extractedStories = this._extractStoriesFromText(searchResults);
         
-        // Try to extract using the forum post pattern
-        while ((match = forumPostPattern.exec(searchResults)) !== null) {
-          if (match[1] && match[1].trim().length > 100) { // Ensure it's substantial content
-            const story = {
-              source: "Forum Post",
-              content: match[1].trim(),
-              url: "",
-              date: new Date().toISOString().split('T')[0]
-            };
-            
-            stories.push(story);
-            
-            // Also save to the database
-            await storage.createScrapedData({
-              transitionId: state.input.transitionId,
-              source: story.source,
-              content: story.content,
-              url: null,
-              postDate: story.date,
-              skillsExtracted: []
-            });
-          }
+        console.log(`Extracted ${extractedStories.length} stories using text patterns`);
+        
+        // Process and save each extracted story
+        for (const story of extractedStories) {
+          stories.push(story);
+          
+          // Save to the database using our safe method
+          await safeCreateScrapedData(state.input.transitionId, story);
         }
       }
       
@@ -772,15 +824,8 @@ Collect at least 3-5 detailed transition stories.`)
         
         stories.push(story);
         
-        // Also save to the database
-        await storage.createScrapedData({
-          transitionId: state.input.transitionId,
-          source: story.source,
-          content: story.content,
-          url: null,
-          postDate: story.date,
-          skillsExtracted: []
-        });
+        // Also save to the database using our safe method
+        await safeCreateScrapedData(state.input.transitionId, story);
       }
     } catch (error) {
       console.error("Error extracting stories from search results:", error);
@@ -881,8 +926,11 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
         // Safely handle pastSteps in case it's undefined
         const pastSteps = state.pastSteps && Array.isArray(state.pastSteps) ? state.pastSteps : [];
         
+        // Safely handle plan in case it's undefined
+        const plan = state.plan && Array.isArray(state.plan) ? state.plan : [];
+        
         // Safely create originalPlan and completedSteps
-        const originalPlan = state.plan.concat(pastSteps.map(([step]) => step)).join("\n");
+        const originalPlan = plan.concat(pastSteps.map(([step]) => step)).join("\n");
         const completedSteps = pastSteps
           .map(([step, result]) => `${step}: ${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`)
           .join("\n\n");
