@@ -1,6 +1,20 @@
-import { db } from "./db";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { sql } from "drizzle-orm";
+import { client } from "./db";
+
+/**
+ * Utilities to check if columns exist
+ */
+async function checkIfColumnExists(tableName: string, columnName: string): Promise<boolean> {
+  const result = await client`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_name = ${tableName}
+      AND column_name = ${columnName}
+    )
+  `;
+  
+  return result[0].exists;
+}
 
 /**
  * Run database migrations to ensure all tables are properly created
@@ -12,11 +26,24 @@ async function runMigrations() {
   try {
     // Check if profiles table exists
     try {
-      await sql`SELECT 1 FROM profiles LIMIT 1`.execute(db);
+      await client`SELECT 1 FROM profiles LIMIT 1`;
       console.log("Profiles table exists");
+      
+      // Ensure profiles table has all required columns
+      const hasUpdatedAt = await checkIfColumnExists('profiles', 'updated_at');
+      if (!hasUpdatedAt) {
+        await client`ALTER TABLE profiles ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`;
+        console.log("Added updated_at column to profiles table");
+      }
+      
+      const hasProfileImageUrl = await checkIfColumnExists('profiles', 'profile_image_url');
+      if (!hasProfileImageUrl) {
+        await client`ALTER TABLE profiles ADD COLUMN profile_image_url TEXT`;
+        console.log("Added profile_image_url column to profiles table");
+      }
     } catch (error) {
       console.log("Creating profiles table...");
-      await sql`
+      await client`
         CREATE TABLE IF NOT EXISTS profiles (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id),
@@ -29,17 +56,24 @@ async function runMigrations() {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
-      `.execute(db);
+      `;
       console.log("Profiles table created");
     }
 
     // Check if user_skills table exists
     try {
-      await sql`SELECT 1 FROM user_skills LIMIT 1`.execute(db);
+      await client`SELECT 1 FROM user_skills LIMIT 1`;
       console.log("User skills table exists");
+      
+      // Ensure user_skills table has all required columns
+      const hasVerified = await checkIfColumnExists('user_skills', 'verified');
+      if (!hasVerified) {
+        await client`ALTER TABLE user_skills ADD COLUMN verified BOOLEAN DEFAULT FALSE`;
+        console.log("Added verified column to user_skills table");
+      }
     } catch (error) {
       console.log("Creating user_skills table...");
-      await sql`
+      await client`
         CREATE TABLE IF NOT EXISTS user_skills (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id),
@@ -49,28 +83,65 @@ async function runMigrations() {
           verified BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
-      `.execute(db);
+      `;
       console.log("User skills table created");
     }
 
     // Ensure users table has all required columns
     console.log("Updating users table...");
-    await sql`
-      ALTER TABLE users 
-        ADD COLUMN IF NOT EXISTS email TEXT, 
-        ADD COLUMN IF NOT EXISTS current_role TEXT, 
-        ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN DEFAULT FALSE,
-        ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT FALSE,
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    `.execute(db);
+    
+    // Check for email column (might be username in older schema)
+    const hasEmail = await checkIfColumnExists('users', 'email');
+    if (!hasEmail) {
+      // Check if we have username column to migrate from
+      const hasUsername = await checkIfColumnExists('users', 'username');
+      if (hasUsername) {
+        // Migrate from username to email
+        await client`ALTER TABLE users ADD COLUMN email TEXT`;
+        await client`UPDATE users SET email = username WHERE email IS NULL`;
+        await client`ALTER TABLE users ALTER COLUMN email SET NOT NULL`;
+        console.log("Migrated username to email column");
+      } else {
+        await client`ALTER TABLE users ADD COLUMN email TEXT`;
+        console.log("Added email column to users table");
+      }
+    }
+    
+    // Check for current_role
+    const hasCurrentRole = await checkIfColumnExists('users', 'current_role');
+    if (!hasCurrentRole) {
+      await client`ALTER TABLE users ADD COLUMN current_role TEXT`;
+      console.log("Added current_role column to users table");
+    }
+    
+    // Check for profile_completed
+    const hasProfileCompleted = await checkIfColumnExists('users', 'profile_completed');
+    if (!hasProfileCompleted) {
+      await client`ALTER TABLE users ADD COLUMN profile_completed BOOLEAN DEFAULT FALSE`;
+      console.log("Added profile_completed column to users table");
+    }
+    
+    // Check for verified
+    const hasVerified = await checkIfColumnExists('users', 'verified');
+    if (!hasVerified) {
+      await client`ALTER TABLE users ADD COLUMN verified BOOLEAN DEFAULT FALSE`;
+      console.log("Added verified column to users table");
+    }
+    
+    // Check for updated_at
+    const hasUpdatedAt = await checkIfColumnExists('users', 'updated_at');
+    if (!hasUpdatedAt) {
+      await client`ALTER TABLE users ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`;
+      console.log("Added updated_at column to users table");
+    }
 
     // Check for password_reset_tokens table
     try {
-      await sql`SELECT 1 FROM password_reset_tokens LIMIT 1`.execute(db);
+      await client`SELECT 1 FROM password_reset_tokens LIMIT 1`;
       console.log("Password reset tokens table exists");
     } catch (error) {
       console.log("Creating password_reset_tokens table...");
-      await sql`
+      await client`
         CREATE TABLE IF NOT EXISTS password_reset_tokens (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -78,8 +149,36 @@ async function runMigrations() {
           expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
-      `.execute(db);
+      `;
       console.log("Password reset tokens table created");
+    }
+    
+    // Check insights table and add url column if missing
+    try {
+      await client`SELECT 1 FROM insights LIMIT 1`;
+      console.log("Insights table exists");
+      
+      const hasUrlColumn = await checkIfColumnExists('insights', 'url');
+      if (!hasUrlColumn) {
+        await client`ALTER TABLE insights ADD COLUMN url TEXT`;
+        console.log("Added url column to insights table");
+      }
+    } catch (error) {
+      // Table doesn't exist yet, that's ok as it will be created when needed
+    }
+    
+    // Check scraped_data table and add post_date column if missing
+    try {
+      await client`SELECT 1 FROM scraped_data LIMIT 1`;
+      console.log("Scraped data table exists");
+      
+      const hasPostDateColumn = await checkIfColumnExists('scraped_data', 'post_date');
+      if (!hasPostDateColumn) {
+        await client`ALTER TABLE scraped_data ADD COLUMN post_date TEXT`;
+        console.log("Added post_date column to scraped_data table");
+      }
+    } catch (error) {
+      // Table doesn't exist yet, that's ok as it will be created when needed
     }
 
     console.log("Migrations completed successfully");
