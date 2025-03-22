@@ -1,6 +1,6 @@
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import { createChatModel } from "../helpers/modelFactory";
-import { BaseMessage, HumanMessage } from "@langchain/core/messages";
+import { BaseMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 
@@ -17,18 +17,17 @@ export class ImprovedPlanExecuteAgent {
       maxResults: 5
     });
 
-    // Create a model with appropriate temperature for planning
+    // Create a model with appropriate temperature for planning using the factory
+    // This will use Gemini instead of OpenAI based on the environment setting
     const model = createChatModel({
       temperature: 0.2,  // Lower temperature for more consistent results
-      modelName: "gpt-4-turbo-preview"
+      modelName: "gemini-1.5-pro" // Explicitly use Gemini model
     });
 
     // Create the agent using prebuilt React agent pattern
     this.agent = createReactAgent({
       llm: model, 
-      tools: [searchTool],
-      // System message
-      agentType: "chat"
+      tools: [searchTool]
     });
   }
 
@@ -42,10 +41,10 @@ export class ImprovedPlanExecuteAgent {
     try {
       console.log(`Running ImprovedPlanExecuteAgent with query: ${query}`);
       
-      // Create the initial state with messages
+      // Create the initial state with system and human messages
       const initialState = {
         messages: [
-          new HumanMessage(`You are a career transition planning and analysis agent.
+          new SystemMessage(`You are a career transition planning and analysis agent.
 
 Your goal is to analyze career transitions between different roles and industries.
 For any career transition query:
@@ -53,27 +52,60 @@ For any career transition query:
 2. Search for relevant information about the transition
 3. Identify skill gaps, challenges, and success factors
 4. Provide concrete recommendations
-5. Format your final response as JSON with these keys:
-   - skillGaps: array of {skillName, gapLevel, confidenceScore, mentionCount, contextSummary}
-   - insights: object with key observations about the transition
-   - success factors: array of most important factors for success
 
-Always search for accurate and up-to-date information. Do not make up data.
+Format your final response as valid JSON with these exact keys:
+{
+  "skillGaps": [
+    {
+      "skillName": "string",
+      "gapLevel": "Low|Medium|High",
+      "confidenceScore": number,
+      "mentionCount": number,
+      "contextSummary": "string"
+    }
+  ],
+  "insights": {
+    "keyObservations": ["string"],
+    "successRate": number,
+    "commonChallenges": ["string"]
+  },
+  "successFactors": ["string"]
+}
 
-Now analyze this transition: ${query}`)
+Always search for accurate and up-to-date information. Do not make up data.`),
+          new HumanMessage(`Analyze this career transition: ${query}`)
         ]
       };
 
       // Invoke the agent with the initial state
       const result = await this.agent.invoke(initialState);
       
-      // Process the result
+      // Process the result - extract content from final message
       const finalMessage = result.messages[result.messages.length - 1];
       
       console.log("Agent execution completed successfully");
+      
+      let responseContent;
+      try {
+        // Try to extract JSON from the content
+        const content = finalMessage.content;
+        const jsonMatch = content.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+        if (jsonMatch) {
+          responseContent = JSON.parse(jsonMatch[0]);
+        } else {
+          responseContent = { error: "Could not extract JSON from response" };
+        }
+      } catch (parseError) {
+        console.error("Error parsing agent response as JSON:", parseError);
+        responseContent = { 
+          error: "Failed to parse response", 
+          rawContent: finalMessage.content 
+        };
+      }
+      
       return {
         messages: result.messages,
-        content: finalMessage.content
+        content: responseContent
       };
     } catch (error: any) {
       console.error("Error in ImprovedPlanExecuteAgent.run:", error);

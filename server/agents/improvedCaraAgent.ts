@@ -55,19 +55,32 @@ export class ImprovedCaraAgent {
 
   private processAgentResult(result: any): CaraAnalysisResult {
     try {
-      // Get the content from result
-      const content = result.content || "";
-      console.log("Parsing result content...");
+      console.log("Processing agent result:", result);
       
-      // Find the JSON part in the content
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        console.error("No JSON content found in agent result");
-        return this.getFallbackResult();
+      // For our improved implementation, the content might already be a parsed JSON
+      // from the ImprovedPlanExecuteAgent JSON extractor
+      let parsed;
+      
+      if (typeof result.content === 'object' && result.content !== null) {
+        // It's already a parsed object
+        parsed = result.content;
+      } else {
+        // It's still a string, try to parse it
+        const content = result.content || "";
+        console.log("Parsing string content...");
+        
+        // Find the JSON part in the content
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          console.error("No JSON content found in agent result");
+          return this.getFallbackResult();
+        }
+        
+        // Parse the JSON
+        parsed = JSON.parse(jsonMatch[0]);
       }
       
-      // Parse the JSON
-      const parsed = JSON.parse(jsonMatch[0]);
+      console.log("Successfully parsed result:", parsed);
       
       return {
         skillGaps: this.validateSkillGaps(parsed.skillGaps || []),
