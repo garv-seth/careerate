@@ -1,0 +1,439 @@
+    at RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1271:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Search agent activated
+Replanning next steps
+Error parsing stories: SyntaxError: Unexpected token ` in JSON at position 0
+    at JSON.parse (<anonymous>)
+    at searchForums (file:///home/runner/workspace/server/helpers/langGraphHelpers.ts:15:352)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/server/routes.ts:1:19263
+No transition stories found with Tavily, creating fallback insights
+Sending request to OpenAI API with model: gpt-4-turbo-preview
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify skill gaps and areas for development by comparing the skills and responsibilities required for both roles.
+Sending request to OpenAI API with model: gpt-4-turbo-preview
+Created 6 insights for transition with LangGraph and Tavily
+1:47:40 AM [express] GET /api/stories-analysis/27 200 in 14167ms :: {"success":true,"data":{"keyObse…
+ImprovedCara is analyzing transition from Microsoft Product Manager Level 63 to Google Product Manager L6
+1:47:42 AM [express] POST /api/analyze 200 in 101ms :: {"success":true,"message":"Analysis initiated…
+Found existing transition ID: 27
+Starting improved Plan-Execute analysis for transition ID: 27
+Starting Improved Plan-Execute analysis: Microsoft Product Manager Level 63 → Google Product Manager L6
+Cleared all data for transition ID: 27
+Cleared existing data for transition ID: 27 to ensure fresh analysis
+Creating detailed career transition analysis plan
+No skill gaps found, generating skill gaps using LangGraph
+ImprovedCara is analyzing transition from Microsoft Product Manager Level 63 to Google Product Manager L6
+Found existing transition ID: 27
+Starting improved Plan-Execute analysis for transition ID: 27
+Starting Improved Plan-Execute analysis: Microsoft Product Manager Level 63 → Google Product Manager L6
+Cleared all data for transition ID: 27
+Cleared existing data for transition ID: 27 to ensure fresh analysis
+Creating detailed career transition analysis plan
+Plan created: [
+  'Search for and compile transition stories from Microsoft Product Manager Level 63 to Google Product Manager L6 on professional networks and forums.',
+  'Analyze job descriptions for Microsoft Product Manager Level 63 and Google Product Manager L6 to identify specific skill and experience requirements.',
+  'Identify common themes, challenges, and success factors from the transition stories.',
+  'Compare personal skills and experiences with the requirements for Google Product Manager L6 to identify gaps.',
+  'Set specific, measurable, achievable, relevant, and time-bound (SMART) goals for each identified skill and experience gap.',
+  'Create a timeline for achieving these goals, incorporating both short-term and long-term milestones.',
+  'Recommend online courses, certifications, and reading materials for each identified skill gap.',
+  'Seek mentorship or coaching from professionals who have successfully made the transition or are experienced Google Product Managers.'
+]
+Executing plan step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Google Product Manager L6 on professional networks and forums.
+Error executing step: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:18:22)
+    at file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:113
+    at AsyncLocalStorage.run (node:async_hooks:338:14)
+    at AsyncLocalStorageProvider.runWithConfig (file:///home/runner/workspace/node_modules/@langchain/core/dist/singletons/async_local_storage/index.js:56:24)
+    at RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:68)
+    at RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1271:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executed step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Google Product Manager L6 on professional networks and forums.
+Executing search using specialized search agent
+Error in search agent: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:39:740)
+    at file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:113
+    at AsyncLocalStorage.run (node:async_hooks:338:14)
+    at AsyncLocalStorageProvider.runWithConfig (file:///home/runner/workspace/node_modules/@langchain/core/dist/singletons/async_local_storage/index.js:56:24)
+    at RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:68)
+    at RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1271:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Search agent activated
+Replanning next steps
+Plan created: [
+  'Search for and compile transition stories from Microsoft Product Manager Level 63 to Google Product Manager L6 on professional networks and forums.',
+  'Analyze job descriptions and requirements for Microsoft Product Manager Level 63 and Google Product Manager L6 to identify key skills and responsibilities.',
+  'Identify skill gaps and areas for development by comparing the skill sets required for both roles.',
+  'Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.',
+  'Develop a personalized development plan that includes specific milestones, timelines, and methods for skill acquisition.',
+  'Recommend specific online courses, books, and professional workshops for each identified skill gap.',
+  'Seek mentorship or coaching from professionals who have successfully made the transition or are experienced in the Google Product Manager role.',
+  'Regularly review and adjust the development plan based on progress and feedback from mentors or peers.'
+]
+Executing plan step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Google Product Manager L6 on professional networks and forums.
+Error executing step: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:18:22)
+    at file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:113
+    at AsyncLocalStorage.run (node:async_hooks:338:14)
+    at AsyncLocalStorageProvider.runWithConfig (file:///home/runner/workspace/node_modules/@langchain/core/dist/singletons/async_local_storage/index.js:56:24)
+    at RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:68)
+    at RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1271:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executed step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Google Product Manager L6 on professional networks and forums.
+Executing search using specialized search agent
+Error in search agent: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:39:740)
+    at file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:113
+    at AsyncLocalStorage.run (node:async_hooks:338:14)
+    at AsyncLocalStorageProvider.runWithConfig (file:///home/runner/workspace/node_modules/@langchain/core/dist/singletons/async_local_storage/index.js:56:24)
+    at RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:68)
+    at RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1271:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Search agent activated
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify skill gaps and areas for development by comparing the skill sets required for both roles.
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Executed step: Identify skill gaps and areas for development by comparing the skills and responsibilities required for both roles.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Executed step: Identify skill gaps and areas for development by comparing the skill sets required for both roles.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Executed step: Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.
+Replanning next steps
+Error in replan node: Error: Not implemented.
+    at parse (file:///home/runner/workspace/node_modules/@langchain/core/dist/output_parsers/openai_tools/json_output_tools_parsers.js:103:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.func (file:///home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:56:866)
+    at async RunnableCallable.invoke (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/utils.js:79:27)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/retry.js:68:22)
+    at async PregelRunner._executeTasksWithRetry (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:220:33)
+    at async PregelRunner.tick (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/runner.js:45:40)
+    at async CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1381:17)
+    at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17)
+Executing plan step: Identify common themes, challenges, and success factors from the transition stories.
+Executed step: Identify common themes, challenges, and success factors from the transition stories.
+Replanning next steps

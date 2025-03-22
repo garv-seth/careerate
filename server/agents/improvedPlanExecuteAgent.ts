@@ -497,9 +497,12 @@ You are analyzing a transition from ${state.input.currentRole} to ${state.input.
         // Extract the task from the current step
         const currentTask = state.plan[0];
         
+        // Initialize empty array if searchMessages is undefined
+        const currentSearchMessages = Array.isArray(state.searchMessages) ? state.searchMessages : [];
+        
         // If we don't have search messages prepared, create them
-        const searchMessages = state.searchMessages.length > 0 
-          ? state.searchMessages 
+        const searchMessages = currentSearchMessages.length > 0 
+          ? currentSearchMessages 
           : [
               new SystemMessage(`You are a specialized search agent focused on finding career transition information.
 Your goal is to find real stories, experiences, and data about transitioning from ${state.input.currentRole} to ${state.input.targetRole}.
@@ -779,20 +782,33 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
           { type: "function", function: responseFunction },
         ]);
         
-        const output = await replannerWithTools.invoke(formattedPrompt).then(parser.parse);
+        // Instead of using the JsonOutputToolsParser which has an issue,
+        // we'll parse the result directly from the response
+        const result = await replannerWithTools.invoke(formattedPrompt);
+        const content = result.content.toString();
         
-        // Check which tool was called
-        if (output.length > 0) {
-          const toolCall = output[0];
-          
-          if (toolCall.name === "response") {
-            // We're done, return the response
-            return { 
-              response: toolCall.args?.response || "Analysis complete",
-            };
-          } else if (toolCall.name === "plan") {
-            // Continue with the updated plan
-            return { plan: toolCall.args?.steps || [] };
+        // Check for response function call
+        if (content.includes("response") && content.includes("function_call")) {
+          // Extract the response text
+          const responseMatch = content.match(/"response"\s*:\s*"([^"]+)"/);
+          if (responseMatch && responseMatch[1]) {
+            return { response: responseMatch[1] };
+          }
+        }
+        
+        // Check for plan function call
+        if (content.includes("plan") && content.includes("function_call")) {
+          // Try to extract the steps array
+          const stepsMatch = content.match(/"steps"\s*:\s*(\[(?:\s*"[^"]*"(?:\s*,\s*"[^"]*")*\s*)\])/);
+          if (stepsMatch && stepsMatch[1]) {
+            try {
+              const steps = JSON.parse(stepsMatch[1]);
+              if (Array.isArray(steps) && steps.length > 0) {
+                return { plan: steps };
+              }
+            } catch (error) {
+              console.error("Error parsing steps:", error);
+            }
           }
         }
         

@@ -59,7 +59,8 @@ export async function searchForums(
     
     // Parse the response
     try {
-      // Extract JSON from the response
+      // Extract JSON from the response text
+      const responseText = processResponse.content.toString();
       const jsonMatch = String(processResponse.content).match(/\[\s*\{.*\}\s*\]/s);
       let storiesJson;
       
