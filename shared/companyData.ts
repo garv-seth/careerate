@@ -381,17 +381,33 @@ export function getLevelsByCompanyAndRoleId(companyId: string, roleId: string): 
   return role ? role.levels : [];
 }
 
-export function formatRoleWithLevel(companyId: string, roleId: string, levelId: string): string {
-  const company = getCompanyById(companyId);
-  if (!company) return "";
-  
-  const role = company.roles.find(r => r.id === roleId);
-  if (!role) return "";
-  
-  const level = role.levels.find(l => l.id === levelId);
-  if (!level) return role.title;
-  
-  return `${company.name} ${role.title} ${level.name}`;
+export async function formatRoleWithLevel(companyId: string, roleId: string, levelId: string): Promise<string> {
+  try {
+    // Call the backend API to format the role (or create a client-side version that matches the DB)
+    const response = await fetch(`/api/format-role/${companyId}/${roleId}/${levelId}`);
+    const data = await response.json();
+    
+    if (data.success && data.formattedRole) {
+      return data.formattedRole;
+    } else {
+      throw new Error("Failed to format role");
+    }
+  } catch (error) {
+    console.error("Error formatting role:", error);
+    
+    // Fallback to client-side formatting using the in-memory data
+    // This is just for backward compatibility
+    const company = getCompanyById(companyId);
+    if (!company) return "Unknown Role";
+    
+    const role = company.roles.find(r => r.id === roleId);
+    if (!role) return company.name;
+    
+    const level = role.levels.find(l => l.id === levelId);
+    if (!level) return `${company.name} ${role.title}`;
+    
+    return `${company.name} ${role.title} ${level.name}`;
+  }
 }
 
 export function parseRoleString(roleString: string): { companyId: string, roleId: string, levelId?: string } {

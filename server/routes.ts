@@ -15,6 +15,7 @@ import {
   callLLM
 } from "./helpers/langGraphHelpers";
 import { companies, getCompanyById, getRolesByCompanyId, getLevelsByCompanyAndRoleId } from "@shared/companyData";
+import { db } from "./db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes
@@ -25,51 +26,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await seedRoleSkills();
   
   // Company data API endpoints
-  apiRouter.get("/companies", (req, res) => {
-    res.json({
-      success: true,
-      data: companies.map(company => ({
-        id: company.id,
-        name: company.name
-      }))
-    });
-  });
-  
-  apiRouter.get("/companies/:companyId/roles", (req, res) => {
-    const { companyId } = req.params;
-    const roles = getRolesByCompanyId(companyId);
-    
-    if (!roles.length) {
-      return res.status(404).json({
+  apiRouter.get("/companies", async (req, res) => {
+    try {
+      const companies = await db.select({ id: 'id', name: 'name' }).from('companies');
+      
+      res.json({
+        success: true,
+        data: companies
+      });
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({
         success: false,
-        error: "Company not found"
+        error: "Failed to fetch companies"
       });
     }
-    
-    res.json({
-      success: true,
-      data: roles.map(role => ({
-        id: role.id,
-        title: role.title
-      }))
-    });
   });
   
-  apiRouter.get("/companies/:companyId/roles/:roleId/levels", (req, res) => {
-    const { companyId, roleId } = req.params;
-    const levels = getLevelsByCompanyAndRoleId(companyId, roleId);
-    
-    if (!levels.length) {
-      return res.status(404).json({
+  apiRouter.get("/companies/:companyId/roles", async (req, res) => {
+    try {
+      const { companyId } = req.params;
+      
+      const roles = await db
+        .select({ id: 'id', title: 'title' })
+        .from('company_roles')
+        .where('company_id', '=', companyId);
+      
+      if (roles.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Company not found or has no roles"
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: roles
+      });
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      res.status(500).json({
         success: false,
-        error: "Company or role not found"
+        error: "Failed to fetch roles"
       });
     }
-    
-    res.json({
-      success: true,
-      data: levels
-    });
+  });
+  
+  apiRouter.get("/companies/:companyId/roles/:roleId/levels", async (req, res) => {
+    try {
+      const { companyId, roleId } = req.params;
+      
+      const levels = await db
+        .select({ id: 'id', name: 'name' })
+        .from('role_levels')
+        .where({
+          company_id: companyId,
+          role_id: roleId
+        });
+      
+      if (levels.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Company, role, or levels not found"
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: levels
+      });
+    } catch (error) {
+      console.error("Error fetching levels:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch levels"
+      });
+    }
+  });
+  
+  // Format role string endpoint
+  apiRouter.get("/format-role/:companyId/:roleId/:levelId", async (req, res) => {
+    try {
+      const { companyId, roleId, levelId } = req.params;
+      
+      // Get company name
+      const companyResults = await db
+        .select({ name: 'name' })
+        .from('companies')
+        .where('id', '=', companyId);
+      
+      if (companyResults.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Company not found"
+        });
+      }
+      
+      // Get role title
+      const roleResults = await db
+        .select({ title: 'title' })
+        .from('company_roles')
+        .where({
+          'company_id': companyId,
+          'id': roleId
+        });
+      
+      if (roleResults.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Role not found"
+        });
+      }
+      
+      // Get level name
+      const levelResults = await db
+        .select({ name: 'name' })
+        .from('role_levels')
+        .where({
+          'company_id': companyId,
+          'role_id': roleId,
+          'id': levelId
+        });
+      
+      if (levelResults.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: "Level not found"
+        });
+      }
+      
+      const formattedRole = `${companyResults[0].name} ${roleResults[0].title} ${levelResults[0].name}`;
+      
+      res.json({
+        success: true,
+        formattedRole
+      });
+    } catch (error) {
+      console.error("Error formatting role:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to format role"
+      });
+    }
   });
 
   // Handle unified transition creation, scraping, and analysis
