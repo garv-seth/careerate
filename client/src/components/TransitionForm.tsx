@@ -101,9 +101,9 @@ const TransitionForm: React.FC = () => {
   
   const companies = companiesResponse?.data || [];
   
-  // Fetch roles for current company
+  // Fetch roles for current company with explicit endpoint path
   const { data: currentRolesResponse } = useQuery<ApiResponse<Role>>({
-    queryKey: ["/api/companies", currentCompanyId, "roles"],
+    queryKey: [`/api/companies/${currentCompanyId}/roles`],
     enabled: !!currentCompanyId,
   });
   
@@ -115,28 +115,30 @@ const TransitionForm: React.FC = () => {
   console.log("Current roles data:", currentRolesResponse?.data);
   console.log("Current roles mapped:", currentRoles);
   
-  // Fetch roles for target company
+  // Fetch roles for target company with explicit endpoint path
   const { data: targetRolesResponse } = useQuery<ApiResponse<Role>>({
-    queryKey: ["/api/companies", targetCompanyId, "roles"],
+    queryKey: [`/api/companies/${targetCompanyId}/roles`],
     enabled: !!targetCompanyId,
   });
   
   const targetRoles = targetRolesResponse?.data || [];
   
-  // Fetch levels for current role
+  // Fetch levels for current role with explicit endpoint path
   const { data: currentLevelsResponse } = useQuery<ApiResponse<Level>>({
-    queryKey: ["/api/companies", currentCompanyId, "roles", currentRoleId, "levels"],
+    queryKey: [`/api/companies/${currentCompanyId}/roles/${currentRoleId}/levels`],
     enabled: !!currentCompanyId && !!currentRoleId,
   });
   
   const currentLevels = currentLevelsResponse?.data || [];
   
   console.log("Current role ID:", currentRoleId);
-  console.log("Current levels:", currentLevels);
+  console.log("Current levels response:", currentLevelsResponse);
+  console.log("Current levels data:", currentLevelsResponse?.data);
+  console.log("Current levels mapped:", currentLevels);
   
-  // Fetch levels for target role
+  // Fetch levels for target role with explicit endpoint path
   const { data: targetLevelsResponse } = useQuery<ApiResponse<Level>>({
-    queryKey: ["/api/companies", targetCompanyId, "roles", targetRoleId, "levels"],
+    queryKey: [`/api/companies/${targetCompanyId}/roles/${targetRoleId}/levels`],
     enabled: !!targetCompanyId && !!targetRoleId,
   });
   
@@ -172,14 +174,14 @@ const TransitionForm: React.FC = () => {
   // Format current role when all selections are made
   const currentLevelId = form.watch("currentLevelId");
   const { data: currentRoleFormat } = useQuery<FormatRoleResponse>({
-    queryKey: ["/api/format-role", currentCompanyId, currentRoleId, currentLevelId],
+    queryKey: [`/api/format-role?companyId=${currentCompanyId}&roleId=${currentRoleId}&levelId=${currentLevelId}`],
     enabled: !!currentCompanyId && !!currentRoleId && !!currentLevelId,
   });
   
   // Format target role when all selections are made
   const targetLevelId = form.watch("targetLevelId");
   const { data: targetRoleFormat } = useQuery<FormatRoleResponse>({
-    queryKey: ["/api/format-role", targetCompanyId, targetRoleId, targetLevelId],
+    queryKey: [`/api/format-role?companyId=${targetCompanyId}&roleId=${targetRoleId}&levelId=${targetLevelId}`],
     enabled: !!targetCompanyId && !!targetRoleId && !!targetLevelId,
   });
   
