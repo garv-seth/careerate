@@ -14,6 +14,7 @@ import {
   generateTransitionOverview,
   callLLM
 } from "./helpers/langGraphHelpers";
+import { companies, getCompanyById, getRolesByCompanyId, getLevelsByCompanyAndRoleId } from "@shared/companyData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize API routes
@@ -22,6 +23,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Seed some predefined role skills if they don't exist
   await seedRoleSkills();
+  
+  // Company data API endpoints
+  apiRouter.get("/companies", (req, res) => {
+    res.json({
+      success: true,
+      data: companies.map(company => ({
+        id: company.id,
+        name: company.name
+      }))
+    });
+  });
+  
+  apiRouter.get("/companies/:companyId/roles", (req, res) => {
+    const { companyId } = req.params;
+    const roles = getRolesByCompanyId(companyId);
+    
+    if (!roles.length) {
+      return res.status(404).json({
+        success: false,
+        error: "Company not found"
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: roles.map(role => ({
+        id: role.id,
+        title: role.title
+      }))
+    });
+  });
+  
+  apiRouter.get("/companies/:companyId/roles/:roleId/levels", (req, res) => {
+    const { companyId, roleId } = req.params;
+    const levels = getLevelsByCompanyAndRoleId(companyId, roleId);
+    
+    if (!levels.length) {
+      return res.status(404).json({
+        success: false,
+        error: "Company or role not found"
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: levels
+    });
+  });
 
   // Handle unified transition creation, scraping, and analysis
   apiRouter.post("/transition", async (req, res) => {
