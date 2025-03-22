@@ -24,7 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatRoleWithLevel } from "@shared/companyData";
+// Use API call instead of direct import
+// import { formatRoleWithLevel } from "@shared/companyData";
 
 // Updated form schema for structured inputs
 const formSchema = z.object({
@@ -150,34 +151,39 @@ const TransitionForm: React.FC = () => {
     }
   }, [watchTargetRoleId, targetRoleId, form]);
   
-  // Format the role strings whenever the selections change
+  // Types for the API responses
+  interface FormatRoleResponse {
+    success: boolean;
+    formattedRole: string;
+    error?: string;
+  }
+
+  // Format the current role string using API
+  const { data: currentRoleFormat } = useQuery<FormatRoleResponse>({
+    queryKey: ["/api/format-role", watchCurrentCompanyId, watchCurrentRoleId, form.watch("currentLevelId")],
+    enabled: !!watchCurrentCompanyId && !!watchCurrentRoleId && !!form.watch("currentLevelId"),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+  
+  // Format the target role string using API
+  const { data: targetRoleFormat } = useQuery<FormatRoleResponse>({
+    queryKey: ["/api/format-role", watchTargetCompanyId, watchTargetRoleId, form.watch("targetLevelId")],
+    enabled: !!watchTargetCompanyId && !!watchTargetRoleId && !!form.watch("targetLevelId"),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  // Update form values when formatted roles are received
   useEffect(() => {
-    const currentCompanyId = form.getValues("currentCompanyId");
-    const currentRoleId = form.getValues("currentRoleId");
-    const currentLevelId = form.getValues("currentLevelId");
-    
-    if (currentCompanyId && currentRoleId && currentLevelId) {
-      const formattedCurrentRole = formatRoleWithLevel(currentCompanyId, currentRoleId, currentLevelId);
-      form.setValue("currentRole", formattedCurrentRole);
+    if (currentRoleFormat?.success && currentRoleFormat.formattedRole) {
+      form.setValue("currentRole", currentRoleFormat.formattedRole);
     }
-    
-    const targetCompanyId = form.getValues("targetCompanyId");
-    const targetRoleId = form.getValues("targetRoleId");
-    const targetLevelId = form.getValues("targetLevelId");
-    
-    if (targetCompanyId && targetRoleId && targetLevelId) {
-      const formattedTargetRole = formatRoleWithLevel(targetCompanyId, targetRoleId, targetLevelId);
-      form.setValue("targetRole", formattedTargetRole);
+  }, [currentRoleFormat, form]);
+  
+  useEffect(() => {
+    if (targetRoleFormat?.success && targetRoleFormat.formattedRole) {
+      form.setValue("targetRole", targetRoleFormat.formattedRole);
     }
-  }, [
-    watchCurrentCompanyId, 
-    watchCurrentRoleId, 
-    form.watch("currentLevelId"),
-    watchTargetCompanyId,
-    watchTargetRoleId,
-    form.watch("targetLevelId"),
-    form
-  ]);
+  }, [targetRoleFormat, form]);
 
   // Submit handler
   const mutation = useMutation({
