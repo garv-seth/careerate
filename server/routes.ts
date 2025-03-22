@@ -571,8 +571,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           transitionId,
           skillName: skillGap.skillName,
           gapLevel: skillGap.gapLevel as "Low" | "Medium" | "High",
-          confidenceScore: skillGap.confidenceScore,
-          mentionCount: skillGap.mentionCount || 0
+          confidenceScore: Math.round(skillGap.confidenceScore), // Ensure integer value
+          mentionCount: Math.round(skillGap.mentionCount || 0) // Ensure integer value
         });
         storedSkillGaps.push(stored);
       }

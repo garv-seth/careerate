@@ -60,6 +60,13 @@ export async function searchForums(
   try {
     console.log(`Searching for transition stories from ${currentRole} to ${targetRole} using Tavily`);
     
+    // Extract company, role, and level information from the roles
+    const currentCompany = currentRole.split(' ')[0];
+    const currentRoleTitle = currentRole.split(' ').slice(1, -2).join(' ');
+    const targetCompany = targetRole.split(' ')[0];
+    const targetRoleTitle = targetRole.split(' ').slice(1, -2).join(' ');
+    
+    // Search for exact match first
     const transitionSearch = new CareerTransitionSearch();
     const searchResults = await transitionSearch._call({
       query: "career transition experiences success stories challenges",
@@ -67,6 +74,35 @@ export async function searchForums(
       targetRole
     });
     
+    // If no meaningful results, try searching with generic role titles across companies
+    if (!searchResults || searchResults.trim().length < 100) {
+      console.log("Limited search results for exact roles. Trying with more generic role search...");
+      
+      const genericSearchResults = await transitionSearch._call({
+        query: "career transition experiences success stories challenges",
+        currentRole: currentRoleTitle,
+        targetRole: targetRoleTitle
+      });
+      
+      // Merge results, prefer specific results if available
+      return await processSearchResults(searchResults + "\n\n" + genericSearchResults, currentRole, targetRole);
+    }
+    
+    // Process the search results
+    return await processSearchResults(searchResults, currentRole, targetRole);
+  } catch (error) {
+    console.error("Error searching forums with Tavily:", error);
+    return [];
+  }
+}
+
+// Helper function to process search results
+async function processSearchResults(
+    searchResults: string,
+    currentRole: string, 
+    targetRole: string
+  ): Promise<{ source: string; content: string; url: string; date: string }[]> {
+  try {
     // Process the search results with the LLM
     const processPrompt = `
     You've searched for transition stories from ${currentRole} to ${targetRole}.
@@ -90,31 +126,25 @@ export async function searchForums(
       new HumanMessage(processPrompt)
     ]);
     
-    // Parse the response
-    try {
-      // Extract JSON from the response text
-      const responseText = processResponse.content.toString();
-      const jsonMatch = String(processResponse.content).match(/\[\s*\{.*\}\s*\]/s);
-      let storiesJson;
-      
-      if (jsonMatch) {
-        storiesJson = JSON.parse(jsonMatch[0]);
-      } else {
-        // Try to parse the entire response as JSON
-        storiesJson = JSON.parse(String(processResponse.content));
-      }
-      
-      // Ensure it's an array
-      const stories = Array.isArray(storiesJson) ? storiesJson : [];
-      
-      console.log(`Successfully parsed ${stories.length} transition stories`);
-      return stories;
-    } catch (error) {
-      console.error("Error parsing stories:", error);
-      return [];
+    // Extract JSON from the response text
+    const responseText = processResponse.content.toString();
+    const jsonMatch = String(processResponse.content).match(/\[\s*\{.*\}\s*\]/s);
+    let storiesJson;
+    
+    if (jsonMatch) {
+      storiesJson = JSON.parse(jsonMatch[0]);
+    } else {
+      // Try to parse the entire response as JSON
+      storiesJson = JSON.parse(String(processResponse.content));
     }
+    
+    // Ensure it's an array
+    const stories = Array.isArray(storiesJson) ? storiesJson : [];
+    
+    console.log(`Successfully parsed ${stories.length} transition stories`);
+    return stories;
   } catch (error) {
-    console.error("Error searching forums with Tavily:", error);
+    console.error("Error parsing stories:", error);
     return [];
   }
 }

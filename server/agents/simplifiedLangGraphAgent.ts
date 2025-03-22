@@ -377,8 +377,8 @@ Format as JSON with these fields for each skill. All fields are required.`;
                 transitionId: state.transition.transitionId,
                 skillName: skill.skillName,
                 gapLevel: skill.gapLevel as "Low" | "Medium" | "High",
-                confidenceScore: skill.confidenceScore,
-                mentionCount: skill.mentionCount
+                confidenceScore: Math.round(skill.confidenceScore), // Convert to integer
+                mentionCount: Math.round(skill.mentionCount || 1) // Ensure valid integer
               });
               
               return {
