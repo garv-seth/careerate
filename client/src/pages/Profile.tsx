@@ -126,7 +126,7 @@ const Profile = () => {
     mutationFn: async (data: ProfileFormValues) => {
       return apiRequest("/api/auth/profile", {
         method: "PUT",
-        body: JSON.stringify(data)
+        data: data
       });
     },
     onSuccess: () => {
@@ -149,7 +149,7 @@ const Profile = () => {
     mutationFn: async (data: SkillFormValues) => {
       return apiRequest("/api/auth/skills", {
         method: "POST",
-        body: JSON.stringify(data)
+        data: data
       });
     },
     onSuccess: () => {
@@ -199,7 +199,7 @@ const Profile = () => {
     mutationFn: async (data: RoleFormValues) => {
       return apiRequest("/api/auth/current-role", {
         method: "PUT",
-        body: JSON.stringify(data)
+        data: data
       });
     },
     onSuccess: () => {
