@@ -10,6 +10,21 @@
  * 3. Better story extraction and context preservation between steps
  * 4. Improved skill gap analysis based on real stories and forum content
  */
+
+/**
+ * Helper function to safely create scraped data
+ * Ensures that no nulls are passed to source field to avoid database errors
+ */
+async function safeCreateScrapedData(transitionId: number, story: any) {
+  return await storage.createScrapedData({
+    transitionId,
+    source: story.source || "Extracted Story", // Ensure source is never null
+    content: story.content || "No content available",
+    url: story.url || null,
+    postDate: story.date || new Date().toISOString().split('T')[0],
+    skillsExtracted: []
+  });
+}
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
