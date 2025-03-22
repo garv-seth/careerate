@@ -12,9 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 
 // Form validation schema
 const formSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters").max(50),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  email: z.string().email("Invalid email address").optional().or(z.literal(""))
+  email: z.string().email("Valid email address is required"),
+  password: z.string().min(6, "Password must be at least 6 characters")
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -27,9 +26,8 @@ const SignUp = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
-      password: "",
-      email: ""
+      email: "",
+      password: ""
     }
   });
 
@@ -85,15 +83,16 @@ const SignUp = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Choose a username" 
-                        {...field} 
-                        className="bg-surface-light border-primary/20 focus-visible:ring-primary"
+                        type="email" 
+                        placeholder="Enter your email address" 
+                        {...field}
+                        className="bg-surface-light border-primary/20 focus-visible:ring-primary" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -113,25 +112,6 @@ const SignUp = () => {
                         placeholder="Create a password" 
                         {...field}
                         className="bg-surface-light border-primary/20 focus-visible:ring-primary"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email (Optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="Enter your email address" 
-                        {...field}
-                        className="bg-surface-light border-primary/20 focus-visible:ring-primary" 
                       />
                     </FormControl>
                     <FormMessage />

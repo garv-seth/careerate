@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Form validation schema
 const formSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Valid email is required"),
   password: z.string().min(1, "Password is required")
 });
 
@@ -26,7 +26,7 @@ const Login = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: ""
     }
   });
@@ -51,7 +51,7 @@ const Login = () => {
       } else {
         toast({
           title: "Login failed",
-          description: response.error || "Invalid username or password",
+          description: response.error || "Invalid email or password",
           variant: "destructive"
         });
       }
@@ -81,13 +81,13 @@ const Login = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Enter your username" 
+                        placeholder="Enter your email" 
                         {...field} 
                         className="bg-surface-light border-primary/20 focus-visible:ring-primary"
                       />
