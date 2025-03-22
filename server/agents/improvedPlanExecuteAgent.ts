@@ -1370,23 +1370,39 @@ ${parser.getFormatInstructions()}`;
             for (let i = 0; i < developmentPlan.milestones.length; i++) {
               const m = developmentPlan.milestones[i];
               
+              // Ensure all required fields are present and valid
+              const durationWeeks = typeof m.durationWeeks === 'number' && m.durationWeeks > 0 
+                ? m.durationWeeks 
+                : 4; // Default to 4 weeks if missing or invalid
+              
               const milestone = await storage.createMilestone({
                 planId: plan.id,
                 title: m.title,
                 description: m.description || null,
                 priority: m.priority as "Low" | "Medium" | "High",
-                durationWeeks: m.durationWeeks || 4,
+                durationWeeks: durationWeeks,
                 order: i + 1,
                 progress: 0
               });
               
-              // Add resources
-              if (m.resources && Array.isArray(m.resources)) {
-                for (const r of m.resources) {
+              // Add resources - ensure resources array exists
+              const resources = m.resources && Array.isArray(m.resources) ? m.resources : [];
+              
+              // If no resources were provided, add a default resource
+              if (resources.length === 0) {
+                await storage.createResource({
+                  milestoneId: milestone.id,
+                  title: `Learning resources for ${m.title}`,
+                  url: "https://www.coursera.org/",
+                  type: "website"
+                });
+              } else {
+                // Add all specified resources
+                for (const r of resources) {
                   await storage.createResource({
                     milestoneId: milestone.id,
-                    title: r.title,
-                    url: r.url,
+                    title: r.title || `Resource for ${m.title}`,
+                    url: r.url || "https://www.coursera.org/",
                     type: r.type || "website"
                   });
                 }
