@@ -570,6 +570,88 @@ Collect at least 3-5 detailed transition stories.`)
   /**
    * Process search results to extract stories
    */
+  /**
+   * Helper method to extract stories from text when JSON parsing fails
+   * This fallback method uses various regex patterns to find stories
+   */
+  private _extractStoriesFromText(text: string): Array<{
+    source: string;
+    content: string;
+    url: string;
+    date: string;
+  }> {
+    const stories: Array<{
+      source: string;
+      content: string;
+      url: string;
+      date: string;
+    }> = [];
+    
+    try {
+      // Pattern for stories that might be labeled as "Story 1", "Example 2", etc.
+      const storyPattern = /(?:Story|Example)\s*\d+[:\-]\s*([^]*?)(?=(?:Story|Example)\s*\d+[:\-]|$)/gi;
+      
+      // Pattern for forum posts or threads
+      const forumPostPattern = /(?:Forum Post|Post|Thread|From)[^:]*?:\s*([^]*?)(?=(?:Forum Post|Post|Thread|From)[^:]*?:|$)/gi;
+      
+      // Pattern for Reddit/Quora/Blind posts
+      const platformPostPattern = /(?:Reddit|Quora|Blind|LinkedIn)[^:]*?:\s*([^]*?)(?=(?:Reddit|Quora|Blind|LinkedIn)[^:]*?:|$)/gi;
+      
+      // Pattern for source: content format
+      const sourceContentPattern = /([A-Za-z0-9\s]+(?:Reddit|Quora|Blind|Forum|Post|Thread)):\s*([^]*?)(?=[A-Za-z0-9\s]+(?:Reddit|Quora|Blind|Forum|Post|Thread):|$)/gi;
+      
+      // Function to add extracted content as a story
+      const addStory = (content: string, source = "Extracted Story") => {
+        if (content && content.trim().length > 50) { // Ensure it's substantial content
+          stories.push({
+            source: source,
+            content: content.trim(),
+            url: "",
+            date: new Date().toISOString().split('T')[0]
+          });
+        }
+      };
+      
+      // Try all patterns
+      let match;
+      
+      // Try story pattern
+      while ((match = storyPattern.exec(text)) !== null) {
+        addStory(match[1], "Transition Story");
+      }
+      
+      // Try forum post pattern
+      while ((match = forumPostPattern.exec(text)) !== null) {
+        addStory(match[1], "Forum Post");
+      }
+      
+      // Try platform post pattern
+      while ((match = platformPostPattern.exec(text)) !== null) {
+        addStory(match[1], match[0].split(':')[0].trim());
+      }
+      
+      // Try source: content pattern
+      while ((match = sourceContentPattern.exec(text)) !== null) {
+        addStory(match[2], match[1].trim());
+      }
+      
+      // If no stories found with patterns, split by paragraphs and use substantial ones
+      if (stories.length === 0) {
+        const paragraphs = text.split(/\n\s*\n/);
+        for (const paragraph of paragraphs) {
+          if (paragraph.trim().length > 150) {
+            addStory(paragraph);
+          }
+        }
+      }
+      
+      return stories;
+    } catch (error) {
+      console.error("Error extracting stories from text:", error);
+      return [];
+    }
+  }
+  
   private async _extractStoriesFromSearchResults(
     searchResults: string, 
     state: typeof CaraImprovedState.State
@@ -587,63 +669,39 @@ Collect at least 3-5 detailed transition stories.`)
     }> = [];
     
     try {
-      // Try to extract structured stories from the search results
-      const storyMatch = searchResults.match(/\[.*?\]/s) || searchResults.match(/\{.*?\}/s);
+      // First try to extract stories using a more robust JSON extraction
+      let parsedStories = null;
       
-      if (storyMatch) {
-        // Try to parse as JSON array or object
-        try {
-          const parsedStories = JSON.parse(storyMatch[0]);
-          if (Array.isArray(parsedStories)) {
-            // We have an array of stories
-            for (const story of parsedStories) {
-              if (story.content || story.text) {
-                const newStory = {
-                  source: story.source || story.title || "Search Result",
-                  content: story.content || story.text || "",
-                  url: story.url || "",
-                  date: story.date || new Date().toISOString().split('T')[0]
-                };
-                
-                stories.push(newStory);
-                
-                // Also save to the database
-                await storage.createScrapedData({
-                  transitionId: state.input.transitionId,
-                  source: newStory.source,
-                  content: newStory.content,
-                  url: newStory.url || null,
-                  postDate: newStory.date || null,
-                  skillsExtracted: []
-                });
-              }
-            }
-          } else if (typeof parsedStories === 'object') {
-            // We have a single story object
-            const story = parsedStories;
-            if (story.content || story.text) {
-              const newStory = {
-                source: story.source || story.title || "Search Result",
-                content: story.content || story.text || "",
-                url: story.url || "",
-                date: story.date || new Date().toISOString().split('T')[0]
-              };
-              
-              stories.push(newStory);
-              
-              // Also save to the database, ensuring source is never null
-              await storage.createScrapedData({
-                transitionId: state.input.transitionId,
-                source: newStory.source || "Search Result", // Ensure source is never null
-                content: newStory.content || "No content available",
-                url: newStory.url || null,
-                postDate: newStory.date || null,
-                skillsExtracted: []
-              });
-            }
+      // Try different patterns to find JSON objects or arrays
+      const jsonPatterns = [
+        /\[\s*\{[\s\S]*?\}\s*\]/g,  // Array of objects [{ ... }, { ... }]
+        /\{\s*"stories"\s*:\s*\[[\s\S]*?\]\s*\}/g,  // Object with stories array { "stories": [...] }
+        /\{\s*"results"\s*:\s*\[[\s\S]*?\]\s*\}/g,  // Object with results array { "results": [...] }
+        /\{\s*"posts"\s*:\s*\[[\s\S]*?\]\s*\}/g,    // Object with posts array { "posts": [...] }
+        /\[\s*"[^"]*"\s*,\s*"[^"]*"/g,              // Array of strings ["...", "..."]
+        /\{[\s\S]*?content[\s\S]*?\}/g,             // Object with content field
+        /\{[\s\S]*?text[\s\S]*?\}/g                 // Object with text field
+      ];
+      
+      // Try each pattern to find JSON
+      for (const pattern of jsonPatterns) {
+        const matches = searchResults.match(pattern);
+        if (matches && matches.length > 0) {
+          try {
+            // Clean the match to handle common issues
+            const cleanedMatch = matches[0]
+              .replace(/\\n/g, '\n')           // Replace escaped newlines
+              .replace(/\\"/g, '"')            // Replace escaped quotes
+              .replace(/([{,])\s*(\w+):/g, '$1"$2":')  // Quote unquoted keys
+              .replace(/:\s*'([^']*)'/g, ':"$1"')     // Replace single quotes with double quotes
+              .replace(/"\s*\n\s*"/g, '" "');         // Fix broken strings across lines
+            
+            parsedStories = JSON.parse(cleanedMatch);
+            console.log("Successfully parsed JSON with pattern:", pattern);
+            break;
+          } catch (e) {
+            console.log("Failed to parse JSON with pattern:", pattern);
           }
-        } catch (e) {
-          console.error("Error parsing JSON stories:", e);
         }
       }
       
@@ -802,22 +860,30 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
         }
         
         // Check for repeated steps/patterns that indicate a loop
-        const lastSteps = state.pastSteps.slice(-4).map(step => step[0]);
-        const uniqueStepTypes = new Set(lastSteps);
-        
-        // If we're repeating the same 1-2 steps over and over, this is a loop
-        if (lastSteps.length >= 4 && uniqueStepTypes.size <= 2) {
-          console.log("Detected a loop in the execution. Moving to completion.");
-          return { 
-            response: "Analysis complete. Moving to the final development plan creation."
-          };
+        // Ensure pastSteps exists and is an array before using it
+        if (state.pastSteps && Array.isArray(state.pastSteps) && state.pastSteps.length >= 4) {
+          const lastSteps = state.pastSteps.slice(-4).map(step => step[0]);
+          const uniqueStepTypes = new Set(lastSteps);
+          
+          // If we're repeating the same 1-2 steps over and over, this is a loop
+          if (uniqueStepTypes.size <= 2) {
+            console.log("Detected a loop in the execution. Moving to completion.");
+            return { 
+              response: "Analysis complete. Moving to the final development plan creation."
+            };
+          }
         }
         
         // Format variables for the prompt
         const currentRole = state.input.currentRole;
         const targetRole = state.input.targetRole;
-        const originalPlan = state.plan.concat(state.pastSteps.map(([step]) => step)).join("\n");
-        const completedSteps = state.pastSteps
+        
+        // Safely handle pastSteps in case it's undefined
+        const pastSteps = state.pastSteps && Array.isArray(state.pastSteps) ? state.pastSteps : [];
+        
+        // Safely create originalPlan and completedSteps
+        const originalPlan = state.plan.concat(pastSteps.map(([step]) => step)).join("\n");
+        const completedSteps = pastSteps
           .map(([step, result]) => `${step}: ${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`)
           .join("\n\n");
         
