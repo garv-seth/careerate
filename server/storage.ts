@@ -1,5 +1,7 @@
 import { 
   users, type User, type InsertUser,
+  profiles, type Profile, type InsertProfile,
+  userSkills, type UserSkill, type InsertUserSkill,
   transitions, type Transition, type InsertTransition,
   roleSkills, type RoleSkill, type InsertRoleSkill,
   scrapedData, type ScrapedData, type InsertScrapedData,
@@ -17,7 +19,22 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserRole(userId: number, currentRole: string): Promise<User | undefined>;
+  updateUserProfileStatus(userId: number, profileCompleted: boolean): Promise<User | undefined>;
+  
+  // Profile methods
+  getProfile(userId: number): Promise<Profile | undefined>;
+  createProfile(profile: InsertProfile): Promise<Profile>;
+  updateProfile(userId: number, profileData: Partial<InsertProfile>): Promise<Profile | undefined>;
+  
+  // User skills methods
+  getUserSkills(userId: number): Promise<UserSkill[]>;
+  createUserSkill(userSkill: InsertUserSkill): Promise<UserSkill>;
+  updateUserSkill(id: number, userSkill: Partial<InsertUserSkill>): Promise<UserSkill | undefined>;
+  deleteUserSkill(id: number): Promise<void>;
+  deleteUserSkillsByUserId(userId: number): Promise<void>;
 
   // Role skills methods
   getRoleSkills(roleName: string): Promise<RoleSkill[]>;
@@ -26,6 +43,7 @@ export interface IStorage {
   // Transition methods
   getTransition(id: number): Promise<Transition | undefined>;
   getTransitionByRoles(currentRole: string, targetRole: string): Promise<Transition | undefined>;
+  getTransitionsByUserId(userId: number): Promise<Transition[]>;
   createTransition(transition: InsertTransition): Promise<Transition>;
   updateTransitionStatus(id: number, isComplete: boolean): Promise<Transition | undefined>;
   
@@ -74,6 +92,11 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
@@ -81,6 +104,82 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+  
+  async updateUserRole(userId: number, currentRole: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ currentRole })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+  
+  async updateUserProfileStatus(userId: number, profileCompleted: boolean): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ profileCompleted })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+  
+  // Profile methods
+  async getProfile(userId: number): Promise<Profile | undefined> {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.userId, userId));
+    return profile;
+  }
+  
+  async createProfile(insertProfile: InsertProfile): Promise<Profile> {
+    const [profile] = await db
+      .insert(profiles)
+      .values(insertProfile)
+      .returning();
+    return profile;
+  }
+  
+  async updateProfile(userId: number, profileData: Partial<InsertProfile>): Promise<Profile | undefined> {
+    const [profile] = await db
+      .update(profiles)
+      .set(profileData)
+      .where(eq(profiles.userId, userId))
+      .returning();
+    return profile;
+  }
+  
+  // User skills methods
+  async getUserSkills(userId: number): Promise<UserSkill[]> {
+    return db.select().from(userSkills).where(eq(userSkills.userId, userId));
+  }
+  
+  async createUserSkill(insertUserSkill: InsertUserSkill): Promise<UserSkill> {
+    const [skill] = await db
+      .insert(userSkills)
+      .values(insertUserSkill)
+      .returning();
+    return skill;
+  }
+  
+  async updateUserSkill(id: number, userSkillData: Partial<InsertUserSkill>): Promise<UserSkill | undefined> {
+    const [skill] = await db
+      .update(userSkills)
+      .set(userSkillData)
+      .where(eq(userSkills.id, id))
+      .returning();
+    return skill;
+  }
+  
+  async deleteUserSkill(id: number): Promise<void> {
+    await db.delete(userSkills).where(eq(userSkills.id, id));
+  }
+  
+  async deleteUserSkillsByUserId(userId: number): Promise<void> {
+    await db.delete(userSkills).where(eq(userSkills.userId, userId));
+  }
+  
+  // Get transitions by user ID
+  async getTransitionsByUserId(userId: number): Promise<Transition[]> {
+    return db.select().from(transitions).where(eq(transitions.userId, userId));
   }
 
   // Role skills methods

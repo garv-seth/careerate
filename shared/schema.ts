@@ -7,15 +7,66 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email").unique(),
+  currentRole: text("current_role"),
+  profileCompleted: boolean("profile_completed").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export const profiles = pgTable("profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  bio: text("bio"),
+  goals: text("goals"),
+  experienceYears: integer("experience_years"),
+  education: text("education"),
+  profileImageUrl: text("profile_image_url"),
+  resumeUrl: text("resume_url"),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertProfileSchema = createInsertSchema(profiles).pick({
+  userId: true,
+  bio: true,
+  goals: true,
+  experienceYears: true,
+  education: true,
+  profileImageUrl: true,
+  resumeUrl: true
+});
+
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
+export type Profile = typeof profiles.$inferSelect;
+
+export const userSkills = pgTable("user_skills", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  skillName: text("skill_name").notNull(),
+  proficiencyLevel: text("proficiency_level"), // "Beginner", "Intermediate", "Advanced", "Expert"
+  yearsOfExperience: integer("years_of_experience"),
+  verified: boolean("verified").default(false),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertUserSkillSchema = createInsertSchema(userSkills).pick({
+  userId: true,
+  skillName: true,
+  proficiencyLevel: true,
+  yearsOfExperience: true,
+  verified: true
+});
+
+export type InsertUserSkill = z.infer<typeof insertUserSkillSchema>;
+export type UserSkill = typeof userSkills.$inferSelect;
 
 // Store predefined skills for common roles
 export const roleSkills = pgTable("role_skills", {
