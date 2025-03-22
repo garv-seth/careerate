@@ -7,6 +7,36 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
+
+function generateFallbackResponse(prompt: string) {
+  // Simple template-based fallback responses
+  if (prompt.includes("challenges")) {
+    return {
+      challenges: [
+        "Adapting to new technical requirements",
+        "Building leadership experience",
+        "Demonstrating impact at scale"
+      ]
+    };
+  }
+  if (prompt.includes("observations") || prompt.includes("insights")) {
+    return {
+      observations: [
+        "Career transitions typically require 6-12 months",
+        "Technical expertise is highly valued",
+        "Leadership skills become increasingly important"
+      ]
+    };
+  }
+  return {
+    general: [
+      "Focus on building relevant technical skills",
+      "Seek mentorship opportunities",
+      "Build a strong professional network"
+    ]
+  };
+}
+
 import { SkillGapAnalysis } from "../agents/langGraphAgent";
 import { CaraAgent } from "../agents/caraAgent";
 
@@ -442,22 +472,29 @@ export async function generateTransitionOverview(
 }
 
 // Helper function for raw LLM calls 
-// Replaces the old callPerplexity function
+// With enhanced fallback for quota/rate limits
 export async function callLLM(
   prompt: string,
   maxTokens: number = 1000
 ): Promise<string> {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return JSON.stringify({
+        type: "fallback",
+        source: "static",
+        data: generateFallbackResponse(prompt)
+      });
+    }
+
     console.log('Sending request to OpenAI API with model: gpt-4-turbo-preview');
     
-    // Add exponential backoff delay on rate limits
     const backoff = async (retryCount: number) => {
       const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
       await new Promise(resolve => setTimeout(resolve, delay));
     };
 
     let retries = 0;
-    const maxRetries = 3;
+    const maxRetries = 2;
 
     while (retries < maxRetries) {
       try {
