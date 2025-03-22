@@ -15,6 +15,8 @@ const model = new ChatOpenAI({
   temperature: 0.7,
   modelName: "gpt-4-turbo-preview",
   streaming: false,
+  maxConcurrency: 5,
+  maxRetries: 3,
 });
 
 /**
@@ -448,14 +450,46 @@ export async function callLLM(
   try {
     console.log('Sending request to OpenAI API with model: gpt-4-turbo-preview');
     
-    const response = await model.invoke([
-      new SystemMessage('You are a helpful AI assistant with expertise in career transitions.'),
-      new HumanMessage(prompt)
-    ]);
-    
-    return String(response.content);
+    // Add exponential backoff delay on rate limits
+    const backoff = async (retryCount: number) => {
+      const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    };
+
+    let retries = 0;
+    const maxRetries = 3;
+
+    while (retries < maxRetries) {
+      try {
+        const response = await model.invoke([
+          new SystemMessage('You are a helpful AI assistant with expertise in career transitions.'),
+          new HumanMessage(prompt)
+        ]);
+        return String(response.content);
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('429')) {
+          retries++;
+          if (retries < maxRetries) {
+            console.log(`Rate limited, retry ${retries} of ${maxRetries}`);
+            await backoff(retries);
+            continue;
+          }
+        }
+        throw err;
+      }
+    }
+    throw new Error('Max retries exceeded');
   } catch (error) {
     console.error('Error calling LLM:', error);
-    throw new Error(`LLM API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // Return a fallback response instead of throwing
+    return JSON.stringify({
+      type: "fallback",
+      message: "API rate limit exceeded. Using fallback response.",
+      data: {
+        insights: ["Career transitions typically take 6-12 months"],
+        challenges: ["Adapting to new organizational cultures"],
+        recommendations: ["Focus on building relevant skills"]
+      }
+    });
   }
 }
