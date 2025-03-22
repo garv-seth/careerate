@@ -110,7 +110,10 @@ const TransitionForm: React.FC = () => {
   const currentRoles = currentRolesResponse?.data || [];
   
   console.log("Current company ID:", currentCompanyId);
-  console.log("Current roles:", currentRoles);
+  // We're debugging the API response and data extraction
+  console.log("Current roles response:", currentRolesResponse);
+  console.log("Current roles data:", currentRolesResponse?.data);
+  console.log("Current roles mapped:", currentRoles);
   
   // Fetch roles for target company
   const { data: targetRolesResponse } = useQuery<ApiResponse<Role>>({
