@@ -43,6 +43,20 @@ interface Level {
   name: string;
 }
 
+// Query response types
+interface QueryResponse<T> {
+  success: boolean;
+  data: T[];
+  error?: string;
+}
+
+// API response for formatted roles
+interface FormatRoleResponse {
+  success: boolean;
+  formattedRole: string;
+  error?: string;
+}
+
 // Updated form schema for structured inputs
 const formSchema = z.object({
   // Fields for structured selection
@@ -70,13 +84,6 @@ const TransitionForm: React.FC = () => {
   const [currentRoleId, setCurrentRoleId] = useState<string>("");
   const [targetCompanyId, setTargetCompanyId] = useState<string>("");
   const [targetRoleId, setTargetRoleId] = useState<string>("");
-
-  // Query response types
-  interface QueryResponse<T> {
-    success: boolean;
-    data: T[];
-    error?: string;
-  }
 
   // Fetch companies
   const { data: companiesData } = useQuery<QueryResponse<Company>>({
@@ -174,13 +181,6 @@ const TransitionForm: React.FC = () => {
     }
   }, [watchTargetRoleId, targetRoleId, form]);
   
-  // Types for the API responses
-  interface FormatRoleResponse {
-    success: boolean;
-    formattedRole: string;
-    error?: string;
-  }
-
   // Format the current role string using API
   const { data: currentRoleFormat } = useQuery<FormatRoleResponse>({
     queryKey: ["/api/format-role", watchCurrentCompanyId, watchCurrentRoleId, form.watch("currentLevelId")],
@@ -329,7 +329,7 @@ const TransitionForm: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {companies.map(company => (
+                          {companies.map((company: Company) => (
                             <SelectItem key={company.id} value={company.id}>
                               {company.name}
                             </SelectItem>
@@ -359,7 +359,7 @@ const TransitionForm: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {currentRoles.map(role => (
+                          {currentRoles.map((role: Role) => (
                             <SelectItem key={role.id} value={role.id}>
                               {role.title}
                             </SelectItem>
@@ -389,7 +389,7 @@ const TransitionForm: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {currentLevels.map(level => (
+                          {currentLevels.map((level: Level) => (
                             <SelectItem key={level.id} value={level.id}>
                               {level.name}
                             </SelectItem>
@@ -425,7 +425,7 @@ const TransitionForm: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {companies.map(company => (
+                          {companies.map((company: Company) => (
                             <SelectItem key={company.id} value={company.id}>
                               {company.name}
                             </SelectItem>
@@ -455,7 +455,7 @@ const TransitionForm: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {targetRoles.map(role => (
+                          {targetRoles.map((role: Role) => (
                             <SelectItem key={role.id} value={role.id}>
                               {role.title}
                             </SelectItem>
@@ -485,7 +485,7 @@ const TransitionForm: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {targetLevels.map(level => (
+                          {targetLevels.map((level: Level) => (
                             <SelectItem key={level.id} value={level.id}>
                               {level.name}
                             </SelectItem>
