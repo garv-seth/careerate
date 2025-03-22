@@ -109,6 +109,9 @@ const TransitionForm: React.FC = () => {
   
   const currentRoles = currentRolesResponse?.data || [];
   
+  console.log("Current company ID:", currentCompanyId);
+  console.log("Current roles:", currentRoles);
+  
   // Fetch roles for target company
   const { data: targetRolesResponse } = useQuery<ApiResponse<Role>>({
     queryKey: ["/api/companies", targetCompanyId, "roles"],
@@ -124,6 +127,9 @@ const TransitionForm: React.FC = () => {
   });
   
   const currentLevels = currentLevelsResponse?.data || [];
+  
+  console.log("Current role ID:", currentRoleId);
+  console.log("Current levels:", currentLevels);
   
   // Fetch levels for target role
   const { data: targetLevelsResponse } = useQuery<ApiResponse<Level>>({
