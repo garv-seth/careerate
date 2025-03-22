@@ -42,7 +42,7 @@ export function createChatModel(options: {
       apiKey,
       temperature,
       streaming,
-      model: modelName || "gemini-pro", // Default model
+      model: modelName || "gemini-1.5-pro", // Updated model name for the latest API
     });
   } else {
     // Default to OpenAI

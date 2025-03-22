@@ -1085,6 +1085,20 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
           .map((story, index) => `Story ${index + 1} from ${story.source}:\n${story.content.substring(0, 300)}...`)
           .join("\n\n");
         
+        // Define the schema for skill gaps
+        const skillGapSchema = z.array(
+          z.object({
+            skillName: z.string().describe("Name of the skill"),
+            gapLevel: z.enum(["Low", "Medium", "High"]).describe("Level of the skill gap"),
+            confidenceScore: z.number().min(0).max(100).describe("Confidence score between 0-100"),
+            mentionCount: z.number().min(0).describe("Number of times this skill was mentioned"),
+            contextSummary: z.string().describe("Brief explanation of why this skill is important")
+          })
+        );
+        
+        // Get the appropriate parser
+        const parser = getJsonParser(skillGapSchema);
+        
         // Create a prompt to analyze skill gaps
         const skillGapPrompt = `Based on these transition stories and your knowledge, identify key skill gaps for transitioning from ${state.input.currentRole} to ${state.input.targetRole}:
         
@@ -1103,17 +1117,7 @@ For each skill, provide:
 4. Number of mentions in stories
 5. Brief context summary explaining why this skill is important
 
-Format as JSON array with these fields for each skill:
-[
-  {
-    "skillName": "Skill name",
-    "gapLevel": "Medium",
-    "confidenceScore": 85,
-    "mentionCount": 3,
-    "contextSummary": "Brief explanation"
-  },
-  ...
-]`;
+${parser.getFormatInstructions()}`;
         
         // Call the model to analyze skill gaps
         const response = await this.mainModel.invoke([
@@ -1121,37 +1125,31 @@ Format as JSON array with these fields for each skill:
           new HumanMessage(skillGapPrompt)
         ]);
         
-        // Extract JSON from the response
+        // Parse the response using our structured parser
         const responseText = response.content.toString();
         let skillGaps: SkillGapAnalysis[] = [];
         
         try {
-          // Find JSON array in the response
-          const jsonMatch = responseText.match(/\[\s*\{.*\}\s*\]/s);
-          if (jsonMatch) {
-            const parsedSkills = JSON.parse(jsonMatch[0]);
+          const parsedSkills = await parser.parse(responseText);
+          
+          skillGaps = parsedSkills.map(skill => {
+            // Store in the database
+            storage.createSkillGap({
+              transitionId: state.input.transitionId,
+              skillName: skill.skillName,
+              gapLevel: skill.gapLevel,
+              confidenceScore: skill.confidenceScore,
+              mentionCount: skill.mentionCount
+            });
             
-            if (Array.isArray(parsedSkills)) {
-              skillGaps = parsedSkills.map(skill => {
-                // Store in the database
-                storage.createSkillGap({
-                  transitionId: state.input.transitionId,
-                  skillName: skill.skillName,
-                  gapLevel: skill.gapLevel as "Low" | "Medium" | "High",
-                  confidenceScore: skill.confidenceScore,
-                  mentionCount: skill.mentionCount
-                });
-                
-                return {
-                  skillName: skill.skillName,
-                  gapLevel: skill.gapLevel as 'Low' | 'Medium' | 'High',
-                  confidenceScore: skill.confidenceScore,
-                  mentionCount: skill.mentionCount,
-                  contextSummary: skill.contextSummary
-                };
-              });
-            }
-          }
+            return {
+              skillName: skill.skillName,
+              gapLevel: skill.gapLevel,
+              confidenceScore: skill.confidenceScore,
+              mentionCount: skill.mentionCount,
+              contextSummary: skill.contextSummary
+            };
+          });
         } catch (error) {
           console.error("Error parsing skill gaps:", error);
         }
@@ -1183,6 +1181,23 @@ Format as JSON array with these fields for each skill:
           .map(gap => `${gap.skillName} - ${gap.gapLevel} gap (${gap.mentionCount} mentions): ${gap.contextSummary || ''}`)
           .join("\n");
         
+        // Define the schema for insights
+        const insightSchema = z.object({
+          keyObservations: z.array(z.string())
+            .describe("Key observations about the transition process"),
+          commonChallenges: z.array(z.string())
+            .describe("Common challenges faced during the transition"),
+          successFactors: z.array(z.string())
+            .describe("Success factors that contributed to successful transitions"),
+          timelineEstimate: z.string()
+            .describe("Estimated timeline for completing the transition"),
+          successRate: z.number().min(0).max(100)
+            .describe("Approximate success rate percentage for this specific transition")
+        });
+        
+        // Get the appropriate parser
+        const parser = getJsonParser(insightSchema);
+        
         // Create a prompt to extract insights
         const insightPrompt = `Based on these transition stories and identified skill gaps, extract key insights about transitioning from ${state.input.currentRole} to ${state.input.targetRole}:
         
@@ -1199,14 +1214,7 @@ Please extract the following insights:
 4. Estimated timeline for completing the transition
 5. Approximate success rate percentage for this specific transition
 
-Format as JSON with these fields:
-{
-  "keyObservations": ["Observation 1", "Observation 2", ...],
-  "commonChallenges": ["Challenge 1", "Challenge 2", ...],
-  "successFactors": ["Factor 1", "Factor 2", ...],
-  "timelineEstimate": "X months/years",
-  "successRate": number (0-100)
-}`;
+${parser.getFormatInstructions()}`;
         
         // Call the model to extract insights
         const response = await this.mainModel.invoke([
@@ -1214,7 +1222,7 @@ Format as JSON with these fields:
           new HumanMessage(insightPrompt)
         ]);
         
-        // Extract JSON from the response
+        // Parse the response using our structured parser
         const responseText = response.content.toString();
         let insights = {
           keyObservations: [],
@@ -1225,41 +1233,37 @@ Format as JSON with these fields:
         };
         
         try {
-          // Find JSON object in the response
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsedInsights = JSON.parse(jsonMatch[0]);
-            
-            insights = {
-              keyObservations: parsedInsights.keyObservations || [],
-              commonChallenges: parsedInsights.commonChallenges || [],
-              successFactors: parsedInsights.successFactors || [],
-              timelineEstimate: parsedInsights.timelineEstimate || "",
-              successRate: parsedInsights.successRate || 0
-            };
-            
-            // Store insights in the database
-            for (const observation of insights.keyObservations) {
-              await storage.createInsight({
-                transitionId: state.input.transitionId,
-                type: "observation",
-                content: observation,
-                source: null,
-                date: null,
-                experienceYears: null
-              });
-            }
-            
-            for (const challenge of insights.commonChallenges) {
-              await storage.createInsight({
-                transitionId: state.input.transitionId,
-                type: "challenge",
-                content: challenge,
-                source: null,
-                date: null,
-                experienceYears: null
-              });
-            }
+          const parsedInsights = await parser.parse(responseText);
+          
+          insights = {
+            keyObservations: parsedInsights.keyObservations || [],
+            commonChallenges: parsedInsights.commonChallenges || [],
+            successFactors: parsedInsights.successFactors || [],
+            timelineEstimate: parsedInsights.timelineEstimate || "",
+            successRate: parsedInsights.successRate || 0
+          };
+          
+          // Store insights in the database
+          for (const observation of insights.keyObservations) {
+            await storage.createInsight({
+              transitionId: state.input.transitionId,
+              type: "observation",
+              content: observation,
+              source: null,
+              date: null,
+              experienceYears: null
+            });
+          }
+          
+          for (const challenge of insights.commonChallenges) {
+            await storage.createInsight({
+              transitionId: state.input.transitionId,
+              type: "challenge",
+              content: challenge,
+              source: null,
+              date: null,
+              experienceYears: null
+            });
           }
         } catch (error) {
           console.error("Error parsing insights:", error);
@@ -1294,6 +1298,30 @@ Format as JSON with these fields:
           .map(gap => `${gap.skillName} - ${gap.gapLevel} gap (${gap.mentionCount} mentions): ${gap.contextSummary || ''}`)
           .join("\n");
         
+        // Define the resource schema
+        const resourceSchema = z.object({
+          title: z.string().describe("Title of the resource"),
+          url: z.string().url().describe("URL of the resource"),
+          type: z.string().describe("Type of resource (course, book, tutorial, etc.)")
+        });
+        
+        // Define the milestone schema
+        const milestoneSchema = z.object({
+          title: z.string().describe("Title of the milestone"),
+          description: z.string().describe("Description of the milestone"),
+          priority: z.enum(["Low", "Medium", "High"]).describe("Priority level of the milestone"),
+          durationWeeks: z.number().min(1).describe("Duration in weeks"),
+          resources: z.array(resourceSchema).describe("Learning resources for this milestone")
+        });
+        
+        // Define the plan schema
+        const planSchema = z.object({
+          milestones: z.array(milestoneSchema).describe("List of milestones in the development plan")
+        });
+        
+        // Get the appropriate parser
+        const parser = getJsonParser(planSchema);
+        
         // Create a prompt to generate a development plan
         const planPrompt = `Based on the identified skill gaps for transitioning from ${state.input.currentRole} to ${state.input.targetRole}, create a comprehensive development plan:
         
@@ -1315,24 +1343,7 @@ Please create a structured development plan with:
    - Duration in weeks
    - 2-3 specific learning resources (title, URL, type)
 
-Format as JSON with this structure:
-{
-  "milestones": [
-    {
-      "title": "Milestone title",
-      "description": "Description",
-      "priority": "Medium",
-      "durationWeeks": 4,
-      "resources": [
-        {
-          "title": "Resource title",
-          "url": "https://example.com",
-          "type": "course/book/tutorial"
-        }
-      ]
-    }
-  ]
-}`;
+${parser.getFormatInstructions()}`;
         
         // Call the model to generate a plan
         const response = await this.mainModel.invoke([
@@ -1340,48 +1351,44 @@ Format as JSON with this structure:
           new HumanMessage(planPrompt)
         ]);
         
-        // Extract JSON from the response
+        // Parse the response using our structured parser
         const responseText = response.content.toString();
         let developmentPlan = { milestones: [] };
         
         try {
-          // Find JSON object in the response
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsedPlan = JSON.parse(jsonMatch[0]);
+          const parsedPlan = await parser.parse(responseText);
+          
+          if (parsedPlan.milestones && Array.isArray(parsedPlan.milestones)) {
+            developmentPlan = parsedPlan;
             
-            if (parsedPlan.milestones && Array.isArray(parsedPlan.milestones)) {
-              developmentPlan = parsedPlan;
+            // Store the plan in the database
+            const plan = await storage.createPlan({
+              transitionId: state.input.transitionId
+            });
+            
+            // Store milestones and resources
+            for (let i = 0; i < developmentPlan.milestones.length; i++) {
+              const m = developmentPlan.milestones[i];
               
-              // Store the plan in the database
-              const plan = await storage.createPlan({
-                transitionId: state.input.transitionId
+              const milestone = await storage.createMilestone({
+                planId: plan.id,
+                title: m.title,
+                description: m.description || null,
+                priority: m.priority as "Low" | "Medium" | "High",
+                durationWeeks: m.durationWeeks || 4,
+                order: i + 1,
+                progress: 0
               });
               
-              // Store milestones and resources
-              for (let i = 0; i < developmentPlan.milestones.length; i++) {
-                const m = developmentPlan.milestones[i];
-                
-                const milestone = await storage.createMilestone({
-                  planId: plan.id,
-                  title: m.title,
-                  description: m.description || null,
-                  priority: m.priority as "Low" | "Medium" | "High",
-                  durationWeeks: m.durationWeeks || 4,
-                  order: i + 1,
-                  progress: 0
-                });
-                
-                // Add resources
-                if (m.resources && Array.isArray(m.resources)) {
-                  for (const r of m.resources) {
-                    await storage.createResource({
-                      milestoneId: milestone.id,
-                      title: r.title,
-                      url: r.url,
-                      type: r.type || "website"
-                    });
-                  }
+              // Add resources
+              if (m.resources && Array.isArray(m.resources)) {
+                for (const r of m.resources) {
+                  await storage.createResource({
+                    milestoneId: milestone.id,
+                    title: r.title,
+                    url: r.url,
+                    type: r.type || "website"
+                  });
                 }
               }
             }
