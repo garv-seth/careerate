@@ -67,7 +67,7 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.8 }}
               >
-                <Link href="/">
+                <Link href="/signup">
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
@@ -460,7 +460,7 @@ const Home: React.FC = () => {
                 </p>
               </div>
               
-              <Link href="/">
+              <Link href="/signup">
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
