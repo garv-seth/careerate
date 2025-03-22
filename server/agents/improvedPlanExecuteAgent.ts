@@ -21,7 +21,7 @@ async function safeCreateScrapedData(transitionId: number, story: any) {
     const safeSource = story.source || "Search Result"; // Ensure source is never null
     const safeContent = story.content || "No content available";
     const safeDate = story.date || new Date().toISOString().split('T')[0];
-    
+
     return await storage.createScrapedData({
       transitionId,
       source: safeSource,
@@ -286,11 +286,11 @@ export class ImprovedPlanExecuteAgent {
       .addNode("skillGapCollector", this._createSkillGapCollectorNode())
       .addNode("insightCollector", this._createInsightCollectorNode())
       .addNode("planCreator", this._createPlanCreatorNode())
-      
+
       // Define the workflow
       .addEdge(START, "planner")
       .addEdge("planner", "agent")
-      
+
       // Route based on agent type
       .addConditionalEdges(
         "agent",
@@ -313,16 +313,16 @@ export class ImprovedPlanExecuteAgent {
           "replan": "replan"
         }
       )
-      
+
       // From search agent back to replan
       .addEdge("searchAgent", "replan")
-      
+
       // Handle replanning
       .addConditionalEdges("replan", this._shouldEnd, {
         "true": "storyCollector",
         "false": "agent",
       })
-      
+
       // Set up the end sequence
       .addEdge("storyCollector", "skillGapCollector")
       .addEdge("skillGapCollector", "insightCollector")
@@ -367,25 +367,25 @@ Plan for 4-8 total steps that comprehensively analyze this career transition.`;
     // Use a structured output to ensure the plan is properly formatted
     return async (state: typeof CaraImprovedState.State): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log("Creating detailed career transition analysis plan");
-      
+
       try {
         // Create the plan schema using zod
         const planSchema = z.object({
           steps: z.array(z.string())
             .describe("different steps to follow, should be in sorted order")
         });
-        
+
         // Get the appropriate parser based on the current provider
         const parser = getJsonParser(planSchema);
-        
+
         // Format the prompt with variables
         const formattedPrompt = plannerPrompt
           .replace(/{input.currentRole}/g, state.input.currentRole)
           .replace(/{input.targetRole}/g, state.input.targetRole);
-        
+
         // Add format instructions for the parser
         const promptWithInstructions = `${formattedPrompt}\n\n${parser.getFormatInstructions()}`;
-        
+
         // Run the model and parse the output
         const response = await this.plannerModel.invoke(promptWithInstructions);
         const result = await parser.parse(response.content.toString());
@@ -430,15 +430,15 @@ Plan for 4-8 total steps that comprehensively analyze this career transition.`;
       try {
         // Customize input based on the current state
         let taskPrompt = `Task: ${task}\n\n`;
-        
+
         // Add transition details
         taskPrompt += `Career Transition: ${state.input.currentRole} → ${state.input.targetRole}\n\n`;
-        
+
         // Add existing skills if available
         if (state.input.existingSkills && state.input.existingSkills.length > 0) {
           taskPrompt += `Existing Skills: ${state.input.existingSkills.join(", ")}\n\n`;
         }
-        
+
         // Add context from previous steps - with null checks
         if (state.pastSteps && Array.isArray(state.pastSteps) && state.pastSteps.length > 0) {
           taskPrompt += `Context from previous steps:\n`;
@@ -453,15 +453,15 @@ Plan for 4-8 total steps that comprehensively analyze this career transition.`;
             }
           });
         }
-        
+
         // Add stories if we have them and it's relevant to the task
         if (state.transitionStories && state.transitionStories.length > 0 && 
            (task.toLowerCase().includes("skill") || 
             task.toLowerCase().includes("extract") || 
             task.toLowerCase().includes("analyz"))) {
-          
+
           taskPrompt += `Relevant transition stories (${state.transitionStories.length} stories found):\n`;
-          
+
           // Add a sample of stories to avoid context limit issues
           const samplesToInclude = Math.min(state.transitionStories.length, 3);
           for (let i = 0; i < samplesToInclude; i++) {
@@ -470,21 +470,21 @@ Plan for 4-8 total steps that comprehensively analyze this career transition.`;
             // Truncate long stories
             taskPrompt += `${story.content.substring(0, 400)}...\n\n`;
           }
-          
+
           taskPrompt += `(${state.transitionStories.length - samplesToInclude} more stories available but not shown here)\n\n`;
         }
-        
+
         // Determine if we're likely to need search
         const needsSearch = 
           task.toLowerCase().includes("search") || 
           task.toLowerCase().includes("find") || 
           task.toLowerCase().includes("gather") ||
           task.toLowerCase().includes("stories");
-        
+
         // Add special instructions if search is needed
         if (needsSearch) {
           taskPrompt += `IMPORTANT: This task requires finding information from the web. Focus on gathering real experiences from forums, career sites, and professional networks. Be specific about what to search for.`;
-          
+
           // Update agent type to indicate we'll need search
           return {
             pastSteps: [[task, `This step requires search. Directing to search agent to find real transition stories and experiences for ${state.input.currentRole} to ${state.input.targetRole}.`]],
@@ -499,7 +499,7 @@ Focus on finding detailed, authentic experiences - not general advice.`),
             ]
           };
         }
-        
+
         // For non-search tasks, execute with the main model
         const systemMessage = new SystemMessage(`You are Cara, an expert career transition advisor.
 Your task is to analyze career transitions in detail. 
@@ -510,17 +510,17 @@ When analyzing skills or creating plans, use numbered or bulleted lists.
 If you extract data, format as JSON when possible.
 
 You are analyzing a transition from ${state.input.currentRole} to ${state.input.targetRole}.`);
-        
+
         const response = await this.mainModel.invoke([
           systemMessage, 
           new HumanMessage(taskPrompt)
         ]);
-        
+
         const result = response.content.toString();
-        
+
         // Store results in the database if appropriate
         await this._storeResultsIfNeeded(task, result, state);
-        
+
         return {
           pastSteps: [[task, result]],
           plan: state.plan.slice(1),
@@ -547,16 +547,16 @@ You are analyzing a transition from ${state.input.currentRole} to ${state.input.
       config?: RunnableConfig,
     ): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log(`Executing search using specialized search agent`);
-      
+
       try {
         // Extract the task from the current step with null check
         const currentTask = state.plan && Array.isArray(state.plan) && state.plan.length > 0
           ? state.plan[0]
           : "Search for transition stories and experiences";
-        
+
         // Initialize empty array if searchMessages is undefined
         const currentSearchMessages = Array.isArray(state.searchMessages) ? state.searchMessages : [];
-        
+
         // If we don't have search messages prepared, create them
         const searchMessages = currentSearchMessages.length > 0 
           ? currentSearchMessages 
@@ -569,18 +569,24 @@ Focus on finding detailed, authentic experiences - not general advice.`),
 Focus on gathering real-world examples from forums like Reddit, Quora, Blind, and other professional communities.
 Collect at least 3-5 detailed transition stories.`)
             ];
-        
+
         // Invoke the search agent
-        const { messages } = await this.searchAgent.invoke({
+        const results = await this.searchAgent.invoke({
           messages: searchMessages
         }, config);
-        
-        // Extract the last message as the result
-        const result = messages[messages.length - 1].content.toString();
-        
+
+        // Add null check before accessing results
+        const searchResults = results?.data || [];
+        const length = searchResults.length;
+
+        // Extract the last message as the result. Add null checks for messages and content
+        const result = (results && results.messages && Array.isArray(results.messages) && results.messages.length > 0)
+          ? results.messages[results.messages.length - 1].content.toString()
+          : "No results found";
+
         // Store any stories found
         const stories = await this._extractStoriesFromSearchResults(result, state);
-        
+
         return {
           pastSteps: [[currentTask, result]],
           plan: state.plan.slice(1),
@@ -590,17 +596,17 @@ Collect at least 3-5 detailed transition stories.`)
         };
       } catch (error) {
         console.error("Error in search agent:", error);
-        
+
         // Get current task with null check
         const currentTask = state.plan && Array.isArray(state.plan) && state.plan.length > 0
           ? state.plan[0]
           : "Search for transition stories and experiences";
-        
+
         // Get next plan steps with null check
         const nextSteps = state.plan && Array.isArray(state.plan) && state.plan.length > 1
           ? state.plan.slice(1)
           : [];
-        
+
         // Return a generic result to avoid breaking the workflow
         return {
           pastSteps: [[currentTask, "Search agent encountered an error. Unable to retrieve search results. Moving to next step."]],
@@ -630,20 +636,20 @@ Collect at least 3-5 detailed transition stories.`)
       url: string;
       date: string;
     }> = [];
-    
+
     try {
       // Pattern for stories that might be labeled as "Story 1", "Example 2", etc.
       const storyPattern = /(?:Story|Example)\s*\d+[:\-]\s*([^]*?)(?=(?:Story|Example)\s*\d+[:\-]|$)/gi;
-      
+
       // Pattern for forum posts or threads
       const forumPostPattern = /(?:Forum Post|Post|Thread|From)[^:]*?:\s*([^]*?)(?=(?:Forum Post|Post|Thread|From)[^:]*?:|$)/gi;
-      
+
       // Pattern for Reddit/Quora/Blind posts
       const platformPostPattern = /(?:Reddit|Quora|Blind|LinkedIn)[^:]*?:\s*([^]*?)(?=(?:Reddit|Quora|Blind|LinkedIn)[^:]*?:|$)/gi;
-      
+
       // Pattern for source: content format
       const sourceContentPattern = /([A-Za-z0-9\s]+(?:Reddit|Quora|Blind|Forum|Post|Thread)):\s*([^]*?)(?=[A-Za-z0-9\s]+(?:Reddit|Quora|Blind|Forum|Post|Thread):|$)/gi;
-      
+
       // Function to add extracted content as a story
       const addStory = (content: string, source = "Extracted Story") => {
         if (content && content.trim().length > 50) { // Ensure it's substantial content
@@ -655,30 +661,30 @@ Collect at least 3-5 detailed transition stories.`)
           });
         }
       };
-      
+
       // Try all patterns
       let match;
-      
+
       // Try story pattern
       while ((match = storyPattern.exec(text)) !== null) {
         addStory(match[1], "Transition Story");
       }
-      
+
       // Try forum post pattern
       while ((match = forumPostPattern.exec(text)) !== null) {
         addStory(match[1], "Forum Post");
       }
-      
+
       // Try platform post pattern
       while ((match = platformPostPattern.exec(text)) !== null) {
         addStory(match[1], match[0].split(':')[0].trim());
       }
-      
+
       // Try source: content pattern
       while ((match = sourceContentPattern.exec(text)) !== null) {
         addStory(match[2], match[1].trim());
       }
-      
+
       // If no stories found with patterns, split by paragraphs and use substantial ones
       if (stories.length === 0) {
         const paragraphs = text.split(/\n\s*\n/);
@@ -688,14 +694,14 @@ Collect at least 3-5 detailed transition stories.`)
           }
         }
       }
-      
+
       return stories;
     } catch (error) {
       console.error("Error extracting stories from text:", error);
       return [];
     }
   }
-  
+
   private async _extractStoriesFromSearchResults(
     searchResults: string, 
     state: typeof CaraImprovedState.State
@@ -711,11 +717,11 @@ Collect at least 3-5 detailed transition stories.`)
       url: string;
       date: string;
     }> = [];
-    
+
     try {
       // First try to extract stories using a more robust JSON extraction
       let parsedStories = null;
-      
+
       // Try different patterns to find JSON objects or arrays
       const jsonPatterns = [
         /\[\s*\{[\s\S]*?\}\s*\]/g,  // Array of objects [{ ... }, { ... }]
@@ -726,7 +732,7 @@ Collect at least 3-5 detailed transition stories.`)
         /\{[\s\S]*?content[\s\S]*?\}/g,             // Object with content field
         /\{[\s\S]*?text[\s\S]*?\}/g                 // Object with text field
       ];
-      
+
       // Try each pattern to find JSON
       for (const pattern of jsonPatterns) {
         const matches = searchResults.match(pattern);
@@ -739,7 +745,7 @@ Collect at least 3-5 detailed transition stories.`)
               .replace(/([{,])\s*(\w+):/g, '$1"$2":')  // Quote unquoted keys
               .replace(/:\s*'([^']*)'/g, ':"$1"')     // Replace single quotes with double quotes
               .replace(/"\s*\n\s*"/g, '" "');         // Fix broken strings across lines
-            
+
             parsedStories = JSON.parse(cleanedMatch);
             console.log("Successfully parsed JSON with pattern:", pattern);
             break;
@@ -748,7 +754,7 @@ Collect at least 3-5 detailed transition stories.`)
           }
         }
       }
-      
+
       // Process the parsedStories if we successfully extracted them
       if (parsedStories) {
         // Handle different formats of parsed stories
@@ -762,9 +768,9 @@ Collect at least 3-5 detailed transition stories.`)
                 url: story.url || "",
                 date: story.date || new Date().toISOString().split('T')[0]
               };
-              
+
               stories.push(newStory);
-              
+
               // Also save to the database
               await safeCreateScrapedData(state.input.transitionId, newStory);
             }
@@ -772,7 +778,7 @@ Collect at least 3-5 detailed transition stories.`)
         } else if (typeof parsedStories === 'object') {
           // Check if it's an object with a stories/results/posts array
           const storyArray = parsedStories.stories || parsedStories.results || parsedStories.posts;
-          
+
           if (Array.isArray(storyArray)) {
             // Process each story in the array
             for (const story of storyArray) {
@@ -783,9 +789,9 @@ Collect at least 3-5 detailed transition stories.`)
                   url: story.url || "",
                   date: story.date || new Date().toISOString().split('T')[0]
                 };
-                
+
                 stories.push(newStory);
-                
+
                 // Also save to the database
                 await safeCreateScrapedData(state.input.transitionId, newStory);
               }
@@ -798,31 +804,31 @@ Collect at least 3-5 detailed transition stories.`)
               url: parsedStories.url || "",
               date: parsedStories.date || new Date().toISOString().split('T')[0]
             };
-            
+
             stories.push(newStory);
-            
+
             // Also save to the database
             await safeCreateScrapedData(state.input.transitionId, newStory);
           }
         }
       }
-      
+
       // If we couldn't parse structured data, try to extract stories using our improved pattern matching
       if (stories.length === 0) {
         // Use our improved text extraction method
         const extractedStories = this._extractStoriesFromText(searchResults);
-        
+
         console.log(`Extracted ${extractedStories.length} stories using text patterns`);
-        
+
         // Process and save each extracted story
         for (const story of extractedStories) {
           stories.push(story);
-          
+
           // Save to the database using our safe method
           await safeCreateScrapedData(state.input.transitionId, story);
         }
       }
-      
+
       // If we still couldn't extract stories, treat the whole result as a single "story"
       if (stories.length === 0 && searchResults.length > 200) {
         const story = {
@@ -831,16 +837,15 @@ Collect at least 3-5 detailed transition stories.`)
           url: "",
           date: new Date().toISOString().split('T')[0]
         };
-        
+
         stories.push(story);
-        
-        // Also save to the database using our safe method
-        await safeCreateScrapedData(state.input.transitionId, story);
+
+        // Also save to the database using our safe method        await safeCreateScrapedData(state.input.transitionId, story);
       }
     } catch (error) {
       console.error("Error extracting stories from search results:", error);
     }
-    
+
     return stories;
   }
 
@@ -876,7 +881,7 @@ Collect at least 3-5 detailed transition stories.`)
 
     // Create the replanner prompt
     const replannerPrompt = `You are an expert career transition advisor.
-    
+
 Your objective is to analyze a career transition from {currentRole} to {targetRole}.
 
 Your original plan was:
@@ -901,11 +906,11 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
 
     return async (state: typeof CaraImprovedState.State): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log("Replanning next steps");
-      
+
       try {
         // Count iterations to prevent infinite loops
         const iterationCount = state.pastSteps && Array.isArray(state.pastSteps) ? state.pastSteps.length : 0;
-        
+
         // If we've gone through too many iterations, force completion
         if (iterationCount > 10) {
           console.log("Forcing completion after too many iterations");
@@ -913,13 +918,13 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             response: "Analysis complete. All necessary information has been gathered."
           };
         }
-        
+
         // Check for repeated steps/patterns that indicate a loop
         // Ensure pastSteps exists and is an array before using it
         if (state.pastSteps && Array.isArray(state.pastSteps) && state.pastSteps.length >= 4) {
           const lastSteps = state.pastSteps.slice(-4).map(step => step[0]);
           const uniqueStepTypes = new Set(lastSteps);
-          
+
           // If we're repeating the same 1-2 steps over and over, this is a loop
           if (uniqueStepTypes.size <= 2) {
             console.log("Detected a loop in the execution. Moving to completion.");
@@ -928,23 +933,23 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             };
           }
         }
-        
+
         // Format variables for the prompt
         const currentRole = state.input.currentRole;
         const targetRole = state.input.targetRole;
-        
+
         // Safely handle pastSteps in case it's undefined
         const pastSteps = state.pastSteps && Array.isArray(state.pastSteps) ? state.pastSteps : [];
-        
+
         // Safely handle plan in case it's undefined
         const plan = state.plan && Array.isArray(state.plan) ? state.plan : [];
-        
+
         // Safely create originalPlan and completedSteps
         const originalPlan = plan.concat(pastSteps.map(([step]) => step)).join("\n");
         const completedSteps = pastSteps
           .map(([step, result]) => `${step}: ${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`)
           .join("\n\n");
-        
+
         // Format the prompt
         const formattedPrompt = replannerPrompt
           .replace("{currentRole}", currentRole)
@@ -952,18 +957,18 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
           .replace("{originalPlan}", originalPlan)
           .replace("{completedSteps}", completedSteps)
           .replace("{iterationCount}", iterationCount.toString());
-        
+
         // Call the model with the tools
         const replannerWithTools = this.plannerModel.bindTools([
           { type: "function", function: planFunction },
           { type: "function", function: responseFunction },
         ]);
-        
+
         // Instead of using the JsonOutputToolsParser which has an issue,
         // we'll parse the result directly from the response
         const result = await replannerWithTools.invoke(formattedPrompt);
         const content = result.content.toString();
-        
+
         // Check for response function call
         if (content.includes("response") && content.includes("function_call")) {
           // Extract the response text
@@ -972,7 +977,7 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             return { response: responseMatch[1] };
           }
         }
-        
+
         // Check for plan function call
         if (content.includes("plan") && content.includes("function_call")) {
           // Try to extract the steps array
@@ -989,7 +994,7 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             }
           }
         }
-        
+
         // If we couldn't parse the output properly, check if the response contained "COMPLETE"
         // This is a fallback mechanism
         if (content.includes("COMPLETE")) {
@@ -997,7 +1002,7 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             response: "Analysis complete. All necessary information has been gathered.",
           };
         }
-        
+
         // If we've done several iterations already and still haven't parsed a valid plan,
         // move to completion to avoid getting stuck
         if (iterationCount > 5) {
@@ -1005,7 +1010,7 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             response: "Analysis complete. Moving to the final development plan creation."
           };
         }
-        
+
         // Default: return a simplified plan with just the next logical step based on the workflow
         // This provides a fallback when parsing fails
         if (state.transitionStories.length === 0) {
@@ -1043,10 +1048,10 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
   private _createStoryCollectorNode() {
     return async (state: typeof CaraImprovedState.State): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log("Collecting transition stories");
-      
+
       // Get scraped data from the database as well
       const scrapedData = await storage.getScrapedDataByTransitionId(state.input.transitionId);
-      
+
       // Combine with any transition stories already in the state
       const allStories = [
         ...state.transitionStories,
@@ -1057,14 +1062,14 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
           date: item.postDate || new Date().toISOString().split('T')[0]
         }))
       ];
-      
+
       // Remove duplicates (based on content)
       const uniqueStories = Array.from(
         new Map(allStories.map(item => [item.content, item])).values()
       );
-      
+
       console.log(`Collected ${uniqueStories.length} unique transition stories`);
-      
+
       return {
         transitionStories: uniqueStories,
         scrapedCount: uniqueStories.length
@@ -1078,13 +1083,13 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
   private _createSkillGapCollectorNode() {
     return async (state: typeof CaraImprovedState.State): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log("Extracting skill gaps");
-      
+
       try {
         // Format the transition stories for the model
         const storiesText = state.transitionStories
           .map((story, index) => `Story ${index + 1} from ${story.source}:\n${story.content.substring(0, 300)}...`)
           .join("\n\n");
-        
+
         // Define the schema for skill gaps
         const skillGapSchema = z.array(
           z.object({
@@ -1095,13 +1100,13 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             contextSummary: z.string().describe("Brief explanation of why this skill is important")
           })
         );
-        
+
         // Get the appropriate parser
         const parser = getJsonParser(skillGapSchema);
-        
+
         // Create a prompt to analyze skill gaps
         const skillGapPrompt = `Based on these transition stories and your knowledge, identify key skill gaps for transitioning from ${state.input.currentRole} to ${state.input.targetRole}:
-        
+
 Transition Stories:
 ${storiesText}
 
@@ -1109,7 +1114,7 @@ Existing Skills:
 ${state.input.existingSkills.join(", ") || "None provided"}
 
 Please identify the key skills needed for ${state.input.targetRole} role that might be missing or underdeveloped in someone coming from ${state.input.currentRole}.
-        
+
 For each skill, provide:
 1. Skill name
 2. Gap level (Low, Medium, High)
@@ -1118,20 +1123,20 @@ For each skill, provide:
 5. Brief context summary explaining why this skill is important
 
 ${parser.getFormatInstructions()}`;
-        
+
         // Call the model to analyze skill gaps
         const response = await this.mainModel.invoke([
           new SystemMessage("You are an expert skill gap analyzer. Extract skill gaps accurately and format them as JSON."),
           new HumanMessage(skillGapPrompt)
         ]);
-        
+
         // Parse the response using our structured parser
         const responseText = response.content.toString();
         let skillGaps: SkillGapAnalysis[] = [];
-        
+
         try {
           const parsedSkills = await parser.parse(responseText);
-          
+
           skillGaps = parsedSkills.map(skill => {
             // Store in the database
             storage.createSkillGap({
@@ -1141,7 +1146,7 @@ ${parser.getFormatInstructions()}`;
               confidenceScore: skill.confidenceScore,
               mentionCount: skill.mentionCount
             });
-            
+
             return {
               skillName: skill.skillName,
               gapLevel: skill.gapLevel,
@@ -1153,7 +1158,7 @@ ${parser.getFormatInstructions()}`;
         } catch (error) {
           console.error("Error parsing skill gaps:", error);
         }
-        
+
         return { skillGaps };
       } catch (error) {
         console.error("Error collecting skill gaps:", error);
@@ -1168,19 +1173,19 @@ ${parser.getFormatInstructions()}`;
   private _createInsightCollectorNode() {
     return async (state: typeof CaraImprovedState.State): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log("Extracting insights");
-      
+
       try {
         // Format the transition stories for the model (use a subset to avoid token limits)
         const storiesToUse = state.transitionStories.slice(0, 5);
         const storiesText = storiesToUse
           .map((story, index) => `Story ${index + 1} from ${story.source}:\n${story.content.substring(0, 300)}...`)
           .join("\n\n");
-        
+
         // Format the skill gaps for the model
         const skillGapsText = state.skillGaps
           .map(gap => `${gap.skillName} - ${gap.gapLevel} gap (${gap.mentionCount} mentions): ${gap.contextSummary || ''}`)
           .join("\n");
-        
+
         // Define the schema for insights
         const insightSchema = z.object({
           keyObservations: z.array(z.string())
@@ -1194,13 +1199,13 @@ ${parser.getFormatInstructions()}`;
           successRate: z.number().min(0).max(100)
             .describe("Approximate success rate percentage for this specific transition")
         });
-        
+
         // Get the appropriate parser
         const parser = getJsonParser(insightSchema);
-        
+
         // Create a prompt to extract insights
         const insightPrompt = `Based on these transition stories and identified skill gaps, extract key insights about transitioning from ${state.input.currentRole} to ${state.input.targetRole}:
-        
+
 Transition Stories:
 ${storiesText}
 
@@ -1215,13 +1220,13 @@ Please extract the following insights:
 5. Approximate success rate percentage for this specific transition
 
 ${parser.getFormatInstructions()}`;
-        
+
         // Call the model to extract insights
         const response = await this.mainModel.invoke([
           new SystemMessage("You are an expert at extracting insights from career transition stories. Format your response as JSON."),
           new HumanMessage(insightPrompt)
         ]);
-        
+
         // Parse the response using our structured parser
         const responseText = response.content.toString();
         let insights = {
@@ -1231,10 +1236,10 @@ ${parser.getFormatInstructions()}`;
           timelineEstimate: "",
           successRate: 0
         };
-        
+
         try {
           const parsedInsights = await parser.parse(responseText);
-          
+
           insights = {
             keyObservations: parsedInsights.keyObservations || [],
             commonChallenges: parsedInsights.commonChallenges || [],
@@ -1242,7 +1247,7 @@ ${parser.getFormatInstructions()}`;
             timelineEstimate: parsedInsights.timelineEstimate || "",
             successRate: parsedInsights.successRate || 0
           };
-          
+
           // Store insights in the database
           for (const observation of insights.keyObservations) {
             await storage.createInsight({
@@ -1254,7 +1259,7 @@ ${parser.getFormatInstructions()}`;
               experienceYears: null
             });
           }
-          
+
           for (const challenge of insights.commonChallenges) {
             await storage.createInsight({
               transitionId: state.input.transitionId,
@@ -1268,7 +1273,7 @@ ${parser.getFormatInstructions()}`;
         } catch (error) {
           console.error("Error parsing insights:", error);
         }
-        
+
         return { insights };
       } catch (error) {
         console.error("Error collecting insights:", error);
@@ -1291,20 +1296,20 @@ ${parser.getFormatInstructions()}`;
   private _createPlanCreatorNode() {
     return async (state: typeof CaraImprovedState.State): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log("Creating development plan");
-      
+
       try {
         // Format the skill gaps for the model
         const skillGapsText = state.skillGaps
           .map(gap => `${gap.skillName} - ${gap.gapLevel} gap (${gap.mentionCount} mentions): ${gap.contextSummary || ''}`)
           .join("\n");
-        
+
         // Define the resource schema
         const resourceSchema = z.object({
           title: z.string().describe("Title of the resource"),
           url: z.string().url().describe("URL of the resource"),
           type: z.string().describe("Type of resource (course, book, tutorial, etc.)")
         });
-        
+
         // Define the milestone schema
         const milestoneSchema = z.object({
           title: z.string().describe("Title of the milestone"),
@@ -1313,18 +1318,18 @@ ${parser.getFormatInstructions()}`;
           durationWeeks: z.number().min(1).describe("Duration in weeks"),
           resources: z.array(resourceSchema).describe("Learning resources for this milestone")
         });
-        
+
         // Define the plan schema
         const planSchema = z.object({
           milestones: z.array(milestoneSchema).describe("List of milestones in the development plan")
         });
-        
+
         // Get the appropriate parser
         const parser = getJsonParser(planSchema);
-        
+
         // Create a prompt to generate a development plan
         const planPrompt = `Based on the identified skill gaps for transitioning from ${state.input.currentRole} to ${state.input.targetRole}, create a comprehensive development plan:
-        
+
 Skill Gaps:
 ${skillGapsText}
 
@@ -1344,37 +1349,37 @@ Please create a structured development plan with:
    - 2-3 specific learning resources (title, URL, type)
 
 ${parser.getFormatInstructions()}`;
-        
+
         // Call the model to generate a plan
         const response = await this.mainModel.invoke([
           new SystemMessage("You are an expert career development planner. Create a comprehensive plan and format it as JSON."),
           new HumanMessage(planPrompt)
         ]);
-        
+
         // Parse the response using our structured parser
         const responseText = response.content.toString();
         let developmentPlan = { milestones: [] };
-        
+
         try {
           const parsedPlan = await parser.parse(responseText);
-          
+
           if (parsedPlan.milestones && Array.isArray(parsedPlan.milestones)) {
             developmentPlan = parsedPlan;
-            
+
             // Store the plan in the database
             const plan = await storage.createPlan({
               transitionId: state.input.transitionId
             });
-            
+
             // Store milestones and resources
             for (let i = 0; i < developmentPlan.milestones.length; i++) {
               const m = developmentPlan.milestones[i];
-              
+
               // Ensure all required fields are present and valid
               const durationWeeks = typeof m.durationWeeks === 'number' && m.durationWeeks > 0 
                 ? m.durationWeeks 
                 : 4; // Default to 4 weeks if missing or invalid
-              
+
               const milestone = await storage.createMilestone({
                 planId: plan.id,
                 title: m.title,
@@ -1384,10 +1389,10 @@ ${parser.getFormatInstructions()}`;
                 order: i + 1,
                 progress: 0
               });
-              
+
               // Add resources - ensure resources array exists
               const resources = m.resources && Array.isArray(m.resources) ? m.resources : [];
-              
+
               // If no resources were provided, add a default resource
               if (resources.length === 0) {
                 await storage.createResource({
@@ -1412,14 +1417,14 @@ ${parser.getFormatInstructions()}`;
         } catch (error) {
           console.error("Error parsing development plan:", error);
         }
-        
+
         // Update transition to mark it as complete
         try {
           await storage.updateTransitionStatus(state.input.transitionId, true);
         } catch (error) {
           console.error("Error updating transition status:", error);
         }
-        
+
         return { developmentPlan };
       } catch (error) {
         console.error("Error creating development plan:", error);
@@ -1433,7 +1438,7 @@ ${parser.getFormatInstructions()}`;
    */
   private async _storeResultsIfNeeded(task: string, result: string, state: typeof CaraImprovedState.State) {
     const { transitionId } = state.input;
-    
+
     try {
       // Store insights if the task is related to insights
       if (
@@ -1445,7 +1450,7 @@ ${parser.getFormatInstructions()}`;
           // Try to extract observations or challenges
           const observationMatches = result.match(/(?:Observation|Key point|Insight)[^:.]*[:.]?\s*([^.\n\r]+)/gi);
           const challengeMatches = result.match(/(?:Challenge|Difficulty|Obstacle)[^:.]*[:.]?\s*([^.\n\r]+)/gi);
-          
+
           if (observationMatches) {
             for (const match of observationMatches) {
               const content = match.replace(/(?:Observation|Key point|Insight)[^:.]*[:.]?\s*/i, "").trim();
@@ -1461,7 +1466,7 @@ ${parser.getFormatInstructions()}`;
               }
             }
           }
-          
+
           if (challengeMatches) {
             for (const match of challengeMatches) {
               const content = match.replace(/(?:Challenge|Difficulty|Obstacle)[^:.]*[:.]?\s*/i, "").trim();
@@ -1481,7 +1486,7 @@ ${parser.getFormatInstructions()}`;
           console.error("Error storing insights:", error);
         }
       }
-      
+
       // Store skill gaps if the task is related to skills
       if (
         task.toLowerCase().includes("skill") && 
@@ -1518,7 +1523,7 @@ ${parser.getFormatInstructions()}`;
                 if (skillName && gapLevel) {
                   const level = gapLevel.toLowerCase().includes("high") ? "High" :
                                 gapLevel.toLowerCase().includes("medium") ? "Medium" : "Low";
-                  
+
                   await storage.createSkillGap({
                     transitionId,
                     skillName,
