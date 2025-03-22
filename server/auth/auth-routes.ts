@@ -76,9 +76,13 @@ router.post('/register', async (req: Request, res: Response) => {
       });
     } else {
       console.error('Registration error details:', error);
+      // Show specific error message to users
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
+      console.error('Registration error details:', error);
+      
       res.status(400).json({
         success: false,
-        error: error instanceof Error ? error.message : 'An error occurred during registration'
+        error: `Registration failed: ${errorMessage}`
       });
     }
   }
@@ -99,9 +103,10 @@ router.post('/login', (req: Request, res: Response, next) => {
       }
       
       if (!user) {
+        console.error('Login failed:', info.message || 'No specific error message');
         return res.status(401).json({
           success: false,
-          error: info.message || 'Invalid credentials'
+          error: info.message || 'Incorrect email or password'
         });
       }
       

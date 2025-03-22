@@ -58,9 +58,19 @@ const SignUp = () => {
         });
       }
     } catch (error) {
+      // Get specific error message if available
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // @ts-ignore - Try to extract error from response if possible
+        errorMessage = error.response?.data?.error || errorMessage;
+      }
+      
       toast({
         title: "Registration failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
       console.error("Registration error:", error);

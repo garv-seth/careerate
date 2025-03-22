@@ -56,9 +56,19 @@ const Login = () => {
         });
       }
     } catch (error) {
+      // Get the specific error message if available
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // @ts-ignore - Try to extract error from response if possible
+        errorMessage = error.response?.data?.error || errorMessage;
+      }
+      
       toast({
         title: "Login failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
       console.error("Login error:", error);
