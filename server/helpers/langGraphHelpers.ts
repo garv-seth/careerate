@@ -9,6 +9,12 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
 import { createChatModel, getModelInfo } from "./modelFactory";
 
+// Create a model instance for all our helpers to use
+const model = createChatModel({
+  temperature: 0.2,
+  modelName: process.env.GOOGLE_API_KEY ? "gemini-1.5-pro" : "gpt-3.5-turbo"
+});
+
 function generateFallbackResponse(prompt: string) {
   // Simple template-based fallback responses
   if (prompt.includes("challenges")) {
@@ -40,15 +46,6 @@ function generateFallbackResponse(prompt: string) {
 
 import { SkillGapAnalysis } from "../agents/langGraphAgent";
 import { CaraAgent } from "../agents/caraAgent";
-
-// Initialize the OpenAI model
-const model = new ChatOpenAI({
-  temperature: 0.7,
-  modelName: "gpt-4-turbo-preview",
-  streaming: false,
-  maxConcurrency: 5,
-  maxRetries: 3,
-});
 
 /**
  * Search forums for career transition stories using Tavily search
@@ -89,7 +86,7 @@ export async function searchForums(
     }
     
     // Process the search results
-    return await processSearchResults(searchResults, currentRole, targetRole);
+    return processSearchResults(searchResults, currentRole, targetRole);
   } catch (error) {
     console.error("Error searching forums with Tavily:", error);
     return [];
@@ -509,9 +506,8 @@ export async function callLLM(
   maxTokens: number = 1000
 ): Promise<string> {
   try {
-    // Create the model using our factory to get the appropriate provider
-    // This will use Gemini if configured in environment
-    const model = createChatModel({
+    // Use the already-created model instance or create a local one
+    const localModel = createChatModel({
       temperature: 0.2,
       modelName: "gemini-1.5-pro" // Defaults to Gemini in factory
     });
@@ -528,7 +524,7 @@ export async function callLLM(
 
     while (retries < maxRetries) {
       try {
-        const response = await model.invoke([
+        const response = await localModel.invoke([
           new SystemMessage('You are a helpful AI assistant with expertise in career transitions.'),
           new HumanMessage(prompt)
         ]);
