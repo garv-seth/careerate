@@ -94,16 +94,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Add username when inserting user, defaulting to email if not provided
-  async insertUser(data: InsertUser): Promise<User> {
-    const userData = {
-      ...data,
-      username: data.username || data.email // Default to email if username not provided
-    };
-    const [user] = await db.insert(users).values(userData).returning();
-    return user;
-  }
-
   async createUser(insertUser: InsertUser): Promise<User> {
     console.log('Inserting user into database with data:', JSON.stringify(insertUser));
     try {
