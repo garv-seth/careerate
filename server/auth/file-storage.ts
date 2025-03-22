@@ -1,18 +1,25 @@
-import { createClient } from '@replit/object-storage';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
+import path from 'path';
 import { promisify } from 'util';
 
 // Convert fs functions to promise-based
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 const unlink = promisify(fs.unlink);
+const mkdir = promisify(fs.mkdir);
 
-// Initialize Object Storage client
-const client = createClient();
+// Define uploads directory
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+
+// Make sure uploads directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 /**
- * Upload a file to Replit Object Storage
+ * Upload a file to local storage
+ * This is a simplified version that stores files locally instead of using Replit Object Storage
  */
 export async function uploadFile(
   fileData: Buffer, 
@@ -20,19 +27,27 @@ export async function uploadFile(
   userId: number
 ): Promise<{ url: string, key: string }> {
   try {
-    // Generate a unique key for the file
+    // Create user directory if it doesn't exist
+    const userDir = path.join(UPLOADS_DIR, `user_${userId}`);
+    if (!fs.existsSync(userDir)) {
+      await mkdir(userDir, { recursive: true });
+    }
+    
+    // Generate a unique filename
     const extension = fileName.split('.').pop() || '';
-    const uniqueKey = `user_${userId}/${uuidv4()}.${extension}`;
+    const uniqueFilename = `${uuidv4()}.${extension}`;
+    const filePath = path.join(userDir, uniqueFilename);
     
-    // Upload the file
-    await client.putObject(uniqueKey, fileData);
+    // Write the file to disk
+    await writeFile(filePath, fileData);
     
-    // Get the public URL
-    const url = `${client.publicUrl()}/${uniqueKey}`;
+    // Create a relative URL path
+    const key = `user_${userId}/${uniqueFilename}`;
+    const url = `/uploads/${key}`;
     
     return {
       url,
-      key: uniqueKey
+      key
     };
   } catch (error) {
     console.error('Error uploading file:', error);

@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 import { z } from "zod";
 import { 
@@ -25,11 +26,55 @@ import {
 import { getCompanyById, getRolesByCompanyId, getLevelsByCompanyAndRoleId } from "@shared/companyData";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
+import passport from "passport";
+import session from "express-session";
+import connectPgSimpleModule from "connect-pg-simple";
+import { configurePassport } from "./auth/passport-config";
+import { handleReplitAuth } from "./auth/replit-auth";
+import authRoutes from "./auth/auth-routes";
+import resumeRoutes from "./auth/resume-routes";
+import cookieParser from "cookie-parser";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure session
+  // Use database URL directly for session store
+  const PgSession = connectPgSimpleModule(session);
+  
+  app.use(cookieParser());
+  app.use(session({
+    store: new PgSession({
+      conObject: {
+        connectionString: process.env.DATABASE_URL,
+        ssl: false
+      },
+      tableName: 'user_sessions'
+    }),
+    secret: process.env.SESSION_SECRET || 'careerate-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    }
+  }));
+  
+  // Configure passport
+  const passportInstance = configurePassport();
+  app.use(passportInstance.initialize());
+  app.use(passportInstance.session());
+  
+  // Configure Replit auth middleware
+  app.use(handleReplitAuth);
+  
+  // Serve static files from the uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
   // Initialize API routes
   const apiRouter = express.Router();
   app.use("/api", apiRouter);
+  
+  // Register auth routes
+  apiRouter.use("/auth", authRoutes);
+  apiRouter.use("/auth", resumeRoutes);
 
   // Seed some predefined role skills if they don't exist
   await seedRoleSkills();
