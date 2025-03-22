@@ -2,11 +2,12 @@
  * LangGraph helpers for Cara
  * 
  * These functions replace the Perplexity API functions with LangGraph alternatives
- * that use Tavily for search and OpenAI for processing.
+ * that use Tavily for search and OpenAI or Gemini for processing.
  */
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
+import { createChatModel, getModelInfo } from "./modelFactory";
 
 function generateFallbackResponse(prompt: string) {
   // Simple template-based fallback responses
@@ -478,15 +479,14 @@ export async function callLLM(
   maxTokens: number = 1000
 ): Promise<string> {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return JSON.stringify({
-        type: "fallback",
-        source: "static",
-        data: generateFallbackResponse(prompt)
-      });
-    }
-
-    console.log('Sending request to OpenAI API with model: gpt-4-turbo-preview');
+    // Create the model using our factory to get the appropriate provider
+    // This will use Gemini if configured in environment
+    const model = createChatModel({
+      temperature: 0.2,
+      modelName: "gemini-1.5-pro" // Defaults to Gemini in factory
+    });
+    
+    console.log(`Sending request to LLM using ${getModelInfo()}`);
     
     const backoff = async (retryCount: number) => {
       const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
@@ -518,15 +518,20 @@ export async function callLLM(
     throw new Error('Max retries exceeded');
   } catch (error) {
     console.error('Error calling LLM:', error);
-    // Return a fallback response instead of throwing
-    return JSON.stringify({
-      type: "fallback",
-      message: "API rate limit exceeded. Using fallback response.",
-      data: {
-        insights: ["Career transitions typically take 6-12 months"],
-        challenges: ["Adapting to new organizational cultures"],
-        recommendations: ["Focus on building relevant skills"]
-      }
-    });
+    // Return a valid JSON array for error cases
+    if (prompt.includes("JSON array of strings")) {
+      return '["Career transitions typically take 6-12 months", "Adapting to new organizational cultures", "Focus on building relevant skills"]';
+    } else {
+      // Return a fallback response instead of throwing
+      return JSON.stringify({
+        type: "fallback",
+        message: "API limit exceeded. Using fallback response.",
+        data: {
+          insights: ["Career transitions typically take 6-12 months"],
+          challenges: ["Adapting to new organizational cultures"],
+          recommendations: ["Focus on building relevant skills"]
+        }
+      });
+    }
   }
 }
