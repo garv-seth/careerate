@@ -133,6 +133,16 @@ const Login = () => {
               >
                 {isLoading ? "Logging in..." : "Log In"}
               </Button>
+              
+              <div className="text-center mt-2">
+                <Button 
+                  variant="link" 
+                  className="text-primary p-0 text-sm" 
+                  onClick={() => navigate("/forgot-password")}
+                >
+                  Forgot your password?
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

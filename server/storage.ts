@@ -9,7 +9,8 @@ import {
   plans, type Plan, type InsertPlan,
   milestones, type Milestone, type InsertMilestone,
   resources, type Resource, type InsertResource,
-  insights, type Insight, type InsertInsight
+  insights, type Insight, type InsertInsight,
+  passwordResetTokens, type PasswordResetToken, type InsertPasswordResetToken
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -22,6 +23,12 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserRole(userId: number, currentRole: string): Promise<User | undefined>;
   updateUserProfileStatus(userId: number, profileCompleted: boolean): Promise<User | undefined>;
+  updatePassword(userId: number, newPassword: string): Promise<User | undefined>;
+  
+  // Password reset methods
+  createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<PasswordResetToken>;
+  getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
+  deletePasswordResetToken(token: string): Promise<void>;
   
   // Profile methods
   getProfile(userId: number): Promise<Profile | undefined>;
@@ -125,6 +132,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+  
+  async updatePassword(userId: number, newPassword: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ password: newPassword })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+  
+  // Password reset methods
+  async createPasswordResetToken(userId: number, token: string, expiresAt: Date): Promise<PasswordResetToken> {
+    const [resetToken] = await db
+      .insert(passwordResetTokens)
+      .values({ userId, token, expiresAt })
+      .returning();
+    return resetToken;
+  }
+  
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const [resetToken] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return resetToken;
+  }
+  
+  async deletePasswordResetToken(token: string): Promise<void> {
+    await db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
   }
   
   // Profile methods
