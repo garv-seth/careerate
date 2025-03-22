@@ -609,11 +609,11 @@ Collect at least 3-5 detailed transition stories.`)
               
               stories.push(newStory);
               
-              // Also save to the database
+              // Also save to the database, ensuring source is never null
               await storage.createScrapedData({
                 transitionId: state.input.transitionId,
-                source: newStory.source,
-                content: newStory.content,
+                source: newStory.source || "Search Result", // Ensure source is never null
+                content: newStory.content || "No content available",
                 url: newStory.url || null,
                 postDate: newStory.date || null,
                 skillsExtracted: []
@@ -750,17 +750,47 @@ Your original plan was:
 You have already completed these steps:
 {completedSteps}
 
+You've spent {iterationCount} iterations on analyzing the transition.
+
+IMPORTANT: Follow these guidelines strictly:
+1. Do not repeat steps that have already been completed.
+2. Do not repeat the same analysis in different words.
+3. If you have already generated observations or analyzed skill gaps, move to the next stage.
+4. The workflow should be: gathering transition stories -> analyzing stories for observations -> identifying skill gaps -> creating a detailed trajectory plan with resources
+5. After 3 or more iterations on the same type of task, consider that task complete and move on.
+6. If you've spent 5 or more iterations total, complete the analysis to avoid getting stuck.
+
 Update your plan accordingly. If all necessary steps have been completed and you have gathered sufficient information for a comprehensive analysis, respond with the word "COMPLETE" and use the 'response' function.
 Otherwise, provide the remaining steps that need to be done to complete the analysis.  
 Only add steps to the plan that still NEED to be done. Do not return previously done steps as part of the plan.`;
-
-    // Create the parser
-    const parser = new JsonOutputToolsParser();
 
     return async (state: typeof CaraImprovedState.State): Promise<Partial<typeof CaraImprovedState.State>> => {
       console.log("Replanning next steps");
       
       try {
+        // Count iterations to prevent infinite loops
+        const iterationCount = state.pastSteps.length;
+        
+        // If we've gone through too many iterations, force completion
+        if (iterationCount > 10) {
+          console.log("Forcing completion after too many iterations");
+          return { 
+            response: "Analysis complete. All necessary information has been gathered."
+          };
+        }
+        
+        // Check for repeated steps/patterns that indicate a loop
+        const lastSteps = state.pastSteps.slice(-4).map(step => step[0]);
+        const uniqueStepTypes = new Set(lastSteps);
+        
+        // If we're repeating the same 1-2 steps over and over, this is a loop
+        if (lastSteps.length >= 4 && uniqueStepTypes.size <= 2) {
+          console.log("Detected a loop in the execution. Moving to completion.");
+          return { 
+            response: "Analysis complete. Moving to the final development plan creation."
+          };
+        }
+        
         // Format variables for the prompt
         const currentRole = state.input.currentRole;
         const targetRole = state.input.targetRole;
@@ -774,7 +804,8 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
           .replace("{currentRole}", currentRole)
           .replace("{targetRole}", targetRole)
           .replace("{originalPlan}", originalPlan)
-          .replace("{completedSteps}", completedSteps);
+          .replace("{completedSteps}", completedSteps)
+          .replace("{iterationCount}", iterationCount.toString());
         
         // Call the model with the tools
         const replannerWithTools = this.plannerModel.bindTools([
@@ -804,7 +835,8 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
             try {
               const steps = JSON.parse(stepsMatch[1]);
               if (Array.isArray(steps) && steps.length > 0) {
-                return { plan: steps };
+                // Limit to only the next step to prevent loops
+                return { plan: steps.slice(0, Math.min(steps.length, 2)) };
               }
             } catch (error) {
               console.error("Error parsing steps:", error);
@@ -814,21 +846,39 @@ Only add steps to the plan that still NEED to be done. Do not return previously 
         
         // If we couldn't parse the output properly, check if the response contained "COMPLETE"
         // This is a fallback mechanism
-        const rawResult = await replannerWithTools.invoke(formattedPrompt);
-        const resultText = rawResult.content.toString();
-        
-        if (resultText.includes("COMPLETE")) {
+        if (content.includes("COMPLETE")) {
           return { 
             response: "Analysis complete. All necessary information has been gathered.",
           };
         }
         
-        // Default: return the existing plan
-        return { plan: state.plan };
+        // If we've done several iterations already and still haven't parsed a valid plan,
+        // move to completion to avoid getting stuck
+        if (iterationCount > 5) {
+          return { 
+            response: "Analysis complete. Moving to the final development plan creation."
+          };
+        }
+        
+        // Default: return a simplified plan with just the next logical step based on the workflow
+        // This provides a fallback when parsing fails
+        if (state.transitionStories.length === 0) {
+          return { plan: ["Search for transition stories and experiences"] };
+        } else if (state.skillGaps.length === 0) {
+          return { plan: ["Analyze skill gaps based on transition stories"] };
+        } else {
+          return { plan: ["Create a comprehensive development plan with resources"] };
+        }
       } catch (error) {
         console.error("Error in replan node:", error);
-        // If an error occurs, return the existing plan to avoid breaking the workflow
-        return { plan: state.plan };
+        // If an error occurs, move to completion if we've done several iterations
+        // otherwise return a basic next step
+        if (state.pastSteps.length > 5) {
+          return { 
+            response: "Analysis complete. All necessary information has been gathered."
+          };
+        }
+        return { plan: ["Proceed to the next step of the career transition analysis"] };
       }
     };
   }

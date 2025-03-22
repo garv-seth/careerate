@@ -36,11 +36,11 @@ export async function scrapeForums(
     
     console.log(`Found ${results.length} relevant results about ${currentRole} to ${targetRole} transitions`);
     
-    // Process and clean up results
+    // Process and clean up results, ensuring source is never null
     const processedResults = results.map(result => ({
-      source: result.source || "Web search",
+      source: result.source || "Web search", // Ensure source is never null
       // Limit content size to 5000 chars to avoid excessive database storage
-      content: result.content.substring(0, 5000),
+      content: result.content ? result.content.substring(0, 5000) : "No content available",
       url: result.url || "",
       date: result.date || new Date().toISOString().split('T')[0]
     }));
