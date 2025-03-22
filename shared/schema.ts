@@ -17,7 +17,11 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+// Adding a custom type that includes username field for backward compatibility
+// until we can migrate the database
+export type InsertUser = z.infer<typeof insertUserSchema> & {
+  username?: string; // Make this optional in the type but we'll provide it
+};
 export type User = typeof users.$inferSelect;
 
 export const profiles = pgTable("profiles", {

@@ -64,6 +64,8 @@ export function configurePassport() {
  */
 export async function registerUser(email: string, password: string): Promise<any> {
   try {
+    console.log('Registering user with email:', email);
+    
     // Check if email is already taken
     const existingEmail = await storage.getUserByEmail(email);
     if (existingEmail) {
@@ -73,18 +75,24 @@ export async function registerUser(email: string, password: string): Promise<any
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Create user with email as the identifier
+    // Create user with email as the identifier and username to satisfy NOT NULL constraint
+    // We'll use email as the username for backward compatibility
     const userData: InsertUser = {
       email,
-      password: hashedPassword
-    };
+      password: hashedPassword,
+      username: email  // Add username field to handle the database constraint
+    } as any;  // Use type assertion to bypass type checking
+    
+    console.log('User data to insert:', JSON.stringify(userData));
     
     const newUser = await storage.createUser(userData);
+    console.log('User created successfully:', newUser);
     
     // Return user without password
     const { password: _, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
   } catch (error) {
+    console.error('Error in registerUser:', error);
     throw error;
   }
 }

@@ -65,6 +65,7 @@ router.post('/register', async (req: Request, res: Response) => {
         details: error.errors
       });
     } else {
+      console.error('Registration error details:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'An error occurred during registration'
