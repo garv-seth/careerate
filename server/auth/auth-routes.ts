@@ -102,64 +102,55 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // Login
-router.post('/login', (req: Request, res: Response, next) => {
+router.post('/login', async (req: Request, res: Response) => {
   try {
     // Validate request body
     loginSchema.parse(req.body);
     
-    // Use a wrapped passport.authenticate to avoid double response issues
-    passport.authenticate('local', (err: Error, user: any, info: any) => {
-      if (err) {
-        console.error('Login error:', err);
-        return res.status(500).json({
-          success: false,
-          error: 'Internal Server Error'
-        });
-      }
+    const { email, password } = req.body;
+    
+    try {
+      // Use the loginUser helper function which just verifies credentials
+      const user = await storage.getUserByEmail(email);
       
       if (!user) {
-        console.error('Login failed:', info?.message || 'No specific error message');
         return res.status(401).json({
           success: false,
-          error: info?.message || 'Incorrect email or password'
+          error: 'Incorrect email or password'
         });
       }
       
-      // Log in the user
-      req.logIn(user, (loginErr) => {
-        if (loginErr) {
-          console.error('Login error during req.logIn:', loginErr);
-          return res.status(500).json({
-            success: false,
-            error: 'Failed to login'
-          });
-        }
-        
-        try {
-          // Generate JWT token
-          const token = jwt.sign(
-            { id: user.id, email: user.email },
-            process.env.JWT_SECRET || 'careerate-secret-key',
-            { expiresIn: '1d' }
-          );
-          
-          // Return user without password and token
-          const { password: _, ...userWithoutPassword } = user;
-          
-          return res.json({
-            success: true,
-            user: userWithoutPassword,
-            token
-          });
-        } catch (tokenErr) {
-          console.error('Token generation error:', tokenErr);
-          return res.status(500).json({
-            success: false,
-            error: 'Failed to generate authentication token'
-          });
-        }
+      // Check password
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({
+          success: false,
+          error: 'Incorrect email or password'
+        });
+      }
+      
+      // Generate JWT token (we'll use this instead of sessions for now)
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET || 'careerate-secret-key',
+        { expiresIn: '1d' }
+      );
+      
+      // Return user without password and with token
+      const { password: _, ...userWithoutPassword } = user;
+      
+      return res.json({
+        success: true,
+        user: userWithoutPassword,
+        token
       });
-    })(req, res, next);
+    } catch (loginErr) {
+      console.error('Login error:', loginErr);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to login'
+      });
+    }
   } catch (error) {
     // This block handles validation errors only
     if (error instanceof z.ZodError) {
@@ -198,8 +189,29 @@ router.post('/logout', (req: Request, res: Response) => {
 // Get current user
 router.get('/me', requireAuth, async (req: Request, res: Response) => {
   try {
+    let userId: number;
+    
+    // Extract user ID from JWT token or session
+    if (typeof req.user === 'object' && req.user !== null) {
+      if ('id' in req.user) {
+        userId = typeof req.user.id === 'number' ? req.user.id : parseInt(req.user.id as string);
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid user ID'
+        });
+      }
+    } else {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+    
+    console.log('Getting user data for ID:', userId);
+    
     // Find current user
-    const user = await storage.getUser((req.user as any).id);
+    const user = await storage.getUser(userId);
     
     if (!user) {
       return res.status(404).json({
@@ -224,6 +236,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
       skills: skills || []
     });
   } catch (error) {
+    console.error('Error fetching user data:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get user data'
@@ -234,11 +247,27 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
 // Update user profile
 router.put('/profile', requireAuth, async (req: Request, res: Response) => {
   try {
+    let userId: number;
+    
+    // Extract user ID from JWT token or session
+    if (typeof req.user === 'object' && req.user !== null) {
+      if ('id' in req.user) {
+        userId = typeof req.user.id === 'number' ? req.user.id : parseInt(req.user.id as string);
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid user ID'
+        });
+      }
+    } else {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
+      });
+    }
+    
     // Validate request body
     const data = profileUpdateSchema.parse(req.body);
-    
-    // Get user ID
-    const userId = (req.user as any).id;
     
     // Check if profile exists
     let profile = await storage.getProfile(userId);
@@ -269,6 +298,7 @@ router.put('/profile', requireAuth, async (req: Request, res: Response) => {
         details: error.errors
       });
     } else {
+      console.error('Profile update error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to update profile'
