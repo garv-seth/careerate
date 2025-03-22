@@ -142,12 +142,13 @@ export class DatabaseStorage implements IStorage {
     const serializedSkills = JSON.stringify(skills);
     const parsedSkills = JSON.parse(serializedSkills);
     
-    // Use type assertion to bypass TypeScript error
+    // Use type assertion to bypass TypeScript error and ensure no null values are passed to required fields
     const valueToInsert = {
       transitionId: insertScrapedData.transitionId,
-      source: insertScrapedData.source,
-      content: insertScrapedData.content,
+      source: insertScrapedData.source || "Extracted Data", // Ensure source is never null
+      content: insertScrapedData.content || "No content available", // Ensure content is never null
       url: insertScrapedData.url || null,
+      postDate: insertScrapedData.postDate || new Date().toISOString().split('T')[0],
       skillsExtracted: parsedSkills
     } as any;
     
