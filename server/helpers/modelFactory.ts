@@ -8,11 +8,12 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import { JsonOutputToolsParser as OpenAIToolsParser } from "@langchain/core/output_parsers/openai_tools";
-import { JsonOutputParser as GeminiJsonParser } from "@langchain/google-genai/output_parsers";
+import { JsonOutputToolsParser } from "@langchain/core/output_parsers/openai_tools";
+import { BaseOutputParser } from "@langchain/core/output_parsers";
+import { z } from "zod";
 
 // Read provider from environment or default to OpenAI
-const LLM_PROVIDER = process.env.LLM_PROVIDER?.toLowerCase() || "openai";
+const LLM_PROVIDER = process.env.LLM_PROVIDER?.toLowerCase() || "gemini"; // Default to Gemini now that we have the API key
 
 /**
  * Create a chat model instance based on the configured provider
@@ -60,13 +61,51 @@ export function createChatModel(options: {
 }
 
 /**
+ * Simple JSON parser that can be used with Gemini
+ * This is a simpler alternative to the built-in parsers
+ */
+export class SimpleJsonOutputParser<T extends z.ZodTypeAny> extends BaseOutputParser<z.infer<T>> {
+  private schema: T;
+
+  constructor(schema: T) {
+    super();
+    this.schema = schema;
+  }
+
+  async parse(text: string): Promise<z.infer<T>> {
+    try {
+      // Try to extract JSON from text
+      const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      const jsonText = jsonMatch ? jsonMatch[0] : text;
+      
+      // Parse JSON
+      const json = JSON.parse(jsonText);
+      
+      // Validate with schema
+      return this.schema.parse(json);
+    } catch (e) {
+      console.error("Error parsing JSON:", e);
+      throw new Error(`Failed to parse JSON: ${e}`);
+    }
+  }
+
+  getFormatInstructions(): string {
+    return `Return a JSON object that matches the following schema:
+${JSON.stringify(this.schema.safeParse({}), null, 2)}
+
+Always use proper JSON format with double quotes around keys and string values.
+`;
+  }
+}
+
+/**
  * Get the appropriate JSON parser based on the configured provider
  */
-export function getJsonParser() {
+export function getJsonParser<T extends z.ZodTypeAny>(schema: T) {
   if (LLM_PROVIDER === "gemini" || LLM_PROVIDER === "google") {
-    return GeminiJsonParser;
+    return new SimpleJsonOutputParser(schema);
   } else {
-    return OpenAIToolsParser;
+    return JsonOutputToolsParser.fromZodSchema(schema);
   }
 }
 

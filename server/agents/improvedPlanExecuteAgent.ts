@@ -45,14 +45,12 @@ async function safeCreateScrapedData(transitionId: number, story: any) {
     };
   }
 }
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import { StateGraph, END, START } from "@langchain/langgraph";
 import { Annotation } from "@langchain/langgraph";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { JsonOutputToolsParser } from "@langchain/core/output_parsers/openai_tools";
 import { RunnableConfig } from "@langchain/core/runnables";
 import { storage } from "../storage";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
@@ -61,6 +59,8 @@ import { CaraAnalysisResult } from "./caraAgent";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
 import { StructuredTool } from "@langchain/core/tools";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { createChatModel, getJsonParser } from "../helpers/modelFactory";
 
 // Define the state schema for the improved Plan-Execute agent
 const CaraImprovedState = Annotation.Root({
@@ -145,24 +145,22 @@ const CaraImprovedState = Annotation.Root({
  * Improved career transition analysis using a multi-agent Plan-and-Execute pattern
  */
 export class ImprovedPlanExecuteAgent {
-  private mainModel: ChatOpenAI;
-  private plannerModel: ChatOpenAI;
+  private mainModel: BaseChatModel;
+  private plannerModel: BaseChatModel;
   private searchAgent: any;
   private searchTools: StructuredTool[];
   private workflow: any;
 
   constructor() {
-    // Initialize the main model
-    this.mainModel = new ChatOpenAI({
+    // Initialize the main model using the factory
+    this.mainModel = createChatModel({
       temperature: 0.2,
-      modelName: "gpt-4-turbo-preview",
       streaming: false,
     });
 
-    // Initialize the planner model
-    this.plannerModel = new ChatOpenAI({
+    // Initialize the planner model using the factory
+    this.plannerModel = createChatModel({
       temperature: 0.1, // Lower temperature for more consistent planning
-      modelName: "gpt-4-turbo-preview",
     });
 
     // Initialize the specialized search tools
