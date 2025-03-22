@@ -828,24 +828,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const storedMilestones = [];
       for (let i = 0; i < milestoneData.length; i++) {
         const milestone = milestoneData[i];
+        // Ensure all required fields are present and valid
+        const durationWeeks = typeof milestone.durationWeeks === 'number' && milestone.durationWeeks > 0 
+          ? milestone.durationWeeks 
+          : 4; // Default to 4 weeks if missing or invalid
+        
         const storedMilestone = await storage.createMilestone({
           planId: plan.id,
-          title: milestone.title,
-          description: milestone.description,
-          priority: milestone.priority,
-          durationWeeks: milestone.durationWeeks,
+          title: milestone.title || `Phase ${i + 1}`,
+          description: milestone.description || null,
+          priority: milestone.priority || "Medium",
+          durationWeeks: durationWeeks,
           order: i + 1,
           progress: 0,
         });
 
         // Use resources from LangGraph's response directly
-        if (milestone.resources && milestone.resources.length > 0) {
+        if (milestone.resources && Array.isArray(milestone.resources) && milestone.resources.length > 0) {
           for (const resource of milestone.resources) {
             await storage.createResource({
               milestoneId: storedMilestone.id,
-              title: resource.title,
-              url: resource.url,
-              type: resource.type,
+              title: resource.title || `Resource for ${milestone.title || 'Milestone'}`,
+              url: resource.url || "https://www.coursera.org/",
+              type: resource.type || "website",
             });
           }
         } else {

@@ -467,13 +467,24 @@ Format as JSON with these fields. All fields are required.`;
                 progress: 0
               });
               
-              // Add resources if available
-              if (m.resources && Array.isArray(m.resources)) {
-                for (const r of m.resources) {
+              // Add resources - ensure resources array exists
+              const resources = m.resources && Array.isArray(m.resources) ? m.resources : [];
+              
+              // If no resources were provided, add a default resource
+              if (resources.length === 0) {
+                await storage.createResource({
+                  milestoneId: milestone.id,
+                  title: `Learning resources for ${m.title}`,
+                  url: "https://www.coursera.org/",
+                  type: "website"
+                });
+              } else {
+                // Add all specified resources
+                for (const r of resources) {
                   await storage.createResource({
                     milestoneId: milestone.id,
-                    title: r.title,
-                    url: r.url,
+                    title: r.title || `Resource for ${m.title || 'Milestone'}`,
+                    url: r.url || "https://www.coursera.org/",
                     type: r.type || "website"
                   });
                 }
