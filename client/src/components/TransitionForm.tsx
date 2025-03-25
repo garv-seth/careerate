@@ -244,336 +244,283 @@ const TransitionForm: React.FC = () => {
   }
   
   return (
-    <Card className="max-w-3xl mx-auto card rounded-xl shadow-glow">
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-heading font-semibold">
-            Plan Your Career Transition
-          </h2>
-          <div className="flex items-center text-primary text-sm bg-primary/5 px-3 py-1.5 rounded-full">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="18" 
-              height="18" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              className="mr-1.5"
-            >
-              <path d="M12 8V4H8" />
-              <rect width="16" height="12" x="4" y="8" rx="2" />
-              <path d="M2 14h2" />
-              <path d="M20 14h2" />
-              <path d="M15 13v2" />
-              <path d="M9 13v2" />
-            </svg>
-            <span>Powered by Cara AI</span>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Current Role Section */}
+        <div className="space-y-4">
+          <h3 className="font-medium text-lg text-secondary-foreground">Your Current Role</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Current Company */}
+            <FormField
+              control={form.control}
+              name="currentCompanyId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-text-secondary">Company</FormLabel>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Reset dependent fields
+                      form.setValue("currentRoleId", "");
+                      form.setValue("currentLevelId", "");
+                    }} 
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select company" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Current Role */}
+            <FormField
+              control={form.control}
+              name="currentRoleId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-text-secondary">Role</FormLabel>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Reset level when role changes
+                      form.setValue("currentLevelId", "");
+                    }} 
+                    value={field.value}
+                    disabled={!currentCompanyId}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {currentRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Current Level */}
+            <FormField
+              control={form.control}
+              name="currentLevelId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-text-secondary">Level</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={!currentRoleId}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {currentLevels.map((level) => (
+                        <SelectItem key={level.id} value={level.id}>
+                          {level.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
         
-        <div className="text-sm mb-6 p-4 bg-muted/50 rounded-lg border border-border">
-          <p className="flex items-start">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="18" 
-              height="18" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              className="mr-2 mt-0.5 text-primary"
-            >
-              <path d="m7.7 11.4 4.1 2.2c.1 0 .2.1.3.1h.6l4.3-2.3c.2-.1.3-.1.5 0l3.5 2.2c.2.1.5 0 .6-.2.1-.1.1-.2.1-.3V6.8c0-.2-.1-.4-.1-.4l-3-1.8c-.1-.1-.3-.1-.5 0l-3.6 1.8c-.1.1-.3.1-.4.1h-.6L9.9 4.3c-.1-.1-.3-.1-.4 0l-3 1.8a.4.4 0 0 0-.2.4v6.5c0 .2.1.4.3.5.2.1.5 0 .6-.2l.5-.9" />
-              <path d="M4.8 13.9c0 .9.5 1.4 1.4 1.4.4 0 .7-.1 1-.3l.7-.6" />
-            </svg>
-            <span>Cara will analyze your career transition using real-world data from the web, identify skill gaps, and create a personalized development plan with YouTube learning resources.</span>
-          </p>
+        {/* Target Role Section */}
+        <div className="space-y-4">
+          <h3 className="font-medium text-lg text-secondary-foreground">Your Target Role</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Target Company */}
+            <FormField
+              control={form.control}
+              name="targetCompanyId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-text-secondary">Company</FormLabel>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Reset dependent fields
+                      form.setValue("targetRoleId", "");
+                      form.setValue("targetLevelId", "");
+                    }} 
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select company" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Target Role */}
+            <FormField
+              control={form.control}
+              name="targetRoleId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-text-secondary">Role</FormLabel>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Reset level when role changes
+                      form.setValue("targetLevelId", "");
+                    }} 
+                    value={field.value}
+                    disabled={!targetCompanyId}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {targetRoles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Target Level */}
+            <FormField
+              control={form.control}
+              name="targetLevelId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-text-secondary">Level</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                    disabled={!targetRoleId}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {targetLevels.map((level) => (
+                        <SelectItem key={level.id} value={level.id}>
+                          {level.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          {/* Hidden fields for API compatibility */}
+          <input type="hidden" {...form.register("currentRole")} />
+          <input type="hidden" {...form.register("targetRole")} />
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Current Role Section */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-lg text-secondary-foreground">Your Current Role</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Current Company */}
-                <FormField
-                  control={form.control}
-                  name="currentCompanyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-text-secondary">Company</FormLabel>
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Reset dependent fields
-                          form.setValue("currentRoleId", "");
-                          form.setValue("currentLevelId", "");
-                        }} 
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select company" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {companies.map((company) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Current Role */}
-                <FormField
-                  control={form.control}
-                  name="currentRoleId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-text-secondary">Role</FormLabel>
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Reset level when role changes
-                          form.setValue("currentLevelId", "");
-                        }} 
-                        value={field.value}
-                        disabled={!currentCompanyId}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {currentRoles.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              {role.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Current Level */}
-                <FormField
-                  control={form.control}
-                  name="currentLevelId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-text-secondary">Level</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={!currentRoleId}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {currentLevels.map((level) => (
-                            <SelectItem key={level.id} value={level.id}>
-                              {level.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-            
-            {/* Target Role Section */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-lg text-secondary-foreground">Your Target Role</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Target Company */}
-                <FormField
-                  control={form.control}
-                  name="targetCompanyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-text-secondary">Company</FormLabel>
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Reset dependent fields
-                          form.setValue("targetRoleId", "");
-                          form.setValue("targetLevelId", "");
-                        }} 
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select company" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {companies.map((company) => (
-                            <SelectItem key={company.id} value={company.id}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Target Role */}
-                <FormField
-                  control={form.control}
-                  name="targetRoleId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-text-secondary">Role</FormLabel>
-                      <Select 
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          // Reset level when role changes
-                          form.setValue("targetLevelId", "");
-                        }} 
-                        value={field.value}
-                        disabled={!targetCompanyId}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {targetRoles.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              {role.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Target Level */}
-                <FormField
-                  control={form.control}
-                  name="targetLevelId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-text-secondary">Level</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value}
-                        disabled={!targetRoleId}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {targetLevels.map((level) => (
-                            <SelectItem key={level.id} value={level.id}>
-                              {level.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              {/* Hidden fields for API compatibility */}
-              <input type="hidden" {...form.register("currentRole")} />
-              <input type="hidden" {...form.register("targetRole")} />
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={mutation.isPending || 
-                  !currentCompanyId || 
-                  !currentRoleId || 
-                  !currentLevelId || 
-                  !targetCompanyId || 
-                  !targetRoleId || 
-                  !targetLevelId}
-                className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow transition duration-200 flex items-center space-x-2"
-              >
-                {mutation.isPending ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="18" 
-                      height="18" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                      className="mr-1.5"
-                    >
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 16v-4"/>
-                      <path d="M12 8h.01"/>
-                    </svg>
-                    <span>Let Cara Analyze My Path</span>
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={mutation.isPending || 
+              !currentCompanyId || 
+              !currentRoleId || 
+              !currentLevelId || 
+              !targetCompanyId || 
+              !targetRoleId || 
+              !targetLevelId}
+            className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow transition duration-200 flex items-center space-x-2"
+          >
+            {mutation.isPending ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Processing...
+              </>
+            ) : (
+              <>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="18" 
+                  height="18" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className="mr-1.5"
+                >
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4"/>
+                  <path d="M12 8h.01"/>
+                </svg>
+                <span>Let Cara Analyze My Path</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

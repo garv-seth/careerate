@@ -11,6 +11,7 @@ import Profile from "@/pages/Profile";
 import OnboardingWizard from "@/pages/OnboardingWizard";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import NewTransition from "@/pages/NewTransition";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -22,6 +23,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/dashboard/:transitionId" component={Dashboard} />
+          <Route path="/transitions/new" component={NewTransition} />
           <Route path="/signup" component={SignUp} />
           <Route path="/login" component={Login} />
           <Route path="/profile" component={Profile} />
