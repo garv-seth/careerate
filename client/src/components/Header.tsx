@@ -3,18 +3,36 @@ import { Link, useLocation } from "wouter";
 import Logo from "./Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+// Define the auth response type
+interface AuthResponse {
+  success: boolean;
+  user?: {
+    id: number;
+    email: string;
+    username?: string;
+    currentRole?: string;
+    profileCompleted?: boolean;
+  };
+  profile?: any;
+  skills?: any[];
+}
 
 const Header: React.FC = () => {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Check if user is authenticated
-  const { data: userData, isLoading } = useQuery({
+  const { data: userData, isLoading } = useQuery<AuthResponse>({
     queryKey: ['/api/auth/me'],
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false, // Don't retry on 401 errors
+    refetchOnWindowFocus: false,
   });
   
-  const isAuthenticated = !!userData?.user;
+  // Check if user data exists and has a user property
+  const isAuthenticated = !!(userData && userData.user);
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -119,16 +137,24 @@ const Header: React.FC = () => {
             className="hidden md:block"
           >
             {isAuthenticated ? (
-              <Link href="/api/auth/logout">
-                <div className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer">
-                  <span className="mr-2">LOGOUT</span>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </Link>
+              <button
+                onClick={async () => {
+                  try {
+                    await apiRequest("/api/auth/logout", { method: "POST" });
+                    window.location.href = "/";
+                  } catch (error) {
+                    console.error("Logout failed:", error);
+                  }
+                }}
+                className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer"
+              >
+                <span className="mr-2">LOGOUT</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             ) : (
               <Link href="/signup">
                 <div className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer">
@@ -190,11 +216,20 @@ const Header: React.FC = () => {
                 )}
                 <div className="pt-2 border-t border-primary/10">
                   {isAuthenticated ? (
-                    <Link href="/api/auth/logout" onClick={closeMobileMenu}>
-                      <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
-                        Logout
-                      </div>
-                    </Link>
+                    <button
+                      onClick={async () => {
+                        try {
+                          closeMobileMenu();
+                          await apiRequest("/api/auth/logout", { method: "POST" });
+                          window.location.href = "/";
+                        } catch (error) {
+                          console.error("Logout failed:", error);
+                        }
+                      }}
+                      className="py-2 px-3 w-full text-left bg-primary/10 text-primary font-medium text-base rounded-md"
+                    >
+                      Logout
+                    </button>
                   ) : (
                     <Link href="/signup" onClick={closeMobileMenu}>
                       <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
