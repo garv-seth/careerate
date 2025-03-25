@@ -14,6 +14,9 @@ import {
 } from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent";
 import { ImprovedCaraAgent } from "./agents/improvedCaraAgent";
+import { EnhancedMultiAgentSystem } from "./agents/enhancedMultiAgetnSystem";
+import { safeParseJSON } from "./helpers/jsonParserHelper";
+import { CaraPlanExecuteAgent } from "./agents/caraPlanExecuteAgent";
 import {
   searchForums,
   analyzeSkillGaps,
@@ -380,13 +383,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create ImprovedCara agent for web scraping with enhanced LangGraph capabilities
-      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
+      // Create EnhancedMultiAgentSystem for web scraping with improved reliability
+      const multiAgentSystem = new EnhancedMultiAgentSystem();
       
       // Store that scraping has been initiated (frontend needs immediate response)
       res.json({ 
         success: true, 
-        message: "Scraping initiated with enhanced LangGraph Plan-Execute agent",
+        message: "Scraping initiated with enhanced multi-agent system",
         forceRefresh
       });
       
@@ -401,7 +404,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // The uniqueTag and today's date trick search engines into avoiding cached results
       console.log(`Starting web scraping for ${transition.currentRole} to ${transition.targetRole} transition (${uniqueTag} - ${today})`);
       
-      cara.analyzeCareerTransition().catch(error => {
+      multiAgentSystem.analyzeCareerTransition(
+        transition.currentRole,
+        transition.targetRole,
+        transitionId,
+        []
+      ).catch(error => {
         console.error("Background analysis error:", error);
       });
       
@@ -595,13 +603,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
       const currentSkills = currentRoleSkills.map(item => item.skillName);
 
-      console.log(`Starting improved Cara analysis for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      console.log(`Starting enhanced multi-agent analysis for transition from ${transition.currentRole} to ${transition.targetRole}`);
       
-      // Create ImprovedCara agent instance that uses LangGraph Plan-Execute pattern
-      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
+      // Create EnhancedMultiAgentSystem instance with improved error handling
+      const multiAgentSystem = new EnhancedMultiAgentSystem();
       
-      // Perform comprehensive analysis using the improved multi-agent system
-      const analysisResult = await cara.analyzeCareerTransition(currentSkills);
+      // Perform comprehensive analysis using the enhanced multi-agent system
+      const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+        transition.currentRole,
+        transition.targetRole,
+        transitionId,
+        currentSkills
+      );
       
       // Store scraped data
       if (analysisResult.scrapedCount > 0) {
