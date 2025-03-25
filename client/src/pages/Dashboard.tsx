@@ -25,7 +25,7 @@ const Dashboard: React.FC = () => {
   // Redirect if no transitionId
   useEffect(() => {
     if (!match) {
-      setLocation("/");
+      setLocation("/transitions/new");
     }
   }, [match, setLocation]);
 
@@ -579,7 +579,7 @@ const Dashboard: React.FC = () => {
                   to get AI-powered insights on skill gaps and a personalized development plan.
                 </p>
                 <button
-                  onClick={() => setLocation("/")}
+                  onClick={() => setLocation("/transitions/new")}
                   className="w-full py-3 px-4 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center"
                 >
                   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -608,10 +608,10 @@ const Dashboard: React.FC = () => {
                 {errorMessage}
               </p>
               <button
-                onClick={() => setLocation("/")}
+                onClick={() => setLocation("/transitions/new")}
                 className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow"
               >
-                Return Home
+                Create New Transition
               </button>
             </>
           )}
