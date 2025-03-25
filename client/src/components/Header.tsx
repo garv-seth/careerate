@@ -86,6 +86,26 @@ const Header: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link href="/transitions/new">
+                  <div className={`relative px-3 py-2 font-medium text-sm tracking-wide transition-all duration-300 ease-in-out cursor-pointer ${
+                    location.startsWith('/transitions') 
+                      ? 'text-primary' 
+                      : 'text-text-secondary hover:text-primary'
+                  }`}>
+                    TRANSITIONS
+                    {location.startsWith('/transitions') && (
+                      <motion.span
+                        layoutId="nav-indicator"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </div>
+                </Link>
+              </li>
+              <li>
                 <Link href="/dashboard/1">
                   <div className={`relative px-3 py-2 font-medium text-sm tracking-wide transition-all duration-300 ease-in-out cursor-pointer ${
                     location.startsWith('/dashboard') 
@@ -219,6 +239,13 @@ const Header: React.FC = () => {
                 location === '/' ? 'text-primary border-l-2 border-primary pl-3' : 'text-text-secondary border-l-2 border-transparent pl-3'
               }`}>
                 Home
+              </div>
+            </Link>
+            <Link href="/transitions/new" onClick={closeMobileMenu}>
+              <div className={`py-3 px-4 font-medium text-base rounded-md hover:bg-primary/5 transition-colors duration-200 ${
+                location.startsWith('/transitions') ? 'text-primary border-l-2 border-primary pl-3' : 'text-text-secondary border-l-2 border-transparent pl-3'
+              }`}>
+                Transitions
               </div>
             </Link>
             <Link href="/dashboard/1" onClick={closeMobileMenu}>

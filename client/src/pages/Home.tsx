@@ -58,7 +58,7 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.7, delay: 0.6 }}
               >
-                Careerate: Your Gateway to Career Transformation. Unlock your full potential and transition seamlessly into your dream job with our AI-powered platform.
+                Revolutionize your career journey with AI-powered precision. Careerate analyzes real-world transition data to create your personalized path to success—no more guesswork, just strategic career advancement backed by data.
               </motion.p>
               
               <motion.div 
@@ -195,7 +195,7 @@ const Home: React.FC = () => {
               <div className="absolute -bottom-2 left-0 right-0 h-1 bg-primary-light/50"></div>
             </h2>
             <p className="text-text-secondary max-w-2xl mx-auto mt-4">
-              Our advanced AI platform transforms your career transition journey into a clear, actionable path forward.
+              Powered by multi-agent AI technology that analyzes thousands of real career transitions to build your personalized blueprint for success.
             </p>
           </motion.div>
           
