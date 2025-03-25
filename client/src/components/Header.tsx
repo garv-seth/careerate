@@ -2,10 +2,19 @@ import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import Logo from "./Logo";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 
 const Header: React.FC = () => {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Check if user is authenticated
+  const { data: userData, isLoading } = useQuery({
+    queryKey: ['/api/auth/me'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  const isAuthenticated = !!userData?.user;
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -78,26 +87,28 @@ const Header: React.FC = () => {
                   </div>
                 </Link>
               </li>
-              <li>
-                <Link href="/profile">
-                  <div className={`relative px-3 py-2 font-medium text-sm tracking-wide transition-all duration-300 ease-in-out cursor-pointer ${
-                    location === '/profile' 
-                      ? 'text-primary' 
-                      : 'text-text-secondary hover:text-primary'
-                  }`}>
-                    PROFILE
-                    {location === '/profile' && (
-                      <motion.span
-                        layoutId="nav-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    )}
-                  </div>
-                </Link>
-              </li>
+              {isAuthenticated && (
+                <li>
+                  <Link href="/profile">
+                    <div className={`relative px-3 py-2 font-medium text-sm tracking-wide transition-all duration-300 ease-in-out cursor-pointer ${
+                      location === '/profile' 
+                        ? 'text-primary' 
+                        : 'text-text-secondary hover:text-primary'
+                    }`}>
+                      PROFILE
+                      {location === '/profile' && (
+                        <motion.span
+                          layoutId="nav-indicator"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              )}
             </ul>
           </motion.nav>
           
@@ -107,15 +118,28 @@ const Header: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="hidden md:block"
           >
-            <Link href="/signup">
-              <div className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer">
-                <span className="mr-2">GET STARTED</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/api/auth/logout">
+                <div className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer">
+                  <span className="mr-2">LOGOUT</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </Link>
+            ) : (
+              <Link href="/signup">
+                <div className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer">
+                  <span className="mr-2">GET STARTED</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </Link>
+            )}
           </motion.div>
           
           {/* Mobile menu button */}
@@ -157,17 +181,27 @@ const Header: React.FC = () => {
                     Dashboard
                   </div>
                 </Link>
-                <Link href="/profile" onClick={closeMobileMenu}>
-                  <div className={`py-2 px-3 font-medium text-base ${location === '/profile' ? 'text-primary' : 'text-text-secondary'}`}>
-                    Profile
-                  </div>
-                </Link>
-                <div className="pt-2 border-t border-primary/10">
-                  <Link href="/signup" onClick={closeMobileMenu}>
-                    <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
-                      Get Started
+                {isAuthenticated && (
+                  <Link href="/profile" onClick={closeMobileMenu}>
+                    <div className={`py-2 px-3 font-medium text-base ${location === '/profile' ? 'text-primary' : 'text-text-secondary'}`}>
+                      Profile
                     </div>
                   </Link>
+                )}
+                <div className="pt-2 border-t border-primary/10">
+                  {isAuthenticated ? (
+                    <Link href="/api/auth/logout" onClick={closeMobileMenu}>
+                      <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
+                        Logout
+                      </div>
+                    </Link>
+                  ) : (
+                    <Link href="/signup" onClick={closeMobileMenu}>
+                      <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
+                        Get Started
+                      </div>
+                    </Link>
+                  )}
                 </div>
               </nav>
             </div>
