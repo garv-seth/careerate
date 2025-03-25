@@ -171,7 +171,11 @@ const Header: React.FC = () => {
           {/* Mobile menu button */}
           <div className="md:hidden z-30">
             <button 
-              className={`p-2 rounded-md ${mobileMenuOpen ? 'text-primary bg-primary/10' : 'text-text-secondary hover:text-primary'} focus:outline-none transition-colors duration-200`}
+              className={`p-2 rounded-md ${
+                mobileMenuOpen 
+                  ? 'text-primary bg-primary/10 border border-primary/30' 
+                  : 'text-text-secondary hover:text-primary hover:bg-primary/5 border border-transparent'
+              } focus:outline-none transition-all duration-200`}
               onClick={toggleMobileMenu}
               aria-label="Toggle mobile menu"
               aria-expanded={mobileMenuOpen}
@@ -194,40 +198,46 @@ const Header: React.FC = () => {
       </div>
       
       {/* Mobile menu backdrop */}
-      {mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-30 md:hidden"
-          onClick={closeMobileMenu}
-          aria-hidden="true"
-        />
-      )}
+      <div 
+        className={`fixed inset-0 bg-background/90 backdrop-blur-md z-30 md:hidden transition-opacity duration-300 ${
+          mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={closeMobileMenu}
+        aria-hidden="true"
+      />
       
       {/* Mobile menu dropdown */}
       <div 
-        className={`md:hidden fixed left-0 right-0 top-[72px] bg-surface-dark border-b border-primary/20 overflow-hidden shadow-lg z-40 transition-all duration-300 ${
-          mobileMenuOpen ? 'opacity-100 max-h-screen' : 'opacity-0 max-h-0 pointer-events-none'
+        className={`md:hidden fixed left-0 right-0 top-[72px] bg-background/95 backdrop-blur border-b border-primary/20 overflow-hidden shadow-lg z-40 transition-all duration-300 ${
+          mobileMenuOpen ? 'opacity-100 max-h-[300px]' : 'opacity-0 max-h-0 pointer-events-none'
         }`}
       >
         <div className="container mx-auto px-6 py-4">
-          <nav className="flex flex-col space-y-4">
+          <nav className="flex flex-col space-y-2">
             <Link href="/" onClick={closeMobileMenu}>
-              <div className={`py-2 px-3 font-medium text-base ${location === '/' ? 'text-primary' : 'text-text-secondary'}`}>
+              <div className={`py-3 px-4 font-medium text-base rounded-md hover:bg-primary/5 transition-colors duration-200 ${
+                location === '/' ? 'text-primary border-l-2 border-primary pl-3' : 'text-text-secondary border-l-2 border-transparent pl-3'
+              }`}>
                 Home
               </div>
             </Link>
             <Link href="/dashboard/1" onClick={closeMobileMenu}>
-              <div className={`py-2 px-3 font-medium text-base ${location.startsWith('/dashboard') ? 'text-primary' : 'text-text-secondary'}`}>
+              <div className={`py-3 px-4 font-medium text-base rounded-md hover:bg-primary/5 transition-colors duration-200 ${
+                location.startsWith('/dashboard') ? 'text-primary border-l-2 border-primary pl-3' : 'text-text-secondary border-l-2 border-transparent pl-3'
+              }`}>
                 Dashboard
               </div>
             </Link>
             {isAuthenticated && (
               <Link href="/profile" onClick={closeMobileMenu}>
-                <div className={`py-2 px-3 font-medium text-base ${location === '/profile' ? 'text-primary' : 'text-text-secondary'}`}>
+                <div className={`py-3 px-4 font-medium text-base rounded-md hover:bg-primary/5 transition-colors duration-200 ${
+                  location === '/profile' ? 'text-primary border-l-2 border-primary pl-3' : 'text-text-secondary border-l-2 border-transparent pl-3'
+                }`}>
                   Profile
                 </div>
               </Link>
             )}
-            <div className="pt-2 border-t border-primary/10">
+            <div className="pt-3 mt-1 border-t border-primary/10">
               {isAuthenticated ? (
                 <button
                   onClick={async () => {
@@ -239,13 +249,13 @@ const Header: React.FC = () => {
                       console.error("Logout failed:", error);
                     }
                   }}
-                  className="py-2 px-3 w-full text-left bg-primary/10 text-primary font-medium text-base rounded-md"
+                  className="w-full text-left bg-primary/10 text-primary font-medium text-base rounded-md hover:bg-primary/20 transition-colors py-3 px-4"
                 >
                   Logout
                 </button>
               ) : (
                 <Link href="/signup" onClick={closeMobileMenu}>
-                  <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
+                  <div className="bg-primary/10 text-primary font-medium text-base rounded-md hover:bg-primary/20 transition-colors py-3 px-4">
                     Get Started
                   </div>
                 </Link>
