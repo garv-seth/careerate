@@ -270,11 +270,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Starting improved scraping and analysis process for transition ${transition.id}`);
       
-      // Create ImprovedCara agent that uses the Plan-Execute agent with LangGraph
-      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
+      // Create EnhancedMultiAgentSystem that uses multiple specialist agents
+      const multiAgentSystem = new EnhancedMultiAgentSystem();
       
       // Start the analysis process (includes scraping)
-      cara.analyzeCareerTransition().catch(error => {
+      multiAgentSystem.analyzeCareerTransition(
+        transition.currentRole,
+        transition.targetRole,
+        transition.id,
+        []
+      ).catch(error => {
         console.error("Background analysis error:", error);
       });
       
@@ -457,11 +462,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Call the comprehensive analysis endpoint asynchronously
       try {
-        // Create ImprovedCara agent with LangGraph capabilities
-        const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
+        // Create the enhanced multi-agent system with improved error handling
+        const multiAgentSystem = new EnhancedMultiAgentSystem();
         
-        // Perform analysis with improved multi-agent system
-        const analysisResult = await cara.analyzeCareerTransition(currentSkills);
+        // Perform analysis with the enhanced multi-agent system
+        const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+          transition.currentRole,
+          transition.targetRole,
+          transitionId,
+          currentSkills
+        );
         
         // Store skill gaps
         for (const skillGap of analysisResult.skillGaps) {
@@ -770,8 +780,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Try to get target role skills from our predefined list first as a starting point
           const targetRoleSkills = await storage.getRoleSkills(targetRole);
           
-          // Create an ImprovedCara agent with LangGraph capabilities for real-time analysis
-          const cara = new ImprovedCaraAgent(currentRole, targetRole);
+          // Create an EnhancedMultiAgentSystem for more reliable skill gap analysis
+          const multiAgentSystem = new EnhancedMultiAgentSystem();
           
           // Find scraped data for this transition
           const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
@@ -796,9 +806,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               targetRoleSkills.map(s => s.skillName)
             );
           } else {
-            // If no scraped data yet, use the new Cara agent to perform a full analysis
-            // This triggers a fresh web search and skill gap analysis
-            const analysisResult = await cara.analyzeCareerTransition(targetRoleSkills.map(s => s.skillName));
+            // If no scraped data yet, use the multi-agent system to perform a full analysis
+            // This triggers a fresh web search and skill gap analysis with better error handling
+            const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+              currentRole,
+              targetRole,
+              transitionId,
+              targetRoleSkills.map(s => s.skillName)
+            );
             generatedSkillGaps = analysisResult.skillGaps;
           }
           
@@ -852,9 +867,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create plan
       const plan = await storage.createPlan({ transitionId });
 
-      // Create ImprovedCara agent for plan generation with LangGraph
-      console.log(`Using ImprovedCara with LangGraph Plan-Execute pattern for transition from ${transition.currentRole} to ${transition.targetRole}`);
-      const cara = new ImprovedCaraAgent(transition.currentRole, transition.targetRole);
+      // Create EnhancedMultiAgentSystem for plan generation
+      console.log(`Using EnhancedMultiAgentSystem for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      const multiAgentSystem = new EnhancedMultiAgentSystem();
       
       // Prioritize skills
       const prioritizedSkills = skillGaps
@@ -870,10 +885,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 5) // Limit to top 5 skill gaps
         .map(gap => gap.skillName);
 
-      // Generate development plan with milestones using the Cara agent
-      // Since the new agent doesn't have a separate generatePlan method, we'll need to
-      // perform a full analysis and extract the plan data from the results
-      const analysisResult = await cara.analyzeCareerTransition(prioritizedSkills);
+      // Generate development plan with milestones using the enhanced multi-agent system
+      // This uses specialized planning agents working together with improved reliability
+      const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+        transition.currentRole,
+        transition.targetRole,
+        transitionId,
+        prioritizedSkills
+      );
       
       // For compatibility with the existing code, construct milestone data from the analysis result
       // In LangGraph implementation, check both possible locations of milestones
