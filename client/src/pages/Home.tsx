@@ -39,10 +39,10 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.7, delay: 0.4 }}
               >
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-primary to-white animate-text-shimmer">
-                  Discover
+                  Transform
                 </span>
                 <br /> 
-                <span className="text-white">Your <span className="text-primary relative">Next
+                <span className="text-white">Your <span className="text-primary relative">Career
                   <motion.span 
                     className="absolute -bottom-2 left-0 right-0 h-1 bg-primary"
                     initial={{ scaleX: 0 }}

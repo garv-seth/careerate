@@ -546,21 +546,75 @@ const Dashboard: React.FC = () => {
   }
 
   if (isError) {
+    // Check if the error is specifically a "Transition not found" error
+    const errorMessage = error instanceof Error ? error.message : "Failed to load dashboard data";
+    const isTransitionNotFoundError = 
+      errorMessage.includes("Transition not found") || 
+      errorMessage.includes("404") ||
+      (typeof errorMessage === 'string' && errorMessage.toLowerCase().includes("not found"));
+    
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-lg mx-auto card rounded-xl p-6 shadow-glow-sm">
-          <h2 className="text-xl font-heading font-semibold mb-4 text-red-400">
-            Error Loading Dashboard
+          <h2 className="text-xl font-heading font-semibold mb-4 text-primary">
+            {isTransitionNotFoundError 
+              ? "No Career Transition Found" 
+              : "Error Loading Dashboard"}
           </h2>
-          <p className="text-text-secondary mb-4">
-            {error instanceof Error ? error.message : "Failed to load dashboard data"}
-          </p>
-          <button
-            onClick={() => setLocation("/")}
-            className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow"
-          >
-            Return Home
-          </button>
+          
+          {isTransitionNotFoundError ? (
+            <div className="space-y-4">
+              <div className="p-5 bg-surface-dark/50 rounded-lg border border-primary/20">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 16V12M12 8H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" 
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-primary-light">Start Your Career Journey</h3>
+                </div>
+                <p className="text-text-secondary mb-4">
+                  You haven't created a career transition analysis yet. Start by creating a new transition 
+                  to get AI-powered insights on skill gaps and a personalized development plan.
+                </p>
+                <button
+                  onClick={() => setLocation("/")}
+                  className="w-full py-3 px-4 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V20M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Create New Career Transition
+                </button>
+              </div>
+              
+              <div className="text-xs text-text-secondary bg-surface-dark/30 p-3 rounded-lg border border-primary/10">
+                <div className="flex items-start">
+                  <svg className="w-4 h-4 text-primary-light mr-2 mt-0.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 16H12V12H11M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <p>
+                    When you create a career transition, Cara AI will analyze real-world data to provide 
+                    personalized insights about your transition path, skill gaps, and development opportunities.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-text-secondary mb-4">
+                {errorMessage}
+              </p>
+              <button
+                onClick={() => setLocation("/")}
+                className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow"
+              >
+                Return Home
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
