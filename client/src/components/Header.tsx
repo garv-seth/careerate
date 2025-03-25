@@ -44,14 +44,14 @@ const Header: React.FC = () => {
   
   return (
     <header className="relative bg-background border-b border-primary/10 backdrop-blur-sm z-20">
-      <div className="absolute inset-0 bg-cyber-grid bg-20 opacity-5"></div>
+      <div className="absolute inset-0 bg-cyber-grid bg-20 opacity-5 pointer-events-none"></div>
       <div className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="cursor-pointer"
+            className="cursor-pointer z-10"
           >
             <Link href="/">
               <Logo />
@@ -62,7 +62,7 @@ const Header: React.FC = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="hidden md:block"
+            className="hidden md:block z-10"
           >
             <ul className="flex items-center space-x-8">
               <li>
@@ -134,7 +134,7 @@ const Header: React.FC = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="hidden md:block"
+            className="hidden md:block z-10"
           >
             {isAuthenticated ? (
               <button
@@ -169,80 +169,91 @@ const Header: React.FC = () => {
           </motion.div>
           
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden z-30">
             <button 
-              className="p-2 rounded-md text-text-secondary hover:text-primary focus:outline-none"
+              className={`p-2 rounded-md ${mobileMenuOpen ? 'text-primary bg-primary/10' : 'text-text-secondary hover:text-primary'} focus:outline-none transition-colors duration-200`}
               onClick={toggleMobileMenu}
               aria-label="Toggle mobile menu"
+              aria-expanded={mobileMenuOpen}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+              {mobileMenuOpen ? (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              )}
             </button>
           </div>
         </div>
       </div>
       
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-surface-dark border-b border-primary/20 overflow-hidden"
-          >
-            <div className="container mx-auto px-6 py-4">
-              <nav className="flex flex-col space-y-4">
-                <Link href="/" onClick={closeMobileMenu}>
-                  <div className={`py-2 px-3 font-medium text-base ${location === '/' ? 'text-primary' : 'text-text-secondary'}`}>
-                    Home
-                  </div>
-                </Link>
-                <Link href="/dashboard/1" onClick={closeMobileMenu}>
-                  <div className={`py-2 px-3 font-medium text-base ${location.startsWith('/dashboard') ? 'text-primary' : 'text-text-secondary'}`}>
-                    Dashboard
-                  </div>
-                </Link>
-                {isAuthenticated && (
-                  <Link href="/profile" onClick={closeMobileMenu}>
-                    <div className={`py-2 px-3 font-medium text-base ${location === '/profile' ? 'text-primary' : 'text-text-secondary'}`}>
-                      Profile
-                    </div>
-                  </Link>
-                )}
-                <div className="pt-2 border-t border-primary/10">
-                  {isAuthenticated ? (
-                    <button
-                      onClick={async () => {
-                        try {
-                          closeMobileMenu();
-                          await apiRequest("/api/auth/logout", { method: "POST" });
-                          window.location.href = "/";
-                        } catch (error) {
-                          console.error("Logout failed:", error);
-                        }
-                      }}
-                      className="py-2 px-3 w-full text-left bg-primary/10 text-primary font-medium text-base rounded-md"
-                    >
-                      Logout
-                    </button>
-                  ) : (
-                    <Link href="/signup" onClick={closeMobileMenu}>
-                      <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
-                        Get Started
-                      </div>
-                    </Link>
-                  )}
+      {/* Mobile menu backdrop */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-30 md:hidden"
+          onClick={closeMobileMenu}
+          aria-hidden="true"
+        />
+      )}
+      
+      {/* Mobile menu dropdown */}
+      <div 
+        className={`md:hidden fixed left-0 right-0 top-[72px] bg-surface-dark border-b border-primary/20 overflow-hidden shadow-lg z-40 transition-all duration-300 ${
+          mobileMenuOpen ? 'opacity-100 max-h-screen' : 'opacity-0 max-h-0 pointer-events-none'
+        }`}
+      >
+        <div className="container mx-auto px-6 py-4">
+          <nav className="flex flex-col space-y-4">
+            <Link href="/" onClick={closeMobileMenu}>
+              <div className={`py-2 px-3 font-medium text-base ${location === '/' ? 'text-primary' : 'text-text-secondary'}`}>
+                Home
+              </div>
+            </Link>
+            <Link href="/dashboard/1" onClick={closeMobileMenu}>
+              <div className={`py-2 px-3 font-medium text-base ${location.startsWith('/dashboard') ? 'text-primary' : 'text-text-secondary'}`}>
+                Dashboard
+              </div>
+            </Link>
+            {isAuthenticated && (
+              <Link href="/profile" onClick={closeMobileMenu}>
+                <div className={`py-2 px-3 font-medium text-base ${location === '/profile' ? 'text-primary' : 'text-text-secondary'}`}>
+                  Profile
                 </div>
-              </nav>
+              </Link>
+            )}
+            <div className="pt-2 border-t border-primary/10">
+              {isAuthenticated ? (
+                <button
+                  onClick={async () => {
+                    try {
+                      closeMobileMenu();
+                      await apiRequest("/api/auth/logout", { method: "POST" });
+                      window.location.href = "/";
+                    } catch (error) {
+                      console.error("Logout failed:", error);
+                    }
+                  }}
+                  className="py-2 px-3 w-full text-left bg-primary/10 text-primary font-medium text-base rounded-md"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link href="/signup" onClick={closeMobileMenu}>
+                  <div className="py-2 px-3 bg-primary/10 text-primary font-medium text-base rounded-md">
+                    Get Started
+                  </div>
+                </Link>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </nav>
+        </div>
+      </div>
       
       {/* Animated scan line effect */}
       <div className="absolute top-0 left-0 right-0 h-full overflow-hidden pointer-events-none opacity-10">
