@@ -1,0 +1,82 @@
+025-03-26 19:06:37.34
+94dcfed1
+User
+Research agent processing...
+2025-03-26 19:06:38.29
+94dcfed1
+User
+Error in multi-agent analysis: GraphRecursionError: Recursion limit of 25 reached without hitting a stop condition. You can increase the limit by setting the "recursionLimit" config key.
+2025-03-26 19:06:38.29
+94dcfed1
+User
+2025-03-26 19:06:38.29
+94dcfed1
+User
+Troubleshooting URL: https://js.langchain.com/docs/troubleshooting/errors/GRAPH_RECURSION_LIMIT/
+2025-03-26 19:06:38.29
+94dcfed1
+User
+2025-03-26 19:06:38.29
+94dcfed1
+User
+at CompiledStateGraph._runLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1393:23)
+2025-03-26 19:06:38.29
+94dcfed1
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-03-26 19:06:38.29
+94dcfed1
+User
+at async createAndRunLoop (file:///home/runner/workspace/node_modules/@langchain/langgraph/dist/pregel/index.js:1280:17) {
+2025-03-26 19:06:38.29
+94dcfed1
+User
+lc_error_code: 'GRAPH_RECURSION_LIMIT'
+2025-03-26 19:06:38.29
+94dcfed1
+User
+}
+2025-03-26 19:06:38.29
+94dcfed1
+User
+Cara successfully generated a plan with 0 milestones
+2025-03-26 19:06:38.35
+94dcfed1
+User
+2:06:38 AM [express] POST /api/plan 200 in 59667ms :: {"success":true,"planId":65,"milestones":0,"me…
+2025-03-26 19:15:00.10
+94dcfed1
+User
+No scraped data found, generating insights with LangGraph and Tavily
+2025-03-26 19:15:00.10
+94dcfed1
+User
+Searching for transition statistics: Other Software Engineer Junior to Amazon Software Development Engineer SDE II career transition statistics, success rate, time frame, common paths
+2025-03-26 19:15:00.10
+94dcfed1
+User
+Sending request to LLM using Google Gemini 1.5 Pro
+2025-03-26 19:15:00.16
+94dcfed1
+User
+Cleared existing insights for transition ID: 36 to ensure fresh analysis
+2025-03-26 19:15:00.16
+94dcfed1
+User
+No insights found, generating insights with LangGraph and Tavily
+2025-03-26 19:15:00.21
+94dcfed1
+User
+No scraped data found for transition ID: 36, fetching some stories
+2025-03-26 19:15:00.21
+94dcfed1
+User
+Searching for career transition stories: Career transition from Other Software Engineer Junior to Amazon Software Development Engineer SDE II experiences, challenges, and success stories
+2025-03-26 19:15:00.21
+94dcfed1
+User
+Searching for transition stories from Other Software Engineer Junior to Amazon Software Development Engineer SDE II using Tavily
+2025-03-26 19:15:00.21
+94dcfed1
+User
+Running career transition search: career transition experiences success stories challenges for transition from Other Software Engineer Junior to Amazon Software Development Engineer SDE II career path real experiences forums Reddit Quora Blind

@@ -281,6 +281,7 @@ Please coordinate the analysis with the specialist agents to provide:
    * Create the multi-agent workflow
    */
   private _createWorkflow() {
+    // Create the workflow state graph
     const workflow = new StateGraph(MultiAgentState)
       // Add agent nodes
       .addNode("coordinator", this._createCoordinatorNode())
@@ -359,7 +360,9 @@ Please coordinate the analysis with the specialist agents to provide:
       // Final completion
       .addEdge("completeAnalysis", END);
 
-    return workflow.compile();
+    return workflow.compile({
+      recursionLimit: 50 // Set a higher recursion limit to avoid the 25 iteration error
+    });
   }
 
   /**
@@ -1173,7 +1176,63 @@ Format your plan as structured JSON with milestones array containing title, desc
             }
 
             plan.id = dbPlan.id;
+            console.log(`Successfully created plan with id ${dbPlan.id} and ${milestones.length} milestones`);
             return { plan };
+          }
+          
+          // If we couldn't extract a plan but need to make one to avoid dummy data
+          if (!plan || milestones.length === 0) {
+            console.log("No plan found in AI response, creating minimal plan");
+            
+            // Create minimal default plan based on skill gaps
+            const skillGaps = state.skillGaps || [];
+            if (skillGaps.length > 0) {
+              // Create a plan from skill gaps
+              const dbPlan = await storage.createPlan({
+                transitionId,
+              });
+              
+              // Create milestones from skill gaps
+              for (let i = 0; i < Math.min(skillGaps.length, 4); i++) {
+                const gap = skillGaps[i];
+                const milestone = await storage.createMilestone({
+                  planId: dbPlan.id,
+                  title: `Develop ${gap.skillName}`,
+                  description: gap.contextSummary || `Build your ${gap.skillName} skills to the required level`,
+                  priority: gap.gapLevel === "High" ? "High" : gap.gapLevel === "Medium" ? "Medium" : "Low",
+                  durationWeeks: gap.gapLevel === "High" ? 6 : gap.gapLevel === "Medium" ? 4 : 2,
+                  order: i + 1,
+                  progress: 0,
+                });
+                
+                // Add a basic resource
+                await storage.createResource({
+                  milestoneId: milestone.id,
+                  title: `Learn ${gap.skillName}`,
+                  url: "https://www.coursera.org/",
+                  type: "website",
+                });
+              }
+              
+              // Return the created plan
+              console.log(`Created minimal plan with id ${dbPlan.id} from ${Math.min(skillGaps.length, 4)} skill gaps`);
+              
+              // Get the created milestones to return
+              const milestones = await storage.getMilestonesByPlanId(dbPlan.id);
+              const milestonesWithResources = await Promise.all(
+                milestones.map(async (milestone) => {
+                  const resources = await storage.getResourcesByMilestoneId(milestone.id);
+                  return { ...milestone, resources };
+                })
+              );
+              
+              return {
+                plan: {
+                  id: dbPlan.id,
+                  milestones: milestonesWithResources
+                }
+              };
+            }
           }
         }
 
@@ -1272,6 +1331,46 @@ Format your plan as structured JSON with milestones array containing title, desc
         return "complete";
       }
 
+      // Safety mechanism - Track recursion to avoid infinite loops
+      // If we've been cycling through the research agent too many times,
+      // force progression to the next agent with whatever data we have
+      let researchAttemptCount = 0;
+      for (const msg of state.messages) {
+        if (msg instanceof AIMessage && 
+            typeof msg.content === 'string' && 
+            (msg.content.includes("Research agent processing") || 
+             msg.content.includes("career transition stories"))) {
+          researchAttemptCount++;
+        }
+      }
+      
+      // If we've tried research multiple times and still don't have results,
+      // move on to the next step to avoid getting stuck
+      if (researchAttemptCount >= 5) {
+        console.log("Research agent recursion detected - forcing progression");
+        
+        // Force progression to skill analysis even if research wasn't perfect
+        if (!state.skillGaps || state.skillGaps.length === 0) {
+          // If we don't have any search results either, create a minimal result
+          if (!state.searchResults || state.searchResults.length === 0) {
+            state.searchResults = [{
+              content: "Limited information available for this career transition.",
+              source: "Coordinator Agent",
+              url: null
+            }];
+          }
+          return "skillAnalysisAgent";
+        }
+        // Force progression to insight agent if skill gaps exist but insights don't
+        else if (!state.insights) {
+          return "insightAgent";
+        }
+        // Force progression to planning agent if we have insights but no plan
+        else if (!state.plan) {
+          return "planningAgent";
+        }
+      }
+
       // Get the latest message content
       const lastMessage = state.messages[state.messages.length - 1];
 
@@ -1326,8 +1425,16 @@ Format your plan as structured JSON with milestones array containing title, desc
         }
       }
 
-      // Default to research agent if we can't determine
-      return "researchAgent";
+      // Default to skill analysis if we can't determine (instead of research)
+      if (!state.skillGaps || state.skillGaps.length === 0) {
+        return "skillAnalysisAgent";
+      } else if (!state.insights) {
+        return "insightAgent";
+      } else if (!state.plan) {
+        return "planningAgent";
+      } else {
+        return "complete";
+      }
     } catch (error) {
       console.error("Error in routing logic:", error);
       return "error";
