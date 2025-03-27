@@ -42,7 +42,7 @@ export function createChatModel(options: {
       apiKey,
       temperature,
       streaming,
-      model: modelName || "gemini-1.5-pro", // Updated model name for the latest API
+      model: modelName || "gemini-2.0-flash-lite", // Updated to use Gemini 2 Flash Lite (faster and more cost-effective)
     });
   } else {
     // Default to OpenAI
@@ -120,7 +120,7 @@ export function getJsonParser<T extends z.ZodTypeAny>(schema: T) {
  */
 export function getModelInfo(): string {
   if (LLM_PROVIDER === "gemini" || LLM_PROVIDER === "google") {
-    return "Google Gemini 1.5 Pro";
+    return "Google Gemini 2.0 Flash Lite";
   } else {
     return "OpenAI GPT-4 Turbo";
   }

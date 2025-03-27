@@ -21,6 +21,8 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { storage } from "../storage";
 import { createChatModel, getModelInfo } from "../helpers/modelFactory";
 import { SkillGapAnalysis } from "./langGraphAgent";
+import { careerMemory, saveTransitionMemory, retrieveTransitionMemories } from "./memoryStore";
+import { StructuredTool } from "@langchain/core/tools";
 
 // Define the state schema for the multi-agent system
 const MultiAgentState = Annotation.Root({
@@ -82,6 +84,10 @@ The available specialist agents are:
 3. InsightAgent - Extracts key insights and success patterns
 4. PlanningAgent - Creates development plans and learning paths
 
+All agents have access to a memory system where they can store and retrieve information
+about the current career transition. The memory system helps ensure continuity and 
+improves the quality of analysis by allowing agents to build on each other's work.
+
 Always maintain a collaborative tone with other agents and the human user.`,
 
   research: `You are the Research Agent for a career transition analysis system.
@@ -90,47 +96,74 @@ the analysis. Use the search tools available to you to find relevant information
 about transitions between specific roles or similar transitions if exact matches
 aren't available.
 
+You have access to a memory system that allows you to:
+1. save_memory - Store important information about the transition
+2. retrieve_memories - Retrieve previously stored memories
+
 Focus on:
 - Finding stories from professionals who made similar transitions
 - Identifying key challenges and success factors from their experiences
 - Collecting statistics about typical transition timelines and success rates
+- Saving important findings to memory for other agents to access
 
-Format your findings in a structured way that other agents can use.`,
+Format your findings in a structured way that other agents can use.
+Always save important stories and insights to memory using the save_memory tool.`,
 
   skillAnalysis: `You are the Skill Analysis Agent for a career transition analysis system.
 Your specialty is analyzing the skill gaps between different roles and identifying what
 skills a person needs to develop to successfully transition. 
+
+You have access to a memory system that allows you to:
+1. save_memory - Store important information about skill gaps
+2. retrieve_memories - Retrieve previously stored memories about this transition
 
 Focus on:
 - Identifying specific technical and soft skills required for the target role
 - Comparing with skills typically possessed in the current role
 - Quantifying the gap level (Low, Medium, High) for each skill
 - Providing context on why each skill is important
+- Saving skill gap insights to memory for other agents to access
 
+Always check memory for existing research and insights before beginning your analysis.
+After completing your analysis, save each significant skill gap to memory.
 Your analysis will be used to create a personalized development plan.`,
 
   insight: `You are the Insight Agent for a career transition analysis system.
 Your specialty is extracting patterns, observations, and key success factors from
 transition stories and skill analyses.
 
+You have access to a memory system that allows you to:
+1. save_memory - Store important insights about the transition
+2. retrieve_memories - Retrieve previously stored memories about this transition
+
 Focus on:
 - Identifying common challenges and how people overcame them
 - Recognizing patterns in successful transitions
 - Calculating approximate success rates and transition timeframes
 - Providing high-level strategic advice
+- Saving valuable insights to memory for other agents to access
 
+Always check memory for existing research and skill gap analysis before beginning your work.
+Save your most important insights to memory for the planning agent to use later.
 Present your insights in a clear, actionable format.`,
 
   planning: `You are the Planning Agent for a career transition analysis system.
 Your specialty is creating personalized development plans with specific milestones
 and learning resources.
 
+You have access to a memory system that allows you to:
+1. save_memory - Store important plan information
+2. retrieve_memories - Retrieve previously stored memories about this transition
+
 Focus on:
 - Creating a logical sequence of milestones to bridge skill gaps
 - Estimating realistic timeframes for each milestone
 - Finding specific learning resources (courses, books, projects)
 - Prioritizing skills based on impact and difficulty
+- Saving resource recommendations to memory for future reference
 
+Always check memory for existing skill gaps and insights before creating your plan.
+Save your best resource recommendations to memory as you work.
 Your plan should be comprehensive yet realistic, with clear actionable steps.`,
 };
 
@@ -154,6 +187,65 @@ export class EnhancedMultiAgentSystem {
 
     console.log(`Using primary model: ${getModelInfo()}`);
 
+    // Create memory tools for all agents
+    const saveMemoryTool = new StructuredTool({
+      name: "save_memory",
+      description: "Save a memory about the career transition for future reference",
+      schema: z.object({
+        memory: z.string().describe("The text content of the memory to save"),
+        memoryType: z.enum(["skill_gap", "story", "insight", "resource", "general"])
+          .describe("The type of memory being saved")
+      }),
+      func: async ({ memory, memoryType }, runManager) => {
+        try {
+          // Get transition information from the state
+          const state: any = runManager?.getRun()?.getParentRun()?.state;
+          const transition = state?.transition;
+          
+          if (!transition) {
+            console.error("Could not access transition information for memory storage");
+            return "Error: Could not access transition information";
+          }
+          
+          const response = await saveTransitionMemory(memory, memoryType as any, 
+            { configurable: { transition } });
+          return response;
+        } catch (error) {
+          console.error("Error in save_memory tool:", error);
+          return "Error saving memory";
+        }
+      }
+    });
+    
+    const retrieveMemoriesTool = new StructuredTool({
+      name: "retrieve_memories",
+      description: "Retrieve memories related to this career transition",
+      schema: z.object({
+        query: z.string().describe("The search query to find relevant memories"),
+        memoryType: z.enum(["skill_gap", "story", "insight", "resource", "general", "all"])
+          .describe("The type of memories to retrieve, or 'all' for any type")
+      }),
+      func: async ({ query, memoryType }, runManager) => {
+        try {
+          // Get transition information from the state
+          const state: any = runManager?.getRun()?.getParentRun()?.state;
+          const transition = state?.transition;
+          
+          if (!transition) {
+            console.error("Could not access transition information for memory retrieval");
+            return "Error: Could not access transition information";
+          }
+          
+          const memories = await retrieveTransitionMemories(query, memoryType as any, 
+            { configurable: { transition } });
+          return memories.join("\n\n");
+        } catch (error) {
+          console.error("Error in retrieve_memories tool:", error);
+          return "Error retrieving memories";
+        }
+      }
+    });
+    
     // Initialize tools for different agents
     this.tools = {
       research: [
@@ -161,18 +253,28 @@ export class EnhancedMultiAgentSystem {
           maxResults: 5,
           apiKey: process.env.TAVILY_API_KEY,
         }),
+        saveMemoryTool,
+        retrieveMemoriesTool
       ],
       skillAnalysis: [
         new TavilySearchResults({
           maxResults: 3,
           apiKey: process.env.TAVILY_API_KEY,
         }),
+        saveMemoryTool,
+        retrieveMemoriesTool
+      ],
+      insight: [
+        saveMemoryTool,
+        retrieveMemoriesTool
       ],
       planning: [
         new TavilySearchResults({
           maxResults: 3,
           apiKey: process.env.TAVILY_API_KEY,
         }),
+        saveMemoryTool,
+        retrieveMemoriesTool
       ],
     };
 
@@ -292,6 +394,7 @@ Please coordinate the analysis with the specialist agents to provide:
       // Add tool nodes
       .addNode("researchTools", new ToolNode(this.tools.research))
       .addNode("skillAnalysisTools", new ToolNode(this.tools.skillAnalysis))
+      .addNode("insightTools", new ToolNode(this.tools.insight))
       .addNode("planningTools", new ToolNode(this.tools.planning))
       // Add data processing nodes
       .addNode("processSkillGaps", this._createSkillGapProcessorNode())
@@ -354,6 +457,17 @@ Please coordinate the analysis with the specialist agents to provide:
       .addEdge("processInsights", "coordinator")
       .addEdge("processPlan", "coordinator")
 
+      // Tool usage for insight agent
+      .addConditionalEdges(
+        "insightAgent",
+        (state) => this._checkForToolCalls(state, "insight"),
+        {
+          tools: "insightTools",
+          continue: "processInsights",
+        },
+      )
+      .addEdge("insightTools", "insightAgent")
+      
       // Insight agent to processor
       .addEdge("insightAgent", "processInsights")
 
@@ -361,9 +475,9 @@ Please coordinate the analysis with the specialist agents to provide:
       .addEdge("completeAnalysis", END);
 
     // Note: The recursionLimit will be added to RunnableConfig type in future LangGraph versions
-    // @ts-ignore: Adding recursion limit to avoid the 25 iteration limit
+    // @ts-ignore: Adding recursion limit to avoid infinite recursion but allow enough for proper analysis
     return workflow.compile({
-      recursionLimit: 50
+      recursionLimit: 25 // Reduced from 50 to improve first-try data retrieval
     });
   }
 
@@ -621,8 +735,11 @@ Format your insights as a structured JSON with keyObservations, commonChallenges
           new HumanMessage(insightPrompt),
         ];
 
-        // Get response from insight model
-        const response = await this.models.insight.invoke(insightMessages);
+        // Get response from insight model with tools
+        const insightModel = this.models.insight.bindTools(
+          this.tools.insight,
+        );
+        const response = await insightModel.invoke(insightMessages);
 
         // Return updated state with the insight agent's response
         return {

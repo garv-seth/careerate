@@ -12,7 +12,7 @@ import { createChatModel, getModelInfo } from "./modelFactory";
 // Create a model instance for all our helpers to use
 const model = createChatModel({
   temperature: 0.2,
-  modelName: process.env.GOOGLE_API_KEY ? "gemini-1.5-pro" : "gpt-3.5-turbo"
+  modelName: process.env.GOOGLE_API_KEY ? "gemini-2.0-flash-lite" : "gpt-3.5-turbo"
 });
 
 function generateFallbackResponse(prompt: string) {
