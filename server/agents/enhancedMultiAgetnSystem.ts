@@ -232,20 +232,22 @@ Please coordinate the analysis with the specialist agents to provide:
       // Run the workflow
       const finalState = await this.workflow.invoke(initialState);
 
-      // Check if we have skill gaps, otherwise use fallback
+      // Log a warning if we don't have skill gaps or insights
       if (!finalState.skillGaps || finalState.skillGaps.length === 0) {
-        finalState.skillGaps = this._getFallbackSkillGaps(
-          currentRole,
-          targetRole,
-        );
+        console.warn("No skill gaps were generated. Will proceed with empty skill gaps array.");
+        finalState.skillGaps = [];
       }
 
-      // Check if we have insights, otherwise use fallback
+      // Check if we have insights, otherwise create an empty insights object
       if (!finalState.insights) {
-        finalState.insights = this._getFallbackInsights(
-          currentRole,
-          targetRole,
-        );
+        console.warn("No insights were generated. Will proceed with empty insights object.");
+        finalState.insights = { 
+          keyObservations: [],
+          commonChallenges: [],
+          successRate: null,
+          timeframe: null,
+          plan: { milestones: [] }
+        };
       }
 
       // Ensure the transition is marked complete
@@ -260,11 +262,17 @@ Please coordinate the analysis with the specialist agents to provide:
     } catch (error) {
       console.error("Error in multi-agent analysis:", error);
 
-      // Return fallback results if there's an error
+      // Return empty results if there's an error instead of fallbacks
       return {
-        skillGaps: this._getFallbackSkillGaps(currentRole, targetRole),
-        insights: this._getFallbackInsights(currentRole, targetRole),
-        scrapedCount: 3,
+        skillGaps: [],
+        insights: { 
+          keyObservations: [],
+          commonChallenges: [],
+          successRate: null,
+          timeframe: null,
+          plan: { milestones: [] }
+        },
+        scrapedCount: 0,
       };
     }
   }
@@ -394,10 +402,11 @@ Please coordinate the analysis with the specialist agents to provide:
             "SkillAnalysisAgent, InsightAgent, or PlanningAgent. " +
             "If all tasks are complete, indicate that the analysis is complete.";
 
-          // Add the context message
+          // Add the context message - ensuring system message is first
           const coordinatorInput = [
             new SystemMessage(agentPrompts.coordinator),
-            ...state.messages.slice(-5), // Keep last 5 messages for context
+            // Filter out any system messages from history to avoid system message ordering issues
+            ...state.messages.slice(-5).filter(msg => !(msg instanceof SystemMessage)),
             new HumanMessage(contextPrompt),
           ];
 
@@ -448,10 +457,11 @@ Focus on the challenges they faced, skills they needed to develop, and strategie
 
 Please use search tools as needed to find this information.`;
 
-        // Initialize the research agent
+        // Initialize the research agent - ensuring system message is first
         const researchMessages = [
           new SystemMessage(agentPrompts.research),
-          ...state.messages.slice(-3), // Last 3 messages for context
+          // Filter out any system messages from history to avoid system message ordering issues
+          ...state.messages.slice(-3).filter(msg => !(msg instanceof SystemMessage)),
           new HumanMessage(researchPrompt),
         ];
 
@@ -515,9 +525,11 @@ The person already has these skills: ${existingSkills.join(", ") || "None specif
 
 Format your results as a structured JSON array with skillName, gapLevel, confidenceScore, mentionCount, and contextSummary fields.`;
 
-        // Initialize the skill analysis agent
+        // Initialize the skill analysis agent - ensuring system message is first
         const skillMessages = [
           new SystemMessage(agentPrompts.skillAnalysis),
+          // Filter out any system messages from history to avoid system message ordering issues
+          ...state.messages.slice(-3).filter(msg => !(msg instanceof SystemMessage)),
           new HumanMessage(skillPrompt),
         ];
 
@@ -596,9 +608,11 @@ Please identify:
 
 Format your insights as a structured JSON with keyObservations, commonChallenges, successRate, and timeframe fields.`;
 
-        // Initialize the insight agent
+        // Initialize the insight agent - ensuring system message is first
         const insightMessages = [
           new SystemMessage(agentPrompts.insight),
+          // Filter out any system messages from history to avoid system message ordering issues
+          ...state.messages.slice(-3).filter(msg => !(msg instanceof SystemMessage)),
           new HumanMessage(insightPrompt),
         ];
 
@@ -693,9 +707,11 @@ Please create:
 
 Format your plan as structured JSON with milestones array containing title, description, priority, durationWeeks, order, and resources fields.`;
 
-        // Initialize the planning agent
+        // Initialize the planning agent - ensuring system message is first
         const planningMessages = [
           new SystemMessage(agentPrompts.planning),
+          // Filter out any system messages from history to avoid system message ordering issues
+          ...state.messages.slice(-3).filter(msg => !(msg instanceof SystemMessage)),
           new HumanMessage(planningPrompt),
         ];
 
