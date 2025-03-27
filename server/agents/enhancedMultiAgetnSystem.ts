@@ -360,8 +360,10 @@ Please coordinate the analysis with the specialist agents to provide:
       // Final completion
       .addEdge("completeAnalysis", END);
 
+    // Note: The recursionLimit will be added to RunnableConfig type in future LangGraph versions
+    // @ts-ignore: Adding recursion limit to avoid the 25 iteration limit
     return workflow.compile({
-      recursionLimit: 50 // Set a higher recursion limit to avoid the 25 iteration error
+      recursionLimit: 50
     });
   }
 

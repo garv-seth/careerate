@@ -67,18 +67,26 @@ router.post('/register', async (req: Request, res: Response) => {
     // Register user using email as identifier
     const user = await registerUser(data.email, data.password);
     
-    // Generate JWT token
+    // Generate JWT token with long expiration (30 days)
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET || 'careerate-secret-key',
-      { expiresIn: '1d' }
+      { expiresIn: '30d' }
     );
+    
+    // Set token in HTTP-only cookie for better security
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+      sameSite: 'lax'
+    });
     
     // Return user and token
     res.json({
       success: true,
       user,
-      token
+      token // Still include for backward compatibility
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -129,20 +137,28 @@ router.post('/login', async (req: Request, res: Response) => {
         });
       }
       
-      // Generate JWT token (we'll use this instead of sessions for now)
+      // Generate JWT token with long expiration (30 days)
       const token = jwt.sign(
         { id: user.id, email: user.email },
         process.env.JWT_SECRET || 'careerate-secret-key',
-        { expiresIn: '1d' }
+        { expiresIn: '30d' } // Increased from 1 day to 30 days
       );
       
-      // Return user without password and with token
+      // Set token in HTTP-only cookie for better security
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+        sameSite: 'lax'
+      });
+      
+      // Return user without password (still include token in response for legacy clients)
       const { password: _, ...userWithoutPassword } = user;
       
       return res.json({
         success: true,
         user: userWithoutPassword,
-        token
+        token // Still include for backward compatibility
       });
     } catch (loginErr) {
       console.error('Login error:', loginErr);
@@ -171,6 +187,10 @@ router.post('/login', async (req: Request, res: Response) => {
 
 // Logout
 router.post('/logout', (req: Request, res: Response) => {
+  // Clear the auth cookie
+  res.clearCookie('auth_token');
+  
+  // Also handle session logout if session is being used
   req.logout((err) => {
     if (err) {
       return res.status(500).json({

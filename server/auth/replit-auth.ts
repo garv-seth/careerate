@@ -84,15 +84,26 @@ export async function handleReplitAuth(req: Request, res: Response, next: NextFu
     // Set user to request
     req.user = user;
     
-    // JWT token for API authentication (for client-side API calls)
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || 'careerate-secret-key',
-      { expiresIn: '1d' }
-    );
-    
-    // Set token in response header
-    res.setHeader('X-Auth-Token', token);
+    // Only create JWT token if we have a valid user
+    if (user) {
+      // JWT token for API authentication (for client-side API calls)
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET || 'careerate-secret-key',
+        { expiresIn: '30d' }
+      );
+      
+      // Set token in response header
+      res.setHeader('X-Auth-Token', token);
+      
+      // Also set in HTTP-only cookie for better security
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+        sameSite: 'lax'
+      });
+    }
     
     next();
   } catch (error) {
@@ -116,8 +127,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     return next();
   }
   
-  // Check if user is authenticated via JWT
-  const token = req.headers.authorization?.split(' ')[1];
+  // Check if user is authenticated via JWT in cookies
+  const cookieToken = req.cookies.auth_token;
+  
+  // Also check Authorization header as fallback
+  const headerToken = req.headers.authorization?.split(' ')[1];
+  
+  // Use cookie token first, then header token as fallback
+  const token = cookieToken || headerToken;
   
   if (token) {
     try {
@@ -126,6 +143,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
       return next();
     } catch (error) {
       console.error('Invalid token:', error);
+      
+      // If token is invalid or expired, clear the cookie
+      if (cookieToken) {
+        res.clearCookie('auth_token');
+      }
     }
   }
   
