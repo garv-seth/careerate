@@ -15,6 +15,12 @@ import ResetPassword from "@/pages/ResetPassword";
 import NewTransition from "@/pages/NewTransition";
 import ContactUs from "@/pages/ContactUs";
 import Partnerships from "@/pages/Partnerships";
+import CareerGuides from "@/pages/CareerGuides";
+import LearningResources from "@/pages/LearningResources";
+import SuccessStories from "@/pages/SuccessStories";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
+import CookiePolicy from "@/pages/CookiePolicy";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -35,6 +41,12 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/contact" component={ContactUs} />
           <Route path="/partnerships" component={Partnerships} />
+          <Route path="/career-guides" component={CareerGuides} />
+          <Route path="/learning-resources" component={LearningResources} />
+          <Route path="/success-stories" component={SuccessStories} />
+          <Route path="/privacy-policy" component={PrivacyPolicy} />
+          <Route path="/terms-of-service" component={TermsOfService} />
+          <Route path="/cookie-policy" component={CookiePolicy} />
           <Route component={NotFound} />
         </Switch>
       </main>

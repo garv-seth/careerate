@@ -49,7 +49,7 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/skill-gap-assessment">
+                <Link href="/transitions/new">
                   <div className="text-text-secondary hover:text-primary transition-all duration-300 text-sm flex items-center group cursor-pointer">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary/50 mr-2 group-hover:scale-150 group-hover:bg-primary transition-all duration-300"></span>
                     <span className="relative">
@@ -148,7 +148,7 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/support">
+                <Link href="/contact">
                   <div className="text-text-secondary hover:text-primary transition-all duration-300 text-sm flex items-center group cursor-pointer">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary/50 mr-2 group-hover:scale-150 group-hover:bg-primary transition-all duration-300"></span>
                     <span className="relative">
@@ -245,4 +245,4 @@ const Footer: React.FC = () => {
   );
 };
 
-export default Footer;;
+export default Footer;
