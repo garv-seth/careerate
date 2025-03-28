@@ -139,15 +139,14 @@ const Home: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-tl from-primary/10 via-background/50 to-transparent">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="relative w-24 h-24 mx-auto mb-6">
-                        {/* Animated circular logo */}
-                        <svg viewBox="0 0 100 100" className="w-full h-full animate-pulse-glow">
-                          <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="2" className="text-primary" fill="none" />
-                          <circle cx="50" cy="50" r="30" stroke="currentColor" strokeWidth="3" className="text-primary" fill="transparent" strokeDasharray="60 100" strokeDashoffset="25" />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-primary font-bold text-3xl">C</span>
-                        </div>
+                      <div className="relative w-28 h-28 mx-auto mb-6">
+                        {/* Actual Careerate logo with glow effect */}
+                        <div className="absolute inset-0 bg-blue-400 rounded-full opacity-20 blur-md animate-pulse-slow scale-110"></div>
+                        <img 
+                          src="/careerate-icon.png" 
+                          alt="Careerate Logo" 
+                          className="w-full h-full relative z-10 animate-logo-pulse"
+                        />
                       </div>
                       <div className="mb-4 relative">
                         <div className="h-1 w-32 mx-auto bg-gradient-to-r from-transparent via-primary to-transparent"></div>
@@ -197,7 +196,7 @@ const Home: React.FC = () => {
             viewport={{ once: true }}
             className="text-center"
           >
-            <span className="text-primary-light font-medium tracking-wide">CARA AI AGENT</span>
+            <span className="text-primary-light font-medium tracking-wide">POWERED BY CARA<sup className="text-xs">agent</sup></span>
             <h3 className="text-lg text-text-secondary">Analyzing career paths, processing transition data</h3>
           </motion.div>
         </div>
