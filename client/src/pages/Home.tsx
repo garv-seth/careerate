@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Link } from "wouter";
 import DigitalRain from "@/components/DigitalRain";
 import { useQuery } from "@tanstack/react-query";
+import { ScrollToTopLink } from "@/components/ui/scroll-top";
 
 // Define the auth response type
 interface AuthResponse {
@@ -147,7 +147,7 @@ const Home: React.FC = () => {
                 transition={{ duration: 0.7, delay: 0.8 }}
               >
                 {isAuthenticated ? (
-                  <Link href="/transitions/new">
+                  <ScrollToTopLink href="/transitions/new">
                     <motion.button 
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.98 }}
@@ -155,9 +155,9 @@ const Home: React.FC = () => {
                     >
                       Explore Transitions
                     </motion.button>
-                  </Link>
+                  </ScrollToTopLink>
                 ) : (
-                  <Link href="/signup">
+                  <ScrollToTopLink href="/signup">
                     <motion.button 
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.98 }}
@@ -165,9 +165,9 @@ const Home: React.FC = () => {
                     >
                       Get Started
                     </motion.button>
-                  </Link>
+                  </ScrollToTopLink>
                 )}
-                <Link href="/dashboard/1">
+                <ScrollToTopLink href="/dashboard/1">
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
@@ -175,7 +175,7 @@ const Home: React.FC = () => {
                   >
                     View Demo
                   </motion.button>
-                </Link>
+                </ScrollToTopLink>
               </motion.div>
             </motion.div>
             
@@ -194,8 +194,8 @@ const Home: React.FC = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
                       <div className="relative w-28 h-28 mx-auto mb-6">
-                        {/* Actual Careerate logo with subtle glow effect */}
-                        <div className="absolute inset-0 bg-[#0480DE] rounded-full opacity-5 blur-lg animate-pulse-slow scale-105"></div>
+                        {/* Actual Careerate logo with very subtle glow effect */}
+                        <div className="absolute inset-0 bg-[#0480DE] rounded-full opacity-2 blur-xl animate-pulse-slow scale-102"></div>
                         <img 
                           src="/careerate-icon.png" 
                           alt="Careerate Logo" 
@@ -540,7 +540,7 @@ const Home: React.FC = () => {
               
               {/* Use conditional rendering based on authentication status */}
               {isAuthenticated ? (
-                <Link href="/transitions/new">
+                <ScrollToTopLink href="/transitions/new">
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
@@ -548,9 +548,9 @@ const Home: React.FC = () => {
                   >
                     Explore Transitions
                   </motion.button>
-                </Link>
+                </ScrollToTopLink>
               ) : (
-                <Link href="/signup">
+                <ScrollToTopLink href="/signup">
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.98 }}
@@ -558,7 +558,7 @@ const Home: React.FC = () => {
                   >
                     Start Your Journey
                   </motion.button>
-                </Link>
+                </ScrollToTopLink>
               )}
             </div>
           </motion.div>
