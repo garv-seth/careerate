@@ -59,7 +59,8 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
   // Calculate optimistic success rate (minimum 70%, maximum 95%)
   const successRate = Math.min(Math.max(rawSuccessRate * 3.5, 70), 95);
   const avgTransitionTime = insights?.avgTransitionTime;
-  const commonPaths = insights?.commonPaths || [];
+  // Ensure commonPaths is always an array, even if the API returns something else
+  const commonPaths = Array.isArray(insights?.commonPaths) ? insights?.commonPaths : [];
 
   // Create a comprehensive overview text that summarizes all relevant data
   const generateOverviewText = () => {
@@ -204,7 +205,7 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
               <h4 className="text-sm font-medium text-text-secondary mb-2">
                 Common Paths
               </h4>
-              {insights?.commonPaths && insights.commonPaths.length > 0 ? (
+              {Array.isArray(insights?.commonPaths) && insights.commonPaths.length > 0 ? (
                 <ul className="space-y-3">
                   {insights.commonPaths.map((path, index) => (
                     <li
