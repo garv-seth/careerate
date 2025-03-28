@@ -538,22 +538,49 @@ export class MemoryEnabledAgent {
     try {
       console.log(`Analyzing skill gaps for ${currentRole} → ${targetRole}`);
 
+      // Format stories for analysis
       const storiesText = stories.map((story) => story.content).join("\n\n");
+      
+      // Format existing skills for analysis
+      const formattedExistingSkills = existingSkills.length > 0 
+        ? existingSkills.join(", ")
+        : "None provided";
+        
+      // Get target role skills from the database if available
+      let targetRoleSkills: string[] = [];
+      try {
+        const roleSkills = await storage.getRoleSkills(targetRole);
+        targetRoleSkills = roleSkills.map(skill => skill.skillName);
+      } catch(error) {
+        console.error("Error retrieving target role skills:", error);
+      }
+      
+      // Format target role skills for the prompt
+      const targetRoleSkillsText = targetRoleSkills.length > 0
+        ? `\nSkills typically required for ${targetRole}: ${targetRoleSkills.join(", ")}`
+        : "";
 
       const skillGapPrompt = `
       Analyze skill gaps for transition from ${currentRole} to ${targetRole}.
 
-      User's existing skills: ${existingSkills.join(", ") || "None specified"}
+      User's existing skills: ${formattedExistingSkills}
+      ${targetRoleSkillsText}
 
       Transition stories:
       ${storiesText}
 
+      Instructions:
+      1. Carefully analyze which skills from the target role requirements are missing from the user's existing skills
+      2. Focus on identifying the most critical gaps needed for successful transition
+      3. Prioritize skills mentioned frequently in transition stories
+      4. Include both technical and soft skills relevant to the transition
+
       For each skill gap, identify:
-      1. Skill name
+      1. Skill name (be specific and actionable)
       2. Gap level (Low, Medium, High)
       3. Confidence score (0-100)
       4. Number of mentions in stories
-      5. Context summary explaining importance
+      5. Context summary explaining importance and how it relates to the transition
 
       Return JSON array with these fields.
       `;
@@ -728,29 +755,71 @@ export class MemoryEnabledAgent {
         `Creating development plan for ${currentRole} → ${targetRole}`,
       );
 
+      // Format skill gaps
       const skillGapsText = skillGaps
         .map(
           (gap) =>
             `${gap.skillName} (${gap.gapLevel} gap): ${gap.contextSummary || ""}`,
         )
         .join("\n");
+        
+      // Get transition stories from the memory to inform the plan
+      let transitionStories = "";
+      try {
+        // Try to retrieve relevant stories from memory
+        const memories = await this.memoryStore.similaritySearch(
+          `career transition from ${currentRole} to ${targetRole} stories and advice`,
+          3,
+          (doc) => doc.metadata.userId === this.userId && doc.metadata.type === "story"
+        );
+        
+        if (memories && memories.length > 0) {
+          transitionStories = "Relevant transition stories:\n" + 
+            memories.map(doc => doc.pageContent).join("\n\n");
+        }
+      } catch (error) {
+        console.error("Error retrieving transition stories from memory:", error);
+      }
+      
+      // Get the user's existing skills
+      let userSkills = [];
+      try {
+        // Get user ID
+        const userId = this.userId;
+        
+        // Get skills from storage
+        const skills = await storage.getUserSkills(userId);
+        userSkills = skills.map(s => `${s.skillName} (${s.proficiencyLevel || 'Intermediate'})`);
+      } catch (error) {
+        console.error("Error getting user skills:", error);
+      }
+      
+      const userSkillsText = userSkills.length > 0 
+        ? `\nUser's Existing Skills:\n${userSkills.join("\n")}`
+        : "\nUser Skills: Not specified";
 
+      // Create a more personalized plan using all available information
       const planPrompt = `
-      Create a development plan for transition from ${currentRole} to ${targetRole}.
+      Create a personalized development plan for transition from ${currentRole} to ${targetRole}.
+      
+      ${userSkillsText}
 
-      Skill Gaps:
+      Skill Gaps to Address:
       ${skillGapsText}
+      
+      ${transitionStories}
 
-      Create a plan with:
+      Based on the user's existing skills and the identified skill gaps, create a detailed plan with:
       1. 4-6 milestone phases organized by priority
       2. For each milestone:
-         - Clear title
-         - Description
+         - Clear title that relates to the skills being developed
+         - Detailed description that references the user's existing skills where relevant
          - Priority (High, Medium, Low)
-         - Duration in weeks
+         - Duration in weeks (be realistic about learning timelines)
          - Order (sequence number)
-         - 2-3 specific learning resources (title, URL, type)
-
+         - 2-3 specific learning resources (title, URL, type) that would be most helpful for someone with the user's background
+      
+      The plan should be tailored to leverage the user's existing skills and address the critical skill gaps.
       Return as JSON with milestones array.
       `;
 

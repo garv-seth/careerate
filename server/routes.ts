@@ -1040,11 +1040,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user ID from transition or request
       const userId = transition.userId || (req.user as any)?.id || 1;
       
+      // Retrieve the user's actual skills
+      const userSkills = await storage.getUserSkills(userId);
+      const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
+      
+      // Combine user skills with current role skills for a complete skill profile
+      const existingSkills = userSkills.map(skill => skill.skillName)
+        .concat(currentRoleSkills.map(skill => skill.skillName));
+        
+      console.log(`Found ${userSkills.length} user skills and ${currentRoleSkills.length} role skills for analysis`);
+      
       // Create the memory-enabled agent with the user ID for personalization
       const agent = new MemoryEnabledAgent(userId, transitionId);
       
-      // Prioritize skills
-      const prioritizedSkills = skillGaps
+      // Prioritize skills from skill gaps - extract top skills to focus on
+      const topSkillGapNames = skillGaps
         .sort((a, b) => {
           // Sort by gap level and mention count
           const gapOrder: {[key: string]: number} = { "High": 3, "Medium": 2, "Low": 1 };
@@ -1063,7 +1073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transition.currentRole,
         transition.targetRole,
         transitionId,
-        prioritizedSkills,
+        existingSkills, // Pass the user's actual skills instead of just prioritized skill gaps
         false // Don't force refresh by default
       );
       
