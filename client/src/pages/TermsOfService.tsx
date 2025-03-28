@@ -214,7 +214,7 @@ const TermsOfService: React.FC = () => {
               </p>
               <div className="mt-2">
                 <p className="font-medium">Careerate</p>
-                <p>Email: legal@careerate.ai</p>
+                <p>Email: <a href="mailto:legal@gocareerate.com" className="text-primary hover:underline">legal@gocareerate.com</a></p>
                 <p>Address: Seattle, WA, United States</p>
               </div>
             </section>

@@ -155,7 +155,7 @@ const CookiePolicy: React.FC = () => {
               </p>
               <div className="mt-2">
                 <p className="font-medium">Careerate</p>
-                <p>Email: privacy@careerate.ai</p>
+                <p>Email: <a href="mailto:privacy@gocareerate.com" className="text-primary hover:underline">privacy@gocareerate.com</a></p>
                 <p>Address: Seattle, WA, United States</p>
               </div>
             </section>

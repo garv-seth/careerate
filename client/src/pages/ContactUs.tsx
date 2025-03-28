@@ -168,8 +168,8 @@ const ContactUs: React.FC = () => {
                 <div>
                   <h3 className="text-xl font-semibold mb-2 text-text">Email</h3>
                   <p className="text-text-secondary">
-                    <a href="mailto:support@careerate.ai" className="hover:text-primary transition-colors">
-                      support@careerate.ai
+                    <a href="mailto:support@gocareerate.com" className="hover:text-primary transition-colors">
+                      support@gocareerate.com
                     </a>
                   </p>
                 </div>
