@@ -17,28 +17,27 @@ interface EmailOptions {
 
 /**
  * Send an email using SendGrid
- * For development purposes, this will simulate success without actually sending emails
- * when there are SendGrid API issues
+ * Uses the authenticated em3442.gocareerate.com domain
  */
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   try {
-    if (process.env.NODE_ENV === 'production') {
-      // In production, use actual SendGrid
-      await sgMail.send(options);
-      return true;
-    } else {
-      // In development, simulate success and log the email that would have been sent
-      console.log('DEV MODE: Email would have been sent with the following options:');
-      console.log(JSON.stringify(options, null, 2));
-      // Since we're in development, return success
-      return true;
-    }
+    // Try to send the email using SendGrid
+    await sgMail.send(options);
+    console.log('Email sent successfully to', options.to);
+    return true;
   } catch (error) {
     console.error('Error sending email:', error);
     
-    // Log the simulated email even on error
+    // Log details about the attempted email
+    console.log('Failed to send email with these options:', {
+      to: options.to,
+      from: options.from,
+      subject: options.subject
+    });
+    
+    // In development, simulate success despite errors for testing UI flows
     if (process.env.NODE_ENV !== 'production') {
-      console.log('DEV MODE: Simulating successful email delivery despite API error');
+      console.log('DEV MODE: Simulating successful email delivery despite SendGrid API error');
       console.log(JSON.stringify(options, null, 2));
       return true;
     }
@@ -56,8 +55,8 @@ export const sendContactEmail = async (
   message: string
 ): Promise<boolean> => {
   const emailOptions: EmailOptions = {
-    to: 'support@careerate.ai', // Replace with your support email
-    from: 'noreply@careerate.ai', // Replace with your verified sender email
+    to: 'support@gocareerate.com', // Support email using authenticated domain
+    from: 'noreply@em3442.gocareerate.com', // Verified sender email from SendGrid
     subject: `Careerate Contact Form: Message from ${name}`,
     text: `
       Name: ${name}
@@ -90,8 +89,8 @@ export const sendPartnershipEmail = async (
   message: string
 ): Promise<boolean> => {
   const emailOptions: EmailOptions = {
-    to: 'partnerships@careerate.ai', // Replace with your partnerships email
-    from: 'noreply@careerate.ai', // Replace with your verified sender email
+    to: 'partnerships@gocareerate.com', // Partnerships email using authenticated domain
+    from: 'noreply@em3442.gocareerate.com', // Verified sender email from SendGrid
     subject: `Careerate Partnership Request: ${companyName}`,
     text: `
       Company Name: ${companyName}
