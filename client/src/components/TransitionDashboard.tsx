@@ -204,9 +204,9 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
               <h4 className="text-sm font-medium text-text-secondary mb-2">
                 Common Paths
               </h4>
-              {commonPaths.length > 0 ? (
+              {insights?.commonPaths && insights.commonPaths.length > 0 ? (
                 <ul className="space-y-3">
-                  {commonPaths.map((path, index) => (
+                  {insights.commonPaths.map((path, index) => (
                     <li
                       key={index}
                       className="flex items-center p-2 rounded bg-surface-dark/50"
