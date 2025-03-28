@@ -1509,16 +1509,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           try {
             // Debug the structure of the response
-            console.log("LangGraph response structure:", Object.keys(langGraphResponse));
+            console.log("LangGraph response structure:", typeof langGraphResponse);
             
             let insightsData;
+            let responseText = '';
             
-            // First, check if the response is already JSON
+            // Handle different response formats from LangGraph
+            if (typeof langGraphResponse === 'string') {
+              // If it's already a string, use it directly
+              responseText = langGraphResponse;
+            } else if (Array.isArray(langGraphResponse)) {
+              // If it's an array (as seen in the error logs), join it to create a string
+              responseText = (langGraphResponse as string[]).join('');
+            } else if (langGraphResponse && typeof langGraphResponse === 'object') {
+              // If it's an object, try to stringify it
+              responseText = JSON.stringify(langGraphResponse);
+            } else {
+              // If it's something else, convert to string
+              responseText = String(langGraphResponse || '');
+            }
+            
+            // First, check if the response contains a JSON object
             try {
-              insightsData = JSON.parse(langGraphResponse);
+              // Try parsing the entire response as JSON
+              insightsData = JSON.parse(responseText);
             } catch (jsonError) {
               // If direct parsing fails, try to extract JSON from text
-              const jsonMatch = langGraphResponse.match(/\{[\s\S]*\}/);
+              const jsonMatch = responseText.match(/\{[\s\S]*?\}/s); // Non-greedy match for first complete JSON object
               if (jsonMatch) {
                 try {
                   insightsData = JSON.parse(jsonMatch[0]);

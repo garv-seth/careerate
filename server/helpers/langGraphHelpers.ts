@@ -186,24 +186,92 @@ export async function analyzeSkillGaps(
       new HumanMessage(skillGapPrompt)
     ]);
     
-    // Parse the response
+    // Parse the response with enhanced error handling
     try {
-      // Extract JSON from the response
-      const jsonMatch = String(skillGapResponse.content).match(/\[\s*\{.*\}\s*\]/s);
+      const responseText = String(skillGapResponse.content);
       let skillGapsJson;
-      
-      if (jsonMatch) {
-        skillGapsJson = JSON.parse(jsonMatch[0]);
-      } else {
-        // Try to parse the entire response as JSON
-        skillGapsJson = JSON.parse(String(skillGapResponse.content));
+
+      // First try: extract JSON array from the response
+      const arrayMatch = responseText.match(/\[\s*\{[\s\S]*?\}\s*\]/s);
+      if (arrayMatch) {
+        try {
+          skillGapsJson = JSON.parse(arrayMatch[0]);
+          console.log("Successfully extracted JSON array from response");
+        } catch (arrayParseError) {
+          console.error("Found JSON array pattern but failed to parse:", arrayParseError);
+          
+          // Try to sanitize the JSON before parsing
+          let sanitized = arrayMatch[0];
+          // Step 1: Normalize property names to have double quotes
+          sanitized = sanitized.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+          // Step 2: Replace single quotes around values with double quotes
+          sanitized = sanitized.replace(/:(\s*)'([^']*)'/g, ':$1"$2"');
+          // Step 3: Fix trailing commas in arrays/objects
+          sanitized = sanitized.replace(/,(\s*[\]}])/g, '$1');
+
+          try {
+            skillGapsJson = JSON.parse(sanitized);
+            console.log("Successfully parsed sanitized JSON array");
+          } catch (sanitizeError) {
+            console.error("Failed to parse sanitized JSON array:", sanitizeError);
+          }
+        }
       }
       
-      // Ensure it's an array
-      const skillGaps = Array.isArray(skillGapsJson) ? skillGapsJson : [];
+      // Second try: if the first try failed, try to parse the entire response
+      if (!skillGapsJson) {
+        try {
+          // Try to parse the entire response as JSON
+          skillGapsJson = JSON.parse(responseText);
+          console.log("Successfully parsed entire response as JSON");
+        } catch (fullParseError) {
+          console.error("Failed to parse entire response as JSON:", fullParseError);
+        }
+      }
       
-      console.log(`Identified ${skillGaps.length} skill gaps for the transition`);
-      return skillGaps;
+      // Third try: Search for individual skill objects in case array parsing failed
+      if (!skillGapsJson) {
+        // Extract individual JSON objects
+        const objects = [];
+        const objectPattern = /\{[^{}]*"skillName"[^{}]*\}/g;
+        let match;
+        
+        while ((match = objectPattern.exec(responseText)) !== null) {
+          try {
+            const sanitized = match[0]
+              .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3')
+              .replace(/:(\s*)'([^']*)'/g, ':$1"$2"')
+              .replace(/,(\s*[\]}])/g, '$1');
+            
+            const obj = JSON.parse(sanitized);
+            if (obj.skillName) {
+              objects.push(obj);
+            }
+          } catch (objParseError) {
+            // Skip this object if parsing fails
+          }
+        }
+        
+        if (objects.length > 0) {
+          skillGapsJson = objects;
+          console.log(`Extracted ${objects.length} individual skill objects`);
+        }
+      }
+      
+      // Ensure result is an array
+      const skillGaps = Array.isArray(skillGapsJson) ? skillGapsJson : 
+                         (skillGapsJson ? [skillGapsJson] : []);
+      
+      // Validate entries to ensure they have required fields
+      const validSkillGaps = skillGaps.filter(gap => 
+        typeof gap === 'object' && 
+        gap !== null && 
+        gap.skillName && 
+        typeof gap.skillName === 'string'
+      );
+      
+      console.log(`Identified ${validSkillGaps.length} valid skill gaps for the transition`);
+      return validSkillGaps;
     } catch (error) {
       console.error("Error parsing skill gaps:", error);
       return [];

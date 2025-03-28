@@ -45,8 +45,12 @@ export class MemoryEnabledAgent {
       );
     } catch (error) {
       console.warn("Failed to initialize memory store with embeddings:", error);
-      // Use a simple in-memory store as fallback with no embeddings
-      this.memoryStore = new MemoryVectorStore();
+      // Use a simple in-memory store as fallback with basic embeddings
+      const embeddings = {
+        embedDocuments: async (texts: string[]) => texts.map(() => Array(1536).fill(0)),
+        embedQuery: async (text: string) => Array(1536).fill(0),
+      };
+      this.memoryStore = new MemoryVectorStore(embeddings);
     }
 
     // Store the user ID for memory access
@@ -64,15 +68,16 @@ export class MemoryEnabledAgent {
       console.error("Failed to initialize MCP handler:", error);
     }
 
-    // Initialize tools including memory operations
+    // Initialize tools - using only TavilySearchResults without Zod schema
+    // to avoid serialization issues with Google Gemini
     try {
       this.tools = [
         new TavilySearchResults({
           maxResults: 5,
           apiKey: process.env.TAVILY_API_KEY,
-        }),
-        this.createSaveMemoryTool(),
-        this.createRetrieveMemoryTool(),
+        })
+        // Custom tools with Zod schemas disabled due to compatibility issues with Gemini
+        // Memory tools will be simulated through direct function calls instead
       ];
     } catch (error) {
       console.error("Failed to initialize tools:", error);
@@ -465,15 +470,20 @@ export class MemoryEnabledAgent {
         console.error("Error parsing skill gaps:", parseError);
       }
 
-      // Save skill gaps to database
+      // Save skill gaps to database with validation to prevent null values
       for (const gap of skillGaps) {
-        await storage.createSkillGap({
-          transitionId,
-          skillName: gap.skillName,
-          gapLevel: gap.gapLevel as "Low" | "Medium" | "High",
-          confidenceScore: gap.confidenceScore || 70,
-          mentionCount: gap.mentionCount || 1,
-        });
+        // Only insert skill gaps with valid data
+        if (gap && gap.skillName) {
+          await storage.createSkillGap({
+            transitionId,
+            skillName: gap.skillName, // Ensure this is not null or undefined
+            gapLevel: (gap.gapLevel as "Low" | "Medium" | "High") || "Medium", // Default to Medium
+            confidenceScore: gap.confidenceScore || 70,
+            mentionCount: gap.mentionCount || 1,
+          });
+        } else {
+          console.warn("Skipping invalid skill gap with missing skillName:", gap);
+        }
       }
 
       return skillGaps.length > 0
