@@ -45,7 +45,6 @@ function generateFallbackResponse(prompt: string) {
 }
 
 import { SkillGapAnalysis } from "../agents/langGraphAgent";
-import { CaraAgent } from "../agents/caraAgent";
 
 /**
  * Search forums for career transition stories using Tavily search

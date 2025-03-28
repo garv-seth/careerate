@@ -12,12 +12,8 @@ import {
   CompanyRole,
   RoleLevel
 } from "@shared/schema";
-import { CaraAgent } from "./agents/caraAgent";
-import { ImprovedCaraAgent } from "./agents/improvedCaraAgent";
-// Importing MemoryEnabledAgent as the primary agent architecture
-// EnhancedMultiAgentSystem is being phased out
+// Using MemoryEnabledAgent as the primary agent architecture (consolidated approach)
 import { safeParseJSON } from "./helpers/jsonParserHelper";
-import { CaraPlanExecuteAgent } from "./agents/caraPlanExecuteAgent";
 import { MemoryEnabledAgent } from "./agents/memoryEnabledAgent";
 import {
   searchForums,
