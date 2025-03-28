@@ -765,7 +765,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transition.currentRole,
         transition.targetRole,
         transitionId,
-        existingSkills
+        existingSkills,
+        false // Don't force refresh by default
       );
       
       // Return the results
@@ -825,7 +826,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transition.currentRole,
         transition.targetRole,
         transitionId,
-        existingSkills
+        existingSkills,
+        false // Don't force refresh by default
       );
       
       // Store skill gaps - Note: MemoryEnabledAgent already stores skill gaps in the database
@@ -976,7 +978,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               currentRole,
               targetRole,
               transitionId,
-              targetRoleSkills.map(s => s.skillName)
+              targetRoleSkills.map(s => s.skillName),
+              false // Don't force refresh by default
             );
             generatedSkillGaps = analysisResult.skillGaps;
           }
@@ -1060,7 +1063,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transition.currentRole,
         transition.targetRole,
         transitionId,
-        prioritizedSkills
+        prioritizedSkills,
+        false // Don't force refresh by default
       );
       
       // For compatibility with the existing code, construct milestone data from the analysis result

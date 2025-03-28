@@ -16,8 +16,8 @@ export function safeParseJSON(
   if (!text || text.trim() === '') {
     return fallbackType ? getFallbackObject(fallbackType) : {};
   }
-  
-  // Add field normalization to convert between snake_case and camelCase
+
+  // Function to normalize field keys (convert snake_case to camelCase)
   const normalizeKeys = (obj: any): any => {
     if (Array.isArray(obj)) {
       return obj.map(item => normalizeKeys(item));
