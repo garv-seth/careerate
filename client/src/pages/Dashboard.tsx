@@ -9,7 +9,7 @@ import CareerTrajectory from "@/components/CareerTrajectory";
 import ScrapedInsights from "@/components/ImprovedScrapedInsights";
 import CompanyLogoNetwork from "@/components/CompanyLogoNetwork";
 import DigitalRain from "@/components/DigitalRain";
-{/* EngagingLoader removed */}
+import WorkflowStatus, { LoadingStage } from "@/components/WorkflowStatus";
 import { apiRequest } from "@/lib/queryClient";
 import { DashboardData } from "@/types";
 
@@ -21,6 +21,7 @@ const Dashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showData, setShowData] = useState(false);
 
   // Redirect if no transitionId
   useEffect(() => {
@@ -39,8 +40,17 @@ const Dashboard: React.FC = () => {
   });
 
   // State for tracking loading stages
-  const [loadingStage, setLoadingStage] = useState<'stories' | 'skills' | 'plan' | 'insights' | 'metrics' | null>(null);
+  const [loadingStage, setLoadingStage] = useState<LoadingStage>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Effect to toggle showing data once loading is complete
+  useEffect(() => {
+    if (data?.isComplete && !loadingStage) {
+      setShowData(true);
+    } else {
+      setShowData(false);
+    }
+  }, [data?.isComplete, loadingStage]);
 
   // Process API with corrected logical sequence to ensure proper data flow
   useEffect(() => {
@@ -183,501 +193,102 @@ const Dashboard: React.FC = () => {
     processApiSteps();
   }, [data, transitionId, toast, queryClient, isProcessing, loadingStage]);
 
-  // Loading state handling
-  
-  // Only show the loader when data is initially loading (not when analysis is complete)
-  // This fixes the issue where the loading UI persists even after analysis is done
-  if (isLoading || (loadingStage && !data?.isComplete)) {
-    // Only show processing steps if actually in-progress and not complete
+  // Only show the loading workflow when data is initially loading or a processing stage is active
+  if (isLoading || loadingStage) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {loadingStage ? (
-            // Advanced agentic workflow loader with step visualization
-            <div className="space-y-8">
-              <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-                <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0 flex items-center">
-                  <span className="text-primary-light">Cara</span>
-                  <span className="text-xs text-text-secondary translate-y-[-8px] translate-x-[-2px]">agent</span>
-                </h1>
-                <div className="flex items-center">
-                  <span className="text-sm text-text-secondary mr-2">
-                    Current operation:
-                  </span>
-                  <span className="text-sm text-primary-light font-medium animate-pulse">
-                    Processing live data
-                  </span>
-                </div>
-              </div>
-              
-              {/* Agent Workflow Status */}
-              <div className="bg-surface-dark border border-primary/20 rounded-xl p-6 shadow-glow">
-                <h2 className="text-lg font-medium mb-6 flex items-center">
-                  <svg 
-                    className="mr-2 h-5 w-5 text-primary" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path 
-                      d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                    <path 
-                      d="M12 6v6l4 2" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span>Workflow Status</span>
-                </h2>
-                
-                {/* Vertical timeline with connecting line */}
-                <div className="relative">
-                  {/* Vertical connecting line with dynamic segments */}
-                  <div className="absolute left-4 top-8 bottom-8 w-0.5 z-0" aria-hidden="true">
-                    {/* Line segments that change color based on completed stages */}
-                    <div className={`absolute top-0 h-[20%] w-full transition-colors duration-500 ${
-                      loadingStage === 'stories' 
-                        ? 'bg-primary animate-pulse' 
-                        : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
-                          ? 'bg-green-500' 
-                          : 'bg-primary/20'
-                    }`}></div>
-                    
-                    <div className={`absolute top-[20%] h-[20%] w-full transition-colors duration-500 ${
-                      loadingStage === 'insights' 
-                        ? 'bg-primary animate-pulse' 
-                        : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
-                          ? 'bg-green-500' 
-                          : 'bg-primary/20'
-                    }`}></div>
-                    
-                    <div className={`absolute top-[40%] h-[20%] w-full transition-colors duration-500 ${
-                      loadingStage === 'skills' 
-                        ? 'bg-primary animate-pulse' 
-                        : loadingStage === 'plan' || loadingStage === 'metrics' 
-                          ? 'bg-green-500' 
-                          : 'bg-primary/20'
-                    }`}></div>
-                    
-                    <div className={`absolute top-[60%] h-[20%] w-full transition-colors duration-500 ${
-                      loadingStage === 'plan' 
-                        ? 'bg-primary animate-pulse' 
-                        : loadingStage === 'metrics' 
-                          ? 'bg-green-500' 
-                          : 'bg-primary/20'
-                    }`}></div>
-                    
-                    <div className={`absolute top-[80%] h-[20%] w-full transition-colors duration-500 ${
-                      loadingStage === 'metrics' 
-                        ? 'bg-primary animate-pulse' 
-                        : 'bg-primary/20'
-                    }`}></div>
-                  </div>
-                  {/* Stage 1: Scraping Stories */}
-                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
-                    loadingStage === 'stories' 
-                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
-                      : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics'
-                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
-                        : 'p-4 border border-surface-lighter'
-                  }`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
-                      loadingStage === 'stories' 
-                        ? 'bg-primary text-black' 
-                        : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
-                          ? 'bg-green-500/20 text-green-500' 
-                          : 'bg-surface-lighter text-text-secondary'
-                    }`}>
-                      {loadingStage === 'stories' ? (
-                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : '1'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${
-                          loadingStage === 'stories' 
-                            ? 'text-primary-light' 
-                            : loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
-                              ? 'text-green-500' 
-                              : 'text-text'
-                        }`}>
-                          Finding Career Transition Stories
-                        </h3>
-                        {loadingStage === 'stories' && (
-                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
-                        )}
-                        {(loadingStage === 'insights' || loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics') && (
-                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
-                        )}
-                      </div>
-                      {/* Only show details for active or current stage */}
-                      {loadingStage === 'stories' && (
-                        <p className="text-sm text-text-secondary mt-2">
-                          Scraping web forums and platforms for real stories from professionals who made the transition from {data?.transition.currentRole || "current role"} to {data?.transition.targetRole || "target role"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Stage 2: Analyze Insights */}
-                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
-                    loadingStage === 'insights' 
-                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
-                      : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics'
-                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
-                        : 'p-4 border border-surface-lighter'
-                  }`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
-                      loadingStage === 'insights' 
-                        ? 'bg-primary text-black' 
-                        : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
-                          ? 'bg-green-500/20 text-green-500' 
-                          : 'bg-surface-lighter text-text-secondary'
-                    }`}>
-                      {loadingStage === 'insights' ? (
-                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : '2'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${
-                          loadingStage === 'insights' 
-                            ? 'text-primary-light' 
-                            : loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics' 
-                              ? 'text-green-500' 
-                              : 'text-text'
-                        }`}>
-                          Extracting Key Observations & Challenges
-                        </h3>
-                        {loadingStage === 'insights' && (
-                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
-                        )}
-                        {(loadingStage === 'skills' || loadingStage === 'plan' || loadingStage === 'metrics') && (
-                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
-                        )}
-                      </div>
-                      {/* Only show details for active stage */}
-                      {loadingStage === 'insights' && (
-                        <p className="text-sm text-text-secondary mt-2">
-                          Analyzing transition stories to identify key observations, challenges, and success patterns
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Stage 3: Analyze Skills */}
-                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
-                    loadingStage === 'skills' 
-                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
-                      : loadingStage === 'plan' || loadingStage === 'metrics'
-                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
-                        : 'p-4 border border-surface-lighter'
-                  }`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
-                      loadingStage === 'skills' 
-                        ? 'bg-primary text-black' 
-                        : loadingStage === 'plan' || loadingStage === 'metrics' 
-                          ? 'bg-green-500/20 text-green-500' 
-                          : 'bg-surface-lighter text-text-secondary'
-                    }`}>
-                      {loadingStage === 'skills' ? (
-                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : loadingStage === 'plan' || loadingStage === 'metrics' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : '3'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${
-                          loadingStage === 'skills' 
-                            ? 'text-primary-light' 
-                            : loadingStage === 'plan' || loadingStage === 'metrics' 
-                              ? 'text-green-500' 
-                              : 'text-text'
-                        }`}>
-                          Analyzing Skill Requirements & Gaps
-                        </h3>
-                        {loadingStage === 'skills' && (
-                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
-                        )}
-                        {(loadingStage === 'plan' || loadingStage === 'metrics') && (
-                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
-                        )}
-                      </div>
-                      {/* Only show details for active stage */}
-                      {loadingStage === 'skills' && (
-                        <p className="text-sm text-text-secondary mt-2">
-                          Identifying critical skills needed and determining skill gaps based on transition requirements
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Stage 4: Create Career Plan */}
-                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
-                    loadingStage === 'plan' 
-                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
-                      : loadingStage === 'metrics'
-                        ? 'py-2 px-4 bg-green-500/5 border border-green-500/10' 
-                        : 'p-4 border border-surface-lighter'
-                  }`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
-                      loadingStage === 'plan' 
-                        ? 'bg-primary text-black' 
-                        : loadingStage === 'metrics' 
-                          ? 'bg-green-500/20 text-green-500' 
-                          : 'bg-surface-lighter text-text-secondary'
-                    }`}>
-                      {loadingStage === 'plan' ? (
-                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : loadingStage === 'metrics' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : '4'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${
-                          loadingStage === 'plan' 
-                            ? 'text-primary-light' 
-                            : loadingStage === 'metrics' 
-                              ? 'text-green-500' 
-                              : 'text-text'
-                        }`}>
-                          Creating Career Trajectory Plan
-                        </h3>
-                        {loadingStage === 'plan' && (
-                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
-                        )}
-                        {loadingStage === 'metrics' && (
-                          <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full">Completed</span>
-                        )}
-                      </div>
-                      {/* Only show details for active stage */}
-                      {loadingStage === 'plan' && (
-                        <p className="text-sm text-text-secondary mt-2">
-                          Building a personalized career transition roadmap with specific milestones and learning resources
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Stage 5: Metrics & Success Rate */}
-                  <div className={`flex items-start rounded-lg mb-3 transition-all duration-300 ${
-                    loadingStage === 'metrics' 
-                      ? 'p-4 bg-primary/10 border border-primary/20 shadow-glow-sm' 
-                      : 'p-4 border border-surface-lighter'
-                  }`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 z-10 ${
-                      loadingStage === 'metrics' 
-                        ? 'bg-primary text-black' 
-                        : 'bg-surface-lighter text-text-secondary'
-                    }`}>
-                      {loadingStage === 'metrics' ? (
-                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : '5'}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className={`font-medium ${loadingStage === 'metrics' ? 'text-primary-light' : 'text-text'}`}>
-                          Calculating Success Metrics & Predictions
-                        </h3>
-                        {loadingStage === 'metrics' && (
-                          <span className="text-xs text-primary-light bg-primary/10 px-2 py-1 rounded-full animate-pulse">In Progress</span>
-                        )}
-                      </div>
-                      {/* Only show details for active stage */}
-                      {loadingStage === 'metrics' && (
-                        <p className="text-sm text-text-secondary mt-2">
-                          Estimating transition success rate, timeline, and generating personalized metrics
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Simple progress indicator */}
-              <div className="bg-surface-dark/80 border border-primary/10 rounded-xl p-4 text-center">
-                <p className="text-sm text-text-secondary">
-                  Cara<sup className="text-xs opacity-70 ml-0.5">agent</sup> is gathering real-world data to build your personalized career plan
-                </p>
-                <div className="w-full bg-surface-darkest/50 h-2 rounded-full overflow-hidden mt-3">
-                  <div className="h-full bg-gradient-to-r from-primary-dark via-primary to-primary-light w-full animate-pulse" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Simple skeleton loader for initial page load
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-surface-dark rounded w-3/4"></div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="h-64 bg-surface-dark rounded"></div>
-                <div className="h-64 bg-surface-dark rounded"></div>
-                <div className="h-64 bg-surface-dark rounded"></div>
-              </div>
-              <div className="h-96 bg-surface-dark rounded"></div>
-            </div>
-          )}
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+            <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0 flex items-center">
+              <span className="text-primary-light">Cara</span>
+              <span className="text-xs text-text-secondary translate-y-[-8px] translate-x-[-2px]">agent</span>
+            </h1>
+          </div>
+          
+          {/* Show workflow status component during loading */}
+          <WorkflowStatus 
+            loadingStage={loadingStage || 'stories'} 
+            currentRole={data?.transition?.currentRole || "Current role"} 
+            targetRole={data?.transition?.targetRole || "Target role"}
+            onCancel={() => {
+              setLoadingStage(null);
+              setIsProcessing(false);
+            }}
+          />
         </div>
       </div>
     );
   }
 
+  // Show error state if there's an issue
   if (isError) {
-    // Check if the error is specifically a "Transition not found" error
-    const errorMessage = error instanceof Error ? error.message : "Failed to load dashboard data";
-    const isTransitionNotFoundError = 
-      errorMessage.includes("Transition not found") || 
-      errorMessage.includes("404") ||
-      (typeof errorMessage === 'string' && errorMessage.toLowerCase().includes("not found"));
-    
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-lg mx-auto card rounded-xl p-6 shadow-glow-sm">
-          <h2 className="text-xl font-heading font-semibold mb-4 text-primary">
-            {isTransitionNotFoundError 
-              ? "No Career Transition Found" 
-              : "Error Loading Dashboard"}
-          </h2>
-          
-          {isTransitionNotFoundError ? (
-            <div className="space-y-4">
-              <div className="p-5 bg-surface-dark/50 rounded-lg border border-primary/20">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 16V12M12 8H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" 
-                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-primary-light">Start Your Career Journey</h3>
-                </div>
-                <p className="text-text-secondary mb-4">
-                  You haven't created a career transition analysis yet. Start by creating a new transition 
-                  to get AI-powered insights on skill gaps and a personalized development plan.
-                </p>
-                <button
-                  onClick={() => setLocation("/transitions/new")}
-                  className="w-full py-3 px-4 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow transition-colors duration-200 flex items-center justify-center"
-                >
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 4V20M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Create New Career Transition
-                </button>
-              </div>
-              
-              <div className="text-xs text-text-secondary bg-surface-dark/30 p-3 rounded-lg border border-primary/10">
-                <div className="flex items-start">
-                  <svg className="w-4 h-4 text-primary-light mr-2 mt-0.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M13 16H12V12H11M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  <p>
-                    When you create a career transition, Cara AI will analyze real-world data to provide 
-                    personalized insights about your transition path, skill gaps, and development opportunities.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <p className="text-text-secondary mb-4">
-                {errorMessage}
-              </p>
-              <button
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6">
+            <h1 className="text-xl font-medium text-red-500 mb-4">Error Loading Dashboard</h1>
+            <p className="text-text-secondary mb-4">
+              There was a problem loading your career transition data. Please try again or create a new transition.
+            </p>
+            <p className="text-xs text-text-tertiary font-mono bg-surface-darker p-3 rounded mb-4 overflow-auto">
+              {error instanceof Error ? error.message : 'Unknown error occurred'}
+            </p>
+            <div className="flex space-x-4">
+              <button 
                 onClick={() => setLocation("/transitions/new")}
-                className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow"
+                className="px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary-light rounded-md transition-colors"
               >
                 Create New Transition
               </button>
-            </>
-          )}
+              <button 
+                onClick={() => queryClient.invalidateQueries({ queryKey: [`/api/dashboard/${transitionId}`] })}
+                className="px-4 py-2 bg-surface-lighter hover:bg-surface-light text-text rounded-md transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!data) {
-    return null;
-  }
-
-  // Function to handle refreshing all data
-  const handleRefreshData = async () => {
-    if (isRefreshing || !transitionId) return;
+  // Handle refresh functionality
+  const handleRefresh = async () => {
+    if (isRefreshing || !transitionId || !data) return;
     
     setIsRefreshing(true);
     
     try {
       toast({
         title: "Refreshing data",
-        description: "Getting fresh career transition data from the web...",
+        description: "Updating your transition analysis with fresh data...",
         duration: 3000,
       });
       
-      // Clear all existing data
-      const clearResult = await apiRequest("/api/clear-data", {
+      // Clear any existing data first
+      await apiRequest("/api/clear-data", {
         method: "POST",
-        data: { 
-          transitionId
-        }
+        data: { transitionId }
       });
       
-      if (clearResult.success) {
-        // Set loadingStage to start the loading sequence
-        setLoadingStage('stories');
-        setIsProcessing(true);
-        
-        // Refresh the dashboard data to trigger the useEffect
-        queryClient.invalidateQueries({ queryKey: [`/api/dashboard/${transitionId}`] });
-        
-        toast({
-          title: "Data cleared",
-          description: "Fetching fresh career transition data...",
-          duration: 3000,
-        });
-      } else {
-        throw new Error("Failed to clear existing data");
-      }
+      // Reset state to start fresh analysis
+      setLoadingStage('stories');
+      setIsProcessing(true);
+      
+      // Invalidate query to force refresh
+      queryClient.invalidateQueries({ queryKey: [`/api/dashboard/${transitionId}`] });
+      
+      toast({
+        title: "Analysis started",
+        description: "Your career transition is being refreshed with the latest data.",
+        duration: 3000,
+      });
     } catch (error) {
       console.error("Error refreshing data:", error);
       toast({
         title: "Error",
-        description: "Failed to refresh data. Please try again.",
+        description: "Failed to refresh your analysis. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
@@ -685,7 +296,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Helper function to determine target company from transition data
+  // Function to determine the target company based on role name
   const getTargetCompany = () => {
     const { targetRole } = data.transition;
     
@@ -700,6 +311,7 @@ const Dashboard: React.FC = () => {
     return 'Google';
   };
 
+  // Main dashboard content - only shown when data is loaded and complete
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
@@ -737,376 +349,124 @@ const Dashboard: React.FC = () => {
                 <h2 className="text-lg font-medium flex items-center">
                   <svg 
                     className="mr-2 h-5 w-5 text-primary" 
-                    viewBox="0 0 24 24" 
                     fill="none" 
-                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
                   >
                     <path 
-                      d="M2 22L12 2L22 22M6 16H18M9 11H15" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
                       strokeLinecap="round" 
-                      strokeLinejoin="round"
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" 
                     />
                   </svg>
-                  <span>Cara<sup className="text-xs opacity-70 ml-0.5">agent</sup> CAREER NETWORK</span>
+                  Career Trajectory Analysis
                 </h2>
-                <p className="text-sm text-text-secondary">
-                  Mapping transition paths from {data.transition.currentRole} to {data.transition.targetRole}
+                <p className="text-xs text-text-secondary mt-1">
+                  Interactive visualization of your personalized career path
                 </p>
               </div>
-              
-              {selectedCompany && (
-                <div className="bg-surface/70 backdrop-blur-sm rounded-lg px-3 py-1 border border-primary/30">
-                  <span className="text-sm">Selected: <span className="text-primary-light">{selectedCompany}</span></span>
-                </div>
-              )}
+              <button 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="text-xs flex items-center px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary-light transition-colors"
+              >
+                {isRefreshing ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="mr-1.5 h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                    </svg>
+                    Refresh Analysis
+                  </>
+                )}
+              </button>
             </div>
             
-            <div className="p-2 text-xs text-center text-text-secondary border-b border-primary/20">
-              <div className="mb-2">Interactive company network - click any company to explore career paths</div>
-              <div className="flex justify-center space-x-4 flex-wrap">
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-[#00c3ff]80 mr-1"></span>
-                  <span>Tech</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-[#4caf50]80 mr-1"></span>
-                  <span>Enterprise</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-[#ff9800]80 mr-1"></span>
-                  <span>Fintech</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-[#e91e63]80 mr-1"></span>
-                  <span>Consumer</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="inline-block w-3 h-3 rounded-full bg-[#9c27b0]80 mr-1"></span>
-                  <span>Social</span>
-                </div>
+            <div className="p-4 h-64 relative overflow-hidden">
+              <div className="absolute inset-0 z-0 opacity-20">
+                <DigitalRain speed={0.3} density={0.3} />
               </div>
-            </div>
-            
-            <div className="relative">
-              <CompanyLogoNetwork 
-                height={350} 
-                className="bg-surface-dark/80" 
-                selectedCompany={selectedCompany || getTargetCompany()}
-                onSelectCompany={setSelectedCompany}
-                interactionStrength={1.5}
-              />
               
-              {/* Company Details Panel - appears when a company is selected */}
-              {selectedCompany && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute top-4 right-4 bg-surface/90 backdrop-blur-md p-4 rounded-lg border border-primary/20 shadow-glow-sm max-w-xs z-10"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-primary-light font-medium">{selectedCompany}</h4>
-                    <button 
-                      onClick={() => setSelectedCompany(null)}
-                      className="text-text-muted hover:text-text transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  <div className="text-xs text-text-secondary mb-3">
-                    Based on your Amazon L5 experience, these roles at {selectedCompany} would be a good match:
-                  </div>
-                  
-                  <ul className="space-y-2 mb-3">
-                    {selectedCompany === 'Google' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">L6 Senior SWE</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$265K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">L5 SWE</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$218K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'Microsoft' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Senior SDE (63)</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$210K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">SDE II (62)</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$180K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'Meta' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">E5 Software Engineer</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$270K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">E4 Software Engineer</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$210K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'Apple' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">ICT4 Software Engineer</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$240K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">ICT3 Software Engineer</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$193K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'Amazon' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">L6 SDE III</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$245K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">L5 SDE II</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$190K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'Netflix' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Senior SWE</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$425K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">SWE</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$325K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'AMD' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Principal Engineer</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$220K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Senior Engineer II</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$180K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'LinkedIn' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Staff SWE (IC5)</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$290K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Senior SWE (IC4)</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$224K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {selectedCompany === 'Salesforce' && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Lead MTS (Senior)</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$235K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Member of Technical Staff</span>
-                          </div>
-                          <span className="text-xs text-text-muted">~$185K</span>
-                        </li>
-                      </>
-                    )}
-                    
-                    {(selectedCompany !== 'Google' && 
-                      selectedCompany !== 'Microsoft' && 
-                      selectedCompany !== 'Meta' && 
-                      selectedCompany !== 'Apple' && 
-                      selectedCompany !== 'Amazon' && 
-                      selectedCompany !== 'Netflix' &&
-                      selectedCompany !== 'AMD' &&
-                      selectedCompany !== 'LinkedIn' &&
-                      selectedCompany !== 'Salesforce') && (
-                      <>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Senior Software Engineer</span>
-                          </div>
-                          <span className="text-xs text-text-muted">$170K-$240K</span>
-                        </li>
-                        <li className="text-sm bg-surface-dark/70 p-2 rounded flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="font-medium text-white">Software Engineer</span>
-                          </div>
-                          <span className="text-xs text-text-muted">$130K-$180K</span>
-                        </li>
-                      </>
-                    )}
-                  </ul>
-                  
-                  <div className="text-xs text-text-muted">
-                    <div className="flex items-center mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-primary-light" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                      Recommendations based on your experience and skill profile
-                    </div>
-                    <div className="flex justify-between text-text-secondary">
-                      <span className="flex items-center">
-                        <span className="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                        Best match
-                      </span>
-                      <span className="flex items-center">
-                        <span className="w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                        Good match
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-            
-            <div className="h-12 relative overflow-hidden border-t border-primary/20">
-              <DigitalRain height={50} density={5} speed={1.5} primaryColor="rgba(0, 195, 255, 0.7)" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-xs text-primary-light font-mono tracking-wider opacity-70">
-                  CARA.AI.AGENT // ANALYZING INTERCONNECTED CAREER PATHS
-                </div>
+              <div className="absolute inset-0 z-10">
+                <CompanyLogoNetwork 
+                  currentRole={data.transition.currentRole}
+                  targetRole={data.transition.targetRole}
+                  targetCompany={getTargetCompany()}
+                  roleConnections={data.insights?.connections || []}
+                  onSelectCompany={setSelectedCompany}
+                  selectedCompany={selectedCompany}
+                />
               </div>
             </div>
           </div>
         </motion.div>
 
-        {!data.isComplete ? (
-          <div className="card rounded-xl p-6 shadow-glow mb-6">
-            <div className="flex items-center justify-center">
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-primary"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              <h2 className="text-xl font-heading font-semibold">
-                Analyzing your career transition...
-              </h2>
-            </div>
-            <p className="text-center text-text-secondary mt-4">
-              We're scraping forums, analyzing skill gaps, and creating your
-              personalized career trajectory plan. This may take a minute.
-            </p>
+        {/* Main insight cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Left Column */}
+          <div className="space-y-8">
+            {/* Transition Insights */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              <ScrapedInsights
+                transitionId={transitionId}
+                insights={data.insights || {}}
+              />
+            </motion.div>
+            
+            {/* Skills Gap Analysis */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+            >
+              <SkillGapAnalysis 
+                skills={data.skills || []} 
+                currentRole={data.transition.currentRole}
+                targetRole={data.transition.targetRole}
+              />
+            </motion.div>
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          
+          {/* Right Column */}
+          <div className="space-y-8">
+            {/* Dashboard Summary Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+            >
               <TransitionDashboard
-                transition={data.transition}
-                scrapedCount={data.scrapedCount}
+                data={data}
+                transitionId={transitionId}
               />
-              <SkillGapAnalysis skillGaps={data.skillGaps} />
-              <CareerTrajectory
-                milestones={data.milestones}
-                plan={data.plan}
+            </motion.div>
+            
+            {/* Career Trajectory */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+            >
+              <CareerTrajectory 
+                plan={data.plan || {}}
+                currentRole={data.transition.currentRole}
+                targetRole={data.transition.targetRole}
               />
-            </div>
-
-            <ScrapedInsights
-              insights={data.insights}
-              transition={data.transition}
-            />
-          </>
-        )}
+            </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );
