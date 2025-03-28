@@ -12,6 +12,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { MCPHandler } from "../helpers/mcpHandler";
 import { careerTransitionMemory } from './memoryStore';
 import { safeParseJSON } from '../helpers/jsonParserHelper';
+import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from '../tools/tavilySearch';
 
 /**
  * A single agent with long-term memory for career transition analysis
@@ -402,26 +403,70 @@ export class MemoryEnabledAgent {
         `Researching transition stories for ${currentRole} → ${targetRole}`,
       );
 
+      // Extract company and role information for broader searches
+      const currentParts = currentRole.split(' ');
+      const currentCompany = currentParts[0] || "";
+      const currentRoleTitle = currentParts.slice(1, -1).join(' ') || "Software Engineer";
+      
+      const targetParts = targetRole.split(' ');
+      const targetCompany = targetParts[0] || "";
+      const targetRoleTitle = targetParts.slice(1, -1).join(' ') || "Software Engineer";
+      
+      // Define a series of search queries with decreasing specificity
+      const searchQueries = [
+        // Exact role transition
+        `career transition stories from ${currentRole} to ${targetRole} experiences challenges success`,
+        
+        // Company transition with role
+        `${currentCompany} to ${targetCompany} ${currentRoleTitle} to ${targetRoleTitle} transition stories experiences`,
+        
+        // Generic role transition without company
+        `${currentRoleTitle} to ${targetRoleTitle} career transition experiences success stories challenges`,
+        
+        // Industry transition
+        `software engineer career advancement to senior staff engineer transition experiences`,
+        
+        // Similar role transition (if roles are different)
+        `similar transitions to ${targetRoleTitle} from other technical roles success stories`
+      ];
+      
+      // Construct the research prompt with broader search parameters
       const researchPrompt = `
-      Research career transition stories from ${currentRole} to ${targetRole}.
+      Research career transition stories that can help someone moving from ${currentRole} to ${targetRole}.
 
       Follow these steps:
-      1. Use Tavily search to find real transition stories from credible sources
-      2. Focus on Reddit, Blind, Medium, LinkedIn or professional blog posts
-      3. Extract specific details about challenges, skills needed, and timeframes
-      4. Save important findings to memory using the save_memory tool
+      1. Use Tavily search to find relevant transition stories from credible sources
+      2. Consider stories from similar roles or companies if exact matches aren't available
+      3. Look at both specific (${currentCompany} to ${targetCompany}) transitions and general role progressions
+      4. Extract specific details about:
+         - Technical skill requirements
+         - Timeline and learning paths
+         - Common challenges faced
+         - Success strategies
 
-      Store at least 3-5 concrete examples of this transition.
+      Even if you can't find exact matches, find stories of similar transitions that would be relevant.
+      Focus on career blogs, tech forums, LinkedIn articles, Medium posts, and company culture insights.
+      
+      Extract at least 3-5 examples that would be helpful for this specific transition.
       `;
 
-      // Use a maximum of 3 attempts to avoid getting stuck
-      for (let attempt = 0; attempt < 3; attempt++) {
+      // Use multiple search approaches with different queries
+      for (let queryIndex = 0; queryIndex < searchQueries.length; queryIndex++) {
+        const currentQuery = searchQueries[queryIndex];
+        console.log(`Searching: ${currentQuery}`);
+        
         try {
           const response = await modelWithTools.invoke([
             new SystemMessage(
-              "You are a career researcher who finds genuine transition stories.",
+              "You are a career researcher who finds and adapts relevant transition stories. Even if exact matches aren't available, find similar transitions that provide valuable insights."
             ),
-            new HumanMessage(researchPrompt),
+            new HumanMessage(`
+              ${researchPrompt}
+              
+              Current search focus: ${currentQuery}
+              
+              If you don't find exact matches, extract insights from similar transitions that would be useful.
+            `),
           ]);
 
           // Parse the response to extract stories
@@ -429,9 +474,9 @@ export class MemoryEnabledAgent {
           const stories = this.extractStories(content, currentRole, targetRole);
 
           if (stories.length > 0) {
-            console.log(`Successfully extracted ${stories.length} stories`);
+            console.log(`Successfully extracted ${stories.length} stories from search approach ${queryIndex + 1}`);
             
-            // Also save the stories to the database
+            // Save the stories to the database
             for (const story of stories) {
               try {
                 await storage.createScrapedData({
@@ -449,10 +494,8 @@ export class MemoryEnabledAgent {
             
             return stories;
           }
-          
-          console.log(`Attempt ${attempt + 1} found no usable stories, trying again...`);
         } catch (attemptError) {
-          console.error(`Error in search attempt ${attempt + 1}:`, attemptError);
+          console.error(`Error in search approach ${queryIndex + 1}:`, attemptError);
         }
       }
 
@@ -832,6 +875,64 @@ export class MemoryEnabledAgent {
         ? `\nUser's Existing Skills:\n${userSkills.join("\n")}`
         : "\nUser Skills: Not specified";
 
+      // Add a search tool to find related articles
+      const careerResourceSearch = new LearningResourceSearch();
+      
+      // First, search for relevant career articles to ground recommendations
+      console.log(`Searching for career resources for ${currentRole} to ${targetRole} transition`);
+      let relatedArticles = [];
+      try {
+        // Extract the key parts of the roles for better search
+        const currentParts = currentRole.split(' ');
+        const currentCompany = currentParts[0] || "";
+        const currentRoleTitle = currentParts.slice(1, -1).join(' ') || "Software Engineer";
+        
+        const targetParts = targetRole.split(' ');
+        const targetCompany = targetParts[0] || "";
+        const targetRoleTitle = targetParts.slice(1, -1).join(' ') || "Software Engineer";
+        
+        // Perform searches for relevant articles
+        const searchResponses = await Promise.allSettled([
+          careerResourceSearch.invoke(`Best learning resources for ${targetRoleTitle} skills`),
+          careerResourceSearch.invoke(`${currentCompany} to ${targetCompany} career transition guide`),
+          careerResourceSearch.invoke(`Career progression to ${targetRoleTitle} learning path`),
+          careerResourceSearch.invoke(`Required skills for ${targetRoleTitle} at ${targetCompany}`)
+        ]);
+        
+        // Process successful responses
+        searchResponses.forEach(result => {
+          if (result.status === "fulfilled") {
+            try {
+              const response = JSON.parse(result.value);
+              if (response && response.results) {
+                relatedArticles = [...relatedArticles, ...response.results];
+              }
+            } catch (error) {
+              console.error("Error parsing search response:", error);
+            }
+          }
+        });
+        
+        // Keep only unique articles by URL
+        const uniqueUrls = new Set();
+        relatedArticles = relatedArticles.filter(article => {
+          if (!article.url || uniqueUrls.has(article.url)) return false;
+          uniqueUrls.add(article.url);
+          return true;
+        });
+        
+        console.log(`Found ${relatedArticles.length} related articles/resources`);
+      } catch (searchError) {
+        console.error("Error searching for career resources:", searchError);
+      }
+      
+      // Format articles for inclusion in the prompt
+      const articlesText = relatedArticles.length > 0 
+        ? `\nRelevant Articles and Resources:\n${relatedArticles.map(a => 
+          `- ${a.title || 'Article'}: ${a.url} (${a.description ? a.description.substring(0, 100) + '...' : 'Career resource'})`
+        ).join('\n')}`
+        : "";
+      
       // Create a more personalized plan using all available information
       const planPrompt = `
       Create a personalized development plan for transition from ${currentRole} to ${targetRole}.
@@ -842,6 +943,8 @@ export class MemoryEnabledAgent {
       ${skillGapsText}
       
       ${transitionStories}
+      
+      ${articlesText}
 
       Based on the user's existing skills and the identified skill gaps, create a detailed plan with:
       1. 4-6 milestone phases organized by priority
@@ -851,7 +954,15 @@ export class MemoryEnabledAgent {
          - Priority (High, Medium, Low)
          - Duration in weeks (be realistic about learning timelines)
          - Order (sequence number)
-         - 2-3 specific learning resources (title, URL, type) that would be most helpful for someone with the user's background
+         - 3-4 specific learning resources for each milestone including:
+           * At least one specific YouTube video or channel (provide exact video title and URL)
+           * A specific blog post, tutorial or technical documentation (with exact URL)
+           * A recommended book or online course (with title and where to find it)
+           * Any other relevant resources like GitHub repositories, community forums, etc.
+      
+      Make the plan hyper-personalized with very specific resources that address the exact skill gaps.
+      Each resource should have a detailed explanation of why it's relevant to this specific transition.
+      Ensure each resource includes its type (video, article, course, book, etc.) and a direct URL when applicable.
       
       The plan should be tailored to leverage the user's existing skills and address the critical skill gaps.
       Return as JSON with milestones array.

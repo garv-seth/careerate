@@ -13,6 +13,9 @@ export function safeParseJSON(
   text: string,
   fallbackType?: "skillGaps" | "insights" | "plan" | "stories"
 ): any {
+  // Add more logging to trace JSON parsing issues
+  console.log(`Parsing JSON with type: ${fallbackType || 'unknown'}`);
+  
   if (!text || text.trim() === '') {
     console.log("Empty text received for JSON parsing");
     return fallbackType ? getFallbackObject(fallbackType) : {};
@@ -31,12 +34,29 @@ export function safeParseJSON(
     const normalized: any = {};
     
     for (const key in obj) {
+      // Skip invalid keys
+      if (typeof key !== 'string') continue;
+        
       // Convert snake_case to camelCase
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
       
-      // Handle special cases like skill_name → skillName
-      const finalKey = camelKey === 'skillName' ? camelKey : 
-                       (camelKey === 'numberOfMentions' ? 'mentionCount' : camelKey);
+      // Handle special cases for our application's fields
+      let finalKey = camelKey;
+      
+      // Skill gaps related mappings
+      if (camelKey === 'skillName' || camelKey === 'skill' || camelKey === 'name') finalKey = 'skillName';
+      else if (camelKey === 'numberOfMentions' || camelKey === 'mentions') finalKey = 'mentionCount';
+      else if (camelKey === 'confidenceScore' || camelKey === 'confidence') finalKey = 'confidenceScore';
+      else if (camelKey === 'gapLevel' || camelKey === 'level') finalKey = 'gapLevel';
+      else if (camelKey === 'contextSummary' || camelKey === 'context' || camelKey === 'summary') finalKey = 'contextSummary';
+      
+      // Resource related mappings
+      else if (camelKey === 'resourceType' || camelKey === 'type') finalKey = 'type';
+      else if (camelKey === 'resourceUrl' || camelKey === 'url' || camelKey === 'link') finalKey = 'url';
+      else if (camelKey === 'resourceTitle' || camelKey === 'title') finalKey = 'title';
+      
+      // Other common mappings
+      else if (camelKey === 'timeframe' || camelKey === 'avgTransitionTime') finalKey = 'timeframe';
       
       normalized[finalKey] = normalizeKeys(obj[key]);
     }
