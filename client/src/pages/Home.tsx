@@ -3,8 +3,33 @@ import { motion } from "framer-motion";
 import TransitionForm from "@/components/TransitionForm";
 import { Link } from "wouter";
 import DigitalRain from "@/components/DigitalRain";
+import { useQuery } from "@tanstack/react-query";
+
+// Define the auth response type
+interface AuthResponse {
+  success: boolean;
+  user?: {
+    id: number;
+    email: string;
+    username?: string;
+    currentRole?: string;
+    profileCompleted?: boolean;
+  };
+  profile?: any;
+  skills?: any[];
+}
 
 const Home: React.FC = () => {
+  // Check if user is authenticated
+  const { data: userData, isLoading } = useQuery<AuthResponse>({
+    queryKey: ['/api/auth/me'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false, // Don't retry on 401 errors
+    refetchOnWindowFocus: false,
+  });
+  
+  // Check if user data exists and has a user property
+  const isAuthenticated = !!(userData && userData.user);
   return (
     <div className="relative overflow-hidden">
       {/* Background elements */}
@@ -67,15 +92,27 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.8 }}
               >
-                <Link href="/signup">
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-glow hover:shadow-glow-lg transition-all duration-300"
-                  >
-                    Get Started
-                  </motion.button>
-                </Link>
+                {isAuthenticated ? (
+                  <Link href="/transitions/new">
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-glow hover:shadow-glow-lg transition-all duration-300"
+                    >
+                      Explore Transitions
+                    </motion.button>
+                  </Link>
+                ) : (
+                  <Link href="/signup">
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-glow hover:shadow-glow-lg transition-all duration-300"
+                    >
+                      Get Started
+                    </motion.button>
+                  </Link>
+                )}
                 <Link href="/dashboard/1">
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
@@ -166,19 +203,7 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Form Section */}
-      <section className="py-16 relative">
-        <div className="container mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-          >
-            <TransitionForm />
-          </motion.div>
-        </div>
-      </section>
+
       
       {/* How It Works Section */}
       <section className="py-16 relative">
@@ -460,15 +485,28 @@ const Home: React.FC = () => {
                 </p>
               </div>
               
-              <Link href="/signup">
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-glow hover:shadow-glow-lg transition-all duration-300"
-                >
-                  Start Your Journey
-                </motion.button>
-              </Link>
+              {/* Use conditional rendering based on authentication status */}
+              {isAuthenticated ? (
+                <Link href="/transitions/new">
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-glow hover:shadow-glow-lg transition-all duration-300"
+                  >
+                    Explore Transitions
+                  </motion.button>
+                </Link>
+              ) : (
+                <Link href="/signup">
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg shadow-glow hover:shadow-glow-lg transition-all duration-300"
+                  >
+                    Start Your Journey
+                  </motion.button>
+                </Link>
+              )}
             </div>
           </motion.div>
         </div>
