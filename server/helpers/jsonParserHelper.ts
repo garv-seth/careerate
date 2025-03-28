@@ -13,13 +13,41 @@ export function safeParseJSON(
   text: string,
   fallbackType?: "skillGaps" | "insights" | "plan" | "stories"
 ): any {
-  if (!text) {
+  if (!text || text.trim() === '') {
     return fallbackType ? getFallbackObject(fallbackType) : {};
   }
+  
+  // Add field normalization to convert between snake_case and camelCase
+  const normalizeKeys = (obj: any): any => {
+    if (Array.isArray(obj)) {
+      return obj.map(item => normalizeKeys(item));
+    }
+    
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    
+    const normalized: any = {};
+    
+    for (const key in obj) {
+      // Convert snake_case to camelCase
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      
+      // Handle special cases like skill_name → skillName
+      const finalKey = camelKey === 'skillName' ? camelKey : 
+                       (camelKey === 'numberOfMentions' ? 'mentionCount' : camelKey);
+      
+      normalized[finalKey] = normalizeKeys(obj[key]);
+    }
+    
+    return normalized;
+  };
 
   // First try: standard JSON.parse on the entire string
   try {
-    return JSON.parse(text);
+    // Try to parse JSON and normalize keys
+    const parsed = JSON.parse(text);
+    return normalizeKeys(parsed);
   } catch (e) {
     console.log("Initial JSON parse failed, trying fixes...");
   }
@@ -27,14 +55,17 @@ export function safeParseJSON(
   // Second try: Clean up the text and try JSON.parse again
   try {
     const cleaned = prepareJsonText(text);
-    return JSON.parse(cleaned);
+    // Try to parse JSON and normalize keys
+    const parsed = JSON.parse(cleaned);
+    return normalizeKeys(parsed);
   } catch (e) {
     console.log("JSON parse failed after cleaning, trying repairs...");
   }
 
   // Third try: Attempt to repair and extract JSON
   try {
-    return repairJson(text, fallbackType);
+    const repaired = repairJson(text, fallbackType);
+    return normalizeKeys(repaired);
   } catch (e) {
     console.error("All JSON parse attempts failed:", e);
     

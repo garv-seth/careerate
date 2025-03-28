@@ -33,16 +33,27 @@ class CareerTransitionMemoryStore {
   
   /**
    * Check if a transition is currently being processed
+   * @param transitionId The ID of the transition to check
+   * @param force Optional parameter to override the in-progress state
    */
-  isTransitionInProgress(transitionId: number): boolean {
+  isTransitionInProgress(transitionId: number, force?: boolean): boolean {
+    if (force) {
+      return false;
+    }
     return this.inProgressTransitions.has(transitionId);
   }
   
   /**
    * Mark a transition as in-progress
+   * @param transitionId The ID of the transition to mark as in-progress
    */
   markTransitionInProgress(transitionId: number): void {
     this.inProgressTransitions.add(transitionId);
+    
+    // Auto-clear in-progress flag after 5 minutes to prevent deadlocks
+    setTimeout(() => {
+      this.inProgressTransitions.delete(transitionId);
+    }, 5 * 60 * 1000);
   }
   
   /**

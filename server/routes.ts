@@ -283,7 +283,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transition.currentRole,
         transition.targetRole,
         transition.id,
-        []
+        [],
+        false // Don't force refresh by default
       ).catch(error => {
         console.error("Background analysis error:", error);
       });
@@ -437,7 +438,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           transition.currentRole,
           transition.targetRole,
           transitionId,
-          []
+          [],
+          forceRefresh
         );
         
         console.log(`Completed scraping and analysis for transition ${transitionId}`);
@@ -537,7 +539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           transition.currentRole,
           transition.targetRole,
           transitionId,
-          existingSkills
+          existingSkills,
+          false // Don't force refresh in regular analysis
         );
         
         console.log(`Analysis completed for: ${transition.currentRole} → ${transition.targetRole}`);

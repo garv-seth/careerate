@@ -190,13 +190,14 @@ export class MemoryEnabledAgent {
     targetRole: string,
     transitionId: number,
     existingSkills: string[] = [],
+    forceRefresh: boolean = false,
   ): Promise<{
     skillGaps: SkillGapAnalysis[];
     insights: any;
     scrapedCount: number;
   }> {
     // Check if this transition is already being processed using the memory store
-    if (careerTransitionMemory.isTransitionInProgress(transitionId)) {
+    if (careerTransitionMemory.isTransitionInProgress(transitionId, forceRefresh)) {
       console.warn(`Career transition analysis already in progress for ID ${transitionId}, skipping duplicate request`);
       
       // Return the current state from memory, or fallbacks if nothing exists
@@ -214,6 +215,17 @@ export class MemoryEnabledAgent {
         insights: this.getFallbackInsights(currentRole, targetRole),
         scrapedCount: 0,
       };
+    }
+    
+    // If force refresh is enabled, clear existing data
+    if (forceRefresh) {
+      console.log(`Force refresh enabled for transition ${transitionId}, clearing existing data...`);
+      try {
+        await storage.clearTransitionData(transitionId);
+        console.log(`Successfully cleared existing data for transition ${transitionId}`);
+      } catch (error) {
+        console.error(`Error clearing data for transition ${transitionId}:`, error);
+      }
     }
     
     // Mark this transition as in-progress in the memory store
@@ -558,19 +570,37 @@ export class MemoryEnabledAgent {
 
       try {
         // Use our enhanced JSON parser with robust error handling
-        skillGaps = safeParseJSON(response.content.toString(), "skillGaps");
+        const rawSkillGaps = safeParseJSON(response.content.toString(), "skillGaps");
+        
+        // Additional normalization for field names
+        const normalizedSkillGaps = rawSkillGaps.map(gap => {
+          // Check for snake_case fields and convert them
+          const skillName = gap.skillName || gap.skill_name;
+          const gapLevel = gap.gapLevel || gap.gap_level;
+          const confidenceScore = gap.confidenceScore || gap.confidence_score;
+          const mentionCount = gap.mentionCount || gap.number_of_mentions || gap.mentions || 1;
+          
+          return {
+            skillName,
+            gapLevel,
+            confidenceScore,
+            mentionCount,
+            contextSummary: gap.contextSummary || gap.context_summary
+          };
+        }).filter(gap => gap.skillName); // Filter out invalid gaps
+        
+        skillGaps = normalizedSkillGaps;
       } catch (parseError) {
         console.error("Error parsing skill gaps:", parseError);
       }
 
-      // Save skill gaps to database with validation to prevent null values
+      // Save skill gaps to database with validation
       for (const gap of skillGaps) {
-        // Only insert skill gaps with valid data
         if (gap && gap.skillName) {
           await storage.createSkillGap({
             transitionId,
-            skillName: gap.skillName, // Ensure this is not null or undefined
-            gapLevel: (gap.gapLevel as "Low" | "Medium" | "High") || "Medium", // Default to Medium
+            skillName: gap.skillName,
+            gapLevel: (gap.gapLevel as "Low" | "Medium" | "High") || "Medium",
             confidenceScore: gap.confidenceScore || 70,
             mentionCount: gap.mentionCount || 1,
           });
@@ -745,6 +775,28 @@ export class MemoryEnabledAgent {
         // If we got an array directly, assume it's the milestones array
         else if (Array.isArray(parsed)) {
           plan = { milestones: parsed };
+        }
+        
+        // If no milestones were generated, create default ones based on skill gaps
+        if (!plan.milestones || plan.milestones.length === 0) {
+          console.log("No milestones generated, creating defaults based on skill gaps");
+          
+          plan.milestones = skillGaps
+            .slice(0, 5)
+            .map((gap, index) => ({
+              title: `Develop ${gap.skillName}`,
+              description: gap.contextSummary || `Improve skills in ${gap.skillName} needed for the transition`,
+              priority: gap.gapLevel || "Medium",
+              durationWeeks: 4,
+              order: index + 1,
+              resources: [
+                {
+                  title: `Learn ${gap.skillName}`,
+                  url: "https://www.coursera.org/",
+                  type: "course"
+                }
+              ]
+            }));
         }
       } catch (parseError) {
         console.error("Error parsing plan:", parseError);
