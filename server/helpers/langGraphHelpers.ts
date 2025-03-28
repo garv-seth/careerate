@@ -2,9 +2,8 @@
  * LangGraph helpers for Cara
  * 
  * These functions replace the Perplexity API functions with LangGraph alternatives
- * that use Tavily for search and OpenAI or Gemini for processing.
+ * that use Tavily for search and Gemini for processing.
  */
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
 import { createChatModel, getModelInfo } from "./modelFactory";
@@ -12,7 +11,7 @@ import { createChatModel, getModelInfo } from "./modelFactory";
 // Create a model instance for all our helpers to use
 const model = createChatModel({
   temperature: 0.2,
-  modelName: process.env.GOOGLE_API_KEY ? "gemini-2.0-flash-lite" : "gpt-3.5-turbo"
+  modelName: "gemini-2.0-flash-lite"
 });
 
 function generateFallbackResponse(prompt: string) {

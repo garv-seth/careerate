@@ -19,12 +19,76 @@ import { safeParseJSON } from '../helpers/jsonParserHelper';
  */
 export class MemoryEnabledAgent {
   private model: any;
-  private tools: StructuredTool[] = [];
-  private memoryStore: MemoryVectorStore | null = null;
+  private tools: StructuredTool[];
+  private memoryStore: MemoryVectorStore;
   private userId: number;
   private transitionId: number;
   private mcpHandler: any;
 
+  constructor(userId: number, transitionId: number) {
+    this.transitionId = transitionId;
+    
+    // Initialize the model with Gemini 2.0 Flash Lite
+    // We use the normal initialization without tools to avoid schema conversion errors
+    this.model = new ChatGoogleGenerativeAI({
+      apiKey: process.env.GOOGLE_API_KEY || "",
+      modelName: "gemini-2.0-flash-lite", // Use Gemini for all operations
+      temperature: 0.3,
+      maxOutputTokens: 2048,
+    });
+    
+    // Initialize memory store with simple embeddings that don't require OpenAI
+    // This avoids OpenAI rate limits and API key requirements
+    try {
+      // Use a simple cosine similarity function for embeddings
+      const embeddings = {
+        embedDocuments: async (texts: string[]) => {
+          // Create simple word-based embeddings
+          return texts.map(text => {
+            // Split text into words, normalize, and count word frequencies
+            const words = text.toLowerCase().split(/\W+/).filter(w => w.length > 0);
+            const vector = Array(512).fill(0); // Smaller vector size than OpenAI (1536)
+            
+            // Hash words into vector positions
+            for (const word of words) {
+              const position = Math.abs(this.simpleHash(word) % 512);
+              vector[position] += 1;
+            }
+            
+            // Normalize vector
+            const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+            return magnitude > 0 ? vector.map(val => val / magnitude) : vector;
+          });
+        },
+        embedQuery: async (text: string) => {
+          // Use the same embedding logic for queries
+          const words = text.toLowerCase().split(/\W+/).filter(w => w.length > 0);
+          const vector = Array(512).fill(0);
+          
+          for (const word of words) {
+            const position = Math.abs(this.simpleHash(word) % 512);
+            vector[position] += 1;
+          }
+          
+          // Normalize vector
+          const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+          return magnitude > 0 ? vector.map(val => val / magnitude) : vector;
+        }
+      };
+      
+      this.memoryStore = new MemoryVectorStore(embeddings);
+      console.log("Initialized memory store with simple embeddings (no OpenAI dependency)");
+    } catch (error) {
+      console.warn("Failed to initialize memory store with embeddings:", error);
+      // Use an even simpler fallback if the above fails
+      const fallbackEmbeddings = {
+        embedDocuments: async (texts: string[]) => texts.map(() => Array(512).fill(0)),
+        embedQuery: async (text: string) => Array(512).fill(0),
+      };
+      this.memoryStore = new MemoryVectorStore(fallbackEmbeddings);
+    }
+  }
+  
   // Simple string hashing function for embedding generation
   private simpleHash(str: string): number {
     let hash = 0;
@@ -118,6 +182,8 @@ export class MemoryEnabledAgent {
           maxResults: 5,
           apiKey: process.env.TAVILY_API_KEY,
         })
+        // Custom tools with Zod schemas disabled due to compatibility issues with Gemini
+        // Memory tools will be simulated through direct function calls instead
       ];
     } catch (error) {
       console.error("Failed to initialize tools:", error);
@@ -139,8 +205,90 @@ export class MemoryEnabledAgent {
   }
 
   /**
+   * Create a tool for saving memories
+   */
+  private createSaveMemoryTool(): StructuredTool {
+    // Define the schema statically to avoid errors with zod serialization
+    const schema = z.object({
+      memory: z.string().describe("The text content to save to memory"),
+      type: z.string().describe("The type of memory (skill_gap, insight, story, plan, general)"),
+    });
+    
+    const tool = new StructuredTool({
+      name: "save_memory",
+      description: "Save information about the career transition to memory",
+      schema: schema,
+      func: async ({ memory, type }: { memory: string, type: string }) => {
+        const validTypes = ["skill_gap", "insight", "story", "plan", "general"];
+        const memoryType = validTypes.includes(type) ? type : "general";
+        
+        const document = new Document({
+          pageContent: memory,
+          metadata: {
+            userId: this.userId,
+            type: memoryType,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        await this.memoryStore.addDocuments([document]);
+        return `Successfully saved memory of type ${memoryType}`;
+      },
+    });
+    return tool;
+  }
+
+  /**
+   * Create a tool for retrieving memories
+   */
+  private createRetrieveMemoryTool(): StructuredTool {
+    // Define the schema statically to avoid errors with zod serialization
+    const schema = z.object({
+      query: z.string().describe("The query to search for relevant memories"),
+      type: z.string().describe("The type of memory to retrieve (skill_gap, insight, story, plan, general, all)").optional(),
+    });
+    
+    const tool = new StructuredTool({
+      name: "retrieve_memories",
+      description: "Retrieve relevant memories for this career transition",
+      schema: schema,
+      func: async ({ query, type }: { query: string, type?: string }) => {
+        // Filter function to get memories for this user
+        const filterFn = (doc: Document) => {
+          if (doc.metadata.userId !== this.userId) {
+            return false;
+          }
+
+          if (type && type !== "all" && doc.metadata.type !== type) {
+            return false;
+          }
+
+          return true;
+        };
+
+        try {
+          const documents = await this.memoryStore.similaritySearch(
+            query,
+            5,
+            filterFn,
+          );
+          
+          return documents.map((doc) => doc.pageContent).join("\n\n");
+        } catch (error) {
+          console.error("Error retrieving memories:", error);
+          return "No relevant memories found.";
+        }
+      },
+    });
+    return tool;
+  }
+
+  /**
    * Analyze a career transition from current to target role
    */
+  // Keep track of in-progress transitions to prevent recursive calls
+  private static inProgressTransitions = new Set<number>();
+  
   async analyzeCareerTransition(
     currentRole: string,
     targetRole: string,
@@ -419,140 +567,65 @@ export class MemoryEnabledAgent {
         try {
           const response = await modelWithTools.invoke([
             new SystemMessage(
-              "You are a career researcher who finds genuine transition stories.",
+              "You are a career research specialist who finds real-world transition stories. Use tools to search the web and save findings to memory.",
             ),
             new HumanMessage(researchPrompt),
           ]);
 
-          // Parse the response to extract stories
-          const content = response.content.toString();
-          const stories = this.extractStories(content, currentRole, targetRole);
+          // Process the response to extract stories
+          let stories = [];
 
-          if (stories.length > 0) {
-            console.log(`Successfully extracted ${stories.length} stories`);
+          try {
+            // Use our enhanced JSON parser with robust error handling
+            const parsedStories = safeParseJSON(response.content.toString(), "stories");
             
-            // Also save the stories to the database
-            for (const story of stories) {
-              try {
-                await storage.createScrapedData({
-                  transitionId,
-                  source: story.source || "AI Research",
-                  content: story.content,
-                  url: story.url || null,
-                  postDate: story.date || null,
-                  skillsExtracted: [],
-                });
-              } catch (dbError) {
-                console.error("Error saving story to database:", dbError);
+            if (Array.isArray(parsedStories) && parsedStories.length > 0) {
+              stories = parsedStories;
+            } else {
+              // Fallback: Try extracting semi-structured content
+              const contentMatches = response.content
+                .toString()
+                .match(/Story \d+:([\s\S]*?)(?=Story \d+:|$)/g);
+                
+              if (contentMatches) {
+                stories = contentMatches.map((match: string, index: number) => ({
+                  source: `Story ${index + 1}`,
+                  content: match.replace(/Story \d+:/, "").trim(),
+                  url: null,
+                }));
               }
             }
-            
-            return stories;
+          } catch (parseError) {
+            console.error("Error parsing stories:", parseError);
           }
-          
-          console.log(`Attempt ${attempt + 1} found no usable stories, trying again...`);
+
+          // Save stories to database
+          for (const story of stories) {
+            await storage.createScrapedData({
+              transitionId,
+              source: story.source || "Research",
+              content: story.content || "No content",
+              url: story.url || null,
+              postDate: new Date().toISOString().split("T")[0],
+              skillsExtracted: [],
+            });
+          }
+
+          return stories;
         } catch (attemptError) {
-          console.error(`Error in search attempt ${attempt + 1}:`, attemptError);
+          console.error(
+            `Research attempt ${attempt + 1} failed:`,
+            attemptError,
+          );
+          if (attempt === 2) throw attemptError;
         }
       }
 
-      // If we reached here, all attempts failed
-      console.log("All story search attempts failed, using simulated stories");
-      const simulatedStories = this.generateSimulatedStories(currentRole, targetRole);
-      
-      // Save simulated stories to database
-      for (const story of simulatedStories) {
-        await storage.createScrapedData({
-          transitionId,
-          source: story.source,
-          content: story.content,
-          url: null,
-          postDate: null,
-          skillsExtracted: [],
-        });
-      }
-      
-      return simulatedStories;
+      return [];
     } catch (error) {
       console.error("Error researching transition stories:", error);
-      
-      // If all else fails, return an empty array
       return [];
     }
-  }
-  
-  /**
-   * Extract stories from AI model response
-   */
-  private extractStories(content: string, currentRole: string, targetRole: string): any[] {
-    try {
-      // Try to extract structured stories from the response
-      const storyPattern = /(?:Story|Example|Transition)\s*\d+:\s*([^]+?)(?=(?:Story|Example|Transition)\s*\d+:|$)/gi;
-      const storyMatches = content.match(storyPattern);
-
-      if (storyMatches && storyMatches.length > 0) {
-        return storyMatches.map((storyText, index) => {
-          // Try to extract source
-          const sourceMatch = storyText.match(/(?:Source|From|Posted on):\s*([^,\n]+)/i);
-          const source = sourceMatch ? sourceMatch[1].trim() : "Research";
-
-          // Try to extract URL
-          const urlMatch = storyText.match(/(?:URL|Link):\s*(https?:\/\/[^\s,\n]+)/i);
-          const url = urlMatch ? urlMatch[1].trim() : "";
-
-          // Try to extract date
-          const dateMatch = storyText.match(/(?:Date|Posted|Published):\s*([^\n,]+\d{4})/i);
-          const date = dateMatch ? dateMatch[1].trim() : "";
-
-          return {
-            id: index,
-            source,
-            content: storyText.trim(),
-            url,
-            date,
-          };
-        });
-      }
-
-      // If structured stories weren't found, try to extract paragraphs as stories
-      const paragraphs = content.split(/\n\n+/).filter(p => p.length > 100);
-      if (paragraphs.length > 0) {
-        return paragraphs.map((paragraph, index) => ({
-          id: index,
-          source: "AI Research",
-          content: paragraph.trim(),
-          url: "",
-          date: "",
-        }));
-      }
-
-      return [];
-    } catch (error) {
-      console.error("Error extracting stories:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Generate simulated transition stories when research fails
-   */
-  private generateSimulatedStories(currentRole: string, targetRole: string): any[] {
-    return [
-      {
-        id: 1,
-        source: "Professional Transition Blog",
-        content: `After spending 5 years as a ${currentRole}, I decided to transition to a ${targetRole} role. The biggest challenges were learning new technical skills and adapting to a different workflow. I spent about 6 months taking online courses and working on side projects to build my portfolio. What helped most was connecting with people already in ${targetRole} positions who could provide mentorship and advice.`,
-        url: "",
-        date: new Date().toISOString().split("T")[0],
-      },
-      {
-        id: 2,
-        source: "Career Forum",
-        content: `My journey from ${currentRole} to ${targetRole} took about 9 months of dedicated effort. I started by identifying the skill gaps - particularly in technical areas I hadn't been exposed to before. The interview process was challenging, but highlighting my transferable skills from my previous role really helped. My advice is to focus on building practical experience through projects rather than just theoretical learning.`,
-        url: "",
-        date: new Date().toISOString().split("T")[0],
-      },
-    ];
   }
 
   /**
@@ -631,7 +704,7 @@ export class MemoryEnabledAgent {
         const rawSkillGaps = safeParseJSON(response.content.toString(), "skillGaps");
         
         // Additional normalization for field names
-        const normalizedSkillGaps = rawSkillGaps.map((gap: any) => {
+        const normalizedSkillGaps = rawSkillGaps.map(gap => {
           // Check for snake_case fields and convert them
           const skillName = gap.skillName || gap.skill_name;
           const gapLevel = gap.gapLevel || gap.gap_level;
@@ -645,7 +718,7 @@ export class MemoryEnabledAgent {
             mentionCount,
             contextSummary: gap.contextSummary || gap.context_summary
           };
-        }).filter((gap: any) => gap.skillName); // Filter out invalid gaps
+        }).filter(gap => gap.skillName); // Filter out invalid gaps
         
         skillGaps = normalizedSkillGaps;
       } catch (parseError) {
@@ -658,7 +731,7 @@ export class MemoryEnabledAgent {
           await storage.createSkillGap({
             transitionId,
             skillName: gap.skillName,
-            gapLevel: gap.gapLevel as "Low" | "Medium" | "High" || "Medium",
+            gapLevel: (gap.gapLevel as "Low" | "Medium" | "High") || "Medium",
             confidenceScore: gap.confidenceScore || 70,
             mentionCount: gap.mentionCount || 1,
           });
@@ -797,26 +870,23 @@ export class MemoryEnabledAgent {
       // Get transition stories from the memory to inform the plan
       let transitionStories = "";
       try {
-        // Only attempt to retrieve memories if memoryStore is initialized
-        if (this.memoryStore) {
-          // Try to retrieve relevant stories from memory
-          const memories = await this.memoryStore.similaritySearch(
-            `career transition from ${currentRole} to ${targetRole} stories and advice`,
-            3,
-            (doc) => doc.metadata.userId === this.userId && doc.metadata.type === "story"
-          );
-          
-          if (memories && memories.length > 0) {
-            transitionStories = "Relevant transition stories:\n" + 
-              memories.map(doc => doc.pageContent).join("\n\n");
-          }
+        // Try to retrieve relevant stories from memory
+        const memories = await this.memoryStore.similaritySearch(
+          `career transition from ${currentRole} to ${targetRole} stories and advice`,
+          3,
+          (doc) => doc.metadata.userId === this.userId && doc.metadata.type === "story"
+        );
+        
+        if (memories && memories.length > 0) {
+          transitionStories = "Relevant transition stories:\n" + 
+            memories.map(doc => doc.pageContent).join("\n\n");
         }
       } catch (error) {
         console.error("Error retrieving transition stories from memory:", error);
       }
       
       // Get the user's existing skills
-      let userSkills: any[] = [];
+      let userSkills = [];
       try {
         // Get user ID
         const userId = this.userId;
@@ -903,6 +973,49 @@ export class MemoryEnabledAgent {
         }
       } catch (parseError) {
         console.error("Error parsing plan:", parseError);
+      }
+
+      // Save plan and milestones to database
+      if (plan.milestones && plan.milestones.length > 0) {
+        const dbPlan = await storage.createPlan({
+          transitionId,
+        });
+
+        for (let i = 0; i < plan.milestones.length; i++) {
+          const m = plan.milestones[i];
+
+          const milestone = await storage.createMilestone({
+            planId: dbPlan.id,
+            title: m.title || `Milestone ${i + 1}`,
+            description: m.description || null,
+            priority: m.priority || "Medium",
+            durationWeeks: m.durationWeeks || 4,
+            order: i + 1,
+            progress: 0,
+          });
+
+          // Add resources if available
+          if (m.resources && Array.isArray(m.resources)) {
+            for (const r of m.resources) {
+              await storage.createResource({
+                milestoneId: milestone.id,
+                title: r.title || `Resource for ${m.title}`,
+                url: r.url || "https://www.coursera.org/",
+                type: r.type || "website",
+              });
+            }
+          } else {
+            // Add default resource
+            await storage.createResource({
+              milestoneId: milestone.id,
+              title: `Learning resources for ${m.title}`,
+              url: "https://www.coursera.org/",
+              type: "website",
+            });
+          }
+        }
+
+        plan.id = dbPlan.id;
       }
 
       return plan;
