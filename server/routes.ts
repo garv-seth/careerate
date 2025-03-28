@@ -1296,22 +1296,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Add transition stories directly from scraped data
-            for (const story of formattedData.slice(0, 2)) {
-              // Clean/truncate content to a reasonable length for stories
-              let storyContent = story.content;
-              if (storyContent.length > 500) {
-                storyContent = storyContent.substring(0, 500) + "...";
+            if (formattedData && formattedData.length > 0) {
+              for (const story of formattedData.slice(0, 2)) {
+                // Clean/truncate content to a reasonable length for stories
+                if (story && story.content) { 
+                  let storyContent = story.content;
+                  if (storyContent.length > 500) {
+                    storyContent = storyContent.substring(0, 500) + "...";
+                  }
+                  
+                  await storage.createInsight({
+                    transitionId,
+                    type: "story",
+                    content: storyContent,
+                    source: story.source,
+                    date: story.date || new Date().toISOString().split('T')[0],
+                    experienceYears: Math.floor(Math.random() * 5) + 2, // Estimated experience
+                    url: story.url || null
+                  });
+                }
               }
-              
-              await storage.createInsight({
-                transitionId,
-                type: "story",
-                content: storyContent,
-                source: story.source,
-                date: story.date || new Date().toISOString().split('T')[0],
-                experienceYears: Math.floor(Math.random() * 5) + 2, // Estimated experience
-                url: story.url || null
-              });
             }
             
           } else {

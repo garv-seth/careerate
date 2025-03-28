@@ -91,13 +91,16 @@ export class MemoryEnabledAgent {
    * Create a tool for saving memories
    */
   private createSaveMemoryTool(): StructuredTool {
+    // Define the schema statically to avoid errors with zod serialization
+    const schema = z.object({
+      memory: z.string().describe("The text content to save to memory"),
+      type: z.string().describe("The type of memory (skill_gap, insight, story, plan, general)"),
+    });
+    
     const tool = new StructuredTool({
       name: "save_memory",
       description: "Save information about the career transition to memory",
-      schema: z.object({
-        memory: z.string().describe("The text content to save to memory"),
-        type: z.string().describe("The type of memory (skill_gap, insight, story, plan, general)"),
-      }),
+      schema: schema,
       func: async ({ memory, type }: { memory: string, type: string }) => {
         const validTypes = ["skill_gap", "insight", "story", "plan", "general"];
         const memoryType = validTypes.includes(type) ? type : "general";
@@ -122,13 +125,16 @@ export class MemoryEnabledAgent {
    * Create a tool for retrieving memories
    */
   private createRetrieveMemoryTool(): StructuredTool {
+    // Define the schema statically to avoid errors with zod serialization
+    const schema = z.object({
+      query: z.string().describe("The query to search for relevant memories"),
+      type: z.string().describe("The type of memory to retrieve (skill_gap, insight, story, plan, general, all)").optional(),
+    });
+    
     const tool = new StructuredTool({
       name: "retrieve_memories",
       description: "Retrieve relevant memories for this career transition",
-      schema: z.object({
-        query: z.string().describe("The query to search for relevant memories"),
-        type: z.string().describe("The type of memory to retrieve (skill_gap, insight, story, plan, general, all)").optional(),
-      }),
+      schema: schema,
       func: async ({ query, type }: { query: string, type?: string }) => {
         // Filter function to get memories for this user
         const filterFn = (doc: Document) => {
@@ -143,13 +149,18 @@ export class MemoryEnabledAgent {
           return true;
         };
 
-        const documents = await this.memoryStore.similaritySearch(
-          query,
-          5,
-          filterFn,
-        );
-
-        return documents.map((doc) => doc.pageContent).join("\n\n");
+        try {
+          const documents = await this.memoryStore.similaritySearch(
+            query,
+            5,
+            filterFn,
+          );
+          
+          return documents.map((doc) => doc.pageContent).join("\n\n");
+        } catch (error) {
+          console.error("Error retrieving memories:", error);
+          return "No relevant memories found.";
+        }
       },
     });
     return tool;
