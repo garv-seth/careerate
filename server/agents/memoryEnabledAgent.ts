@@ -25,10 +25,11 @@ export class MemoryEnabledAgent {
   private userId: number;
   private transitionId: number;
   private mcpHandler: any;
+  private modelWithTools: any; //Added to store the bound model
 
   constructor(userId: number, transitionId: number) {
     this.transitionId = transitionId;
-    
+
     // Initialize the model with Gemini 2.0 Flash Lite
     // We use the normal initialization without tools to avoid schema conversion errors
     this.model = new ChatGoogleGenerativeAI({
@@ -37,7 +38,7 @@ export class MemoryEnabledAgent {
       temperature: 0.3,
       maxOutputTokens: 2048,
     });
-    
+
     // Initialize memory store with OpenAI embeddings or fallback
     try {
       this.memoryStore = new MemoryVectorStore(
@@ -61,7 +62,7 @@ export class MemoryEnabledAgent {
     // Initialize MCP handler
     try {
       this.mcpHandler = new MCPHandler(userId, transitionId);
-      
+
       // Initialize MCP handler in the background
       this.initializeMCP().catch(error => {
         console.error("Error initializing MCP:", error);
@@ -85,7 +86,7 @@ export class MemoryEnabledAgent {
       console.error("Failed to initialize tools:", error);
       this.tools = [];
     }
-    
+
     // Initialize agent state in memory store
     careerTransitionMemory.updateMemory(transitionId, userId, {
       state: 'initializing',
@@ -109,7 +110,7 @@ export class MemoryEnabledAgent {
       memory: z.string().describe("The text content to save to memory"),
       type: z.string().describe("The type of memory (skill_gap, insight, story, plan, general)"),
     });
-    
+
     const tool = new StructuredTool({
       name: "save_memory",
       description: "Save information about the career transition to memory",
@@ -117,7 +118,7 @@ export class MemoryEnabledAgent {
       func: async ({ memory, type }: { memory: string, type: string }) => {
         const validTypes = ["skill_gap", "insight", "story", "plan", "general"];
         const memoryType = validTypes.includes(type) ? type : "general";
-        
+
         const document = new Document({
           pageContent: memory,
           metadata: {
@@ -143,7 +144,7 @@ export class MemoryEnabledAgent {
       query: z.string().describe("The query to search for relevant memories"),
       type: z.string().describe("The type of memory to retrieve (skill_gap, insight, story, plan, general, all)").optional(),
     });
-    
+
     const tool = new StructuredTool({
       name: "retrieve_memories",
       description: "Retrieve relevant memories for this career transition",
@@ -168,7 +169,7 @@ export class MemoryEnabledAgent {
             5,
             filterFn,
           );
-          
+
           return documents.map((doc) => doc.pageContent).join("\n\n");
         } catch (error) {
           console.error("Error retrieving memories:", error);
@@ -184,7 +185,7 @@ export class MemoryEnabledAgent {
    */
   // Keep track of in-progress transitions to prevent recursive calls
   private static inProgressTransitions = new Set<number>();
-  
+
   async analyzeCareerTransition(
     currentRole: string,
     targetRole: string,
@@ -198,7 +199,7 @@ export class MemoryEnabledAgent {
     // Check if this transition is already being processed using the memory store
     if (careerTransitionMemory.isTransitionInProgress(transitionId)) {
       console.warn(`Career transition analysis already in progress for ID ${transitionId}, skipping duplicate request`);
-      
+
       // Return the current state from memory, or fallbacks if nothing exists
       const memory = careerTransitionMemory.getMemory(transitionId);
       if (memory && memory.data) {
@@ -208,20 +209,20 @@ export class MemoryEnabledAgent {
           scrapedCount: memory.data.scrapedData?.length || 0,
         };
       }
-      
+
       return {
         skillGaps: this.getFallbackSkillGaps(currentRole, targetRole),
         insights: this.getFallbackInsights(currentRole, targetRole),
         scrapedCount: 0,
       };
     }
-    
+
     // Mark this transition as in-progress in the memory store
     careerTransitionMemory.markTransitionInProgress(transitionId);
-    
+
     try {
       console.log(`Starting career transition analysis: ${currentRole} → ${targetRole}`);
-      
+
       // Store initial state
       careerTransitionMemory.updateMemory(transitionId, this.userId, {
         state: 'initializing',
@@ -230,38 +231,37 @@ export class MemoryEnabledAgent {
 
       // Clear existing data for fresh analysis
       await storage.clearTransitionData(transitionId);
-      
+
       // Update memory state to scraping
       careerTransitionMemory.updateMemory(transitionId, this.userId, {
         state: 'scraping'
       });
 
       // Check if tools exist before trying to bind them
-      let modelWithTools;
       if (this.tools && this.tools.length > 0) {
         try {
           // Bind tools to the model with error handling
-          modelWithTools = this.model.bindTools(this.tools);
+          this.modelWithTools = this.model.bindTools(this.tools);
         } catch (bindError) {
           console.error("Error binding tools to model:", bindError);
           // Fall back to using the model without tools
-          modelWithTools = this.model;
+          this.modelWithTools = this.model;
         }
       } else {
         // If no tools are available, just use the base model
-        modelWithTools = this.model;
+        this.modelWithTools = this.model;
       }
 
       // Step 1: Research transition stories - with error isolation
       let stories = [];
       try {
         stories = await this.researchTransitionStories(
-          modelWithTools,
+          this.modelWithTools,
           currentRole,
           targetRole,
           transitionId,
         );
-        
+
         // Update memory with scraped data
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
           state: 'analyzing',
@@ -278,14 +278,13 @@ export class MemoryEnabledAgent {
       let skillGaps = [];
       try {
         skillGaps = await this.analyzeSkillGaps(
-          modelWithTools,
           currentRole,
           targetRole,
           transitionId,
           existingSkills,
           stories,
         );
-        
+
         // Update memory with skill gaps
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
           data: {
@@ -297,7 +296,7 @@ export class MemoryEnabledAgent {
         console.error("Error analyzing skill gaps:", skillGapsError);
         // Fall back to generated skill gaps
         skillGaps = this.getFallbackSkillGaps(currentRole, targetRole);
-        
+
         // Update memory with fallback skill gaps
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
           data: {
@@ -311,14 +310,14 @@ export class MemoryEnabledAgent {
       let insights = {};
       try {
         insights = await this.generateInsights(
-          modelWithTools,
+          this.modelWithTools,
           currentRole,
           targetRole,
           transitionId,
           stories,
           skillGaps,
         );
-        
+
         // Update memory with insights
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
           state: 'planning',
@@ -331,7 +330,7 @@ export class MemoryEnabledAgent {
         console.error("Error generating insights:", insightsError);
         // Fall back to generated insights
         insights = this.getFallbackInsights(currentRole, targetRole);
-        
+
         // Update memory with fallback insights
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
           state: 'planning',
@@ -346,14 +345,14 @@ export class MemoryEnabledAgent {
       let plan = {};
       try {
         plan = await this.createDevelopmentPlan(
-          modelWithTools,
+          this.modelWithTools,
           currentRole,
           targetRole,
           transitionId,
           skillGaps,
           insights,
         );
-        
+
         // Update memory with plan
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
           data: {
@@ -370,7 +369,7 @@ export class MemoryEnabledAgent {
       careerTransitionMemory.updateMemory(transitionId, this.userId, {
         state: 'complete'
       });
-      
+
       // Always mark the transition as complete in the database, regardless of partial failures
       await storage.updateTransitionStatus(transitionId, true);
 
@@ -385,7 +384,7 @@ export class MemoryEnabledAgent {
       };
     } catch (error) {
       console.error("Critical error in career transition analysis:", error);
-      
+
       // Update memory to mark as complete but with error status
       const currentData = careerTransitionMemory.getMemory(transitionId)?.data || {};
       careerTransitionMemory.updateMemory(transitionId, this.userId, {
@@ -400,14 +399,14 @@ export class MemoryEnabledAgent {
           }
         }
       });
-      
+
       // Try to mark the transition as complete even in case of error
       try {
         await storage.updateTransitionStatus(transitionId, true);
       } catch (updateError) {
         console.error("Failed to update transition status after error:", updateError);
       }
-      
+
       // Return fallback results if there's an error
       return {
         skillGaps: this.getFallbackSkillGaps(currentRole, targetRole),
@@ -462,7 +461,7 @@ export class MemoryEnabledAgent {
           try {
             // Use our enhanced JSON parser with robust error handling
             const parsedStories = safeParseJSON(response.content.toString(), "stories");
-            
+
             if (Array.isArray(parsedStories) && parsedStories.length > 0) {
               stories = parsedStories;
             } else {
@@ -470,7 +469,7 @@ export class MemoryEnabledAgent {
               const contentMatches = response.content
                 .toString()
                 .match(/Story \d+:([\s\S]*?)(?=Story \d+:|$)/g);
-                
+
               if (contentMatches) {
                 stories = contentMatches.map((match: string, index: number) => ({
                   source: `Story ${index + 1}`,
@@ -516,7 +515,6 @@ export class MemoryEnabledAgent {
    * Analyze skill gaps between roles
    */
   private async analyzeSkillGaps(
-    modelWithTools: any,
     currentRole: string,
     targetRole: string,
     transitionId: number,
@@ -546,7 +544,7 @@ export class MemoryEnabledAgent {
       Return JSON array with these fields.
       `;
 
-      const response = await modelWithTools.invoke([
+      const response = await this.modelWithTools.invoke([
         new SystemMessage(
           "You are a career skills analyst who identifies skill gaps between roles.",
         ),
@@ -557,8 +555,22 @@ export class MemoryEnabledAgent {
       let skillGaps: SkillGapAnalysis[] = [];
 
       try {
-        // Use our enhanced JSON parser with robust error handling
-        skillGaps = safeParseJSON(response.content.toString(), "skillGaps");
+        const rawSkillGaps = safeParseJSON(response.content.toString(), "skillGaps");
+
+        skillGaps = rawSkillGaps.map(gap => {
+          const skillName = gap.skillName || gap.skill_name;
+          const gapLevel = gap.gapLevel || gap.gap_level || "Medium";
+          const confidenceScore = gap.confidenceScore || gap.confidence_score || 70;
+          const mentionCount = gap.mentionCount || gap.number_of_mentions || gap.mentions || 1;
+
+          return {
+            skillName,
+            gapLevel,
+            confidenceScore,
+            mentionCount,
+            contextSummary: gap.contextSummary || gap.context_summary
+          };
+        }).filter(gap => gap.skillName);
       } catch (parseError) {
         console.error("Error parsing skill gaps:", parseError);
       }
@@ -737,7 +749,7 @@ export class MemoryEnabledAgent {
       try {
         // Use our enhanced JSON parser with robust error handling
         const parsed = safeParseJSON(response.content.toString(), "plan");
-        
+
         // Check if we got a valid plan with milestones
         if (parsed && parsed.milestones && Array.isArray(parsed.milestones)) {
           plan = parsed;
