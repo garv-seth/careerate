@@ -298,6 +298,11 @@ const Dashboard: React.FC = () => {
 
   // Function to determine the target company based on role name
   const getTargetCompany = () => {
+    // Check if data and transition exist before accessing properties
+    if (!data || !data.transition || !data.transition.targetRole) {
+      return 'Google'; // Default fallback
+    }
+    
     const { targetRole } = data.transition;
     
     // Extract company name from target role, if present
@@ -311,6 +316,32 @@ const Dashboard: React.FC = () => {
     return 'Google';
   };
 
+  // If we don't have data yet, show a simple loading state
+  if (!data) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="p-8 flex justify-center items-center">
+            <div className="animate-pulse text-primary-light">Loading dashboard data...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract transition data with fallbacks
+  const currentRole = data?.transition?.currentRole || "Current Role";
+  const targetRole = data?.transition?.targetRole || "Target Role";
+  const createdAt = data?.transition?.createdAt ? new Date(data.transition.createdAt).toLocaleDateString() : "recently";
+  
+  // Extract insights data with fallbacks
+  const insights = data?.insights || {};
+  const connections = Array.isArray(data?.insights?.connections) ? data.insights.connections : [];
+  
+  // Extract skills and plan data with fallbacks
+  const skills = Array.isArray(data?.skills) ? data.skills : [];
+  const plan = data?.plan || {};
+
   // Main dashboard content - only shown when data is loaded and complete
   return (
     <div className="container mx-auto px-4 py-8">
@@ -319,7 +350,7 @@ const Dashboard: React.FC = () => {
           <h1 className="text-2xl font-heading font-bold mb-4 md:mb-0">
             Transition Dashboard:{" "}
             <span className="text-primary-light">
-              {data.transition.currentRole} → {data.transition.targetRole}
+              {currentRole} → {targetRole}
             </span>
           </h1>
           <div className="flex items-center">
@@ -328,7 +359,7 @@ const Dashboard: React.FC = () => {
                 Last updated:
               </span>
               <span className="text-sm text-text">
-                {new Date(data.transition.createdAt).toLocaleDateString()}
+                {createdAt}
               </span>
             </div>
           </div>
@@ -397,10 +428,10 @@ const Dashboard: React.FC = () => {
               
               <div className="absolute inset-0 z-10">
                 <CompanyLogoNetwork 
-                  currentRole={data.transition.currentRole}
-                  targetRole={data.transition.targetRole}
+                  currentRole={currentRole}
+                  targetRole={targetRole}
                   targetCompany={getTargetCompany()}
-                  roleConnections={data.insights?.connections || []}
+                  roleConnections={connections}
                   onSelectCompany={setSelectedCompany}
                   selectedCompany={selectedCompany}
                 />
@@ -420,8 +451,8 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.4, delay: 0.2 }}
             >
               <ScrapedInsights
-                transitionId={transitionId}
-                insights={data.insights || {}}
+                transitionId={transitionId || ""}
+                insights={insights}
               />
             </motion.div>
             
@@ -432,9 +463,9 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.4, delay: 0.4 }}
             >
               <SkillGapAnalysis 
-                skills={data.skills || []} 
-                currentRole={data.transition.currentRole}
-                targetRole={data.transition.targetRole}
+                skills={skills} 
+                currentRole={currentRole}
+                targetRole={targetRole}
               />
             </motion.div>
           </div>
@@ -449,7 +480,7 @@ const Dashboard: React.FC = () => {
             >
               <TransitionDashboard
                 data={data}
-                transitionId={transitionId}
+                transitionId={transitionId || ""}
               />
             </motion.div>
             
@@ -460,9 +491,9 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.4, delay: 0.5 }}
             >
               <CareerTrajectory 
-                plan={data.plan || {}}
-                currentRole={data.transition.currentRole}
-                targetRole={data.transition.targetRole}
+                plan={plan}
+                currentRole={currentRole}
+                targetRole={targetRole}
               />
             </motion.div>
           </div>
