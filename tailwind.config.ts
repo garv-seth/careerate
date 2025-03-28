@@ -87,10 +87,12 @@ export default {
         'glow-lg': '0 0 30px rgba(0, 195, 255, 0.25), 0 0 60px rgba(0, 195, 255, 0.1)',
         'neon': '0 0 5px theme(colors.primary.DEFAULT), 0 0 20px rgba(0, 195, 255, 0.3)',
         'inner-glow': 'inset 0 0 20px rgba(0, 195, 255, 0.2)',
+        'logo-glow': '0 0 15px rgba(66, 152, 255, 0.6), 0 0 30px rgba(66, 152, 255, 0.3)',
       },
       dropShadow: {
         'glow': '0 0 8px rgba(0, 195, 255, 0.4)',
         'text': '0 0 2px rgba(0, 195, 255, 0.4)',
+        'logo': '0 0 10px rgba(66, 152, 255, 0.7)',
       },
       keyframes: {
         "accordion-down": {
@@ -112,6 +114,20 @@ export default {
           '50%': { 
             filter: 'drop-shadow(0 0 15px rgba(0, 195, 255, 0.7))',
           },
+        },
+        "logo-pulse": {
+          '0%, 100%': { 
+            filter: 'drop-shadow(0 0 10px rgba(66, 152, 255, 0.6))',
+            transform: 'scale(1)',
+          },
+          '50%': { 
+            filter: 'drop-shadow(0 0 20px rgba(66, 152, 255, 0.8))',
+            transform: 'scale(1.02)',
+          },
+        },
+        "logo-rotate": {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
         "float": {
           '0%, 100%': { transform: 'translateY(0)' },
@@ -135,6 +151,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-slow": "pulse-slow 3s ease-in-out infinite",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "logo-pulse": "logo-pulse 4s ease-in-out infinite",
+        "logo-rotate": "logo-rotate 20s linear infinite",
         "float": "float 6s ease-in-out infinite",
         "scan-line": "scan-line 4s linear infinite",
         "text-shimmer": "text-shimmer 4s linear infinite",
