@@ -194,12 +194,61 @@ const Home: React.FC = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
                       <div className="relative w-28 h-28 mx-auto mb-6">
-                        {/* Actual Careerate logo with very subtle glow effect */}
-                        <div className="absolute inset-0 bg-[#0480DE] rounded-full opacity-2 blur-xl animate-pulse-slow scale-102"></div>
-                        <img 
+                        {/* Primary outer glow - white with blue tint */}
+                        <motion.div 
+                          className="absolute -inset-3 bg-white rounded-full opacity-20 blur-xl"
+                          animate={{ 
+                            opacity: [0.15, 0.25, 0.15], 
+                            scale: [1, 1.1, 1],
+                          }}
+                          transition={{ 
+                            duration: 3, 
+                            repeat: Infinity,
+                            ease: "easeInOut" 
+                          }}
+                        />
+                        
+                        {/* Secondary inner glow - pure white */}
+                        <motion.div 
+                          className="absolute inset-2 bg-white rounded-full opacity-30 blur-md"
+                          animate={{ 
+                            opacity: [0.3, 0.5, 0.3], 
+                            scale: [1, 1.05, 1],
+                          }}
+                          transition={{ 
+                            duration: 2, 
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            repeatType: "reverse"
+                          }}
+                        />
+                        
+                        {/* Blue accent glow */}
+                        <motion.div 
+                          className="absolute inset-2 bg-primary rounded-full opacity-50 blur-sm mix-blend-screen"
+                          animate={{ 
+                            opacity: [0.5, 0.7, 0.5], 
+                          }}
+                          transition={{ 
+                            duration: 4, 
+                            repeat: Infinity,
+                            ease: "easeInOut" 
+                          }}
+                        />
+                        
+                        {/* Actual logo image with shadow */}
+                        <motion.img 
                           src="/careerate-icon.png" 
                           alt="Careerate Logo" 
-                          className="w-full h-full relative z-10 animate-logo-pulse"
+                          className="w-full h-full relative z-10 drop-shadow-logo"
+                          animate={{ 
+                            scale: [1, 1.02, 1],
+                          }}
+                          transition={{ 
+                            duration: 4, 
+                            repeat: Infinity,
+                            ease: "easeInOut" 
+                          }}
                         />
                       </div>
                       <div className="mb-4 relative">
