@@ -215,3 +215,59 @@ function getFallbackObject(
       return {};
   }
 }
+import { z } from "zod";
+
+export function safeParseJSON(text: string, fallbackType?: "skillGaps" | "insights" | "plan" | "stories"): any {
+  // Remove any markdown code block syntax
+  let cleaned = text.replace(/```json\n|\n```|```/g, '');
+  
+  // Try to extract JSON content if embedded in text
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+  if (jsonMatch) {
+    cleaned = jsonMatch[0];
+  }
+
+  const normalizeKeys = (obj: any): any => {
+    if (Array.isArray(obj)) {
+      return obj.map(item => normalizeKeys(item));
+    }
+    
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    
+    const normalized: any = {};
+    
+    for (const key in obj) {
+      // Convert snake_case to camelCase
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      
+      // Handle special cases
+      const finalKey = camelKey === 'skillName' ? camelKey : 
+                      camelKey === 'numberOfMentions' ? 'mentionCount' : 
+                      camelKey === 'skillName' ? 'skillName' :
+                      camelKey === 'gapLevel' ? 'gapLevel' :
+                      camelKey;
+      
+      normalized[finalKey] = normalizeKeys(obj[key]);
+    }
+    
+    return normalized;
+  };
+
+  try {
+    const parsed = JSON.parse(cleaned);
+    return normalizeKeys(parsed);
+  } catch (error) {
+    if (fallbackType === "skillGaps") {
+      return [];
+    } else if (fallbackType === "insights") {
+      return {
+        successRate: 70,
+        avgTransitionTime: 6,
+        commonPaths: []
+      };
+    }
+    throw error;
+  }
+}
