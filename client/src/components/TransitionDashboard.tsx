@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Transition } from "@/types";
+import { DashboardData } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
 
 interface TransitionDashboardProps {
-  transition: Transition | null;
-  scrapedCount: number;
+  data: DashboardData;
+  transitionId: string;
 }
 
 interface TransitionInsight {
@@ -20,19 +20,26 @@ interface TransitionInsight {
 }
 
 const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
-  transition,
-  scrapedCount,
+  data,
+  transitionId,
 }) => {
   const [insights, setInsights] = useState<TransitionInsight | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Extract transition and counts from data with fallbacks
+  const transition = data?.transition || null;
+  const scrapedCount = data?.scrapedCount || 0;
+
   // Load transition insights data
   useEffect(() => {
-    if (!transition || !transition.id) return;
+    if (!transitionId) {
+      setLoading(false);
+      return;
+    }
 
     const loadInsights = async () => {
       try {
-        const response = await apiRequest(`/api/insights/${transition.id}`);
+        const response = await apiRequest(`/api/insights/${transitionId}`);
 
         if (response && response.success && response.insights) {
           setInsights(response.insights);
@@ -45,7 +52,7 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
     };
 
     loadInsights();
-  }, [transition.id, scrapedCount]);
+  }, [transitionId]);
 
   // Only use data from API with adjusted success rate for better motivation
   const rawSuccessRate = insights?.successRate || 0;
@@ -58,8 +65,12 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
   const generateOverviewText = () => {
     if (!insights) return '';
     
+    // Get current and target role with fallbacks
+    const currentRole = transition?.currentRole || 'your current role';
+    const targetRole = transition?.targetRole || 'your target role';
+    
     // Build a more useful summary even if exact match data is limited
-    let overview = `Based on analyzed career transitions from ${transition.currentRole} to ${transition.targetRole} and similar roles, `;
+    let overview = `Based on analyzed career transitions from ${currentRole} to ${targetRole} and similar roles, `;
     
     // Add success rate context with optimistic rate
     if (insights.successRate > 0) {

@@ -8,7 +8,7 @@ import { ChevronDown, ChevronUp, Link } from "lucide-react";
 
 interface ScrapedInsightsProps {
   insights: Insight[];
-  transition: Transition;
+  transitionId: string;
 }
 
 interface TransitionStoriesData {
@@ -19,7 +19,7 @@ interface TransitionStoriesData {
 
 const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
   insights,
-  transition,
+  transitionId,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [showAllObservations, setShowAllObservations] = useState(false);
@@ -28,6 +28,10 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
   const [storiesData, setStoriesData] = useState<TransitionStoriesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [transitionDetails, setTransitionDetails] = useState<{ currentRole: string, targetRole: string }>({
+    currentRole: "current role",
+    targetRole: "target role"
+  });
 
   // Function to load and refresh scraped data
   const loadScrapedData = async (forceRefresh = false) => {
@@ -50,7 +54,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
         await apiRequest("/api/clear-data", {
           method: "POST",
           data: { 
-            transitionId: transition.id
+            transitionId: transitionId
           }
         });
         
@@ -59,7 +63,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
         await apiRequest("/api/scrape", {
           method: "POST",
           data: { 
-            transitionId: transition.id,
+            transitionId: transitionId,
             forceRefresh: true // Force new data each time for better personalization
           }
         });
@@ -70,7 +74,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
       
       // Load stories analysis data first - this generates fresh insights
       const storiesResponse = await apiRequest(
-        `/api/stories-analysis/${transition.id}?refresh=${timestamp}`
+        `/api/stories-analysis/${transitionId}?refresh=${timestamp}`
       );
 
       if (storiesResponse && storiesResponse.success && storiesResponse.data) {
@@ -79,7 +83,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
       
       // Then load the actual scraped data that was used for the analysis
       const response = await apiRequest(
-        `/api/scraped-data/${transition.id}?refresh=${timestamp}`
+        `/api/scraped-data/${transitionId}?refresh=${timestamp}`
       );
 
       if (response && response.success && response.data) {
@@ -93,11 +97,28 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
     }
   };
   
-  // Load data when component mounts
+  // Load transition details
   useEffect(() => {
-    if (!transition.id) return;
+    if (!transitionId) return;
+    
+    // Fetch transition details to get current and target roles
+    const fetchTransitionDetails = async () => {
+      try {
+        const response = await apiRequest(`/api/transitions/${transitionId}`);
+        if (response && response.success && response.transition) {
+          setTransitionDetails({
+            currentRole: response.transition.currentRole || "current role",
+            targetRole: response.transition.targetRole || "target role"
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching transition details:", error);
+      }
+    };
+    
+    fetchTransitionDetails();
     loadScrapedData();
-  }, [transition.id]);
+  }, [transitionId]);
 
   // We're not using insights directly - only using data from the API
   
@@ -136,8 +157,8 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
         cleaned.includes("not specifically") || 
         cleaned.length < 50) {
       
-      // Rewrite to focus on relevant career transition insights
-      cleaned = `This career transition story shares valuable insights about moving from ${transition.currentRole} to ${transition.targetRole}. It highlights differences in responsibilities, technical skills, and growth opportunities between these roles.`;
+      // Rewrite to focus on relevant career transition insights using our stored transition details
+      cleaned = `This career transition story shares valuable insights about moving from ${transitionDetails.currentRole} to ${transitionDetails.targetRole}. It highlights differences in responsibilities, technical skills, and growth opportunities between these roles.`;
     }
     
     return cleaned;
@@ -157,7 +178,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
       
       stories = relevantParts.map((part, i) => ({
         id: index * 100 + i,
-        transitionId: transition.id,
+        transitionId: transitionId,
         type: "story" as "observation" | "challenge" | "story",
         content: cleanContent(part),
         source: item.source || "Career Transition Story",
@@ -169,7 +190,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
       // Single story case
       stories = [{
         id: index,
-        transitionId: transition.id,
+        transitionId: transitionId,
         type: "story" as "observation" | "challenge" | "story",
         content: cleanContent(item.content),
         source: item.source || "Career Transition Story",
@@ -473,7 +494,7 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       <div className="flex-1">
                         <div className="flex items-center mb-1">
                           <h4 className="text-sm font-medium mr-2 text-white">
-                            {transition.currentRole} → {transition.targetRole}
+                            {transitionDetails.currentRole} → {transitionDetails.targetRole}
                           </h4>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${sourceBadgeClass}`}>
                             {story.source}
