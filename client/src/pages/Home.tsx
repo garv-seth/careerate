@@ -54,32 +54,71 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.4 }}
               >
-                <motion.span 
-                  className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 inline-block"
-                  whileHover={{ 
-                    color: "white", 
-                    textShadow: "0 0 8px rgba(0, 195, 255, 0.6)",
-                    transition: { duration: 0.3 }
-                  }}
-                >
-                  Transform
-                </motion.span>
+                <div className="inline-block relative">
+                  <span className="text-primary">T</span>
+                  <motion.span 
+                    className="text-primary relative inline-block"
+                    whileHover={{ 
+                      color: "white", 
+                      textShadow: "0 0 8px rgba(4, 128, 222, 0.6)",
+                      transition: { duration: 0.3 }
+                    }}
+                  >r</motion.span>
+                  <span className="text-primary">a</span>
+                  <motion.span 
+                    className="text-primary relative inline-block"
+                    whileHover={{ 
+                      color: "white", 
+                      textShadow: "0 0 8px rgba(4, 128, 222, 0.6)",
+                      transition: { duration: 0.3 }
+                    }}
+                  >n</motion.span>
+                  <span className="text-primary">s</span>
+                  <motion.span 
+                    className="text-primary relative inline-block"
+                    whileHover={{ 
+                      color: "white", 
+                      textShadow: "0 0 8px rgba(4, 128, 222, 0.6)",
+                      transition: { duration: 0.3 }
+                    }}
+                  >f</motion.span>
+                  <span className="text-primary">o</span>
+                  <motion.span 
+                    className="text-primary relative inline-block"
+                    whileHover={{ 
+                      color: "white", 
+                      textShadow: "0 0 8px rgba(4, 128, 222, 0.6)",
+                      transition: { duration: 0.3 }
+                    }}
+                  >r</motion.span>
+                  <span className="text-primary">m</span>
+                </div>
                 <br />
-                <motion.span 
-                  className="text-primary relative inline-block"
-                  whileHover={{ 
-                    color: "white", 
-                    textShadow: "0 0 8px rgba(0, 195, 255, 0.6)",
-                    transition: { duration: 0.3 }
-                  }}
-                >
-                  Your 
-                </motion.span>
+                <div className="inline-block">
+                  <motion.span 
+                    className="text-primary relative inline-block"
+                    whileHover={{ 
+                      color: "white", 
+                      textShadow: "0 0 8px rgba(4, 128, 222, 0.6)",
+                      transition: { duration: 0.3 }
+                    }}
+                  >Y</motion.span>
+                  <span className="text-primary">o</span>
+                  <motion.span 
+                    className="text-primary relative inline-block"
+                    whileHover={{ 
+                      color: "white", 
+                      textShadow: "0 0 8px rgba(4, 128, 222, 0.6)",
+                      transition: { duration: 0.3 }
+                    }}
+                  >u</motion.span>
+                  <span className="text-primary">r</span>
+                </div>
                 {" "}
                 <motion.span 
                   className="text-white relative inline-block"
                   whileHover={{ 
-                    color: "rgb(0, 195, 255)", 
+                    color: "#0480DE", 
                     transition: { duration: 0.3 }
                   }}
                 >
@@ -156,8 +195,8 @@ const Home: React.FC = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
                       <div className="relative w-28 h-28 mx-auto mb-6">
-                        {/* Actual Careerate logo with glow effect */}
-                        <div className="absolute inset-0 bg-blue-400 rounded-full opacity-10 blur-md animate-pulse-slow scale-110"></div>
+                        {/* Actual Careerate logo with subtle glow effect */}
+                        <div className="absolute inset-0 bg-[#0480DE] rounded-full opacity-5 blur-lg animate-pulse-slow scale-105"></div>
                         <img 
                           src="/careerate-icon.png" 
                           alt="Careerate Logo" 
@@ -202,7 +241,7 @@ const Home: React.FC = () => {
           className="pointer-events-none"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent z-0"></div>
-          <DigitalRain height={100} primaryColor="rgba(0, 195, 255, 1)" density={3} speed={1.2} />
+          <DigitalRain height={100} primaryColor="rgba(4, 128, 222, 1)" density={3} speed={1.2} />
         </motion.div>
         <div className="container mx-auto px-6 py-4 relative z-10">
           <motion.div
