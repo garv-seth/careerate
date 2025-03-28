@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import TransitionForm from "@/components/TransitionForm";
 import { Link } from "wouter";
 import DigitalRain from "@/components/DigitalRain";
 import { useQuery } from "@tanstack/react-query";
