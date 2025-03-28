@@ -4,7 +4,7 @@ import { Transition } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
 
 interface TransitionDashboardProps {
-  transition: Transition;
+  transition: Transition | null;
   scrapedCount: number;
 }
 
@@ -28,7 +28,7 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
 
   // Load transition insights data
   useEffect(() => {
-    if (!transition.id) return;
+    if (!transition || !transition.id) return;
 
     const loadInsights = async () => {
       try {
