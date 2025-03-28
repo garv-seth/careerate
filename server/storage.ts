@@ -85,6 +85,9 @@ export interface IStorage {
   
   // Clear all transition data
   clearTransitionData(transitionId: number): Promise<void>;
+  
+  // Store development plan with all milestones and resources
+  storeDevelopmentPlan(transitionId: number, planData: any): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -321,9 +324,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPlan(insertPlan: InsertPlan): Promise<Plan> {
+    // Type assertion to handle type mismatches with successMetrics and potentialChallenges arrays
+    const planData = {
+      transitionId: insertPlan.transitionId,
+      overview: insertPlan.overview,
+      estimatedTimeframe: insertPlan.estimatedTimeframe,
+      successMetrics: insertPlan.successMetrics || [],
+      potentialChallenges: insertPlan.potentialChallenges || []
+    };
+    
     const [plan] = await db
       .insert(plans)
-      .values(insertPlan)
+      .values(planData as any)
       .returning();
     return plan;
   }
@@ -334,9 +346,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createMilestone(insertMilestone: InsertMilestone): Promise<Milestone> {
+    // Handle type assertion for milestones
+    const milestoneData = {
+      planId: insertMilestone.planId,
+      title: insertMilestone.title,
+      description: insertMilestone.description,
+      priority: insertMilestone.priority,
+      timeframe: insertMilestone.timeframe,
+      durationWeeks: insertMilestone.durationWeeks || 4,
+      order: insertMilestone.order,
+      progress: insertMilestone.progress || 0
+    };
+    
     const [milestone] = await db
       .insert(milestones)
-      .values(insertMilestone)
+      .values(milestoneData as any)
       .returning();
     return milestone;
   }
@@ -347,9 +371,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createResource(insertResource: InsertResource): Promise<Resource> {
+    // Handle type assertion for resources
+    const resourceData = {
+      milestoneId: insertResource.milestoneId,
+      title: insertResource.title,
+      description: insertResource.description,
+      url: insertResource.url,
+      type: insertResource.type
+    };
+    
     const [resource] = await db
       .insert(resources)
-      .values(insertResource)
+      .values(resourceData as any)
       .returning();
     return resource;
   }
@@ -418,6 +451,65 @@ export class DatabaseStorage implements IStorage {
     
     // Keep the transition record itself
     console.log(`Cleared all data for transition ID: ${transitionId}`);
+  }
+  
+  // Store development plan data
+  async storeDevelopmentPlan(transitionId: number, planData: any): Promise<void> {
+    console.log(`Storing development plan for transition ID: ${transitionId}`);
+    
+    try {
+      // First, clear any existing plan data
+      await this.deletePlansByTransitionId(transitionId);
+      
+      // Create the plan record
+      const plan = await this.createPlan({
+        transitionId,
+        overview: planData.overview || `Development plan for transition ${transitionId}`,
+        estimatedTimeframe: planData.estimatedTimeframe || "3-6 months",
+        successMetrics: planData.successMetrics || [],
+        potentialChallenges: planData.potentialChallenges || []
+      });
+      
+      // Create milestones if they exist
+      if (planData.milestones && Array.isArray(planData.milestones)) {
+        for (let i = 0; i < planData.milestones.length; i++) {
+          const milestoneData = planData.milestones[i];
+          
+          // Create milestone record
+          const milestone = await this.createMilestone({
+            planId: plan.id,
+            title: milestoneData.title || `Milestone ${i + 1}`,
+            description: milestoneData.description || "",
+            timeframe: milestoneData.timeframe || "2-4 weeks",
+            order: i + 1,
+            priority: milestoneData.priority || "Medium"
+          });
+          
+          // Create resources for this milestone if they exist
+          if (milestoneData.tasks && Array.isArray(milestoneData.tasks)) {
+            for (const task of milestoneData.tasks) {
+              // Create resources for this task
+              if (task.resources && Array.isArray(task.resources)) {
+                for (const resourceData of task.resources) {
+                  await this.createResource({
+                    milestoneId: milestone.id,
+                    title: resourceData.title || "Learning Resource",
+                    description: task.task || "",  // Use task description if available
+                    url: resourceData.url || "#",
+                    type: resourceData.type || "other"
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      console.log(`Successfully stored development plan for transition ID: ${transitionId}`);
+    } catch (error) {
+      console.error(`Error storing development plan for transition ID: ${transitionId}:`, error);
+      throw error;
+    }
   }
 }
 

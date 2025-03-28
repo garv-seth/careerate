@@ -150,11 +150,19 @@ export type SkillGap = typeof skillGaps.$inferSelect;
 export const plans = pgTable("plans", {
   id: serial("id").primaryKey(),
   transitionId: integer("transition_id").notNull(),
+  overview: text("overview"),
+  estimatedTimeframe: text("estimated_timeframe"),
+  successMetrics: json("success_metrics").$type<string[]>().default([]),
+  potentialChallenges: json("potential_challenges").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertPlanSchema = createInsertSchema(plans).pick({
   transitionId: true,
+  overview: true,
+  estimatedTimeframe: true,
+  successMetrics: true,
+  potentialChallenges: true,
 });
 
 export type InsertPlan = z.infer<typeof insertPlanSchema>;
@@ -167,7 +175,8 @@ export const milestones = pgTable("milestones", {
   title: text("title").notNull(),
   description: text("description"),
   priority: text("priority").notNull(), // "Low", "Medium", "High"
-  durationWeeks: integer("duration_weeks").notNull(),
+  timeframe: text("timeframe"),
+  durationWeeks: integer("duration_weeks").default(4), // Default to 4 weeks if not specified
   order: integer("order").notNull(),
   progress: integer("progress").default(0).notNull(), // 0-100
 });
@@ -177,6 +186,7 @@ export const insertMilestoneSchema = createInsertSchema(milestones).pick({
   title: true,
   description: true,
   priority: true,
+  timeframe: true,
   durationWeeks: true,
   order: true,
   progress: true,
@@ -190,6 +200,7 @@ export const resources = pgTable("resources", {
   id: serial("id").primaryKey(),
   milestoneId: integer("milestone_id").notNull(),
   title: text("title").notNull(),
+  description: text("description"),
   url: text("url").notNull(),
   type: text("type").notNull(), // "Book", "Video", "Course", "GitHub"
 });
@@ -197,6 +208,7 @@ export const resources = pgTable("resources", {
 export const insertResourceSchema = createInsertSchema(resources).pick({
   milestoneId: true,
   title: true,
+  description: true,
   url: true,
   type: true,
 });
