@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Insight, Transition, ScrapedData } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp, Link } from "lucide-react";
 
 interface ScrapedInsightsProps {
   insights: Insight[];
@@ -12,6 +14,7 @@ interface ScrapedInsightsProps {
 interface TransitionStoriesData {
   keyObservations: string[];
   commonChallenges: string[];
+  sources?: {[key: string]: string};
 }
 
 const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
@@ -19,6 +22,8 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
   transition,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [showAllObservations, setShowAllObservations] = useState(false);
+  const [showAllChallenges, setShowAllChallenges] = useState(false);
   const [scrapedData, setScrapedData] = useState<ScrapedData[]>([]);
   const [storiesData, setStoriesData] = useState<TransitionStoriesData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -223,16 +228,57 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
               Key Observations
             </h3>
 
-            <ul className="space-y-3">
+            <div className="space-y-3">
               {keyObservations.length > 0 ? (
-                keyObservations.map((content, i) => ({
-                  id: i,
-                  content
-                })).map((observation, idx) => (
-                  <li key={idx} className="flex items-start">
+                <>
+                  <ul className="space-y-3">
+                    {keyObservations
+                      .slice(0, showAllObservations ? keyObservations.length : 3)
+                      .map((content, i) => (
+                        <li key={i} className="flex items-start">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-primary-light mr-2 mt-0.5 flex-shrink-0"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <p className="text-sm text-text-secondary">
+                            {content}
+                          </p>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                  
+                  {keyObservations.length > 3 && (
+                    <div className="pt-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary text-xs flex items-center"
+                        onClick={() => setShowAllObservations(!showAllObservations)}
+                      >
+                        {showAllObservations ? (
+                          <>Show less <ChevronUp className="h-3 w-3 ml-1" /></>
+                        ) : (
+                          <>View all {keyObservations.length} observations <ChevronDown className="h-3 w-3 ml-1" /></>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <ul className="space-y-3">
+                  <li className="flex items-start">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-primary-light mr-2 mt-0.5"
+                      className="h-5 w-5 text-primary-light mr-2 mt-0.5 flex-shrink-0"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -243,33 +289,15 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       />
                     </svg>
                     <p className="text-sm text-text-secondary">
-                      {observation.content}
+                      <span className="text-text font-medium">
+                        Successful transition pattern:
+                      </span>{" "}
+                      Professionals making this transition typically focus on building strong technical expertise in systems design and scalability, while highlighting their experience with distributed systems and cloud infrastructure.
                     </p>
                   </li>
-                ))
-              ) : (
-                <li className="flex items-start">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-primary-light mr-2 mt-0.5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="text-sm text-text-secondary">
-                    <span className="text-text font-medium">
-                      Successful transition pattern:
-                    </span>{" "}
-                    Professionals making this transition typically focus on building strong technical expertise in systems design and scalability, while highlighting their experience with distributed systems and cloud infrastructure.
-                  </p>
-                </li>
+                </ul>
               )}
-            </ul>
+            </div>
           </div>
 
           <div>
@@ -289,16 +317,57 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
               Common Challenges
             </h3>
 
-            <ul className="space-y-3">
+            <div className="space-y-3">
               {commonChallenges.length > 0 ? (
-                commonChallenges.map((content, i) => ({
-                  id: i,
-                  content
-                })).map((challenge, idx) => (
-                  <li key={idx} className="flex items-start">
+                <>
+                  <ul className="space-y-3">
+                    {commonChallenges
+                      .slice(0, showAllChallenges ? commonChallenges.length : 3)
+                      .map((content, i) => (
+                        <li key={i} className="flex items-start">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-primary-light mr-2 mt-0.5 flex-shrink-0"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          <p className="text-sm text-text-secondary">
+                            {content}
+                          </p>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                  
+                  {commonChallenges.length > 3 && (
+                    <div className="pt-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-primary text-xs flex items-center"
+                        onClick={() => setShowAllChallenges(!showAllChallenges)}
+                      >
+                        {showAllChallenges ? (
+                          <>Show less <ChevronUp className="h-3 w-3 ml-1" /></>
+                        ) : (
+                          <>View all {commonChallenges.length} challenges <ChevronDown className="h-3 w-3 ml-1" /></>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <ul className="space-y-3">
+                  <li className="flex items-start">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-primary-light mr-2 mt-0.5"
+                      className="h-5 w-5 text-primary-light mr-2 mt-0.5 flex-shrink-0"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -309,33 +378,15 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                       />
                     </svg>
                     <p className="text-sm text-text-secondary">
-                      {challenge.content}
+                      <span className="text-text font-medium">
+                        Common transition hurdle:
+                      </span>{" "}
+                      Adjusting to the target company's unique interview process and culture. Candidates may need to develop specific technical skills and adapt to different problem-solving approaches.
                     </p>
                   </li>
-                ))
-              ) : (
-                <li className="flex items-start">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-primary-light mr-2 mt-0.5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <p className="text-sm text-text-secondary">
-                    <span className="text-text font-medium">
-                      Common transition hurdles:
-                    </span>{" "}
-                    Adjusting to Google's unique interview process, which emphasizes algorithm design and system architecture. Candidates may also need to adapt to Google's culture that values innovation and collaborative problem-solving approaches.
-                  </p>
-                </li>
+                </ul>
               )}
-            </ul>
+            </div>
           </div>
         </div>
 

@@ -30,22 +30,53 @@ export class CareerTransitionSearch extends StructuredTool {
 
   /**
    * Run the career transition search
-   * Performs a specialized search for career transition information
+   * Performs a specialized search for career transition information from diverse sources
    */
   async _call({
     query,
     currentRole,
     targetRole,
   }: z.infer<typeof this.schema>): Promise<string> {
-    // Create a specialized career transition search query
-    const enhancedQuery = `${query} for transition from ${currentRole} to ${targetRole} career path real experiences forums Reddit Quora Blind`;
+    // Extract company and role information
+    const currentCompany = currentRole.split(' ')[0];
+    const currentRoleTitle = currentRole.split(' ').slice(1, -2).join(' ');
+    const targetCompany = targetRole.split(' ')[0];
+    const targetRoleTitle = targetRole.split(' ').slice(1, -2).join(' ');
     
-    console.log(`Running career transition search: ${enhancedQuery}`);
-
-    // Use the Tavily search tool
-    const searchResults = await this.tavilyTool.invoke(enhancedQuery);
+    // Create multiple specialized search queries to get more diverse results
+    const searchQueries = [
+      // Exact role search
+      `${query} for transition from ${currentRole} to ${targetRole} career path real experiences`,
+      
+      // Generic role search (without company)
+      `${currentRoleTitle} to ${targetRoleTitle} transition experiences success stories challenges`,
+      
+      // Search focused on companies
+      `transition from ${currentCompany} to ${targetCompany} employee experiences career change`,
+      
+      // Focused on blogs and professional sites
+      `${currentRole} to ${targetRole} career transition case study blog linkedin medium`
+    ];
     
-    return searchResults;
+    console.log(`Running diverse career transition searches for ${currentRole} to ${targetRole}`);
+    
+    // Combine results from multiple searches
+    let allResults = "";
+    
+    for (const enhancedQuery of searchQueries) {
+      try {
+        console.log(`Searching: ${enhancedQuery}`);
+        const searchResult = await this.tavilyTool.invoke(enhancedQuery);
+        if (searchResult && searchResult.length > 0) {
+          allResults += searchResult + "\n\n";
+        }
+      } catch (error) {
+        console.error(`Error in search query "${enhancedQuery}":`, error);
+        // Continue with other queries even if one fails
+      }
+    }
+    
+    return allResults;
   }
 }
 
