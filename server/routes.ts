@@ -351,7 +351,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Scrape forums for transition data - simplified endpoint for frontend
+  // Track in-progress scraping operations to prevent multiple requests
+  const inProgressScrapingOperations = new Set<number>();
+  
+  // Scrape forums for transition data - simplified endpoint for frontend with improved error handling
   apiRouter.post("/scrape", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
@@ -365,6 +368,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Check if this transition is already being processed
+      if (inProgressScrapingOperations.has(transitionId)) {
+        return res.json({
+          success: true,
+          message: "Scraping is already in progress for this transition",
+          alreadyInProgress: true
+        });
+      }
+      
       // Get transition
       const transition = await storage.getTransition(transitionId);
       if (!transition) {
@@ -376,7 +388,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get user ID from transition or request
       const userId = transition.userId || (req.user as any)?.id || 1;
-
+      
+      // Add this transition to in-progress set
+      inProgressScrapingOperations.add(transitionId);
+      
       // If force refresh is enabled, clear existing data first
       if (forceRefresh) {
         console.log(`Force refresh enabled for transition ${transitionId}, clearing existing data...`);
@@ -410,26 +425,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date().toISOString().split('T')[0];
       
       // Perform scraping with additional context for more diverse results
-      // The uniqueTag and today's date trick search engines into avoiding cached results
-      console.log(`Starting web scraping for ${transition.currentRole} to ${transition.targetRole} transition (${uniqueTag} - ${today})`);
-      
-      agent.analyzeCareerTransition(
-        transition.currentRole,
-        transition.targetRole,
-        transitionId,
-        []
-      ).catch(error => {
-        console.error("Background analysis error:", error);
-      });
+      try {
+        // The uniqueTag and today's date trick search engines into avoiding cached results
+        console.log(`Starting web scraping for ${transition.currentRole} to ${transition.targetRole} transition (${uniqueTag} - ${today})`);
+        
+        await agent.analyzeCareerTransition(
+          transition.currentRole,
+          transition.targetRole,
+          transitionId,
+          []
+        );
+        
+        console.log(`Completed scraping and analysis for transition ${transitionId}`);
+      } catch (analysisError) {
+        console.error(`Background analysis error for transition ${transitionId}:`, analysisError);
+        
+        // Try to mark the transition as complete even if there was an error
+        try {
+          await storage.updateTransitionStatus(transitionId, true);
+        } catch (updateError) {
+          console.error(`Failed to update transition status for ${transitionId}:`, updateError);
+        }
+      } finally {
+        // Always remove this transition from the in-progress set
+        inProgressScrapingOperations.delete(transitionId);
+      }
       
     } catch (error) {
       console.error("Error in scraping:", error);
+      // Make sure to remove from in-progress in case of errors
+      if (req.body.transitionId) {
+        const transitionId = parseInt(req.body.transitionId);
+        if (!isNaN(transitionId)) {
+          inProgressScrapingOperations.delete(transitionId);
+        }
+      }
+      
       res.status(500).json({ 
         success: false, 
         error: "Failed to scrape transition data" 
       });
     }
   });
+
+  // Track in-progress analysis operations to prevent multiple requests
+  const inProgressAnalysisOperations = new Set<number>();
 
   // Analyze skill gaps - simplified endpoint for frontend
   apiRouter.post("/analyze", async (req, res) => {
@@ -441,6 +481,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ 
           success: false, 
           error: "Invalid transition ID" 
+        });
+      }
+
+      // Check if this transition is already being analyzed
+      if (inProgressAnalysisOperations.has(transitionId)) {
+        return res.json({
+          success: true,
+          message: "Analysis is already in progress for this transition",
+          alreadyInProgress: true
         });
       }
 
@@ -469,6 +518,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Analysis initiated" 
       });
       
+      // Mark this transition as in-progress for analysis
+      inProgressAnalysisOperations.add(transitionId);
+      
       // Call the memory-enabled analysis asynchronously
       try {
         console.log(`Starting memory-enabled analysis for ${transition.currentRole} → ${transition.targetRole}`);
@@ -493,7 +545,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // If analysis failed and no skill gaps exist, create default ones based on role information
         if (existingSkillGaps.length === 0) {
-          console.log("Analysis failed, creating default skill gaps based on roles");
+          console.log("No skill gaps found, generating skill gaps using LangGraph");
+          
+          try {
+            // First try to use LangGraph to generate skill gaps without the agent
+            const skillGapsPrompt = `
+              Generate skill gaps for career transition from ${transition.currentRole} to ${transition.targetRole}.
+              For each skill gap, provide:
+              1. Skill name (concise description of the skill)
+              2. Gap level ("Low", "Medium", or "High" importance)
+              3. Confidence score (numeric value from 50-100)
+              
+              Return 5-7 real technical and professional skills in JSON format as an array:
+              [
+                {
+                  "skillName": "string",
+                  "gapLevel": "Low|Medium|High",
+                  "confidenceScore": number,
+                  "mentionCount": number
+                }
+              ]
+            `;
+            
+            const langGraphResponse = await callLLM(skillGapsPrompt, 800);
+            
+            try {
+              const jsonMatch = langGraphResponse.match(/\[\s*\{.*\}\s*\]/s);
+              if (jsonMatch) {
+                const parsedSkillGaps = JSON.parse(jsonMatch[0]);
+                
+                // Store the generated skill gaps
+                for (const skill of parsedSkillGaps) {
+                  await storage.createSkillGap({
+                    transitionId,
+                    skillName: skill.skillName,
+                    gapLevel: skill.gapLevel as "High" | "Medium" | "Low",
+                    confidenceScore: skill.confidenceScore || 70,
+                    mentionCount: skill.mentionCount || 1
+                  });
+                }
+                
+                console.log(`Created ${parsedSkillGaps.length} real skill gaps for transition using LangGraph`);
+              } else {
+                throw new Error("No skill gaps found in LangGraph response");
+              }
+            } catch (parseError) {
+              console.error("Error parsing skill gaps from LangGraph:", parseError);
+              useDefaultSkillGaps();
+            }
+          } catch (langGraphError) {
+            console.error("Error generating skill gaps with LangGraph:", langGraphError);
+            useDefaultSkillGaps();
+          }
+        }
+        
+        // Helper function to generate default skill gaps when all else fails
+        async function useDefaultSkillGaps() {
+          console.log("Falling back to default skill gaps based on roles");
           
           // Get target role skills from our predefined list
           const targetRoleSkills = await storage.getRoleSkills(transition.targetRole);
@@ -511,9 +619,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 { name: "Algorithm Optimization", priority: "High", confidence: 80, mentions: 5 },
                 { name: "Distributed Systems", priority: "Medium", confidence: 75, mentions: 4 },
                 { name: "Leadership", priority: "Medium", confidence: 70, mentions: 6 },
-                { name: "Python", priority: "Medium", confidence: 65, mentions: 3 },
-                { name: "Go", priority: "Low", confidence: 60, mentions: 2 },
-                { name: "Java", priority: "Low", confidence: 55, mentions: 3 }
+                { name: "Programming Languages", priority: "Medium", confidence: 65, mentions: 3 },
+                { name: "Project Management", priority: "Low", confidence: 60, mentions: 2 },
+                { name: "Communication", priority: "Low", confidence: 55, mentions: 3 }
               ];
           
           // Store the default skills as skill gaps
@@ -529,10 +637,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Created ${defaultSkills.length} default skill gaps for transition`);
         }
+        
+        // Always mark the transition as complete even in case of error
+        try {
+          await storage.updateTransitionStatus(transitionId, true);
+        } catch (updateError) {
+          console.error("Failed to update transition status after error:", updateError);
+        }
+      } finally {
+        // Always remove this transition from the in-progress set
+        inProgressAnalysisOperations.delete(transitionId);
       }
       
     } catch (error) {
       console.error("Error in analysis:", error);
+      
+      // Make sure to remove from in-progress in case of errors
+      if (req.body.transitionId) {
+        const transitionId = parseInt(req.body.transitionId);
+        if (!isNaN(transitionId)) {
+          inProgressAnalysisOperations.delete(transitionId);
+        }
+      }
+      
       res.status(500).json({ 
         success: false, 
         error: "Failed to analyze transition data" 

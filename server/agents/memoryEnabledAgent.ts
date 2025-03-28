@@ -26,41 +26,58 @@ export class MemoryEnabledAgent {
 
   constructor(userId: number, transitionId: number) {
     this.transitionId = transitionId;
+    
     // Initialize the model with Gemini 2.0 Flash Lite
+    // We use the normal initialization without tools to avoid schema conversion errors
     this.model = new ChatGoogleGenerativeAI({
       apiKey: process.env.GOOGLE_API_KEY || "",
       modelName: "gemini-2.0-flash-lite", // Ensure we're using 2.0 Flash Lite
       temperature: 0.3,
       maxOutputTokens: 2048,
     });
-
-    // Initialize memory store with OpenAI embeddings
-    this.memoryStore = new MemoryVectorStore(
-      new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY || "",
-      }),
-    );
+    
+    // Initialize memory store with OpenAI embeddings or fallback
+    try {
+      this.memoryStore = new MemoryVectorStore(
+        new OpenAIEmbeddings({
+          openAIApiKey: process.env.OPENAI_API_KEY || "",
+        }),
+      );
+    } catch (error) {
+      console.warn("Failed to initialize memory store with embeddings:", error);
+      // Use a simple in-memory store as fallback with no embeddings
+      this.memoryStore = new MemoryVectorStore();
+    }
 
     // Store the user ID for memory access
     this.userId = userId;
 
     // Initialize MCP handler
-    this.mcpHandler = new MCPHandler(userId, transitionId);
+    try {
+      this.mcpHandler = new MCPHandler(userId, transitionId);
+      
+      // Initialize MCP handler in the background
+      this.initializeMCP().catch(error => {
+        console.error("Error initializing MCP:", error);
+      });
+    } catch (error) {
+      console.error("Failed to initialize MCP handler:", error);
+    }
 
     // Initialize tools including memory operations
-    this.tools = [
-      new TavilySearchResults({
-        maxResults: 5,
-        apiKey: process.env.TAVILY_API_KEY,
-      }),
-      this.createSaveMemoryTool(),
-      this.createRetrieveMemoryTool(),
-    ];
-    
-    // Initialize MCP handler
-    this.initializeMCP().catch(error => {
-      console.error("Error initializing MCP:", error);
-    });
+    try {
+      this.tools = [
+        new TavilySearchResults({
+          maxResults: 5,
+          apiKey: process.env.TAVILY_API_KEY,
+        }),
+        this.createSaveMemoryTool(),
+        this.createRetrieveMemoryTool(),
+      ];
+    } catch (error) {
+      console.error("Failed to initialize tools:", error);
+      this.tools = [];
+    }
   }
 
   /**
@@ -141,6 +158,9 @@ export class MemoryEnabledAgent {
   /**
    * Analyze a career transition from current to target role
    */
+  // Keep track of in-progress transitions to prevent recursive calls
+  private static inProgressTransitions = new Set<number>();
+  
   async analyzeCareerTransition(
     currentRole: string,
     targetRole: string,
@@ -151,6 +171,19 @@ export class MemoryEnabledAgent {
     insights: any;
     scrapedCount: number;
   }> {
+    // Check if this transition is already being processed
+    if (MemoryEnabledAgent.inProgressTransitions.has(transitionId)) {
+      console.warn(`Career transition analysis already in progress for ID ${transitionId}, skipping duplicate request`);
+      return {
+        skillGaps: this.getFallbackSkillGaps(currentRole, targetRole),
+        insights: this.getFallbackInsights(currentRole, targetRole),
+        scrapedCount: 0,
+      };
+    }
+    
+    // Mark this transition as in-progress
+    MemoryEnabledAgent.inProgressTransitions.add(transitionId);
+    
     try {
       console.log(
         `Starting career transition analysis: ${currentRole} → ${targetRole}`,
@@ -159,48 +192,87 @@ export class MemoryEnabledAgent {
       // Clear existing data for fresh analysis
       await storage.clearTransitionData(transitionId);
 
-      // Bind tools to the model
-      const modelWithTools = this.model.bindTools(this.tools);
+      // Check if tools exist before trying to bind them
+      let modelWithTools;
+      if (this.tools && this.tools.length > 0) {
+        try {
+          // Bind tools to the model with error handling
+          modelWithTools = this.model.bindTools(this.tools);
+        } catch (bindError) {
+          console.error("Error binding tools to model:", bindError);
+          // Fall back to using the model without tools
+          modelWithTools = this.model;
+        }
+      } else {
+        // If no tools are available, just use the base model
+        modelWithTools = this.model;
+      }
 
-      // Step 1: Research transition stories
-      const stories = await this.researchTransitionStories(
-        modelWithTools,
-        currentRole,
-        targetRole,
-        transitionId,
-      );
+      // Step 1: Research transition stories - with error isolation
+      let stories = [];
+      try {
+        stories = await this.researchTransitionStories(
+          modelWithTools,
+          currentRole,
+          targetRole,
+          transitionId,
+        );
+      } catch (storiesError) {
+        console.error("Error researching transition stories:", storiesError);
+        // Continue with empty stories rather than failing the whole process
+      }
 
-      // Step 2: Analyze skill gaps
-      const skillGaps = await this.analyzeSkillGaps(
-        modelWithTools,
-        currentRole,
-        targetRole,
-        transitionId,
-        existingSkills,
-        stories,
-      );
+      // Step 2: Analyze skill gaps - with error isolation
+      let skillGaps = [];
+      try {
+        skillGaps = await this.analyzeSkillGaps(
+          modelWithTools,
+          currentRole,
+          targetRole,
+          transitionId,
+          existingSkills,
+          stories,
+        );
+      } catch (skillGapsError) {
+        console.error("Error analyzing skill gaps:", skillGapsError);
+        // Fall back to generated skill gaps
+        skillGaps = this.getFallbackSkillGaps(currentRole, targetRole);
+      }
 
-      // Step 3: Generate insights
-      const insights = await this.generateInsights(
-        modelWithTools,
-        currentRole,
-        targetRole,
-        transitionId,
-        stories,
-        skillGaps,
-      );
+      // Step 3: Generate insights - with error isolation
+      let insights = {};
+      try {
+        insights = await this.generateInsights(
+          modelWithTools,
+          currentRole,
+          targetRole,
+          transitionId,
+          stories,
+          skillGaps,
+        );
+      } catch (insightsError) {
+        console.error("Error generating insights:", insightsError);
+        // Fall back to generated insights
+        insights = this.getFallbackInsights(currentRole, targetRole);
+      }
 
-      // Step 4: Create development plan
-      const plan = await this.createDevelopmentPlan(
-        modelWithTools,
-        currentRole,
-        targetRole,
-        transitionId,
-        skillGaps,
-        insights,
-      );
+      // Step 4: Create development plan - with error isolation
+      let plan = {};
+      try {
+        plan = await this.createDevelopmentPlan(
+          modelWithTools,
+          currentRole,
+          targetRole,
+          transitionId,
+          skillGaps,
+          insights,
+        );
+      } catch (planError) {
+        console.error("Error creating development plan:", planError);
+        // Continue without a plan
+      }
 
-      // Mark the transition as complete
+      // Always mark the transition as complete, regardless of partial failures
       await storage.updateTransitionStatus(transitionId, true);
 
       // Return the combined results
@@ -213,13 +285,24 @@ export class MemoryEnabledAgent {
         scrapedCount: stories.length,
       };
     } catch (error) {
-      console.error("Error in career transition analysis:", error);
+      console.error("Critical error in career transition analysis:", error);
+      
+      // Try to mark the transition as complete even in case of error
+      try {
+        await storage.updateTransitionStatus(transitionId, true);
+      } catch (updateError) {
+        console.error("Failed to update transition status after error:", updateError);
+      }
+      
       // Return fallback results if there's an error
       return {
         skillGaps: this.getFallbackSkillGaps(currentRole, targetRole),
         insights: this.getFallbackInsights(currentRole, targetRole),
         scrapedCount: 0,
       };
+    } finally {
+      // Always remove this transition from the in-progress set
+      MemoryEnabledAgent.inProgressTransitions.delete(transitionId);
     }
   }
 
