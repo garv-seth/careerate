@@ -29,6 +29,13 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Image assets 
+attached_assets/
+*.jpg
+*.jpeg
+*.png
+*.ico
+
 # Logs and databases
 *.log
 local_settings.py
