@@ -45,7 +45,18 @@ const Dashboard: React.FC = () => {
   // Process API with corrected logical sequence to ensure proper data flow
   useEffect(() => {
     const processApiSteps = async () => {
-      if (!data || data.isComplete || isProcessing) return;
+      // Don't process if:
+      // 1. No data is available yet
+      // 2. Analysis is already complete
+      // 3. Already processing
+      // This fixes the issue of attempting to reprocess completed transitions
+      if (!data || data.isComplete || isProcessing) {
+        // If analysis is already complete, make sure loading stage is cleared
+        if (data?.isComplete && loadingStage !== null) {
+          setLoadingStage(null);
+        }
+        return;
+      }
 
       setIsProcessing(true);
       
@@ -170,13 +181,14 @@ const Dashboard: React.FC = () => {
     };
 
     processApiSteps();
-  }, [data, transitionId, toast, queryClient, isProcessing]);
+  }, [data, transitionId, toast, queryClient, isProcessing, loadingStage]);
 
   // Loading state handling
-
-  // Show engaging loader when data is loading or being processed
-  if (isLoading || loadingStage) {
-    // Different loading states for initial data load vs processing steps
+  
+  // Only show the loader when data is initially loading (not when analysis is complete)
+  // This fixes the issue where the loading UI persists even after analysis is done
+  if (isLoading || (loadingStage && !data?.isComplete)) {
+    // Only show processing steps if actually in-progress and not complete
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
