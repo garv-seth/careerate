@@ -1,0 +1,165 @@
+API Overview
+Levels.fyi Salary Data API
+Description
+Access comprehensive tech industry salary data from Levels.fyi, the leading platform for verified compensation insights. This API provides detailed salary information across hundreds of tech companies, roles, and locations, helping you make data-driven decisions about your career or organization.
+
+Key Features
+💰 Comprehensive Compensation Data: Access detailed salary information including base pay, stock grants, bonuses, and total compensation
+🏢 Multi-Company Coverage: Data from top tech companies including Google, Meta, Amazon, Microsoft, and many more
+👩‍💻 Extensive Role Coverage: 80+ job families including Software Engineering, Product Management, Data Science, Design, and more
+🌍 Global Location Data: Salary information across different cities and countries
+🔄 Regular Updates: Fresh salary data reflecting current market conditions
+⚡ High Performance: Fast response times with efficient pagination
+Use Cases
+📊 Salary Benchmarking: Compare compensation across companies, roles, and locations
+💼 Career Planning: Make informed decisions about job opportunities and negotiations
+📈 Market Analysis: Track compensation trends in the tech industry
+🎯 Recruitment: Set competitive compensation packages
+📱 Integration: Build salary insights into your HR or career planning applications
+Getting Started
+Subscribe to the API
+Use your RapidAPI key for authentication
+Start querying salary data using various filters:
+Company
+Job Role
+Location
+Work Arrangement (Remote/Hybrid/Office)
+Experience Level
+Example Applications
+Salary Comparison Tools
+Career Planning Platforms
+HR Management Systems
+Job Search Applications
+Market Research Tools
+Custom Solutions
+🔧 Need More Data? We can help!
+
+Custom Scraper Development
+Additional Data Sources Integration
+Specialized API Endpoints
+Custom Data Formats
+Dedicated Support
+Contact us at geckotechmail@gmail.com for:
+
+Custom scraper development requests
+New feature suggestions
+Technical support
+Partnership opportunities
+Special requirements
+Support
+Comprehensive API Documentation
+Regular Updates and Maintenance
+Professional Support
+Email Support: geckotechmail@gmail.com
+Response Time: Within 24 hours
+Start building with the most comprehensive tech salary data available through our secure and reliable API. For custom solutions or specific requirements, don't hesitate to reach out - we're here to help you succeed!
+
+
+levels.fyi Unofficial Api
+
+Levels.fyi API Documentation
+Overview
+The Levels.fyi API provides access to comprehensive salary data across various tech companies, roles, and locations. This API allows you to query detailed compensation information including base salary, stock grants, bonuses, and other benefits.
+
+Endpoints
+Get Salaries
+Endpoint: GET /salaries
+
+Retrieves salary information based on various filtering criteria.
+
+Request Parameters
+Parameter	Type	Required	Description
+limit	number	Yes	Number of records to return (max: 50)
+offset	number	Yes	Number of records to skip
+jobFamilySlug	string	Yes (if companySlug is not provided)	Job family/title. Examples: software-engineer, backend-software-engineer, frontend-software-engineer, full-stack-software-engineer, mobile-software-engineer, ios-engineer, android-engineer, devops-engineer, site-reliability-engineer, systems-engineer, security-software-engineer, quality-assurance-(qa)-software-engineer, hardware-engineer, mechanical-engineer, civil-engineer, geological-engineer, biomedical-engineer, networking-engineer, production-software-engineer, sales-engineer, machine-learning-engineer, ai-engineer, ai-researcher, data-engineer, data-scientist, analytics-engineer, business-intelligence-engineer, data-analyst, distributed-systems-back-end, game-development, virtual-reality-software-engineer, crypto-engineer, embedded-systems-software-developer, video-game-software-engineer, mlops, ux-eng, linguistic-engineer, software-engineering-manager, technical-program-manager, program-manager, project-manager, product-manager, data-science-manager, product-design-manager, business-operations-manager, facilities-manager, property-manager, partner-manager, chief-of-staff, founder, product-designer, industrial-designer, fashion-designer, ux-researcher, graphic-designer, technical-writer, copywriter, business-development, business-operations, business-analyst, financial-analyst, management-consultant, investment-banker, venture-capitalist, corporate-development, customer-service-operations, marketing-operations, research-scientist, applied-scientist, developer-advocate, solution-architect, security-analyst, information-technologist, accountant, human-resources, marketing, recruiter, sales, legal, customer-service, administration, administrative-assistant, real-estate-agent, technical, consumer, enterprise, analytic, growth, data
+companySlug	string	Yes (if jobFamilySlug is not provided)	Company identifier to filter by
+sortBy	string	No	Sort results by field. Options: offer_date, base_salary, total_compensation
+sortOrder	string	No	Sort direction. Options: ASC, DESC
+locationIds	number[]	No	Array of location IDs to filter by
+currency	string	No	Currency for compensation values. Examples: USD, GBP
+searchText	string	No	Free text search query
+gender	string	No	Filter by gender. Options: male, female, non-binary
+workArrangement	string	No	Filter by work arrangement. Options: office, hybrid, remote
+Pagination
+The API uses cursor-based pagination with limit and offset parameters. Note that:
+
+The maximum allowed value for limit is 50
+Requests with limit greater than 50 will return a 400 error
+Negative values for limit or offset are not allowed
+Response
+{
+  total: number;          // Total number of matching records
+  hidden: number;         // Number of hidden records
+  rows: Array&lt;{
+    uuid?: string;        // Unique identifier for the salary entry
+    company?: string;     // Company name
+    title?: string;       // Job title
+    jobFamily?: string;   // Job family/category
+    level?: string;       // Company level (e.g., L3, L4)
+    focusTag?: string;    // Area of focus
+    yearsOfExperience?: number | string;  // Years of total experience
+    yearsAtCompany?: number | string;     // Years at current company
+    yearsAtLevel?: number | string;       // Years at current level
+    offerDate?: string;   // Date of the offer
+    location?: string;    // Location
+    workArrangement?: string;  // Work arrangement type
+    baseSalary?: number;  // Base salary amount
+    baseSalaryCurrency?: string;  // Currency of base salary
+    totalCompensation?: number;   // Total compensation amount
+    avgAnnualStockGrantValue?: number;  // Average annual stock grant value
+    stockGrantCurrency?: string;  // Currency of stock grant
+    avgAnnualBonusValue?: number;  // Average annual bonus value
+    bonusCurrency?: string;  // Currency of bonus
+    salesComp?: {          // Sales compensation details (if applicable)
+      annualCommissionValue?: number;
+      commissionCurrency?: string;
+      potentialAnnualEarningsValue?: number;
+    };
+    companyInfo?: {       // Company information
+      registered?: boolean;
+      icon?: string;
+      name?: string;
+      slug?: string;
+    };
+  }
+}
+Search Companies
+Endpoint: GET /company/:query
+
+Search for companies by name. Returns a list of matching companies with basic information.
+
+Path Parameters
+Parameter	Type	Required	Description
+query	string	Yes	Company name to search for
+Response Format
+Array&lt;{
+  id: string;         // Unique identifier for the company
+  order: number;      // Display order
+  parent: string | null; // Parent company ID if applicable
+  slug: string;       // URL-friendly company identifier
+  icon: string | null; // Company icon URL
+  type: string;       // Entity type (always "company")
+  displayValue: string; // Display name of the company
+}&gt;
+Example Request
+GET /company/Google
+Example Response
+[
+  {
+    "id": "1",
+    "order": 6,
+    "parent": null,
+    "slug": "google",
+    "icon": "https://static.levels.fyi/googlelogo.png",
+    "type": "company",
+    "displayValue": "Google"
+  }
+]
+Notes
+Returns an empty array if no companies match the search query
+The search is case-insensitive
+Partial matches are supported
+Health Check
+Endpoint: GET /healthcheck
+
+Returns the API health status.

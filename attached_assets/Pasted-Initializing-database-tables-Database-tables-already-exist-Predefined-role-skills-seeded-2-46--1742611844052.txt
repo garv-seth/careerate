@@ -1,0 +1,207 @@
+Initializing database tables...
+Database tables already exist
+Predefined role skills seeded
+2:46:26 AM [express] serving on port 5000
+2:46:31 AM [express] GET /api/companies 304 in 33ms :: {"success":true,"data":[{"id":"google","name"…
+2:46:32 AM [express] GET /api/companies 200 in 21ms :: {"success":true,"data":[{"id":"google","name"…
+2:48:25 AM [express] GET /api/companies 304 in 749ms :: {"success":true,"data":[{"id":"google","name…
+2:48:29 AM [express] GET /api/companies/microsoft/roles 304 in 49ms :: {"success":true,"data":[{"id"…
+2:48:31 AM [express] GET /api/companies/microsoft/roles/swe/levels 200 in 42ms :: {"success":true,"d…
+2:48:32 AM [express] GET /api/companies/microsoft/roles/pm/levels 304 in 39ms :: {"success":true,"da…
+2:48:33 AM [express] GET /api/format-role/microsoft/pm/63 200 in 119ms :: {"success":true,"formatted…
+2:48:37 AM [express] GET /api/companies/meta/roles 200 in 41ms :: {"success":true,"data":[{"id":"swe…
+2:48:39 AM [express] GET /api/companies/meta/roles/pm/levels 200 in 39ms :: {"success":true,"data":[…
+2:48:41 AM [express] GET /api/format-role/meta/pm/ic6 200 in 116ms :: {"success":true,"formattedRole…
+2:48:45 AM [express] POST /api/transitions 200 in 92ms :: {"success":true,"transitionId":29,"message…
+2:48:45 AM [express] GET /api/dashboard/29 200 in 217ms :: {"success":true,"transition":{"id":29,"us…
+Clearing all data for transition ID: 29
+Cleared all data for transition ID: 29
+Successfully cleared all data for transition ID: 29
+2:48:45 AM [express] POST /api/clear-data 200 in 276ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 29, clearing existing data...
+Successfully cleared existing data for transition 29
+Starting web scraping for Microsoft Product Manager Level 63 to Meta Product Manager IC6 transition (search_726075 - 2025-03-22)
+ImprovedCara is analyzing transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6
+2:48:46 AM [express] POST /api/scrape 200 in 131ms :: {"success":true,"message":"Scraping initiated …
+Found existing transition ID: 29
+Starting improved Plan-Execute analysis for transition ID: 29
+Starting Improved Plan-Execute analysis: Microsoft Product Manager Level 63 → Meta Product Manager IC6
+Cleared all data for transition ID: 29
+Cleared existing data for transition ID: 29 to ensure fresh analysis
+Creating detailed career transition analysis plan
+Cleared existing insights for transition ID: 29 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 29, fetching some stories
+Searching for career transition stories: Career transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6 experiences, challenges, and success stories
+Searching for transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 using Tavily
+Running career transition search: career transition experiences success stories challenges for transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6 career path real experiences forums Reddit Quora Blind
+Plan created: [
+  'Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 on professional networks and forums.',
+  'Analyze job descriptions and requirements for Microsoft Product Manager Level 63 and Meta Product Manager IC6 to identify key skills and responsibilities.',
+  'Identify skill gaps and areas for development by comparing the skill sets required for both roles.',
+  'Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.',
+  'Develop a personalized development plan focusing on bridging skill gaps, with specific milestones and timelines for achieving competency in required areas.',
+  'Recommend specific online courses, workshops, and reading materials for each identified skill gap, prioritizing resources that are highly rated and relevant to the product management field.',
+  'Network with current and former Meta Product Managers IC6 to gain insights and advice on the transition process and for potential mentorship opportunities.',
+  'Regularly review and adjust the development plan based on progress and feedback from mentors and peers in the product management community.'
+]
+Executing plan step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 on professional networks and forums.
+Executed step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 on professional networks and forums.
+Executing search using specialized search agent
+Running career transition search: transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 for transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6 career path real experiences forums Reddit Quora Blind
+Successfully parsed 3 transition stories
+Analyzing 3 stories with LangGraph and Tavily
+Analyzing transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6
+Created 10 insights for transition with LangGraph and Tavily
+2:49:15 AM [express] GET /api/stories-analysis/29 200 in 26508ms :: {"success":true,"data":{"keyObse…
+ImprovedCara is analyzing transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6
+2:49:16 AM [express] POST /api/analyze 200 in 138ms :: {"success":true,"message":"Analysis initiated…
+Found existing transition ID: 29
+Starting improved Plan-Execute analysis for transition ID: 29
+Starting Improved Plan-Execute analysis: Microsoft Product Manager Level 63 → Meta Product Manager IC6
+Cleared all data for transition ID: 29
+Cleared existing data for transition ID: 29 to ensure fresh analysis
+Creating detailed career transition analysis plan
+Error parsing JSON stories: SyntaxError: Unexpected token 's', "[source]" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at ImprovedPlanExecuteAgent._extractStoriesFromSearchResults (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:596:38)
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:547:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+No skill gaps found, generating skill gaps using LangGraph
+ImprovedCara is analyzing transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6
+Found existing transition ID: 29
+Starting improved Plan-Execute analysis for transition ID: 29
+Starting Improved Plan-Execute analysis: Microsoft Product Manager Level 63 → Meta Product Manager IC6
+Cleared all data for transition ID: 29
+Cleared existing data for transition ID: 29 to ensure fresh analysis
+Creating detailed career transition analysis plan
+Search agent activated
+Replanning next steps
+Plan created: [
+  'Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6, focusing on forums like LinkedIn, Blind, and Medium.',
+  'Conduct a detailed comparison of job descriptions for Microsoft Product Manager Level 63 and Meta Product Manager IC6 on official company websites and job portals to identify skill gaps.',
+  'Analyze the compiled transition stories to identify common challenges, key success factors, and any unexpected insights about the transition.',
+  'Map out a personalized development plan, including specific skills to develop, milestones to achieve, and realistic timelines based on the skill gap analysis.',
+  'Identify and list top-rated courses, books, and online resources for each identified skill gap, prioritizing those with the best reviews and recommendations from industry professionals.'
+]
+Executing plan step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6, focusing on forums like LinkedIn, Blind, and Medium.
+Executed step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6, focusing on forums like LinkedIn, Blind, and Medium.
+Executing search using specialized search agent
+Plan created: [
+  'Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 on professional networks and forums.',
+  'Analyze job descriptions and requirements for Microsoft Product Manager Level 63 and Meta Product Manager IC6 to identify key skills and responsibilities.',
+  'Identify skill gaps and areas for development by comparing the skill sets required for both roles.',
+  'Extract key observations, challenges, and success factors from the transition stories to understand common themes and advice.',
+  'Develop a personalized development plan that includes specific milestones, timelines, and methods for skill acquisition.',
+  'Recommend specific online courses, books, and professional workshops for each identified skill gap.',
+  'Plan networking strategies to connect with current Meta Product Managers IC6 for mentorship and advice.',
+  'Set up a review system to periodically assess progress towards the transition and adjust the development plan as necessary.'
+]
+Executing plan step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 on professional networks and forums.
+Executed step: Search for and compile transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 on professional networks and forums.
+Executing search using specialized search agent
+Running career transition search: transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 for transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6 career path real experiences forums Reddit Quora Blind
+Error in replan node: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:889:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Executing plan step: Proceed to the next step of the career transition analysis
+Running career transition search: transition stories from Microsoft Product Manager Level 63 to Meta Product Manager IC6 for transition from Microsoft Product Manager Level 63 to Meta Product Manager IC6 career path real experiences forums Reddit Quora Blind
+Error parsing JSON stories: SyntaxError: Unexpected token 'R', "[Read more]" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at ImprovedPlanExecuteAgent._extractStoriesFromSearchResults (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:596:38)
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:547:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Search agent activated
+Replanning next steps
+Executed step: Proceed to the next step of the career transition analysis
+Replanning next steps
+Error parsing JSON stories: SyntaxError: Unexpected token 'R', "[Read more]" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at ImprovedPlanExecuteAgent._extractStoriesFromSearchResults (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:596:38)
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:547:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Search agent activated
+Replanning next steps
+Error in replan node: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:889:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Executing plan step: Proceed to the next step of the career transition analysis
+Error in replan node: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:889:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Executing plan step: Proceed to the next step of the career transition analysis
+Error in replan node: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:889:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Executing plan step: Proceed to the next step of the career transition analysis
+Executed step: Proceed to the next step of the career transition analysis
+Replanning next steps
+Executed step: Proceed to the next step of the career transition analysis
+Replanning next steps
+Detected a loop in the execution. Moving to completion.
+Collecting transition stories
+Collected 5 unique transition stories
+Collected 5 transition stories
+Extracting skill gaps
+Error in replan node: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:889:36)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:21)
+    at async RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1274:33)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Executing plan step: Proceed to the next step of the career transition analysis
+Executed step: Proceed to the next step of the career transition analysis
+Replanning next steps

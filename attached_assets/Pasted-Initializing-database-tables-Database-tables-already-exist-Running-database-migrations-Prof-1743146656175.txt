@@ -1,0 +1,377 @@
+Initializing database tables...
+Database tables already exist
+Running database migrations...
+Profiles table exists
+User skills table exists
+Updating users table...
+Password reset tokens table exists
+Insights table exists
+Scraped data table exists
+Migrations completed successfully
+Predefined role skills already exist
+Predefined role skills seeded
+6:18:25 AM [express] serving on port 5000
+6:18:29 AM [express] GET /api/auth/me 401 in 3ms :: {"success":false,"error":"Unauthorized","message…
+Getting user data for ID: 7
+6:18:31 AM [express] GET /api/auth/me 304 in 134ms :: {"success":true,"user":{"id":7,"email":"garv.s…
+Getting user data for ID: 7
+6:18:31 AM [express] GET /api/auth/me 304 in 137ms :: {"success":true,"user":{"id":7,"email":"garv.s…
+Getting user data for ID: 7
+6:19:23 AM [express] GET /api/auth/me 304 in 127ms :: {"success":true,"user":{"id":7,"email":"garv.s…
+Getting user data for ID: 7
+6:19:23 AM [express] GET /api/auth/me 304 in 123ms :: {"success":true,"user":{"id":7,"email":"garv.s…
+Getting user data for ID: 7
+Email sent successfully to support@gocareerate.com
+6:21:44 AM [express] POST /api/email/contact 200 in 404ms :: {"success":true,"message":"Your message…
+Getting user data for ID: 7
+6:24:53 AM [express] GET /api/auth/me 304 in 926ms :: {"success":true,"user":{"id":7,"email":"garv.s…
+6:24:59 AM [express] GET /api/companies 200 in 25ms :: {"success":true,"data":[{"id":"google","name"…
+6:25:02 AM [express] GET /api/companies/microsoft/roles 200 in 54ms :: {"success":true,"data":[{"id"…
+6:25:04 AM [express] GET /api/companies/microsoft/roles/pm/levels 200 in 47ms :: {"success":true,"da…
+6:25:05 AM [express] GET /api/format-role/microsoft/pm/63 200 in 124ms :: {"success":true,"formatted…
+6:25:06 AM [express] GET /api/companies/linkedin/roles 200 in 44ms :: {"success":true,"data":[{"id":…
+6:25:07 AM [express] GET /api/companies/linkedin/roles/swe/levels 200 in 41ms :: {"success":true,"da…
+6:25:09 AM [express] GET /api/companies/apple/roles 200 in 41ms :: {"success":true,"data":[{"id":"sw…
+6:25:10 AM [express] GET /api/companies/apple/roles/swe/levels 200 in 43ms :: {"success":true,"data"…
+6:25:12 AM [express] GET /api/companies/airbnb/roles 200 in 43ms :: {"success":true,"data":[{"id":"s…
+6:25:14 AM [express] GET /api/companies/amazon/roles 200 in 42ms :: {"success":true,"data":[{"id":"s…
+6:25:15 AM [express] GET /api/companies/amazon/roles/pm/levels 200 in 50ms :: {"success":true,"data"…
+6:25:17 AM [express] GET /api/format-role/amazon/pm/pm4 200 in 124ms :: {"success":true,"formattedRo…
+6:25:19 AM [express] GET /api/format-role/microsoft/pm/64 200 in 133ms :: {"success":true,"formatted…
+6:25:20 AM [express] POST /api/transitions 200 in 104ms :: {"success":true,"transitionId":48,"messag…
+6:25:20 AM [express] GET /api/dashboard/48 200 in 257ms :: {"success":true,"transition":{"id":48,"us…
+Clearing all data for transition ID: 48
+Cleared all data for transition ID: 48
+Successfully cleared all data for transition ID: 48
+6:25:20 AM [express] POST /api/clear-data 200 in 296ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 48, clearing existing data...
+Successfully cleared existing data for transition 48
+Starting web scraping for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM transition (search_121098 - 2025-03-28)
+Starting career transition analysis: Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+6:25:21 AM [express] POST /api/scrape 200 in 128ms :: {"success":true,"message":"Scraping initiated …
+Cleared all data for transition ID: 48
+Researching transition stories for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token o in JSON at position 1
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.researchTransitionStories (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:11:326)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:4931)
+    at async file:///home/runner/workspace/server/routes.ts:1:7605
+Analyzing skill gaps for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Cleared existing insights for transition ID: 48 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+Analyzing 1 stories with LangGraph and Tavily
+Analyzing transition stories from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Created 4 insights for transition with LangGraph and Tavily
+6:25:26 AM [express] GET /api/stories-analysis/48 200 in 1266ms :: {"success":true,"data":{"keyObser…
+Starting memory-enabled analysis for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Career transition analysis already in progress for ID 48, skipping duplicate request
+Analysis completed for: Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+6:25:27 AM [express] POST /api/analyze 200 in 142ms :: {"success":true,"message":"Analysis initiated…
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token s in JSON at position 166
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.analyzeSkillGaps (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:27:213)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:5248)
+    at async file:///home/runner/workspace/server/routes.ts:1:7605
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Amazon Leadership Principles',
+  gap_level: 'High',
+  confidence_score: 95,
+  number_of_mentions: 10,
+  context_summary: "Amazon's Leadership Principles are the foundation of their culture and decision-making. A PM Principal needs to embody these principles to influence, lead, and drive results. Understanding and demonstrating these principles is critical for success at Amazon."
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Strategic Thinking & Vision',
+  gap_level: 'High',
+  confidence_score: 90,
+  number_of_mentions: 8,
+  context_summary: 'PM Principals are expected to define and drive the long-term product vision and strategy. This involves anticipating market trends, identifying new opportunities, and aligning product roadmaps with overall business goals. The ability to think strategically is paramount.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Cross-Functional Leadership & Influence',
+  gap_level: 'High',
+  confidence_score: 90,
+  number_of_mentions: 9,
+  context_summary: 'PM Principals must lead and influence large, cross-functional teams without direct authority. This requires strong communication, negotiation, and stakeholder management skills to align teams on product vision, strategy, and execution. This is a critical skill for driving complex initiatives.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Technical Acumen & Deep Dive',
+  gap_level: 'Medium',
+  confidence_score: 80,
+  number_of_mentions: 7,
+  context_summary: 'While not expected to be a technical expert, a PM Principal needs a strong understanding of technical concepts, architecture, and trade-offs. This enables effective communication with engineering teams, informed decision-making, and the ability to dive deep into technical details when necessary.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Data-Driven Decision Making',
+  gap_level: 'Medium',
+  confidence_score: 85,
+  number_of_mentions: 8,
+  context_summary: 'PM Principals are expected to make data-driven decisions, leveraging analytics and metrics to understand customer behavior, measure product performance, and identify areas for improvement. Experience with data analysis tools and techniques is essential.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Communication & Presentation Skills',
+  gap_level: 'Medium',
+  confidence_score: 85,
+  number_of_mentions: 7,
+  context_summary: 'PM Principals need to effectively communicate product vision, strategy, and progress to various audiences, including senior leadership. Strong presentation skills, written communication, and the ability to tailor messaging to different stakeholders are crucial.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Prioritization & Trade-off Analysis',
+  gap_level: 'Medium',
+  confidence_score: 80,
+  number_of_mentions: 6,
+  context_summary: 'PM Principals often manage multiple complex projects and initiatives simultaneously. They must be able to prioritize effectively, make difficult trade-off decisions, and allocate resources to maximize impact. Experience with prioritization frameworks and techniques is beneficial.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Product Execution & Delivery',
+  gap_level: 'Medium',
+  confidence_score: 75,
+  number_of_mentions: 6,
+  context_summary: 'While the focus shifts towards strategy, PM Principals still need to oversee product execution and delivery. This includes managing product roadmaps, working with engineering teams, and ensuring timely and successful product launches. Experience with Agile methodologies is helpful.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Business Acumen',
+  gap_level: 'Medium',
+  confidence_score: 75,
+  number_of_mentions: 6,
+  context_summary: 'PM Principals need a strong understanding of business principles, including market analysis, competitive landscape, and financial modeling. This enables them to make informed decisions about product strategy, pricing, and profitability.'
+}
+Generating insights for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+No skill gaps found, generating skill gaps using LangGraph
+Analyzing skill gaps for transition from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+Creating development plan for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token I in JSON at position 0
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.createDevelopmentPlan (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:61:227)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:6358)
+    at async file:///home/runner/workspace/server/routes.ts:1:7605
+Completed scraping and analysis for transition 48
+Successfully extracted JSON array from response
+Identified 9 valid skill gaps for the transition
+Created 9 real skill gaps for transition using LangGraph
+Using memory-enabled agent for transition from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Starting career transition analysis: Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Cleared all data for transition ID: 48
+Researching transition stories for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token o in JSON at position 1
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.researchTransitionStories (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:11:326)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:4931)
+    at async file:///home/runner/workspace/server/routes.ts:17:10288
+Analyzing skill gaps for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token , in JSON at position 492
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.analyzeSkillGaps (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:27:213)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:5248)
+    at async file:///home/runner/workspace/server/routes.ts:17:10288
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Amazon-Specific Product Management Practices',
+  gap_level: 'High',
+  confidence_score: 95,
+  number_of_mentions: 5,
+  context_summary: 'Amazon has unique product management methodologies, including working backwards, PR/FAQ, and specific mechanisms for customer obsession. Understanding and applying these practices is crucial for success at the Principal PM level. The transition stories emphasize the need to learn these Amazon-specific processes.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Technical Depth and Breadth',
+  gap_level: 'Medium',
+  confidence_score: 80,
+  number_of_mentions: 4,
+  context_summary: 'Principal PMs at Amazon are expected to have a deeper understanding of the technical aspects of their products and the underlying technologies. While the user has data-driven decision making skills, they may need to enhance their technical knowledge to effectively influence engineering teams and make informed decisions about product architecture and scalability. The transition stories suggest that demonstrating technical acumen is highly valued.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Amazon Leadership Principles',
+  gap_level: 'Medium',
+  confidence_score: 85,
+  number_of_mentions: 6,
+  context_summary: "Amazon's Leadership Principles are the foundation of its culture. The user needs to demonstrate a strong understanding and application of these principles in their daily work. This includes areas like 'Customer Obsession', 'Bias for Action', and 'Ownership'. The transition stories highlight the importance of aligning with and embodying these principles."
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Strategic Planning at Scale',
+  gap_level: 'Medium',
+  confidence_score: 75,
+  number_of_mentions: 3,
+  context_summary: 'Principal PMs are responsible for developing and executing long-term product strategies that impact large-scale initiatives. While the user has strategic thinking skills, they may need to refine their ability to create and communicate comprehensive product roadmaps, manage complex dependencies, and anticipate future market trends. The transition stories indicate a need to demonstrate strategic thinking at a broader scale.'
+}
+Skipping invalid skill gap with missing skillName: {
+  skill_name: 'Stakeholder Management and Influence (Amazon Context)',
+  gap_level: 'Medium',
+  confidence_score: 70,
+  number_of_mentions: 4,
+  context_summary: "The user already possesses cross-functional leadership and influence skills. However, at Amazon, the ability to influence and build consensus across diverse teams and stakeholders (including engineering, marketing, legal, and finance) is critical. The user may need to adapt their communication style and approach to align with Amazon's culture and decision-making processes. The transition stories suggest that navigating Amazon's organizational structure effectively is essential."
+}
+Generating insights for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+Creating development plan for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token I in JSON at position 0
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.createDevelopmentPlan (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:61:227)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:6358)
+    at async file:///home/runner/workspace/server/routes.ts:17:10288
+Cara successfully generated a plan with 2 milestones
+6:25:46 AM [express] POST /api/plan 200 in 16903ms :: {"success":true,"planId":102,"milestones":2,"m…
+Cleared all data for transition ID: 48
+Cleared existing data for transition ID: 48 to ensure fresh analysis
+Calculating personalized success rate with LangGraph and Tavily
+Calculating success rate for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM transition
+Generating transition overview for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+6:25:50 AM [express] GET /api/insights/48 200 in 4160ms :: {"success":true,"insights":{"successRate"…
+Clearing all data for transition ID: 48
+6:25:51 AM [express] GET /api/dashboard/48 200 in 194ms :: {"success":true,"transition":{"id":48,"us…
+Cleared all data for transition ID: 48
+Successfully cleared all data for transition ID: 48
+6:25:51 AM [express] POST /api/clear-data 200 in 321ms :: {"success":true,"message":"All transition …
+No scraped data found, generating insights with LangGraph and Tavily
+Searching for transition statistics: Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM career transition statistics, success rate, time frame, common paths
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+Force refresh enabled for transition 48, clearing existing data...
+Successfully cleared existing data for transition 48
+Starting web scraping for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM transition (search_151549 - 2025-03-28)
+Starting career transition analysis: Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+6:25:51 AM [express] POST /api/scrape 200 in 129ms :: {"success":true,"message":"Scraping initiated …
+Cleared existing insights for transition ID: 48 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 48, fetching some stories
+Searching for career transition stories: Career transition from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM experiences, challenges, and success stories
+Searching for transition stories from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM using Tavily
+Running diverse career transition searches for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Searching: career transition experiences success stories challenges for transition from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM career path real experiences
+Cleared all data for transition ID: 48
+Researching transition stories for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token o in JSON at position 1
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.researchTransitionStories (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:11:326)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:4931)
+    at async file:///home/runner/workspace/server/routes.ts:1:7605
+Analyzing skill gaps for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+JSON parse failed after cleaning, trying repairs...
+Repair attempt failed: SyntaxError: Unexpected token I in JSON at position 0
+    at JSON.parse (<anonymous>)
+    at repairJson (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:1758)
+    at safeParseJSON (file:///home/runner/workspace/server/helpers/jsonParserHelper.ts:1:471)
+    at MemoryEnabledAgent.analyzeSkillGaps (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:27:213)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async MemoryEnabledAgent.analyzeCareerTransition (file:///home/runner/workspace/server/agents/memoryEnabledAgent.ts:1:5248)
+    at async file:///home/runner/workspace/server/routes.ts:1:7605
+Generating insights for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+LangGraph response structure: string
+First JSON parse attempt failed, trying with sanitization
+Sanitized JSON: {
+  "successRate": 75,
+  "avgTransitionTime": 6,
+  "commonPaths": [
+    {
+      "path": "Direct appl...
+JSON sanitization failed: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at file:///home/runner/workspace/server/routes.ts:37:1051
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Fallback to basic transition insights after LangGraph failures
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+Cleared existing insights for transition ID: 48 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+Analyzing 1 stories with LangGraph and Tavily
+Analyzing transition stories from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Initial JSON parse failed, trying fixes...
+Creating development plan for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Created 4 insights for transition with LangGraph and Tavily
+6:25:56 AM [express] GET /api/stories-analysis/48 200 in 1210ms :: {"success":true,"data":{"keyObser…
+Searching: Product Manager to Product Manager transition experiences success stories challenges
+Starting memory-enabled analysis for Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+Career transition analysis already in progress for ID 48, skipping duplicate request
+Analysis completed for: Microsoft Product Manager Level 64 → Amazon Product Manager Principal PM
+6:25:57 AM [express] POST /api/analyze 200 in 121ms :: {"success":true,"message":"Analysis initiated…
+Searching: transition from Microsoft to Amazon employee experiences career change
+Using memory-enabled agent for transition from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Career transition analysis already in progress for ID 48, skipping duplicate request
+Cara successfully generated a plan with 0 milestones
+6:26:00 AM [express] POST /api/plan 200 in 253ms :: {"success":true,"planId":104,"milestones":0,"mes…
+Searching: Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM career transition case study blog linkedin medium
+Initial JSON parse failed, trying fixes...
+Completed scraping and analysis for transition 48
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+Successfully parsed 7 transition stories
+Analyzing 7 stories with LangGraph and Tavily
+Analyzing transition stories from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Created 13 insights for transition with LangGraph and Tavily
+6:26:10 AM [express] GET /api/stories-analysis/48 200 in 18849ms :: {"success":true,"data":{"keyObse…
+6:26:10 AM [express] GET /api/scraped-data/48 200 in 40ms :: {"success":true,"data":[{"id":637,"tran…
+6:26:12 AM [express] GET /api/insights/48 200 in 21479ms :: {"success":true,"insights":{"successRate…
+Cleared all data for transition ID: 48
+Cleared existing data for transition ID: 48 to ensure fresh analysis
+Calculating personalized success rate with LangGraph and Tavily
+Calculating success rate for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM transition
+Generating transition overview for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+6:26:17 AM [express] GET /api/insights/48 200 in 4227ms :: {"success":true,"insights":{"successRate"…
+No scraped data found, generating insights with LangGraph and Tavily
+Searching for transition statistics: Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM career transition statistics, success rate, time frame, common paths
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+Cleared existing insights for transition ID: 48 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+6:26:17 AM [express] GET /api/dashboard/48 304 in 197ms :: {"success":true,"transition":{"id":48,"us…
+No scraped data found for transition ID: 48, fetching some stories
+Searching for career transition stories: Career transition from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM experiences, challenges, and success stories
+Searching for transition stories from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM using Tavily
+Running diverse career transition searches for Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Searching: career transition experiences success stories challenges for transition from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM career path real experiences
+Searching: Product Manager to Product Manager transition experiences success stories challenges
+LangGraph response structure: string
+First JSON parse attempt failed, trying with sanitization
+Sanitized JSON: {
+  "successRate": 75,
+  "avgTransitionTime": 6,
+  "commonPaths": [
+    {
+      "path": "Direct Appl...
+JSON sanitization failed: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at file:///home/runner/workspace/server/routes.ts:37:1051
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Fallback to basic transition insights after LangGraph failures
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+Searching: transition from Microsoft to Amazon employee experiences career change
+Searching: Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM career transition case study blog linkedin medium
+Successfully parsed 8 transition stories
+Analyzing 8 stories with LangGraph and Tavily
+Analyzing transition stories from Microsoft Product Manager Level 64 to Amazon Product Manager Principal PM
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+Created 6 insights for transition with LangGraph and Tavily
+6:26:31 AM [express] GET /api/stories-analysis/48 200 in 14530ms :: {"success":true,"data":{"keyObse…
+6:26:31 AM [express] GET /api/scraped-data/48 200 in 39ms :: {"success":true,"data":[{"id":645,"tran…
+6:26:32 AM [express] GET /api/insights/48 200 in 15032ms :: {"success":true,"insights":{"successRate…
+6:27:28 AM [express] GET /api/dashboard/1 404 in 43ms :: {"success":false,"error":"Transition not fo…

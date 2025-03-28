@@ -1,0 +1,44 @@
+Cara is using Perplexity AI to search for career transition data across multiple forums
+Scraping for Microsoft Level 63 to Google L6 using Perplexity Sonar's real-time web search
+Sending request to Perplexity API with model: sonar
+7:18:28 AM [express] POST /api/scrape 200 in 44ms :: {"success":true,"message":"Scraping initiated"}
+Cara is analyzing transition from Microsoft Level 63 to Google L6
+Cara is using Perplexity AI to search for career transition data across multiple forums
+Scraping for Microsoft Level 63 to Google L6 using Perplexity Sonar's real-time web search
+Sending request to Perplexity API with model: sonar
+7:18:28 AM [express] POST /api/analyze 200 in 109ms :: {"success":true,"message":"Analysis initiated…
+7:18:28 AM [express] POST /api/plan 404 in 84ms :: {"success":false,"error":"No skill gaps found for…
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Found 1 relevant results about Microsoft Level 63 to Google L6 transitions
+Cara found 1 relevant transition stories from multiple sources
+Saved scraped data from **: Blind to database
+Limited data, Cara is searching with alternative phrasing
+Scraping for professionals transitioning from Microsoft Level 63 to becoming a Google L6 success stories using Perplexity Sonar's real-time web search
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Found 1 relevant results about professionals transitioning from Microsoft Level 63 to becoming a Google L6 success stories transitions
+Saved additional data from **: Blind to database
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Found 1 relevant results about Microsoft Level 63 to Google L6 transitions
+Cara found 1 relevant transition stories from multiple sources
+Saved scraped data from **: Blind to database
+Limited data, Cara is searching with alternative phrasing
+Scraping for professionals transitioning from Microsoft Level 63 to becoming a Google L6 success stories using Perplexity Sonar's real-time web search
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Found 3 relevant results about professionals transitioning from Microsoft Level 63 to becoming a Google L6 success stories transitions
+Saved additional data from Blind to database
+Saved additional data from Blind to database
+Saved additional data from Blind to database
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Found 2 relevant results about Microsoft Level 63 to Google L6 transitions
+Cara found 2 relevant transition stories from multiple sources
+Saved scraped data from Blind to database
+Saved scraped data from Blind to database
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1
+Sending request to Perplexity API with model: sonar
+Perplexity API response structure: [ 'id', 'model', 'created', 'usage', 'citations', 'object', 'choices' ] choices length: 1

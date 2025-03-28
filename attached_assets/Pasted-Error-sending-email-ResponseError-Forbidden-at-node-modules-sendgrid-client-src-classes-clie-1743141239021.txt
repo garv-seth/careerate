@@ -1,0 +1,60 @@
+Error sending email: ResponseError: Forbidden
+    at node_modules/@sendgrid/client/src/classes/client.js:167:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 403,
+  response: {
+    headers: Object [AxiosHeaders] {
+      server: 'nginx',
+      date: 'Fri, 28 Mar 2025 05:52:45 GMT',
+      'content-type': 'application/json',
+      'content-length': '281',
+      connection: 'keep-alive',
+      'access-control-allow-origin': 'https://sendgrid.api-docs.io',
+      'access-control-allow-methods': 'POST',
+      'access-control-allow-headers': 'Authorization, Content-Type, On-behalf-of, x-sg-elas-acl',
+      'access-control-max-age': '600',
+      'x-no-cors-reason': 'https://sendgrid.com/docs/Classroom/Basics/API/cors.html',
+      'strict-transport-security': 'max-age=31536000; includeSubDomains',
+      'content-security-policy': "frame-ancestors 'none'",
+      'cache-control': 'no-cache',
+      'x-content-type-options': 'no-sniff',
+      'referrer-policy': 'strict-origin-when-cross-origin'
+    },
+    body: { errors: [Array] }
+  }
+}
+Error in contact form submission: Error: Failed to send email
+    at <anonymous> (/home/runner/workspace/server/email-routes.ts:43:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5:52:45 AM [express] POST /api/email/contact 500 in 529ms :: {"success":false,"error":"Failed to sen…
+Getting user data for ID: 7
+5:52:49 AM [express] GET /api/auth/me 304 in 898ms :: {"success":true,"user":{"id":7,"email":"garv.s…
+Error sending email: ResponseError: Forbidden
+    at node_modules/@sendgrid/client/src/classes/client.js:167:29
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 403,
+  response: {
+    headers: Object [AxiosHeaders] {
+      server: 'nginx',
+      date: 'Fri, 28 Mar 2025 05:53:25 GMT',
+      'content-type': 'application/json',
+      'content-length': '281',
+      connection: 'keep-alive',
+      'access-control-allow-origin': 'https://sendgrid.api-docs.io',
+      'access-control-allow-methods': 'POST',
+      'access-control-allow-headers': 'Authorization, Content-Type, On-behalf-of, x-sg-elas-acl',
+      'access-control-max-age': '600',
+      'x-no-cors-reason': 'https://sendgrid.com/docs/Classroom/Basics/API/cors.html',
+      'strict-transport-security': 'max-age=31536000; includeSubDomains',
+      'content-security-policy': "frame-ancestors 'none'",
+      'cache-control': 'no-cache',
+      'x-content-type-options': 'no-sniff',
+      'referrer-policy': 'strict-origin-when-cross-origin'
+    },
+    body: { errors: [Array] }
+  }
+}
+Error in contact form submission: Error: Failed to send email
+    at <anonymous> (/home/runner/workspace/server/email-routes.ts:43:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5:53:25 AM [express] POST /api/email/contact 500 in 253ms :: {"success":false,"error":"Failed to sen…

@@ -1,0 +1,206 @@
+Researching transition stories for Microsoft Designer Level 62 → Apple Designer Designer III
+Analyzing skill gaps for Microsoft Designer Level 62 → Apple Designer Designer III
+Cleared existing insights for transition ID: 44 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 44, fetching some stories
+Searching for career transition stories: Career transition from Microsoft Designer Level 62 to Apple Designer Designer III experiences, challenges, and success stories
+Searching for transition stories from Microsoft Designer Level 62 to Apple Designer Designer III using Tavily
+Running diverse career transition searches for Microsoft Designer Level 62 to Apple Designer Designer III
+Searching: career transition experiences success stories challenges for transition from Microsoft Designer Level 62 to Apple Designer Designer III career path real experiences
+Searching: Designer to Designer transition experiences success stories challenges
+Searching: transition from Microsoft to Apple employee experiences career change
+Error analyzing skill gaps: PostgresError: null value in column "skill_name" of relation "skill_gaps" violates not-null constraint
+    at ErrorResponse (file:///home/runner/workspace/node_modules/postgres/src/connection.js:788:26)
+    at handle (file:///home/runner/workspace/node_modules/postgres/src/connection.js:474:6)
+    at TLSSocket.data (file:///home/runner/workspace/node_modules/postgres/src/connection.js:315:9)
+    at TLSSocket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (2651, 44, null, null, 70, 1).',
+  schema_name: 'public',
+  table_name: 'skill_gaps',
+  column_name: 'skill_name',
+  file: 'execMain.c',
+  line: '2006',
+  routine: 'ExecConstraints'
+}
+Generating insights for Microsoft Designer Level 62 → Apple Designer Designer III
+Searching: Microsoft Designer Level 62 to Apple Designer Designer III career transition case study blog linkedin medium
+Creating development plan for Microsoft Designer Level 62 → Apple Designer Designer III
+Successfully parsed 6 transition stories
+Analyzing 6 stories with LangGraph and Tavily
+Analyzing transition stories from Microsoft Designer Level 62 to Apple Designer Designer III
+Created 6 insights for transition with LangGraph and Tavily
+2:28:45 AM [express] GET /api/stories-analysis/44 200 in 14645ms :: {"success":true,"data":{"keyObse…
+Starting memory-enabled analysis for Microsoft Designer Level 62 → Apple Designer Designer III
+Career transition analysis already in progress for ID 44, skipping duplicate request
+Analysis completed for: Microsoft Designer Level 62 → Apple Designer Designer III
+2:28:47 AM [express] POST /api/analyze 200 in 151ms :: {"success":true,"message":"Analysis initiated…
+No skill gaps found, generating skill gaps using LangGraph
+Analyzing skill gaps for transition from Microsoft Designer Level 62 to Apple Designer Designer III
+Completed scraping and analysis for transition 44
+Error parsing skill gaps: SyntaxError: Unexpected token 'I', "I am sorry"... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at analyzeSkillGaps (/home/runner/workspace/server/helpers/langGraphHelpers.ts:199:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:959:34)
+Created 0 real skill gaps for transition using LangGraph
+Using memory-enabled agent for transition from Microsoft Designer Level 62 to Apple Designer Designer III
+Starting career transition analysis: Microsoft Designer Level 62 → Apple Designer Designer III
+Cleared all data for transition ID: 44
+Error binding tools to model: TypeError: Cannot read properties of undefined (reading '_def')
+    at zodToJsonSchema (file:///home/runner/workspace/node_modules/zod-to-json-schema/dist/esm/zodToJsonSchema.js:19:34)
+    at zodToGenerativeAIParameters (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/zod_to_genai_parameters.js:33:51)
+    at file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/common.js:356:40
+    at Array.map (<anonymous>)
+    at convertToGenerativeAITools (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/common.js:354:41)
+    at file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/tools.js:18:37
+    at Array.forEach (<anonymous>)
+    at processTools (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/tools.js:16:11)
+    at convertToolsToGenAI (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/tools.js:8:24)
+    at ChatGoogleGenerativeAI.bindTools (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/chat_models.js:601:35)
+    at MemoryEnabledAgent.analyzeCareerTransition (/home/runner/workspace/server/agents/memoryEnabledAgent.ts:211:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1052:30)
+Researching transition stories for Microsoft Designer Level 62 → Apple Designer Designer III
+Analyzing skill gaps for Microsoft Designer Level 62 → Apple Designer Designer III
+Error analyzing skill gaps: PostgresError: null value in column "skill_name" of relation "skill_gaps" violates not-null constraint
+    at ErrorResponse (file:///home/runner/workspace/node_modules/postgres/src/connection.js:788:26)
+    at handle (file:///home/runner/workspace/node_modules/postgres/src/connection.js:474:6)
+    at TLSSocket.data (file:///home/runner/workspace/node_modules/postgres/src/connection.js:315:9)
+    at TLSSocket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  severity_local: 'ERROR',
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (2652, 44, null, null, 70, 1).',
+  schema_name: 'public',
+  table_name: 'skill_gaps',
+  column_name: 'skill_name',
+  file: 'execMain.c',
+  line: '2006',
+  routine: 'ExecConstraints'
+}
+Generating insights for Microsoft Designer Level 62 → Apple Designer Designer III
+Creating development plan for Microsoft Designer Level 62 → Apple Designer Designer III
+Finding additional resources for milestone using Tavily search
+Finding resources for skill: Deep Dive into Apple Design Principles and Ecosystem
+Running learning resource search: best all to learn Deep Dive into Apple Design Principles and Ecosystem skill professional development
+Found 3 resources for Deep Dive into Apple Design Principles and Ecosystem
+Finding additional resources for milestone using Tavily search
+Finding resources for skill: Technical Skill Enhancement: Mastering Apple Design Tools
+Running learning resource search: best all to learn Technical Skill Enhancement: Mastering Apple Design Tools skill professional development
+Found 3 resources for Technical Skill Enhancement: Mastering Apple Design Tools
+Finding additional resources for milestone using Tavily search
+Finding resources for skill: Industry Domain Knowledge Acquisition
+Running learning resource search: best all to learn Industry Domain Knowledge Acquisition skill professional development
+Found 3 resources for Industry Domain Knowledge Acquisition
+Finding additional resources for milestone using Tavily search
+Finding resources for skill: Building a Portfolio Aligned with Apple's Standards
+Running learning resource search: best all to learn Building a Portfolio Aligned with Apple's Standards skill professional development
+Found 3 resources for Building a Portfolio Aligned with Apple's Standards
+Finding additional resources for milestone using Tavily search
+Finding resources for skill: Developing Leadership Skills
+Running learning resource search: best all to learn Developing Leadership Skills skill professional development
+Found 3 resources for Developing Leadership Skills
+Finding additional resources for milestone using Tavily search
+Finding resources for skill: Networking and Application Preparation
+Running learning resource search: best all to learn Networking and Application Preparation skill professional development
+Found 3 resources for Networking and Application Preparation
+Cara successfully generated a plan with 6 milestones
+2:29:34 AM [express] POST /api/plan 200 in 45969ms :: {"success":true,"planId":83,"milestones":6,"me…
+No scraped data found, generating insights with LangGraph and Tavily
+Searching for transition statistics: Microsoft Designer Level 62 to Apple Designer Designer III career transition statistics, success rate, time frame, common paths
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+LangGraph response structure: [
+  '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
+  '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '20', '21', '22', '23', '24', '25', '26', '27', '28', '29',
+  '30', '31', '32', '33', '34', '35', '36', '37', '38', '39',
+  '40', '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '50', '51', '52', '53', '54', '55', '56', '57', '58', '59',
+  '60', '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '70', '71', '72', '73', '74', '75', '76', '77', '78', '79',
+  '80', '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '90', '91', '92', '93', '94', '95', '96', '97', '98', '99',
+  ... 779 more items
+]
+Error parsing LangGraph response: Error: Invalid data structure from LangGraph response
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1570:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Fallback to basic transition insights after LangGraph failures
+2:29:38 AM [express] GET /api/insights/44 200 in 4031ms :: {"success":true,"insights":{"successRate"…
+Clearing all data for transition ID: 44
+2:29:39 AM [express] GET /api/dashboard/44 200 in 483ms :: {"success":true,"transition":{"id":44,"us…
+No scraped data found, generating insights with LangGraph and Tavily
+Searching for transition statistics: Microsoft Designer Level 62 to Apple Designer Designer III career transition statistics, success rate, time frame, common paths
+Sending request to LLM using Google Gemini 2.0 Flash Lite
+Cleared existing insights for transition ID: 44 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 44, fetching some stories
+Searching for career transition stories: Career transition from Microsoft Designer Level 62 to Apple Designer Designer III experiences, challenges, and success stories
+Searching for transition stories from Microsoft Designer Level 62 to Apple Designer Designer III using Tavily
+Running diverse career transition searches for Microsoft Designer Level 62 to Apple Designer Designer III
+Searching: career transition experiences success stories challenges for transition from Microsoft Designer Level 62 to Apple Designer Designer III career path real experiences
+Cleared all data for transition ID: 44
+Successfully cleared all data for transition ID: 44
+2:29:39 AM [express] POST /api/clear-data 200 in 810ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 44, clearing existing data...
+Successfully cleared existing data for transition 44
+Starting web scraping for Microsoft Designer Level 62 to Apple Designer Designer III transition (search_979827 - 2025-03-28)
+Starting career transition analysis: Microsoft Designer Level 62 → Apple Designer Designer III
+2:29:39 AM [express] POST /api/scrape 200 in 218ms :: {"success":true,"message":"Scraping initiated …
+Cleared all data for transition ID: 44
+Error binding tools to model: TypeError: Cannot read properties of undefined (reading '_def')
+    at zodToJsonSchema (file:///home/runner/workspace/node_modules/zod-to-json-schema/dist/esm/zodToJsonSchema.js:19:34)
+    at zodToGenerativeAIParameters (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/zod_to_genai_parameters.js:33:51)
+    at file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/common.js:356:40
+    at Array.map (<anonymous>)
+    at convertToGenerativeAITools (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/common.js:354:41)
+    at file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/tools.js:18:37
+    at Array.forEach (<anonymous>)
+    at processTools (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/tools.js:16:11)
+    at convertToolsToGenAI (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/utils/tools.js:8:24)
+    at ChatGoogleGenerativeAI.bindTools (file:///home/runner/workspace/node_modules/@langchain/google-genai/dist/chat_models.js:601:35)
+    at MemoryEnabledAgent.analyzeCareerTransition (/home/runner/workspace/server/agents/memoryEnabledAgent.ts:211:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:432:9)
+Researching transition stories for Microsoft Designer Level 62 → Apple Designer Designer III
+Searching: Designer to Designer transition experiences success stories challenges
+Analyzing skill gaps for Microsoft Designer Level 62 → Apple Designer Designer III
+Searching: transition from Microsoft to Apple employee experiences career change
+Cleared existing insights for transition ID: 44 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 44, fetching some stories
+Searching for career transition stories: Career transition from Microsoft Designer Level 62 to Apple Designer Designer III experiences, challenges, and success stories
+Searching for transition stories from Microsoft Designer Level 62 to Apple Designer Designer III using Tavily
+Running diverse career transition searches for Microsoft Designer Level 62 to Apple Designer Designer III
+Searching: career transition experiences success stories challenges for transition from Microsoft Designer Level 62 to Apple Designer Designer III career path real experiences
+LangGraph response structure: [
+  '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
+  '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+  '20', '21', '22', '23', '24', '25', '26', '27', '28', '29',
+  '30', '31', '32', '33', '34', '35', '36', '37', '38', '39',
+  '40', '41', '42', '43', '44', '45', '46', '47', '48', '49',
+  '50', '51', '52', '53', '54', '55', '56', '57', '58', '59',
+  '60', '61', '62', '63', '64', '65', '66', '67', '68', '69',
+  '70', '71', '72', '73', '74', '75', '76', '77', '78', '79',
+  '80', '81', '82', '83', '84', '85', '86', '87', '88', '89',
+  '90', '91', '92', '93', '94', '95', '96', '97', '98', '99',
+  ... 858 more items
+]
+Error parsing LangGraph response: Error: Invalid data structure from LangGraph response
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1570:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Fallback to basic transition insights after LangGraph failures
+2:29:43 AM [express] GET /api/insights/44 304 in 4125ms :: {"success":true,"insights":{"successRate"…
+Searching: Microsoft Designer Level 62 to Apple Designer Designer III career transition case study blog linkedin medium
+Searching: Designer to Designer transition experiences success stories challenges

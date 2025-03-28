@@ -1,0 +1,64 @@
+Initializing database tables...
+Database tables already exist
+Predefined role skills seeded
+2:03:34 AM [express] serving on port 5000
+2:03:37 AM [express] GET /api/companies 200 in 23ms :: {"success":true,"data":[{"id":"google","name"…
+2:03:40 AM [express] GET /api/companies 304 in 21ms :: {"success":true,"data":[{"id":"google","name"…
+2:03:41 AM [express] GET /api/companies 304 in 20ms :: {"success":true,"data":[{"id":"google","name"…
+2:03:51 AM [express] GET /api/companies 304 in 20ms :: {"success":true,"data":[{"id":"google","name"…
+2:43:49 AM [express] GET /api/companies/apple/roles 200 in 766ms :: {"success":true,"data":[{"id":"s…
+2:43:50 AM [express] GET /api/companies/apple/roles/design/levels 200 in 46ms :: {"success":true,"da…
+2:43:52 AM [express] GET /api/format-role/apple/design/2 200 in 134ms :: {"success":true,"formattedR…
+2:43:54 AM [express] GET /api/companies/salesforce/roles 200 in 43ms :: {"success":true,"data":[{"id…
+2:43:55 AM [express] GET /api/companies/salesforce/roles/swe/levels 200 in 47ms :: {"success":true,"…
+2:43:56 AM [express] GET /api/format-role/salesforce/swe/dpmts 200 in 136ms :: {"success":true,"form…
+2:43:57 AM [express] POST /api/transitions 200 in 102ms :: {"success":true,"transitionId":28,"messag…
+2:43:58 AM [express] GET /api/dashboard/28 200 in 233ms :: {"success":true,"transition":{"id":28,"us…
+Clearing all data for transition ID: 28
+Cleared all data for transition ID: 28
+Successfully cleared all data for transition ID: 28
+2:43:58 AM [express] POST /api/clear-data 200 in 382ms :: {"success":true,"message":"All transition …
+Force refresh enabled for transition 28, clearing existing data...
+Successfully cleared existing data for transition 28
+Starting web scraping for Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS transition (search_438771 - 2025-03-22)
+ImprovedCara is analyzing transition from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS
+2:43:58 AM [express] POST /api/scrape 200 in 139ms :: {"success":true,"message":"Scraping initiated …
+Found existing transition ID: 28
+Starting improved Plan-Execute analysis for transition ID: 28
+Starting Improved Plan-Execute analysis: Apple Designer Designer II → Salesforce Software Engineer Distinguished Principal MTS
+Cleared all data for transition ID: 28
+Cleared existing data for transition ID: 28 to ensure fresh analysis
+Creating detailed career transition analysis plan
+Cleared existing insights for transition ID: 28 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 28, fetching some stories
+Searching for career transition stories: Career transition from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS experiences, challenges, and success stories
+Searching for transition stories from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS using Tavily
+Running career transition search: career transition experiences success stories challenges for transition from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS career path real experiences forums Reddit Quora Blind
+Plan created: [
+  'Search for interviews, articles, and forums discussing the career transition from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS to gather real-life transition stories.',
+  'Analyze job descriptions and requirements for both Apple Designer Designer II and Salesforce Software Engineer Distinguished Principal MTS roles to identify specific skills and qualifications needed.',
+  'Identify common themes, challenges, and success factors from the transition stories to understand the critical aspects of making such a career change.',
+  'Map out the skill gaps between the current role (Apple Designer Designer II) and the target role (Salesforce Software Engineer Distinguished Principal MTS), focusing on technical skills, software knowledge, and any required certifications.',
+  'Develop a personalized development plan that includes setting clear milestones, timelines, and goals for acquiring the necessary skills and qualifications.',
+  'Research and recommend specific online courses, certifications, and learning resources for each identified skill gap, prioritizing those with the best reviews and industry recognition.',
+  'Plan networking strategies to connect with professionals currently in the Salesforce Software Engineer Distinguished Principal MTS role for mentorship and advice.',
+  'Prepare for the transition by updating the resume and LinkedIn profile to highlight relevant skills, projects, and learning initiatives taken towards the new role.'
+]
+Executing plan step: Search for interviews, articles, and forums discussing the career transition from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS to gather real-life transition stories.
+Error executing step: TypeError: Cannot read properties of undefined (reading 'length')
+    at RunnableCallable.func (/home/runner/workspace/server/agents/improvedPlanExecuteAgent.ts:406:29)
+    at <anonymous> (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:87:26)
+    at AsyncLocalStorage.run (node:async_hooks:346:14)
+    at AsyncLocalStorageProvider.runWithConfig (file:///home/runner/workspace/node_modules/@langchain/core/dist/singletons/async_local_storage/index.js:56:24)
+    at RunnableCallable.invoke (/home/runner/workspace/node_modules/@langchain/langgraph/src/utils.ts:85:62)
+    at RunnableSequence.invoke (file:///home/runner/workspace/node_modules/@langchain/core/dist/runnables/base.js:1271:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async _runWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/retry.ts:94:16)
+    at async PregelRunner._executeTasksWithRetry (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:338:27)
+    at async PregelRunner.tick (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/runner.ts:90:35)
+    at async CompiledStateGraph._runLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1894:9)
+    at async createAndRunLoop (/home/runner/workspace/node_modules/@langchain/langgraph/src/pregel/index.ts:1785:9)
+Executed step: Search for interviews, articles, and forums discussing the career transition from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS to gather real-life transition stories.
+Executing search using specialized search agent
+Running career transition search: transition stories from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS for transition from Apple Designer Designer II to Salesforce Software Engineer Distinguished Principal MTS career path real experiences forums Reddit Quora Blind
