@@ -1,228 +1,116 @@
 /**
- * Memory Store for Career Transition Agents
+ * Memory Store for Career Transition Agent State Management
  * 
- * This module provides a memory storage system for the agents to
- * remember important details between sessions or agent runs.
- * It uses an in-memory vector store with embedding capabilities
- * to store and retrieve relevant memories based on semantic search.
+ * This module provides a memory storage system for tracking agent state
+ * between API calls and preventing redundant operations.
  */
-import { OpenAIEmbeddings } from "@langchain/openai";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { Document } from "@langchain/core/documents";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { RunnableConfig } from "@langchain/core/runnables";
 
-/**
- * Class for storing and retrieving memories about career transitions
- */
-export class CareerTransitionMemory {
-  private vectorStore: MemoryVectorStore;
+interface AgentMemoryEntry {
+  transitionId: number;
+  userId: number;
+  lastUpdated: Date;
+  state: 'initializing' | 'scraping' | 'analyzing' | 'planning' | 'complete';
+  data: {
+    scrapedData?: any[];
+    skillGaps?: any[];
+    insights?: any;
+    plan?: any;
+  };
+}
+
+class CareerTransitionMemoryStore {
+  // Using instance variables instead of 'private' keyword to avoid TypeScript issues
+  memory: Map<number, AgentMemoryEntry>;
+  inProgressTransitions: Set<number>;
   
   constructor() {
-    // Determine which embeddings to use based on available API keys
-    const embeddings = process.env.GOOGLE_API_KEY 
-      ? new OpenAIEmbeddings({
-          openAIApiKey: process.env.OPENAI_API_KEY
-        })
-      : new OpenAIEmbeddings({
-          openAIApiKey: process.env.OPENAI_API_KEY
-        });
+    this.memory = new Map();
+    this.inProgressTransitions = new Set();
     
-    // Initialize the vector store with the chosen embeddings
-    this.vectorStore = new MemoryVectorStore(embeddings);
-    
-    console.log("Career transition memory store initialized");
+    // Auto-cleanup of in-progress states after 10 minutes
+    setInterval(() => this.cleanupStalledTransitions(), 10 * 60 * 1000);
   }
   
   /**
-   * Save a memory about a career transition
-   * 
-   * @param memory The text memory to save
-   * @param metadata Additional information about the memory
-   * @returns The ID of the stored memory
+   * Check if a transition is currently being processed
    */
-  async saveMemory(
-    memory: string, 
-    metadata: { 
-      transitionId: number; 
-      currentRole: string; 
-      targetRole: string; 
-      memoryType: "skill_gap" | "story" | "insight" | "resource" | "general";
-    }
-  ): Promise<string> {
-    try {
-      // Generate a unique memory ID
-      const memoryId = `memory-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      
-      // Create a document with the memory text and metadata
-      const doc = new Document({
-        pageContent: memory,
-        metadata: {
-          id: memoryId,
-          ...metadata,
-          timestamp: new Date().toISOString(),
-        }
+  isTransitionInProgress(transitionId: number): boolean {
+    return this.inProgressTransitions.has(transitionId);
+  }
+  
+  /**
+   * Mark a transition as in-progress
+   */
+  markTransitionInProgress(transitionId: number): void {
+    this.inProgressTransitions.add(transitionId);
+  }
+  
+  /**
+   * Mark a transition as completed
+   */
+  markTransitionComplete(transitionId: number): void {
+    this.inProgressTransitions.delete(transitionId);
+  }
+  
+  /**
+   * Get memory for a transition
+   */
+  getMemory(transitionId: number): AgentMemoryEntry | undefined {
+    return this.memory.get(transitionId);
+  }
+  
+  /**
+   * Update memory for a transition
+   */
+  updateMemory(transitionId: number, userId: number, updates: Partial<AgentMemoryEntry>): void {
+    const existing = this.memory.get(transitionId);
+    
+    if (existing) {
+      this.memory.set(transitionId, {
+        ...existing,
+        ...updates,
+        lastUpdated: new Date(),
       });
-      
-      // Add the document to the vector store
-      await this.vectorStore.addDocuments([doc]);
-      
-      console.log(`Memory saved: ${memoryId} for transition ${metadata.transitionId} (${metadata.memoryType})`);
-      return memoryId;
-    } catch (error) {
-      console.error("Error saving memory:", error);
-      throw error;
+    } else {
+      this.memory.set(transitionId, {
+        transitionId,
+        userId,
+        lastUpdated: new Date(),
+        state: 'initializing',
+        data: {},
+        ...updates,
+      });
     }
   }
   
   /**
-   * Retrieve memories relevant to a specific transition or query
-   * 
-   * @param query The query text to search for
-   * @param transitionId Optional transition ID to filter by
-   * @param memoryType Optional memory type to filter by
-   * @param limit Maximum number of memories to retrieve
-   * @returns Array of relevant memory documents
+   * Clear memory for a transition
    */
-  async retrieveMemories(
-    query: string,
-    transitionId?: number,
-    memoryType?: "skill_gap" | "story" | "insight" | "resource" | "general",
-    limit: number = 5
-  ): Promise<Document[]> {
-    try {
-      // Create a filter function based on the provided parameters
-      const filterFunction = (doc: Document) => {
-        if (transitionId !== undefined && doc.metadata.transitionId !== transitionId) {
-          return false;
-        }
-        if (memoryType !== undefined && doc.metadata.memoryType !== memoryType) {
-          return false;
-        }
-        return true;
-      };
-      
-      // Perform a similarity search on the vector store
-      const results = await this.vectorStore.similaritySearch(
-        query, 
-        limit,
-        filterFunction
-      );
-      
-      console.log(`Retrieved ${results.length} memories for query: ${query}`);
-      return results;
-    } catch (error) {
-      console.error("Error retrieving memories:", error);
-      return [];
-    }
+  clearMemory(transitionId: number): void {
+    this.memory.delete(transitionId);
+    this.inProgressTransitions.delete(transitionId);
   }
   
   /**
-   * Get all memories for a specific transition ID
-   * 
-   * @param transitionId The transition ID to retrieve memories for
-   * @returns Array of memory documents
+   * Clean up stalled transitions (those in progress for more than 10 minutes)
    */
-  async getMemoriesByTransitionId(transitionId: number): Promise<Document[]> {
-    try {
-      // Filter memories by transition ID
-      // Note: This is not efficient with the current InMemoryVectorStore implementation
-      // and would be better with a database-backed vector store
-      const allDocs = await this.vectorStore.similaritySearch(
-        "", // Empty query to get all documents (not ideal, but works for in-memory)
-        100, // Higher limit to get most or all documents
-        (doc) => doc.metadata.transitionId === transitionId
-      );
-      
-      console.log(`Retrieved ${allDocs.length} memories for transition ID: ${transitionId}`);
-      return allDocs;
-    } catch (error) {
-      console.error("Error retrieving memories by transition ID:", error);
-      return [];
-    }
-  }
-  
-  /**
-   * Clear all memories for a specific transition ID
-   * 
-   * @param transitionId The transition ID to clear memories for
-   * @returns Whether the operation was successful
-   */
-  async clearMemoriesByTransitionId(transitionId: number): Promise<boolean> {
-    try {
-      // Currently InMemoryVectorStore doesn't support deletion
-      // This would be implemented with a database-backed vector store
-      console.log(`Memory clearing not supported for transition ID: ${transitionId}`);
-      return false;
-    } catch (error) {
-      console.error("Error clearing memories by transition ID:", error);
-      return false;
+  cleanupStalledTransitions(): void {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    
+    for (const [id, entry] of this.memory.entries()) {
+      if (this.inProgressTransitions.has(id) && entry.lastUpdated < tenMinutesAgo) {
+        console.log(`Cleaning up stalled transition ${id} that was in progress for >10 minutes`);
+        this.inProgressTransitions.delete(id);
+        
+        // Update memory to mark as incomplete
+        this.updateMemory(id, entry.userId, { 
+          state: 'complete',
+          data: { ...entry.data }
+        });
+      }
     }
   }
 }
 
-// Singleton instance of the memory store
-export const careerMemory = new CareerTransitionMemory();
-
-/**
- * Function to save a transition-related memory (for use with agents)
- * 
- * @param memory The memory text to save
- * @param config Runtime configuration for context
- * @returns Confirmation message
- */
-export async function saveTransitionMemory(
-  memory: string,
-  memoryType: "skill_gap" | "story" | "insight" | "resource" | "general",
-  config: RunnableConfig
-): Promise<string> {
-  // Extract transition information from the config
-  const transition = config.configurable?.transition;
-  if (!transition) {
-    throw new Error("Transition information not found in config");
-  }
-  
-  const { transitionId, currentRole, targetRole } = transition;
-  
-  // Save the memory
-  await careerMemory.saveMemory(memory, {
-    transitionId,
-    currentRole,
-    targetRole,
-    memoryType
-  });
-  
-  return `Memory saved: ${memory.substring(0, 50)}...`;
-}
-
-/**
- * Function to retrieve transition-related memories (for use with agents)
- * 
- * @param query The query text to search for
- * @param config Runtime configuration for context
- * @returns Array of memory text content
- */
-export async function retrieveTransitionMemories(
-  query: string,
-  memoryType: "skill_gap" | "story" | "insight" | "resource" | "general" | "all",
-  config: RunnableConfig
-): Promise<string[]> {
-  // Extract transition information from the config
-  const transition = config.configurable?.transition;
-  if (!transition) {
-    throw new Error("Transition information not found in config");
-  }
-  
-  const { transitionId } = transition;
-  
-  // Retrieve memories
-  const memories = await careerMemory.retrieveMemories(
-    query,
-    transitionId,
-    memoryType === "all" ? undefined : memoryType,
-    5
-  );
-  
-  // Extract the page content from each memory
-  return memories.map(memory => memory.pageContent);
-}
+// Create a singleton instance of the memory store
+export const careerTransitionMemory = new CareerTransitionMemoryStore();

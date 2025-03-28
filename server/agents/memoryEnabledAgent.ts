@@ -11,6 +11,8 @@ import { SkillGapAnalysis } from "./langGraphAgent";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { MCPHandler } from "../helpers/mcpHandler";
 import { OpenAIEmbeddings } from "@langchain/openai";
+import { careerTransitionMemory } from './memoryStore';
+import { safeParseJSON } from '../helpers/jsonParserHelper';
 
 /**
  * A single agent with long-term memory for career transition analysis
@@ -83,6 +85,12 @@ export class MemoryEnabledAgent {
       console.error("Failed to initialize tools:", error);
       this.tools = [];
     }
+    
+    // Initialize agent state in memory store
+    careerTransitionMemory.updateMemory(transitionId, userId, {
+      state: 'initializing',
+      data: {}
+    });
   }
 
   /**
@@ -187,9 +195,20 @@ export class MemoryEnabledAgent {
     insights: any;
     scrapedCount: number;
   }> {
-    // Check if this transition is already being processed
-    if (MemoryEnabledAgent.inProgressTransitions.has(transitionId)) {
+    // Check if this transition is already being processed using the memory store
+    if (careerTransitionMemory.isTransitionInProgress(transitionId)) {
       console.warn(`Career transition analysis already in progress for ID ${transitionId}, skipping duplicate request`);
+      
+      // Return the current state from memory, or fallbacks if nothing exists
+      const memory = careerTransitionMemory.getMemory(transitionId);
+      if (memory && memory.data) {
+        return {
+          skillGaps: memory.data.skillGaps || this.getFallbackSkillGaps(currentRole, targetRole),
+          insights: memory.data.insights || this.getFallbackInsights(currentRole, targetRole),
+          scrapedCount: memory.data.scrapedData?.length || 0,
+        };
+      }
+      
       return {
         skillGaps: this.getFallbackSkillGaps(currentRole, targetRole),
         insights: this.getFallbackInsights(currentRole, targetRole),
@@ -197,16 +216,25 @@ export class MemoryEnabledAgent {
       };
     }
     
-    // Mark this transition as in-progress
-    MemoryEnabledAgent.inProgressTransitions.add(transitionId);
+    // Mark this transition as in-progress in the memory store
+    careerTransitionMemory.markTransitionInProgress(transitionId);
     
     try {
-      console.log(
-        `Starting career transition analysis: ${currentRole} → ${targetRole}`,
-      );
+      console.log(`Starting career transition analysis: ${currentRole} → ${targetRole}`);
+      
+      // Store initial state
+      careerTransitionMemory.updateMemory(transitionId, this.userId, {
+        state: 'initializing',
+        data: {}
+      });
 
       // Clear existing data for fresh analysis
       await storage.clearTransitionData(transitionId);
+      
+      // Update memory state to scraping
+      careerTransitionMemory.updateMemory(transitionId, this.userId, {
+        state: 'scraping'
+      });
 
       // Check if tools exist before trying to bind them
       let modelWithTools;
@@ -233,6 +261,14 @@ export class MemoryEnabledAgent {
           targetRole,
           transitionId,
         );
+        
+        // Update memory with scraped data
+        careerTransitionMemory.updateMemory(transitionId, this.userId, {
+          state: 'analyzing',
+          data: {
+            scrapedData: stories
+          }
+        });
       } catch (storiesError) {
         console.error("Error researching transition stories:", storiesError);
         // Continue with empty stories rather than failing the whole process
@@ -249,10 +285,26 @@ export class MemoryEnabledAgent {
           existingSkills,
           stories,
         );
+        
+        // Update memory with skill gaps
+        careerTransitionMemory.updateMemory(transitionId, this.userId, {
+          data: {
+            ...careerTransitionMemory.getMemory(transitionId)?.data,
+            skillGaps: skillGaps
+          }
+        });
       } catch (skillGapsError) {
         console.error("Error analyzing skill gaps:", skillGapsError);
         // Fall back to generated skill gaps
         skillGaps = this.getFallbackSkillGaps(currentRole, targetRole);
+        
+        // Update memory with fallback skill gaps
+        careerTransitionMemory.updateMemory(transitionId, this.userId, {
+          data: {
+            ...careerTransitionMemory.getMemory(transitionId)?.data,
+            skillGaps: skillGaps
+          }
+        });
       }
 
       // Step 3: Generate insights - with error isolation
@@ -266,10 +318,28 @@ export class MemoryEnabledAgent {
           stories,
           skillGaps,
         );
+        
+        // Update memory with insights
+        careerTransitionMemory.updateMemory(transitionId, this.userId, {
+          state: 'planning',
+          data: {
+            ...careerTransitionMemory.getMemory(transitionId)?.data,
+            insights: insights
+          }
+        });
       } catch (insightsError) {
         console.error("Error generating insights:", insightsError);
         // Fall back to generated insights
         insights = this.getFallbackInsights(currentRole, targetRole);
+        
+        // Update memory with fallback insights
+        careerTransitionMemory.updateMemory(transitionId, this.userId, {
+          state: 'planning',
+          data: {
+            ...careerTransitionMemory.getMemory(transitionId)?.data,
+            insights: insights
+          }
+        });
       }
 
       // Step 4: Create development plan - with error isolation
@@ -283,12 +353,25 @@ export class MemoryEnabledAgent {
           skillGaps,
           insights,
         );
+        
+        // Update memory with plan
+        careerTransitionMemory.updateMemory(transitionId, this.userId, {
+          data: {
+            ...careerTransitionMemory.getMemory(transitionId)?.data,
+            plan: plan
+          }
+        });
       } catch (planError) {
         console.error("Error creating development plan:", planError);
         // Continue without a plan
       }
 
-      // Always mark the transition as complete, regardless of partial failures
+      // Mark transition as complete in the memory store
+      careerTransitionMemory.updateMemory(transitionId, this.userId, {
+        state: 'complete'
+      });
+      
+      // Always mark the transition as complete in the database, regardless of partial failures
       await storage.updateTransitionStatus(transitionId, true);
 
       // Return the combined results
@@ -302,6 +385,21 @@ export class MemoryEnabledAgent {
       };
     } catch (error) {
       console.error("Critical error in career transition analysis:", error);
+      
+      // Update memory to mark as complete but with error status
+      const currentData = careerTransitionMemory.getMemory(transitionId)?.data || {};
+      careerTransitionMemory.updateMemory(transitionId, this.userId, {
+        state: 'complete',
+        data: {
+          ...currentData,
+          // Include error information without breaking the type
+          skillGaps: currentData.skillGaps || this.getFallbackSkillGaps(currentRole, targetRole),
+          insights: {
+            ...(currentData.insights || {}),
+            errorOccurred: true
+          }
+        }
+      });
       
       // Try to mark the transition as complete even in case of error
       try {
@@ -317,8 +415,8 @@ export class MemoryEnabledAgent {
         scrapedCount: 0,
       };
     } finally {
-      // Always remove this transition from the in-progress set
-      MemoryEnabledAgent.inProgressTransitions.delete(transitionId);
+      // Always mark the transition as complete in the memory store
+      careerTransitionMemory.markTransitionComplete(transitionId);
     }
   }
 
@@ -362,17 +460,17 @@ export class MemoryEnabledAgent {
           let stories = [];
 
           try {
-            // Look for stories in the response
-            const storiesMatch = response.content
-              .toString()
-              .match(/\[\s*\{.*\}\s*\]/s);
-            if (storiesMatch) {
-              stories = JSON.parse(storiesMatch[0]);
+            // Use our enhanced JSON parser with robust error handling
+            const parsedStories = safeParseJSON(response.content.toString(), "stories");
+            
+            if (Array.isArray(parsedStories) && parsedStories.length > 0) {
+              stories = parsedStories;
             } else {
-              // Try extracting semi-structured content
+              // Fallback: Try extracting semi-structured content
               const contentMatches = response.content
                 .toString()
                 .match(/Story \d+:([\s\S]*?)(?=Story \d+:|$)/g);
+                
               if (contentMatches) {
                 stories = contentMatches.map((match: string, index: number) => ({
                   source: `Story ${index + 1}`,
@@ -459,13 +557,8 @@ export class MemoryEnabledAgent {
       let skillGaps: SkillGapAnalysis[] = [];
 
       try {
-        // Look for JSON in the response
-        const jsonMatch = response.content
-          .toString()
-          .match(/\[\s*\{.*\}\s*\]/s);
-        if (jsonMatch) {
-          skillGaps = JSON.parse(jsonMatch[0]);
-        }
+        // Use our enhanced JSON parser with robust error handling
+        skillGaps = safeParseJSON(response.content.toString(), "skillGaps");
       } catch (parseError) {
         console.error("Error parsing skill gaps:", parseError);
       }
@@ -547,11 +640,8 @@ export class MemoryEnabledAgent {
       let insights: any = {};
 
       try {
-        // Look for JSON in the response
-        const jsonMatch = response.content.toString().match(/\{[\s\S]*\}/s);
-        if (jsonMatch) {
-          insights = JSON.parse(jsonMatch[0]);
-        }
+        // Use our enhanced JSON parser with robust error handling
+        insights = safeParseJSON(response.content.toString(), "insights");
       } catch (parseError) {
         console.error("Error parsing insights:", parseError);
       }
@@ -645,24 +735,16 @@ export class MemoryEnabledAgent {
       let plan: any = { milestones: [] };
 
       try {
-        // Look for JSON in the response
-        const jsonMatch = response.content.toString().match(/\{[\s\S]*\}/s);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.milestones) {
-            plan = parsed;
-          }
-        }
-
-        // Alternative: try to find array of milestones
-        if (plan.milestones.length === 0) {
-          const arrayMatch = response.content
-            .toString()
-            .match(/\[\s*\{.*\}\s*\]/s);
-          if (arrayMatch) {
-            const milestones = JSON.parse(arrayMatch[0]);
-            plan = { milestones };
-          }
+        // Use our enhanced JSON parser with robust error handling
+        const parsed = safeParseJSON(response.content.toString(), "plan");
+        
+        // Check if we got a valid plan with milestones
+        if (parsed && parsed.milestones && Array.isArray(parsed.milestones)) {
+          plan = parsed;
+        } 
+        // If we got an array directly, assume it's the milestones array
+        else if (Array.isArray(parsed)) {
+          plan = { milestones: parsed };
         }
       } catch (parseError) {
         console.error("Error parsing plan:", parseError);
