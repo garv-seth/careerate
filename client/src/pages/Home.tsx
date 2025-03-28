@@ -46,16 +46,7 @@ const Home: React.FC = () => {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="z-10"
             >
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="inline-block px-4 py-1 mb-6 border border-primary/30 bg-surface rounded-lg"
-              >
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-cyan-300 text-sm font-medium tracking-wide">
-                  POWERED BY CARA AI
-                </span>
-              </motion.div>
+
               
               <motion.h1 
                 className="text-4xl md:text-6xl font-heading font-bold mb-6 leading-tight"
@@ -63,18 +54,43 @@ const Home: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.4 }}
               >
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-primary to-white animate-text-shimmer">
+                <motion.span 
+                  className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 inline-block"
+                  whileHover={{ 
+                    color: "white", 
+                    textShadow: "0 0 8px rgba(0, 195, 255, 0.6)",
+                    transition: { duration: 0.3 }
+                  }}
+                >
                   Transform
-                </span>
-                <br /> 
-                <span className="text-white">Your <span className="text-primary relative">Career
+                </motion.span>
+                <br />
+                <motion.span 
+                  className="text-primary relative inline-block"
+                  whileHover={{ 
+                    color: "white", 
+                    textShadow: "0 0 8px rgba(0, 195, 255, 0.6)",
+                    transition: { duration: 0.3 }
+                  }}
+                >
+                  Your 
+                </motion.span>
+                {" "}
+                <motion.span 
+                  className="text-white relative inline-block"
+                  whileHover={{ 
+                    color: "rgb(0, 195, 255)", 
+                    transition: { duration: 0.3 }
+                  }}
+                >
+                  Career
                   <motion.span 
                     className="absolute -bottom-2 left-0 right-0 h-1 bg-primary"
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.5, delay: 1.2 }}
                   />
-                </span></span>
+                </motion.span>
               </motion.h1>
               
               <motion.p 
@@ -141,7 +157,7 @@ const Home: React.FC = () => {
                     <div className="text-center">
                       <div className="relative w-28 h-28 mx-auto mb-6">
                         {/* Actual Careerate logo with glow effect */}
-                        <div className="absolute inset-0 bg-blue-400 rounded-full opacity-20 blur-md animate-pulse-slow scale-110"></div>
+                        <div className="absolute inset-0 bg-blue-400 rounded-full opacity-10 blur-md animate-pulse-slow scale-110"></div>
                         <img 
                           src="/careerate-icon.png" 
                           alt="Careerate Logo" 

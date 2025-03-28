@@ -36,7 +36,7 @@ const Logo: React.FC<LogoProps> = ({ size = "md", showTagline = true }) => {
         </div>
       </div>
       <div className="flex flex-col">
-        <span className={`font-bold ${textSizes[size]} bg-clip-text text-transparent bg-gradient-to-r from-primary to-cyan-300 transition-all group-hover:from-primary group-hover:to-purple-400 filter drop-shadow-text`}>
+        <span className={`font-bold ${textSizes[size]} bg-clip-text text-transparent bg-gradient-to-r from-primary to-cyan-300 transition-all group-hover:from-primary group-hover:to-white filter drop-shadow-text`}>
           Careerate
         </span>
         {showTagline && (
