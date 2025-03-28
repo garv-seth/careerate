@@ -29,7 +29,7 @@ const extractSkillsFromGaps = (gaps: SkillGap[]): string[] => {
   return [...new Set(gaps.map(gap => gap.skillName))];
 };
 
-const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps, loading = false }) => {
+const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps = [], loading = false }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("matching");
 
@@ -37,8 +37,11 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps, loading 
   const emptyMatchingSkills: MatchingSkill[] = [];
   const emptySkillsToImprove: SkillToImprove[] = [];
 
+  // Safely check if skillGaps exists and has items
+  const hasSkillGaps = Array.isArray(skillGaps) && skillGaps.length > 0;
+
   // Create matching skills directly from skill gaps with lower priority
-  const matchingSkills = skillGaps.length > 0
+  const matchingSkills = hasSkillGaps
     ? skillGaps
         .filter(gap => gap.gapLevel === "Low")
         .map(gap => ({
@@ -50,7 +53,7 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps, loading 
     : emptyMatchingSkills;
 
   // Create skills to improve directly from skill gaps with medium to high priority
-  const skillsToImprove = skillGaps.length > 0
+  const skillsToImprove = hasSkillGaps
     ? skillGaps
         .filter(gap => gap.gapLevel === "Medium" || gap.gapLevel === "High")
         .map(gap => ({

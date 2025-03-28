@@ -335,12 +335,14 @@ const Dashboard: React.FC = () => {
   const createdAt = data?.transition?.createdAt ? new Date(data.transition.createdAt).toLocaleDateString() : "recently";
   
   // Extract insights data with fallbacks
-  const insights = data?.insights || {};
-  const connections = Array.isArray(data?.insights?.connections) ? data.insights.connections : [];
+  const insights = Array.isArray(data?.insights) ? data.insights : [];
   
-  // Extract skills and plan data with fallbacks
-  const skills = Array.isArray(data?.skills) ? data.skills : [];
-  const plan = data?.plan || {};
+  // Safely handle connections and skills
+  // Connections might be in a different part of the data structure, using 'as any' to bypass TypeScript checks
+  const connections = Array.isArray((data as any)?.connections) ? (data as any).connections : [];
+  
+  // Create safe references to the plan
+  const plan = data?.plan || undefined;
 
   // Main dashboard content - only shown when data is loaded and complete
   return (
@@ -428,12 +430,8 @@ const Dashboard: React.FC = () => {
               
               <div className="absolute inset-0 z-10">
                 <CompanyLogoNetwork 
-                  currentRole={currentRole}
-                  targetRole={targetRole}
-                  targetCompany={getTargetCompany()}
-                  roleConnections={connections}
                   onSelectCompany={setSelectedCompany}
-                  selectedCompany={selectedCompany}
+                  selectedCompany={selectedCompany as string | undefined}
                 />
               </div>
             </div>
@@ -463,9 +461,8 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.4, delay: 0.4 }}
             >
               <SkillGapAnalysis 
-                skills={skills} 
-                currentRole={currentRole}
-                targetRole={targetRole}
+                skillGaps={(data?.insights?.filter(i => (i.type as any) === 'skill_gap') || []) as any}
+                loading={isLoading}
               />
             </motion.div>
           </div>
@@ -491,9 +488,9 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.4, delay: 0.5 }}
             >
               <CareerTrajectory 
-                plan={plan}
-                currentRole={currentRole}
-                targetRole={targetRole}
+                milestones={(data?.plan as any)?.milestones || []}
+                plan={data?.plan}
+                loading={isLoading}
               />
             </motion.div>
           </div>

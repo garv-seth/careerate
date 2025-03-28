@@ -10,16 +10,19 @@ interface CareerTrajectoryProps {
 }
 
 const CareerTrajectory: React.FC<CareerTrajectoryProps> = ({
-  milestones,
+  milestones = [],
   plan,
   loading = false,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
+  // Safely handle potentially undefined milestones array
+  const safeMilestones = Array.isArray(milestones) ? milestones : [];
+  
   // Display only top 2 milestones if not expanded
   const displayMilestones = expanded
-    ? milestones
-    : milestones.slice(0, Math.min(2, milestones.length));
+    ? safeMilestones
+    : safeMilestones.slice(0, Math.min(2, safeMilestones.length));
 
   return (
     <Card className="card rounded-xl p-6 shadow-glow-sm hover:shadow-glow transition duration-300">
@@ -29,7 +32,7 @@ const CareerTrajectory: React.FC<CareerTrajectoryProps> = ({
             Career Trajectory Plan
           </h3>
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary-light">
-            {milestones.length} milestones
+            {safeMilestones.length} milestones
           </span>
         </div>
 
@@ -116,7 +119,7 @@ const CareerTrajectory: React.FC<CareerTrajectoryProps> = ({
                 </div>
               ))}
 
-              {milestones.length > 2 && (
+              {safeMilestones.length > 2 && (
                 <button
                   onClick={() => setExpanded(!expanded)}
                   className="w-full py-2 text-sm text-primary-light hover:text-primary flex items-center justify-center"
