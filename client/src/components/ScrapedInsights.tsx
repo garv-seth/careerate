@@ -22,18 +22,25 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
   const [scrapedData, setScrapedData] = useState<ScrapedData[]>([]);
   const [storiesData, setStoriesData] = useState<TransitionStoriesData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load real scraped data from the server
   useEffect(() => {
     if (!transition.id) return;
 
     const loadScrapedData = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
         // Load scraped data
         const response = await apiRequest(`/api/scraped-data/${transition.id}`);
 
         if (response && response.success && response.data) {
           setScrapedData(response.data);
+        } else {
+          console.error("Invalid scraped data response:", response);
+          setScrapedData([]);
         }
 
         // Load stories analysis data
@@ -41,9 +48,13 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
 
         if (storiesResponse && storiesResponse.success && storiesResponse.data) {
           setStoriesData(storiesResponse.data);
+        } else {
+          console.error("Invalid stories analysis response:", storiesResponse);
+          setStoriesData(null);
         }
       } catch (error) {
-        console.error("Error loading scraped data:", error);
+        console.error("Error loading insights:", error);
+        setError("Failed to load transition stories. Please try refreshing.");
       } finally {
         setLoading(false);
       }
@@ -209,10 +220,11 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                     />
                   </svg>
                   <p className="text-sm text-text-secondary">
-                    <span className="text-text font-medium">
-                      Successful transition pattern:
-                    </span>{" "}
-                    Professionals making this transition typically focus on building strong technical expertise in systems design and scalability, while highlighting their experience with distributed systems and cloud infrastructure.
+                    <LoadingIndicator
+                      message="Analyzing transition patterns..."
+                      size="sm"
+                      className="inline-flex"
+                    />
                   </p>
                 </li>
               )}
@@ -275,10 +287,11 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                     />
                   </svg>
                   <p className="text-sm text-text-secondary">
-                    <span className="text-text font-medium">
-                      Common transition hurdles:
-                    </span>{" "}
-                    Adjusting to Google's unique interview process, which emphasizes algorithm design and system architecture. Candidates may also need to adapt to Google's culture that values innovation and collaborative problem-solving approaches.
+                    <LoadingIndicator
+                      message="Analyzing transition challenges..."
+                      size="sm"
+                      className="inline-flex"
+                    />
                   </p>
                 </li>
               )}

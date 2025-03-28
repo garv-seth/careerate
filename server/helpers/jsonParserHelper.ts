@@ -14,6 +14,7 @@ export function safeParseJSON(
   fallbackType?: "skillGaps" | "insights" | "plan" | "stories"
 ): any {
   if (!text || text.trim() === '') {
+    console.log("Empty text received for JSON parsing");
     return fallbackType ? getFallbackObject(fallbackType) : {};
   }
 
@@ -47,29 +48,36 @@ export function safeParseJSON(
   try {
     // Try to parse JSON and normalize keys
     const parsed = JSON.parse(text);
+    console.log("Successfully parsed JSON directly");
     return normalizeKeys(parsed);
   } catch (e) {
-    console.log("Initial JSON parse failed, trying fixes...");
+    console.log("First JSON parse attempt failed, trying with sanitization");
   }
 
   // Second try: Clean up the text and try JSON.parse again
   try {
     const cleaned = prepareJsonText(text);
+    console.log("Sanitized JSON:", cleaned.substring(0, 200) + (cleaned.length > 200 ? "..." : ""));
     // Try to parse JSON and normalize keys
     const parsed = JSON.parse(cleaned);
+    console.log("Successfully parsed JSON after cleaning");
     return normalizeKeys(parsed);
-  } catch (e) {
-    console.log("JSON parse failed after cleaning, trying repairs...");
+  } catch (e: any) {
+    console.log("JSON sanitization failed:", e.message);
   }
 
   // Third try: Attempt to repair and extract JSON
   try {
+    console.log("Attempting to repair JSON with advanced methods");
     const repaired = repairJson(text, fallbackType);
     return normalizeKeys(repaired);
   } catch (e) {
     console.error("All JSON parse attempts failed:", e);
     
     // Last resort: return type-appropriate fallback
+    if (fallbackType) {
+      console.log(`Using fallback data for ${fallbackType}`);
+    }
     return fallbackType ? getFallbackObject(fallbackType) : {};
   }
 }
@@ -85,11 +93,15 @@ function prepareJsonText(text: string): string {
 
   // Normalize line breaks
   text = text.replace(/\r\n/g, "\n");
-
-  // Try to find the actual JSON content within the text
+  
+  // Remove any explanation or AI text above or below the JSON
+  text = text.replace(/^[\s\S]*?(\{[\s\S]*\}|\[[\s\S]*\])[\s\S]*$/, "$1");
+  
+  // Handle cases where there are nested JSON structures and we want the outermost one
   const jsonObjectMatch = text.match(/(\{[\s\S]*\})/);
   const jsonArrayMatch = text.match(/(\[[\s\S]*\])/);
 
+  // Find the most complete JSON structure
   if (jsonObjectMatch && jsonObjectMatch[1]) {
     return jsonObjectMatch[1];
   } else if (jsonArrayMatch && jsonArrayMatch[1]) {
@@ -116,38 +128,91 @@ function repairJson(text: string, fallbackType?: "skillGaps" | "insights" | "pla
   // Prepare the text first
   text = prepareJsonText(text);
   
+  // Fix incomplete arrays - add missing brackets
+  if (text.includes('"path":') && !text.trim().startsWith('[') && !text.trim().startsWith('{')) {
+    text = `[${text}]`;
+  }
+  
+  // Fix trailing commas and missing commas
+  text = text
+    // Replace trailing commas in arrays and objects with proper syntax
+    .replace(/,(\s*[}\]])/g, '$1')
+    // Add missing commas between array elements
+    .replace(/}(\s*){/g, '},$1{')
+    // Add missing commas between array items
+    .replace(/](\s*)\[/g, '],$1[');
+  
   // Common errors to fix
   const fixedText = text
     // Fix missing quotes around property names
     .replace(/(\w+)(?=\s*:)/g, '"$1"')
-    // Fix single quotes used instead of double quotes
-    .replace(/'/g, '"')
-    // Fix trailing commas in arrays and objects
-    .replace(/,\s*([}\]])/g, '$1')
-    // Fix missing commas between elements
-    .replace(/}(\s*){/g, '},$1{')
-    .replace(/](\s*)\[/g, '],$1[')
-    // Fix extra/missing brackets
-    .replace(/}\s*"/, '},\n"')
-    .replace(/"\s*{/, '",\n{');
+    // Fix single quotes used instead of double quotes (but not inside content)
+    .replace(/'([^']*)'(?=\s*:)/g, '"$1"')
+    .replace(/:\s*'([^']*)'/g, ': "$1"')
+    // Fix malformed arrays with missing brackets
+    .replace(/commonPaths"?\s*:\s*\{/g, 'commonPaths": [{')
+    .replace(/}\s*(?=,\s*"(successRate|avgTransitionTime))/g, '}]')
+    // Fix missing closing brackets based on context
+    .replace(/("path"\s*:\s*"[^"]+")\s*$/g, '$1}]');
   
   try {
     return JSON.parse(fixedText);
-  } catch (e) {
-    console.error("Repair attempt failed:", e);
+  } catch (e: any) {
+    console.log(`Repair attempt failed: ${e.message}`);
     
-    // If we're looking for an array of objects (skill gaps or stories)
+    // Try to extract valid JSON substructures
+    if (fallbackType === "insights") {
+      try {
+        // Build a valid structure from fragments if possible
+        const successRateMatch = text.match(/"successRate"\s*:\s*(\d+)/);
+        const avgTimeMatch = text.match(/"avgTransitionTime"\s*:\s*(\d+)/);
+        
+        const reconstructed: {
+          successRate: number | null;
+          avgTransitionTime: number | null;
+          commonPaths: Array<{path: string}>;
+          keyObservations: string[];
+          commonChallenges: string[];
+        } = {
+          successRate: successRateMatch ? parseInt(successRateMatch[1]) : null,
+          avgTransitionTime: avgTimeMatch ? parseInt(avgTimeMatch[1]) : null,
+          commonPaths: [],
+          keyObservations: [],
+          commonChallenges: []
+        };
+        
+        // Extract path information if available
+        const pathMatches = text.match(/"path"\s*:\s*"([^"]+)"/g);
+        if (pathMatches && pathMatches.length > 0) {
+          for (const match of pathMatches) {
+            const pathMatch = match.match(/"path"\s*:\s*"([^"]+)"/);
+            if (pathMatch && pathMatch[1]) {
+              reconstructed.commonPaths.push({ path: pathMatch[1] });
+            }
+          }
+        }
+        
+        return reconstructed;
+      } catch (innerError) {
+        console.log("Reconstruction attempt failed");
+      }
+    }
+    
+    // Try to extract individual objects for array types
     if (fallbackType === "skillGaps" || fallbackType === "stories") {
-      // Try to extract individual objects from the text
       const objectMatches = text.match(/\{[^{}]*\}/g);
       if (objectMatches && objectMatches.length > 0) {
-        return objectMatches.map(objText => {
+        const validObjects = [];
+        for (const objText of objectMatches) {
           try {
-            return JSON.parse(objText);
-          } catch {
-            return {};
+            validObjects.push(JSON.parse(objText));
+          } catch (parseError) {
+            // Skip invalid objects
           }
-        });
+        }
+        if (validObjects.length > 0) {
+          return validObjects;
+        }
       }
     }
     
