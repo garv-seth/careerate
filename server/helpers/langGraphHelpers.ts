@@ -373,6 +373,8 @@ export async function calculatePersonalizedSuccessRate(
     1. successRate: Number between 0-100
     2. rationale: String explaining your reasoning
     3. keyFactors: Array of strings listing key factors
+    
+    Important: Do not use asterisks (*) or any markdown formatting in your response. Use plain text only.
     `;
     
     // Use the LLM to calculate the success rate

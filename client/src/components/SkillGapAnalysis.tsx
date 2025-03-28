@@ -31,56 +31,9 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("matching");
 
-  // Default data for when API data is not available
-  const defaultMatchingSkills: MatchingSkill[] = [
-    {
-      name: "Object-Oriented Programming",
-      strength: 5,
-      relevance: "High",
-      mentionCount: 32,
-    },
-    {
-      name: "System Architecture",
-      strength: 4.5,
-      relevance: "High",
-      mentionCount: 29,
-    },
-    {
-      name: "Cloud Infrastructure",
-      strength: 4,
-      relevance: "Medium",
-      mentionCount: 26,
-    },
-    {
-      name: "Data Structures",
-      strength: 4.5,
-      relevance: "Medium",
-      mentionCount: 22,
-    },
-  ];
-
-  const defaultSkillsToImprove: SkillToImprove[] = [
-    {
-      name: "Distributed Systems",
-      priority: "High",
-      mentionCount: 38,
-    },
-    {
-      name: "Google-Specific Tech Stack",
-      priority: "High",
-      mentionCount: 31,
-    },
-    {
-      name: "System Design (Google Scale)",
-      priority: "High",
-      mentionCount: 28,
-    },
-    {
-      name: "Algorithm Optimization",
-      priority: "Medium",
-      mentionCount: 24,
-    },
-  ];
+  // Use empty arrays for the initial state until skill gaps data is loaded
+  const emptyMatchingSkills: MatchingSkill[] = [];
+  const emptySkillsToImprove: SkillToImprove[] = [];
 
   // Create matching skills directly from skill gaps with lower priority
   const matchingSkills = skillGaps.length > 0
@@ -92,7 +45,7 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
           relevance: "High",
           mentionCount: gap.mentionCount || 1
         }))
-    : defaultMatchingSkills;
+    : emptyMatchingSkills;
 
   // Create skills to improve directly from skill gaps with medium to high priority
   const skillsToImprove = skillGaps.length > 0
@@ -103,7 +56,7 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
           priority: gap.gapLevel,
           mentionCount: gap.mentionCount || 1
         }))
-    : defaultSkillsToImprove;
+    : emptySkillsToImprove;
 
   // Sort skills to improve by priority
   const sortedImprovementSkills = [...skillsToImprove].sort((a, b) => {

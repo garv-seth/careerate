@@ -1459,9 +1459,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Add key factors if not present
             if (!insightsData.keyFactors) {
-              // Generate key success factors
-              const factorsPrompt = `What are the key success factors for transitioning from ${transition.currentRole} to ${transition.targetRole}? 
-              Return a JSON array of strings with at least 4 factors.`;
+              // Generate key success factors without markdown formatting
+              const factorsPrompt = `What are the key success factors for transitioning from ${transition.currentRole} to ${transition.targetRole}?
+              Return a JSON array of strings with at least 4 factors.
+              Important: Do not use asterisks (*) or markdown formatting in your response. Use plain text only.`;
               
               const factorsResponse = await callLLM(factorsPrompt, 800);
               const factorsMatch = factorsResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
