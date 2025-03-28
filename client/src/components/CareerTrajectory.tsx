@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MilestoneWithResources, Plan } from "@/types";
+import LoadingIndicator from "@/components/common/LoadingIndicator";
 
 interface CareerTrajectoryProps {
   milestones: MilestoneWithResources[];
   plan: Plan | undefined;
+  loading?: boolean;
 }
 
 const CareerTrajectory: React.FC<CareerTrajectoryProps> = ({
   milestones,
   plan,
+  loading = false,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -31,7 +34,12 @@ const CareerTrajectory: React.FC<CareerTrajectoryProps> = ({
         </div>
 
         <div className="space-y-5">
-          {displayMilestones.length > 0 ? (
+          {loading || displayMilestones.length === 0 ? (
+            <LoadingIndicator 
+              message="We're analyzing your skills and target role to create a customized development path..."
+              size="lg"
+            />
+          ) : (
             <>
               {displayMilestones.map((milestone, index) => (
                 <div
@@ -133,16 +141,6 @@ const CareerTrajectory: React.FC<CareerTrajectoryProps> = ({
                 </button>
               )}
             </>
-          ) : (
-            // Loading state instead of fallback static data
-            <div className="flex flex-col items-center justify-center py-8 space-y-4">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-light"></div>
-              <p className="text-sm text-text-secondary">Loading your personalized career plan...</p>
-              <p className="text-xs text-text-muted text-center max-w-md">
-                We're analyzing your skills and target role to create a customized development path.
-                This might take a moment as we gather the most relevant resources for you.
-              </p>
-            </div>
           )}
         </div>
       </CardContent>

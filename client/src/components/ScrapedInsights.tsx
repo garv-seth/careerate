@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Insight, Transition, ScrapedData } from "@/types";
 import { apiRequest } from "@/lib/queryClient";
+import LoadingIndicator from "@/components/common/LoadingIndicator";
 
 interface ScrapedInsightsProps {
   insights: Insight[];
@@ -393,34 +394,11 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                 </div>
               ))
             ) : loading ? (
-              <div className="bg-surface-dark/50 rounded-lg p-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-primary-light animate-pulse"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="w-full">
-                    <div className="h-4 bg-primary/10 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-primary/10 rounded w-full mb-1"></div>
-                    <div className="h-3 bg-primary/10 rounded w-4/5 mb-1"></div>
-                    <div className="h-3 bg-primary/10 rounded w-5/6 mb-2"></div>
-                    <div className="flex">
-                      <div className="h-2 bg-primary/10 rounded w-16 mr-2"></div>
-                      <div className="h-2 bg-primary/10 rounded w-12"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <LoadingIndicator 
+                message="Loading transition stories and insights..."
+                size="md"
+                className="py-4"
+              />
             ) : (
               <div className="bg-surface-dark/50 rounded-lg p-4">
                 <div className="flex items-start">
@@ -439,36 +417,12 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
                     </svg>
                   </div>
                   <div>
-                    <div className="text-center py-4">
-                      <p className="text-text-secondary mb-3">
-                        Loading real transition stories from {transition.currentRole} to {transition.targetRole}...
-                      </p>
-                      <div className="mb-2 flex justify-center">
-                        <svg
-                          className="animate-spin h-6 w-6 text-primary"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                      </div>
-                      <p className="text-xs text-text-secondary">
-                        Please wait while Cara gathers transition stories from Blind, Reddit, and other forums...
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium">
+                      No transition stories found yet
+                    </p>
+                    <p className="text-xs text-text-secondary mt-1">
+                      We're collecting real-world stories from professionals who made similar career transitions. Check back soon for updates.
+                    </p>
                   </div>
                 </div>
               </div>

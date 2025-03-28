@@ -4,9 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkillGap } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, ArrowUp, Award, Star, Zap } from "lucide-react";
+import LoadingIndicator from "@/components/common/LoadingIndicator";
 
 interface SkillGapAnalysisProps {
   skillGaps: SkillGap[];
+  loading?: boolean;
 }
 
 // Extract unique skills from skill gaps
@@ -27,7 +29,7 @@ const extractSkillsFromGaps = (gaps: SkillGap[]): string[] => {
   return [...new Set(gaps.map(gap => gap.skillName))];
 };
 
-const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
+const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps, loading = false }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("matching");
 
@@ -124,7 +126,9 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
           </TabsList>
           
           <TabsContent value="matching" className="mt-0">
-            {displayMatchingSkills.length > 0 ? (
+            {loading || displayMatchingSkills.length === 0 ? (
+              <LoadingIndicator message="We're analyzing your skills compared to the target role..." />
+            ) : (
               <div className="space-y-4">
                 {displayMatchingSkills.map((skill, idx) => (
                   <div key={idx} className="bg-surface-dark/30 rounded-lg p-3">
@@ -154,39 +158,13 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-text-secondary">
-                  We're analyzing your skills compared to the target role...
-                </p>
-                <div className="mt-4 flex justify-center">
-                  <svg
-                    className="animate-spin h-6 w-6 text-primary"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                </div>
-              </div>
             )}
           </TabsContent>
           
           <TabsContent value="improve" className="mt-0">
-            {displayImprovementSkills.length > 0 ? (
+            {loading || displayImprovementSkills.length === 0 ? (
+              <LoadingIndicator message="We're analyzing skills you need to develop for the target role..." />
+            ) : (
               <div className="space-y-4">
                 {displayImprovementSkills.map((skill, idx) => (
                   <div key={idx} className="bg-surface-dark/30 rounded-lg p-3">
@@ -209,34 +187,6 @@ const SkillGapAnalysis: React.FC<SkillGapAnalysisProps> = ({ skillGaps }) => {
                     </p>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-text-secondary">
-                  We're analyzing skills you need to develop for the target role...
-                </p>
-                <div className="mt-4 flex justify-center">
-                  <svg
-                    className="animate-spin h-6 w-6 text-primary"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                </div>
               </div>
             )}
           </TabsContent>
