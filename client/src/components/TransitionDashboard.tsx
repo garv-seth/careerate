@@ -92,7 +92,7 @@ const TransitionDashboard: React.FC<TransitionDashboardProps> = ({
             Transition Overview
           </h3>
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary-light">
-            {scrapedCount} transitions found
+            {scrapedCount || 0} transitions found
           </span>
         </div>
 
