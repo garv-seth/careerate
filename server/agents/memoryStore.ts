@@ -7,30 +7,29 @@
  * to store and retrieve relevant memories based on semantic search.
  */
 import { OpenAIEmbeddings } from "@langchain/openai";
-import { ChatGoogleGenerativeAIEmbeddings } from "@langchain/google-genai/embeddings";
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { Document } from "@langchain/core/documents";
-import { InMemoryVectorStore } from "@langchain/community/vectorstores/memory";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { RunnableConfig } from "@langchain/core/runnables";
 
 /**
  * Class for storing and retrieving memories about career transitions
  */
 export class CareerTransitionMemory {
-  private vectorStore: InMemoryVectorStore;
+  private vectorStore: MemoryVectorStore;
   
   constructor() {
     // Determine which embeddings to use based on available API keys
     const embeddings = process.env.GOOGLE_API_KEY 
-      ? new ChatGoogleGenerativeAIEmbeddings({
-          apiKey: process.env.GOOGLE_API_KEY,
-          modelName: "embedding-001"
-        }) 
+      ? new OpenAIEmbeddings({
+          openAIApiKey: process.env.OPENAI_API_KEY
+        })
       : new OpenAIEmbeddings({
           openAIApiKey: process.env.OPENAI_API_KEY
         });
     
     // Initialize the vector store with the chosen embeddings
-    this.vectorStore = new InMemoryVectorStore(embeddings);
+    this.vectorStore = new MemoryVectorStore(embeddings);
     
     console.log("Career transition memory store initialized");
   }

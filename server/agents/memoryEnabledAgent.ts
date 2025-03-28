@@ -3,12 +3,14 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import { Document } from "@langchain/core/documents";
-import { InMemoryVectorStore } from "@langchain/community/vectorstores/memory";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { StructuredTool } from "@langchain/core/tools";
 import { storage } from "../storage";
 import { z } from "zod";
 import { SkillGapAnalysis } from "./langGraphAgent";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { MCPHandler } from "../helpers/mcpHandler";
+import { OpenAIEmbeddings } from "@langchain/openai";
 
 /**
  * A single agent with long-term memory for career transition analysis
@@ -17,10 +19,13 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 export class MemoryEnabledAgent {
   private model: any;
   private tools: StructuredTool[];
-  private memoryStore: InMemoryVectorStore;
+  private memoryStore: MemoryVectorStore;
   private userId: number;
+  private transitionId: number;
+  private mcpHandler: any;
 
-  constructor(userId: number) {
+  constructor(userId: number, transitionId: number) {
+    this.transitionId = transitionId;
     // Initialize the model with Gemini 2.0 Flash Lite
     this.model = new ChatGoogleGenerativeAI({
       apiKey: process.env.GOOGLE_API_KEY || "",
@@ -29,16 +34,18 @@ export class MemoryEnabledAgent {
       maxOutputTokens: 2048,
     });
 
-    // Initialize memory store
-    this.memoryStore = new InMemoryVectorStore(
-      new ChatGoogleGenerativeAI({
-        apiKey: process.env.GOOGLE_API_KEY || "",
-        modelName: "embedding-001",
+    // Initialize memory store with OpenAI embeddings
+    this.memoryStore = new MemoryVectorStore(
+      new OpenAIEmbeddings({
+        openAIApiKey: process.env.OPENAI_API_KEY || "",
       }),
     );
 
     // Store the user ID for memory access
     this.userId = userId;
+
+    // Initialize MCP handler
+    this.mcpHandler = new MCPHandler(userId, transitionId);
 
     // Initialize tools including memory operations
     this.tools = [
@@ -49,6 +56,18 @@ export class MemoryEnabledAgent {
       this.createSaveMemoryTool(),
       this.createRetrieveMemoryTool(),
     ];
+    
+    // Initialize MCP handler
+    this.initializeMCP().catch(error => {
+      console.error("Error initializing MCP:", error);
+    });
+  }
+
+  /**
+   * Initialize MCP handler by loading contexts
+   */
+  private async initializeMCP(): Promise<void> {
+    await this.mcpHandler.initialize();
   }
 
   /**

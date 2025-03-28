@@ -14,9 +14,11 @@ import {
 } from "@shared/schema";
 import { CaraAgent } from "./agents/caraAgent";
 import { ImprovedCaraAgent } from "./agents/improvedCaraAgent";
-import { EnhancedMultiAgentSystem } from "./agents/enhancedMultiAgetnSystem";
+// Importing MemoryEnabledAgent as the primary agent architecture
+// EnhancedMultiAgentSystem is being phased out
 import { safeParseJSON } from "./helpers/jsonParserHelper";
 import { CaraPlanExecuteAgent } from "./agents/caraPlanExecuteAgent";
+import { MemoryEnabledAgent } from "./agents/memoryEnabledAgent";
 import {
   searchForums,
   analyzeSkillGaps,
@@ -270,11 +272,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Starting improved scraping and analysis process for transition ${transition.id}`);
       
-      // Create EnhancedMultiAgentSystem that uses multiple specialist agents
-      const multiAgentSystem = new EnhancedMultiAgentSystem();
+      // Get user ID from transition or request
+      const userId = transition.userId || (req.user as any)?.id || 1;
       
-      // Start the analysis process (includes scraping)
-      multiAgentSystem.analyzeCareerTransition(
+      // Create a memory-enabled agent for more comprehensive and reliable analysis
+      const agent = new MemoryEnabledAgent(userId, transition.id);
+      
+      // Start the analysis process (includes scraping and memory storage)
+      agent.analyzeCareerTransition(
         transition.currentRole,
         transition.targetRole,
         transition.id,
@@ -372,6 +377,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: "Transition not found" 
         });
       }
+      
+      // Get user ID from transition or request
+      const userId = transition.userId || (req.user as any)?.id || 1;
 
       // If force refresh is enabled, clear existing data first
       if (forceRefresh) {
@@ -388,13 +396,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create EnhancedMultiAgentSystem for web scraping with improved reliability
-      const multiAgentSystem = new EnhancedMultiAgentSystem();
+      // Create memory-enabled agent for web scraping with improved reliability
+      const agent = new MemoryEnabledAgent(userId, transitionId);
       
       // Store that scraping has been initiated (frontend needs immediate response)
       res.json({ 
         success: true, 
-        message: "Scraping initiated with enhanced multi-agent system",
+        message: "Scraping initiated with memory-enabled agent",
         forceRefresh
       });
       
@@ -409,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // The uniqueTag and today's date trick search engines into avoiding cached results
       console.log(`Starting web scraping for ${transition.currentRole} to ${transition.targetRole} transition (${uniqueTag} - ${today})`);
       
-      multiAgentSystem.analyzeCareerTransition(
+      agent.analyzeCareerTransition(
         transition.currentRole,
         transition.targetRole,
         transitionId,
@@ -449,40 +457,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Get current role skills
+      // Get user ID (either from transition or from request)
+      const userId = transition.userId || (req.user as any)?.id || 1;
+      
+      // Get existing skills
       const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
-      const currentSkills = currentRoleSkills.map(item => item.skillName);
+      const userSkills = await storage.getUserSkills(userId);
+      const existingSkills = userSkills.map(skill => skill.skillName)
+        .concat(currentRoleSkills.map(skill => skill.skillName));
       
       // Note: This endpoint just acknowledges the request
-      // We'll use analyze-career for the actual implementation
+      // We'll run the analysis asynchronously
       res.json({ 
         success: true, 
         message: "Analysis initiated" 
       });
       
-      // Call the comprehensive analysis endpoint asynchronously
+      // Call the memory-enabled analysis asynchronously
       try {
-        // Create the enhanced multi-agent system with improved error handling
-        const multiAgentSystem = new EnhancedMultiAgentSystem();
+        console.log(`Starting memory-enabled analysis for ${transition.currentRole} → ${transition.targetRole}`);
         
-        // Perform analysis with the enhanced multi-agent system
-        const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+        // Create the memory-enabled agent with the user ID for personalization
+        const agent = new MemoryEnabledAgent(userId, transitionId);
+        
+        // Run the comprehensive analysis
+        const analysisResult = await agent.analyzeCareerTransition(
           transition.currentRole,
           transition.targetRole,
           transitionId,
-          currentSkills
+          existingSkills
         );
         
-        // Store skill gaps
-        for (const skillGap of analysisResult.skillGaps) {
-          await storage.createSkillGap({
-            transitionId,
-            skillName: skillGap.skillName,
-            gapLevel: skillGap.gapLevel as "Low" | "Medium" | "High",
-            confidenceScore: skillGap.confidenceScore,
-            mentionCount: skillGap.mentionCount || 0
-          });
-        }
+        console.log(`Analysis completed for: ${transition.currentRole} → ${transition.targetRole}`);
       } catch (analysisError) {
         console.error("Background analysis error:", analysisError);
         
@@ -588,6 +594,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add a new endpoint for comprehensive career analysis with memory
+  apiRouter.post("/analyze-with-memory", async (req, res) => {
+    try {
+      const transitionId = parseInt(req.body.transitionId);
+      
+      // Validate transitionId
+      if (isNaN(transitionId)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid transition ID" 
+        });
+      }
+
+      // Get transition data
+      const transition = await storage.getTransition(transitionId);
+      if (!transition) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Transition not found" 
+        });
+      }
+
+      // Get user ID (either from transition or from request)
+      const userId = transition.userId || (req.user as any)?.id || 1;
+
+      // Get existing skills
+      const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
+      const userSkills = await storage.getUserSkills(userId);
+      const existingSkills = userSkills.map(skill => skill.skillName)
+        .concat(currentRoleSkills.map(skill => skill.skillName));
+
+      console.log(`Starting memory-enabled analysis for ${transition.currentRole} → ${transition.targetRole}`);
+      
+      // Create the memory-enabled agent with the user ID for personalization
+      const agent = new MemoryEnabledAgent(userId, transitionId);
+      
+      // Run the comprehensive analysis
+      const analysisResult = await agent.analyzeCareerTransition(
+        transition.currentRole,
+        transition.targetRole,
+        transitionId,
+        existingSkills
+      );
+      
+      // Return the results
+      res.json({ 
+        success: true, 
+        skillGaps: analysisResult.skillGaps,
+        insights: analysisResult.insights,
+        scrapedCount: analysisResult.scrapedCount,
+        message: "Career analysis completed successfully" 
+      });
+    } catch (error) {
+      console.error("Error in memory-enabled career analysis:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to complete career analysis" 
+      });
+    }
+  });
+
   apiRouter.post("/analyze-career", async (req, res) => {
     try {
       const transitionId = parseInt(req.body.transitionId);
@@ -609,110 +676,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get current role skills
+      // Get user ID (either from transition or from request)
+      const userId = transition.userId || (req.user as any)?.id || 1;
+      
+      // Get existing skills
       const currentRoleSkills = await storage.getRoleSkills(transition.currentRole);
-      const currentSkills = currentRoleSkills.map(item => item.skillName);
+      const userSkills = await storage.getUserSkills(userId);
+      const existingSkills = userSkills.map(skill => skill.skillName)
+        .concat(currentRoleSkills.map(skill => skill.skillName));
 
-      console.log(`Starting enhanced multi-agent analysis for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      console.log(`Starting memory-enabled analysis for ${transition.currentRole} → ${transition.targetRole}`);
       
-      // Create EnhancedMultiAgentSystem instance with improved error handling
-      const multiAgentSystem = new EnhancedMultiAgentSystem();
+      // Create the memory-enabled agent with the user ID for personalization
+      const agent = new MemoryEnabledAgent(userId, transitionId);
       
-      // Perform comprehensive analysis using the enhanced multi-agent system
-      const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+      // Run the comprehensive analysis
+      const analysisResult = await agent.analyzeCareerTransition(
         transition.currentRole,
         transition.targetRole,
         transitionId,
-        currentSkills
+        existingSkills
       );
       
-      // Store scraped data
-      if (analysisResult.scrapedCount > 0) {
-        // Note: Scraped data is already stored in the agent process
-        console.log(`Cara found ${analysisResult.scrapedCount} relevant transition stories`);
-      }
+      // Store skill gaps - Note: MemoryEnabledAgent already stores skill gaps in the database
+      // This is just to get them for returning to the client
+      const storedSkillGaps = await storage.getSkillGapsByTransitionId(transitionId);
       
-      // Store skill gaps
-      const storedSkillGaps = [];
-      for (const skillGap of analysisResult.skillGaps) {
-        const stored = await storage.createSkillGap({
-          transitionId,
-          skillName: skillGap.skillName,
-          gapLevel: skillGap.gapLevel as "Low" | "Medium" | "High",
-          confidenceScore: Math.round(skillGap.confidenceScore), // Ensure integer value
-          mentionCount: Math.round(skillGap.mentionCount || 0) // Ensure integer value
-        });
-        storedSkillGaps.push(stored);
-      }
-      
-      // Store insights
+      // Store insights - Note: MemoryEnabledAgent already stores insights in the database
+      // These are additional insights that might need formatting
       if (analysisResult.insights) {
         const insights = analysisResult.insights;
         
-        // Store success rate as observation
-        if (insights.successRate) {
+        // Store success rate as observation if it's not already stored
+        if (insights.estimatedSuccessRate) {
           await storage.createInsight({
             transitionId,
             type: "observation",
-            content: `Success rate for this transition path is approximately ${insights.successRate}% based on analyzed stories.`,
-            source: "Cara Analysis",
+            content: `Success rate for this transition path is approximately ${insights.estimatedSuccessRate}% based on analyzed stories.`,
+            source: "Memory-Enabled Analysis",
             date: new Date().toISOString().split('T')[0],
             experienceYears: null,
           });
         }
         
-        // Store transition time as observation
-        if (insights.avgTransitionTime) {
+        // Store transition time as observation if it's not already stored
+        if (insights.typicalTimeframe) {
           await storage.createInsight({
             transitionId,
             type: "observation",
-            content: `Average transition time is around ${insights.avgTransitionTime} months.`,
-            source: "Cara Analysis",
+            content: `Average transition time is around ${insights.typicalTimeframe} months.`,
+            source: "Memory-Enabled Analysis",
             date: new Date().toISOString().split('T')[0],
             experienceYears: null,
           });
-        }
-        
-        // Store common paths
-        if (insights.commonPaths && insights.commonPaths.length > 0) {
-          for (const path of insights.commonPaths.slice(0, 2)) {
-            await storage.createInsight({
-              transitionId,
-              type: "story",
-              content: `Common transition approach: ${path.path} (mentioned ${path.count} times)`,
-              source: "Cara Analysis",
-              date: new Date().toISOString().split('T')[0],
-              experienceYears: null,
-            });
-          }
-        }
-        
-        // Store challenges
-        if (insights.commonChallenges && insights.commonChallenges.length > 0) {
-          for (const challenge of insights.commonChallenges.slice(0, 2)) {
-            await storage.createInsight({
-              transitionId,
-              type: "challenge",
-              content: challenge,
-              source: "Cara Analysis",
-              date: new Date().toISOString().split('T')[0],
-              experienceYears: null,
-            });
-          }
         }
       }
 
       res.json({ 
         success: true, 
         skillGaps: storedSkillGaps,
+        insights: analysisResult.insights,
         scrapedCount: analysisResult.scrapedCount,
-        message: "Cara's career analysis completed successfully" 
+        message: "Career analysis completed successfully" 
       });
     } catch (error) {
-      console.error("Error in Cara's career analysis:", error);
+      console.error("Error in memory-enabled career analysis:", error);
       res.status(500).json({ 
         success: false, 
-        error: "Failed to complete career analysis with Cara" 
+        error: "Failed to complete career analysis" 
       });
     }
   });
@@ -780,8 +811,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Try to get target role skills from our predefined list first as a starting point
           const targetRoleSkills = await storage.getRoleSkills(targetRole);
           
-          // Create an EnhancedMultiAgentSystem for more reliable skill gap analysis
-          const multiAgentSystem = new EnhancedMultiAgentSystem();
+          // Get user ID from transition or request
+          const userId = transition.userId || (req.user as any)?.id || 1;
+          
+          // Create a memory-enabled agent for more reliable skill gap analysis
+          const agent = new MemoryEnabledAgent(userId, transitionId);
           
           // Find scraped data for this transition
           const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
@@ -806,9 +840,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               targetRoleSkills.map(s => s.skillName)
             );
           } else {
-            // If no scraped data yet, use the multi-agent system to perform a full analysis
-            // This triggers a fresh web search and skill gap analysis with better error handling
-            const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+            // If no scraped data yet, use the memory-enabled agent to perform a full analysis
+            // This triggers a fresh web search and skill gap analysis with memory retention
+            const analysisResult = await agent.analyzeCareerTransition(
               currentRole,
               targetRole,
               transitionId,
@@ -867,9 +901,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create plan
       const plan = await storage.createPlan({ transitionId });
 
-      // Create EnhancedMultiAgentSystem for plan generation
-      console.log(`Using EnhancedMultiAgentSystem for transition from ${transition.currentRole} to ${transition.targetRole}`);
-      const multiAgentSystem = new EnhancedMultiAgentSystem();
+      // Create memory-enabled agent for plan generation
+      console.log(`Using memory-enabled agent for transition from ${transition.currentRole} to ${transition.targetRole}`);
+      
+      // Get user ID from transition or request
+      const userId = transition.userId || (req.user as any)?.id || 1;
+      
+      // Create the memory-enabled agent with the user ID for personalization
+      const agent = new MemoryEnabledAgent(userId, transitionId);
       
       // Prioritize skills
       const prioritizedSkills = skillGaps
@@ -885,9 +924,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .slice(0, 5) // Limit to top 5 skill gaps
         .map(gap => gap.skillName);
 
-      // Generate development plan with milestones using the enhanced multi-agent system
-      // This uses specialized planning agents working together with improved reliability
-      const analysisResult = await multiAgentSystem.analyzeCareerTransition(
+      // Generate development plan with milestones using the memory-enabled agent
+      // The agent uses LangGraph with memory tracking to create a comprehensive plan
+      const analysisResult = await agent.analyzeCareerTransition(
         transition.currentRole,
         transition.targetRole,
         transitionId,
