@@ -13,6 +13,8 @@ import OnboardingWizard from "@/pages/OnboardingWizard";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import NewTransition from "@/pages/NewTransition";
+import ContactUs from "@/pages/ContactUs";
+import Partnerships from "@/pages/Partnerships";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -31,6 +33,8 @@ function Router() {
           <Route path="/onboarding" component={OnboardingWizard} />
           <Route path="/forgot-password" component={ForgotPassword} />
           <Route path="/reset-password" component={ResetPassword} />
+          <Route path="/contact" component={ContactUs} />
+          <Route path="/partnerships" component={Partnerships} />
           <Route component={NotFound} />
         </Switch>
       </main>

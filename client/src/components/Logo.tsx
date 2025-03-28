@@ -24,8 +24,8 @@ const Logo: React.FC<LogoProps> = ({ size = "md", showTagline = true }) => {
       <div className={`${sizes[size]} mr-3 relative overflow-visible`}>
         {/* Actual Careerate logo from PNG file with glow effects */}
         <div className="w-full h-full relative filter drop-shadow-logo animate-logo-pulse">
-          {/* Glow effect background */}
-          <div className="absolute inset-0 bg-blue-400 rounded-full opacity-20 blur-md animate-pulse-slow scale-110"></div>
+          {/* Glow effect background - reduced size */}
+          <div className="absolute inset-2 bg-blue-400 rounded-full opacity-15 blur-sm animate-pulse-slow scale-105"></div>
           
           {/* Actual logo image */}
           <img 

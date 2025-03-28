@@ -15,6 +15,7 @@ import {
 // Using MemoryEnabledAgent as the primary agent architecture (consolidated approach)
 import { safeParseJSON } from "./helpers/jsonParserHelper";
 import { MemoryEnabledAgent } from "./agents/memoryEnabledAgent";
+import emailRoutes from "./email-routes";
 import {
   searchForums,
   analyzeSkillGaps,
@@ -76,6 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register auth routes
   apiRouter.use("/auth", authRoutes);
   apiRouter.use("/auth", resumeRoutes);
+  
+  // Register email routes
+  apiRouter.use("/email", emailRoutes);
 
   // Seed some predefined role skills if they don't exist
   await seedRoleSkills();
