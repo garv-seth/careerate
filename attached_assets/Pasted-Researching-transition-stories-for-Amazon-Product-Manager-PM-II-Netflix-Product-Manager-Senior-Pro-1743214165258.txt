@@ -1,0 +1,222 @@
+Researching transition stories for Amazon Product Manager PM II → Netflix Product Manager Senior Product Manager
+Searching: career transition stories from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager experiences challenges success
+Created 4 insights for transition with LangGraph and Tavily
+2:08:31 AM [express] GET /api/stories-analysis/63 200 in 787ms :: {"success":true,"data":{"keyObserv…
+2:08:31 AM [express] GET /api/scraped-data/63 200 in 43ms :: {"success":true,"data":[]}
+Searching: Amazon to Netflix Product Manager PM to Product Manager Senior Product transition stories experiences
+2:08:31 AM [express] GET /api/transitions/63 200 in 4ms
+Cleared existing insights for transition ID: 63 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 63, fetching some stories
+Searching for career transition stories: Career transition from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager experiences, challenges, and success stories
+Searching for transition stories from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager using Tavily
+Running intelligent career transition searches for Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager
+Searching: career transition experiences success stories challenges for transition from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career path real experiences
+Searching: Product Manager PM to Product Manager Senior Product career transition experiences success stories challenges
+No skill gaps found, generating skill gaps using LangGraph
+Failed to initialize primary LLM, using Gemini as fallback: ReferenceError: require is not defined
+    at new MemoryEnabledAgent (/home/runner/workspace/server/agents/memoryEnabledAgent.ts:47:32)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1018:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Using Gemini 2.0 Flash Lite as fallback
+Failed to initialize memory store with OpenAI embeddings: ReferenceError: require is not defined
+    at new MemoryEnabledAgent (/home/runner/workspace/server/agents/memoryEnabledAgent.ts:81:38)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1018:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Using most basic fallback embeddings
+Career transition analysis already in progress for ID 63, skipping duplicate request
+Error in search query "career transition experiences success stories challenges for transition from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career path real experiences": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Product Manager PM to Product Manager Senior Product transition experiences success stories challenges real cases studies
+Created 3 real skill gaps for transition using LangGraph
+Using memory-enabled agent for transition from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager
+Error in search query "Product Manager PM to Product Manager Senior Product transition experiences success stories challenges real cases studies": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: transition from Amazon to Netflix employee experiences career change interview process compensation culture
+Searching: software engineer career advancement to senior staff engineer transition experiences
+Found 0 user skills and 0 role skills for analysis
+Failed to initialize primary LLM, using Gemini as fallback: ReferenceError: require is not defined
+    at new MemoryEnabledAgent (/home/runner/workspace/server/agents/memoryEnabledAgent.ts:47:32)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1122:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Using Gemini 2.0 Flash Lite as fallback
+Failed to initialize memory store with OpenAI embeddings: ReferenceError: require is not defined
+    at new MemoryEnabledAgent (/home/runner/workspace/server/agents/memoryEnabledAgent.ts:81:38)
+    at <anonymous> (/home/runner/workspace/server/routes.ts:1122:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Using most basic fallback embeddings
+Career transition analysis already in progress for ID 63, skipping duplicate request
+Cara successfully generated a plan with 0 milestones
+2:08:32 AM [express] POST /api/plan 200 in 627ms :: {"success":true,"planId":146,"milestones":0,"mes…
+Error in search query "transition from Amazon to Netflix employee experiences career change interview process compensation culture": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career transition case study blog linkedin medium glassdoor reddit
+2:08:32 AM [express] GET /api/transitions/63 200 in 4ms
+Error in search query "Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career transition case study blog linkedin medium glassdoor reddit": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: how to transition from Product Manager PM at Amazon to Product Manager Senior Product at Netflix skills required preparation strategy
+Cleared existing insights for transition ID: 63 to ensure fresh analysis
+No insights found, generating insights with LangGraph and Tavily
+No scraped data found for transition ID: 63, fetching some stories
+Searching for career transition stories: Career transition from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager experiences, challenges, and success stories
+Searching for transition stories from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager using Tavily
+Running intelligent career transition searches for Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager
+Searching: career transition experiences success stories challenges for transition from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career path real experiences
+Error in search query "how to transition from Product Manager PM at Amazon to Product Manager Senior Product at Netflix skills required preparation strategy": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Limited search results for exact roles. Trying with more generic role search...
+Running intelligent career transition searches for Product Manager to Product Manager Senior
+Searching: career transition experiences success stories challenges for transition from Product Manager to Product Manager Senior career path real experiences
+Error in search query "career transition experiences success stories challenges for transition from Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career path real experiences": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Product Manager PM to Product Manager Senior Product transition experiences success stories challenges real cases studies
+Error in search query "Product Manager PM to Product Manager Senior Product transition experiences success stories challenges real cases studies": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: transition from Amazon to Netflix employee experiences career change interview process compensation culture
+Error in search query "career transition experiences success stories challenges for transition from Product Manager to Product Manager Senior career path real experiences": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Product Manager to Manager transition experiences success stories challenges real cases studies
+Error in search query "transition from Amazon to Netflix employee experiences career change interview process compensation culture": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career transition case study blog linkedin medium glassdoor reddit
+Error in search query "Product Manager to Manager transition experiences success stories challenges real cases studies": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: transition from Product to Product employee experiences career change interview process compensation culture
+Error in search query "Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager career transition case study blog linkedin medium glassdoor reddit": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: how to transition from Product Manager PM at Amazon to Product Manager Senior Product at Netflix skills required preparation strategy
+Error in search query "transition from Product to Product employee experiences career change interview process compensation culture": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Product Manager to Product Manager Senior career transition case study blog linkedin medium glassdoor reddit
+Error in search query "how to transition from Product Manager PM at Amazon to Product Manager Senior Product at Netflix skills required preparation strategy": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:66:27)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Limited search results for exact roles. Trying with more generic role search...
+Running intelligent career transition searches for Product Manager to Product Manager Senior
+Searching: career transition experiences success stories challenges for transition from Product Manager to Product Manager Senior career path real experiences
+Error in search query "Product Manager to Product Manager Senior career transition case study blog linkedin medium glassdoor reddit": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: how to transition from Product Manager at Product to Manager at Product skills required preparation strategy
+Error in search query "career transition experiences success stories challenges for transition from Product Manager to Product Manager Senior career path real experiences": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Product Manager to Manager transition experiences success stories challenges real cases studies
+Error in search query "how to transition from Product Manager at Product to Manager at Product skills required preparation strategy": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: similar transitions to Product Manager Senior Product from other technical roles success stories
+Error in search query "Product Manager to Manager transition experiences success stories challenges real cases studies": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: transition from Product to Product employee experiences career change interview process compensation culture
+Error in search query "transition from Product to Product employee experiences career change interview process compensation culture": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: Product Manager to Product Manager Senior career transition case study blog linkedin medium glassdoor reddit
+Error in search query "Product Manager to Product Manager Senior career transition case study blog linkedin medium glassdoor reddit": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+Searching: how to transition from Product Manager at Product to Manager at Product skills required preparation strategy
+Error in search query "how to transition from Product Manager at Product to Manager at Product skills required preparation strategy": Error: Request failed with status code 400: undefined
+    at TavilySearchResults._call (file:///home/runner/workspace/node_modules/@langchain/community/dist/tools/tavily_search.js:201:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async TavilySearchResults.call (file:///home/runner/workspace/node_modules/@langchain/core/dist/tools/index.js:115:22)
+    at async CareerTransitionSearch._call (/home/runner/workspace/server/tools/tavilySearch.ts:96:30)
+    at async searchForums (/home/runner/workspace/server/helpers/langGraphHelpers.ts:76:36)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1308:35)
+All story search attempts failed, using simulated stories
+Analyzing skill gaps for Amazon Product Manager PM II → Netflix Product Manager Senior Product Manager
+2:08:35 AM [express] GET /api/insights/63 200 in 19177ms :: {"success":true,"insights":{"successRate…
+Cleared all data for transition ID: 63
+Cleared existing data for transition ID: 63 to ensure fresh analysis
+Calculating personalized success rate with LangGraph and Tavily
+Calculating success rate for Amazon Product Manager PM II to Netflix Product Manager Senior Product Manager transition

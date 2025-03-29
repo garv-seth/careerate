@@ -1,0 +1,102 @@
+The goal of this project is to create an interactive agent that can perform searches using the Tavily search tool based on user queries.
+
+
+Introduction
+In this tutorial, we will build a smart search agent using LangChain, a framework designed to facilitate building applications that utilize language models. The goal of this project is to create an interactive agent that can perform searches using the Tavily search tool based on user queries. We will improve the power of the OpenAI GPT-3.5 model to process the queries and return relevant search results.
+
+Project Setup
+Prerequisites
+Before we begin coding, ensure that you have the following prerequisites:
+
+Python Version: Python 3.7 or higher
+Libraries: You will need the following Python libraries:
+langchain-openai
+langchain-community
+langchain-core
+You can install the required libraries using pip:
+
+pip install langchain-openai langchain-community langchain-core python-dotenv
+Environment Variables
+For security reasons, you might want to store your OpenAI API key in an environment variable. Create a .env file in your project directory with the following content:
+
+OPENAI_API_KEY=your_openai_api_key_here
+Make sure to replace your_openai_api_key_here with your actual OpenAI API key.
+
+Code Walkthrough
+Now, let’s dive into the code and understand how each part contributes to the functionality of our search agent.
+
+import getpass
+import os
+from langchain_openai import ChatOpenAI
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_core.messages import HumanMessage
+from langgraph.prebuilt import create_react_agent
+from dotenv import load_dotenv
+Imports
+getpass and os: These libraries are standard Python libraries for handling environment variables and user input securely.
+langchain_openai: This module provides access to OpenAI’s language models.
+langchain_community.tools.tavily_search: This module gives us access to the Tavily search tool for retrieving search results.
+langchain_core.messages: Contains messaging structures, including HumanMessage which represents messages from the user.
+langgraph.prebuilt: This module is used to create a reactive agent that can choose the right tool for a given task.
+dotenv: This library is used to load environment variables from a .env file.
+model = ChatOpenAI(model="gpt-3.5-turbo-1106")
+Initializing the Language Model
+We initialize the OpenAI model using:
+
+ChatOpenAI: This class allows us to create a language model instance, in this case, using the "gpt-3.5-turbo-1106" variant. This model is capable of understanding and generating human-like text.
+search = TavilySearchResults(max_results=2)
+Setting Up the Search Tool
+Here, we create an instance of the TavilySearchResults class:
+
+max_results=2: This parameter specifies that we want to retrieve a maximum of two search results for each query. This can be adjusted based on your needs.
+tools = [search]
+Tool List
+We store our search tool in a list named tools. This allows us to easily add more tools in the future if needed.
+
+agent_executor = create_react_agent(model, tools)
+Creating the Agent
+We create a reactive agent using the create_react_agent function:
+
+model: The language model we initialized earlier.
+tools: The list of tools we want the agent to use.
+This agent will be responsible for determining which tool to use based on the user’s input.
+
+query = input("Tavily search:")
+User Input
+This line prompts the user to enter a search query. The input will be used as the basis for our search.
+
+response = agent_executor.invoke(
+    {
+        "messages": [HumanMessage(content=query)]
+    }
+)
+Invoking the Agent
+Here, we invoke the agent with the user’s query:
+
+invoke: This method processes the input message.
+HumanMessage: We create an instance of HumanMessage with the user's input to structure it properly for the agent.
+The invoke method will return a response that includes the search results.
+
+print(response['messages'][-1].content)
+Outputting the Results
+Finally, we print the last message from the response, which contains the results of the search. This allows the user to see what the agent found based on their query.
+
+Output and Examples
+When you run the script, you will see a prompt asking for your search query. For example:
+
+Tavily search: What is the capital of France?
+After entering the query, the program will output the relevant search results, such as:
+
+The capital of France is Paris.
+The output format may vary based on the responses returned by the Tavily search tool.
+
+Conclusion
+In this tutorial, we successfully built a smart search agent that applies LangChain and the Tavily search tool. We explored how to set up the environment, initialize the language model, create a search tool, and interact with the agent. This project demonstrates the potential of combining language models with search tools to create intelligent applications.
+
+Applications
+This search agent can be further expanded and adapted for various applications, such as:
+
+Virtual assistants that provide information based on user queries.
+Research tools that retrieve relevant data quickly.
+Chatbots that can assist users in finding information across different domains.
+Feel free to experiment with the code, modify parameters, and integrate other tools to enhance the capabilities of your smart search agent!
