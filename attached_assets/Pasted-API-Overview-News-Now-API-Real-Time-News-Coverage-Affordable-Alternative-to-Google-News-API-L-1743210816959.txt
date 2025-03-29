@@ -1,0 +1,304 @@
+API Overview
+News Now API: Real-Time News Coverage – Affordable Alternative to Google News API
+
+Looking for a cost-effective way to access real-time global news from top sources like Google News, BBC, CNN, and many others? Introducing the News Now API—a lightning-fast, reliable, and 100x cheaper alternative to Google News.
+
+Stay up-to-date with the latest in Politics, Technology, Health, Business, Sports, and more. Our API delivers real-time articles and headlines sourced directly from trusted outlets across the globe, ensuring your users stay informed.
+
+Key Features:
+
+Access news from Google News and other leading global publishers.
+Flexible querying for categories, keywords, languages, and regions.
+Supports multiple languages for global audiences.
+Real-time updates with comprehensive news coverage.
+Simple integration with any app or platform.
+Our API is perfect for businesses, developers, or apps needing reliable, up-to-the-minute news without the high costs.
+
+To experience real-time news at unbeatable rates, contact us at api.prlabs@gmail.com or check out our API offerings now.
+
+Unlock real-time global news today!
+
+
+Google NewsAPI: Affordable Real-Time Global News Access real-time news from top sources like Google News, BBC, and CNN at 100x cheaper than Google News API. Stay updated on categories like Politics, Technology, Business, Sports, and more with flexible querying and support for multiple languages and regions. Perfect for businesses and developers seeking reliable news updates without the high costs. Contact: api.prlabs@gmail.com for more details.
+
+Key Words :
+
+Google news , Bing news , BBC, CNN, Yahoo news ,MSN, CNN, New York Times, The Washington Post, Wall Street Journal, USA Today, Reuters, Fox News, HuffPost, NBC News, ABC News, India Today, BBC News ,The Guardian , Al Jazeera CNBC ,Associated Press ,Fox News ,Le Monde , Deutsche Welle ,China Central Television (CCTV) , ESPN, Bleacher NBA ,The Sydney Morning Herald,NHK World ,The Categories- Economist, Breaking News, World Events, Politics, Technology, Health, Science, Business, Crypto Stock Market Finance Entertainment Sports Environment Education Lifestyle Travel Culture Weather Crime Social Issues Innovation International Relations Market Trends Art and Design Fashion Food and Dining Human Interest, Trending News Blogs Articles
+
+NewsNow API (NEWS API powered by Google News and Duck duck go news) is a state-of-the-art news aggregation and delivery service with 99.99 % SLA guranteed, that provides developers, businesses, and researchers with access to real-time news articles and headlines from around the world (world news) . With extensive coverage, real-time updates (real time news) , flexible querying, easy integration, rich metadata, and a focus on security and ethical practices, NewsNow API offers a seamless and reliable solution for accessing the latest news information. Join the community of users who rely on NewsNow API to stay informed and enhance their applications with up-to-date news content.
+
+Contact us - api.prlabs@gmail.com
+
+Our Other API
+NewsAPI - https://rapidapi.com/rphrp1985/api/newsnow
+
+ChatGPT Vision https://rapidapi.com/rphrp1985/api/chatgpt-vision1
+
+ChatGPT 4 - https://rapidapi.com/rphrp1985/api/chatgpt-42
+
+Open AI - https://rapidapi.com/rphrp1985/api/open-ai21
+
+Vision API - https://rapidapi.com/rphrp1985/api/vision-ai-api
+
+Google API - https://rapidapi.com/rphrp1985/api/google-api31
+
+Llama , Cohere and more - https://rapidapi.com/rphrp1985/api/llama-ai-mixtral-cohere-gpt-api
+
+Yahoo Finance - https://rapidapi.com/rphrp1985/api/yahoo-finance160
+
+Custom Chat Bots - https://rapidapi.com/rphrp1985/api/custom-chatbot-api
+
+Explore Custom ChatBots - https://prlabsapi.com/assistants
+
+Official Website - https://prlabsapi.com/
+
+Languages
+
+English: en
+Indonesian: id
+Czech: cs
+German: de
+Spanish: es-419
+French: fr
+Italian: it
+Latvian: lv
+Lithuanian: lt
+Hungarian: hu
+Dutch: nl
+Norwegian: no
+Polish: pl
+Portuguese (Brazil): pt-419
+Portuguese (Portugal): pt-150
+Romanian: ro
+Slovak: sk
+Slovenian: sl
+Swedish: sv
+Vietnamese: vi
+Turkish: tr
+Greek: el
+Bulgarian: bg
+Russian: ru
+Serbian: sr
+Ukrainian: uk
+Hebrew: he
+Arabic: ar
+Marathi: mr
+Hindi: hi
+Bengali: bn
+Tamil: ta
+Telugu: te
+Malayalam: ml
+Thai: th
+Chinese (Simplified): zh-Hans
+Chinese (Traditional): zh-Hant
+Japanese: ja
+Korean: ko
+Location for Google based service
+
+Australia: AU
+Botswana: BW
+Canada: CA
+Ethiopia: ET
+Ghana: GH
+India: IN
+Indonesia: ID
+Ireland: IE
+Israel: IL
+Kenya: KE
+Latvia: LV
+Malaysia: MY
+Namibia: NA
+New Zealand: NZ
+Nigeria: NG
+Pakistan: PK
+Philippines: PH
+Singapore: SG
+South Africa: ZA
+Tanzania: TZ
+Uganda: UG
+United Kingdom: GB
+United States: US
+Zimbabwe: ZW
+Czech Republic: CZ
+Germany: DE
+Austria: AT
+Switzerland: CH
+Argentina: AR
+Chile: CL
+Colombia: CO
+Cuba: CU
+Mexico: MX
+Peru: PE
+Venezuela: VE
+Belgium: BE
+France: FR
+Morocco: MA
+Senegal: SN
+Italy: IT
+Lithuania: LT
+Hungary: HU
+Netherlands: NL
+Norway: NO
+Poland: PL
+Brazil: BR
+Portugal: PT
+Romania: RO
+Slovakia: SK
+Slovenia: SI
+Sweden: SE
+Vietnam: VN
+Turkey: TR
+Greece: GR
+Bulgaria: BG
+Russia: RU
+Ukraine: UA
+Serbia: RS
+United Arab Emirates: AE
+Saudi Arabia: SA
+Lebanon: LB
+Egypt: EG
+Bangladesh: BD
+Thailand: TH
+China: CN
+Taiwan: TW
+Hong Kong: HK
+Japan: JP
+Republic of Korea: KR
+Regions for duck duck go based service
+
+xa-ar for Arabia
+xa-en for Arabia (en)
+ar-es for Argentina
+au-en for Australia
+at-de for Austria
+be-fr for Belgium (fr)
+be-nl for Belgium (nl)
+br-pt for Brazil
+bg-bg for Bulgaria
+ca-en for Canada
+ca-fr for Canada (fr)
+ct-ca for Catalan
+cl-es for Chile
+cn-zh for China
+co-es for Colombia
+hr-hr for Croatia
+cz-cs for Czech Republic
+dk-da for Denmark
+ee-et for Estonia
+fi-fi for Finland
+fr-fr for France
+de-de for Germany
+gr-el for Greece
+hk-tzh for Hong Kong
+hu-hu for Hungary
+in-en for India
+id-id for Indonesia
+id-en for Indonesia (en)
+ie-en for Ireland
+il-he for Israel
+it-it for Italy
+jp-jp for Japan
+kr-kr for Korea
+lv-lv for Latvia
+lt-lt for Lithuania
+xl-es for Latin America
+my-ms for Malaysia
+my-en for Malaysia (en)
+mx-es for Mexico
+nl-nl for Netherlands
+nz-en for New Zealand
+no-no for Norway
+pe-es for Peru
+ph-en for Philippines
+ph-tl for Philippines (tl)
+pl-pl for Poland
+pt-pt for Portugal
+ro-ro for Romania
+ru-ru for Russia
+sg-en for Singapore
+sk-sk for Slovak Republic
+sl-sl for Slovenia
+za-en for South Africa
+es-es for Spain
+se-sv for Sweden
+ch-de for Switzerland (de)
+ch-fr for Switzerland (fr)
+ch-it for Switzerland (it)
+tw-tzh for Taiwan
+th-th for Thailand
+tr-tr for Turkey
+ua-uk for Ukraine
+uk-en for United Kingdom
+us-en for United States
+ue-es for United States (es)
+ve-es for Venezuela
+vn-vi for Vietnam
+wt-wt for No region
+Getting Started
+To begin using Real-Time Web Search, follow these steps and make your first API call:
+
+Subscribe to a plan: Visit our Pricing page and subscribe to one of the plans. If you are just starting, you can subscribe to the free BASIC plan of the API - free plan with 50-100 (50 to 100) requests per month (hard-limited and no credit card required).
+
+Make your first API call: Visit the RapidAPI Playground - Select and endpoint and make an test API call on sample query paramters provided
+
+Documentation and Resources: Refer to the detailed endpoint, parameter descriptions, and examples provided in the Endpoints tab under each endpoint. Code snippets are available for all popular programming languages and environments, including - Javascript, Python, Java, Shell, and many others, to help you easily integrate the API into your project or workflow.
+
+You should be good to go now!
+
+Authentication
+To access the API, you will need to authenticate your requests by including an API key in the request header. Please refer to the authentication section in the API documentation for instructions on how to generate and include the API key in your requests.
+
+Rate Limiting
+Limits
+Each subscription plan of the API defines the maximum number of requests permitted per month or the quota, in addition to a rate limit expressed in RPS (Requests Per Second).
+
+Please note that all free plans of the API (e.g. BASIC) are rate limited to 1000 requests per hour. This is a RapidAPI requirement for any free plan.
+Rate Limits Headers
+All API responses include rate limit information in the following headers:
+
+x-ratelimit-requests-limit: number of requests the plan you are currently subscribed to allows you to make before incurring overages.
+x-ratelimit-requests-remaining: The number of requests remaining (from your plan) before you reach the limit of requests your application is allowed to make. When this reaches zero, you will begin experiencing overage charges. This will reset each day or each month, depending on how the API pricing plan is configured. You can view these limits and quotas on the pricing page of the API in the API Hub.
+x-ratelimit-requests-reset: Indicates the number of seconds until the quota resets. This number of seconds would at most be as long as either a day or a month, depending on how the plan was configured.
+Handling Limits
+When hitting the rate limits of the API, the RapidAPI gateway will return a 429 Too Many Requests error. When that happens, wait until your rate limit resets, or consider upgrading your subscription plan for a higher limit. We can support almost any monthly quota and rate limit, contact us for more information.
+
+Here’s an example of a 429 Too Many Requests error:
+
+{
+    "message":"Too many requests"
+}
+Code Examples
+Code examples are available for all popular programming languages and environments (Javascript, Python, Java, Shell, etc) on the Endpoints tab, on the right panel, under “Code Snippets”.
+
+Common Use Cases
+The LLAMA, Mixtral, Cohere API can be used for a variety of use cases, including:
+
+Market Research and Competitive Analysis Generative AI / LLMs and Machine Learning Applications and Services Research and Data Analysis
+
+ChatBot services
+
+Error Handling
+The API is designed to be robust and reliable . However, in the event of errors during API interaction, we use HTTP status codes to indicate the nature of the problem. Below, you'll find detailed explanations of common error codes you may encounter, along with potential causes and suggested remediation steps.
+
+If you need any assistant contact at api.prlabs@gmail.com
+Common HTTP Status Codes
+400 Bad Request: This status is returned when your request is malformed or missing some required parameters. The response body might also include a “message” field, explaining the specific error. Ensure that all required fields are included and properly formatted before retrying your request.
+
+403 Forbidden: This error indicates that you are not subscribed to the API or that your API key is invalid. If you believe this is in error, please contact RapidAPI support - support@rapidapi.com.
+
+404 Not Found: This status is returned if the requested resource could not be found. This can occur with incorrect URL endpoints. Double-check the URL and try again.
+
+429 Too Many Requests: This error means you have hit the rate limit for your subscription plan. Wait until your rate limit resets, or consider upgrading your subscription plan for a higher limit. If you believe this is in error, please contact us.
+
+5XX Server Error (500, 502, and 503): This indicates a problem with our servers processing your request or an internal server timeout. This is a rare occurrence and should be temporary. If this error persists, please contact our technical support for assistance at api.prlabs@gmail.com
+
+Handling Errors Programmatically
+Implement error handling in your application to manage these responses gracefully. Here are some tips:
+
+Retry Logic: For 5XX (500, 502, 503) and 429, implement a retry mechanism that waits for a few seconds before retrying the request.
+
+Validation: Prior to sending requests, validate parameters to catch common errors like 400 Bad Request.
+
+Logging: Log error responses for further analysis to understand patterns or recurring issues that might require changes in how you integrate with the API. The request_id field in the response can be used for further debugging.
+
+User Feedback: When applicable, Provide clear messages to your users when an error occurs, potentially using the information from the error response.

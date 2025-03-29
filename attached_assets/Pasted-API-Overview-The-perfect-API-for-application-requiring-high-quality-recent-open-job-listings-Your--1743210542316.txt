@@ -1,0 +1,455 @@
+API Overview
+The perfect API for application requiring high-quality recent open job listings. Your users are forwarded directly to the employer's career site or ATS, providing the best user experience. This database contains active jobs listed during the last 7 days from over 100,000 organizations and is refreshed hourly.
+
+
+AI-enriched Jobs from 100k+ Career Sites & ATS with up to 100 jobs per request. Hourly refresh. Text & HTML description. Filter on Remote, Location, Description & Title. Expired jobs API included! Our dataset contains jobs from the following ATS platforms: Ashby, Bamboohr, Breezy HR, CareerPlug, Comeet, CSOD, Dayforce, Eightfold, Freshteam, GoHire, Greenhouse, HireHive, HirhingThing, iCIMS, JazzHR, Jobvite, JOIN.com, Lever.co, Oraclecloud, Paycom, Paylocity, Personio, Phenompeople, Pinpoint, Polymer, Recooty, Recruitee, SmartRecruiters, SuccessFactors, TeamTailor, Trakstar, Workable, Workday, Zoho Recruit
+
+Do you wish to retrieve jobs beyond the limits of this API? Please reach out to remco@fantastic.jobs
+
+Our Other Job APIs
+LinkedIn Jobs API:
+This API is designed for platforms requiring high quality LinkedIn job listings with detailled recruiter and company data.
+
+LinkedIn Jobs API
+
+Hiring Manager API for Lead Generation:
+This API returns only jobs with:
+
+Hiring Manager LinkedIn profiles (900k+ per month)
+Hiring Manager Email addresses (100k+ per month)
+This contact data is extracted directly from the jobs, no external sources are accessed, guaranteeing high quality data.
+
+Hiring Manager API
+
+Other APIs:
+Upwork Jobs API
+
+API with Upwork Jobs and detailled employers data.
+
+About this API
+This API is designed for job platforms requiring high-quality job listings.
+
+Jobs in this API are solely from Career Sites / ATS platforms, allowing your users to directly apply with the employer without the need of a 3rd party.
+
+This API returns up to 100 jobs per request
+
+You may reduce the number of jobs per request by using the limit parameter. Each plan has plenty of requests to support strategies with a lower number of jobs per API call. If you omit the limit parameter, the limit defaults to 100 jobs per request.
+
+Job Credits & Request Credits
+Each request deducts the number of jobs returned from your "Jobs" credits.
+Each request deducts 1 credit from your "Requests" credits.
+Your "Jobs" credits should run out before your "Requests" credits. This is by design.
+If you have any question or require more than 200,000 jobs per month, please reach out to us at remco@fantastic.jobs
+Tracking your Credit usage
+There are two ways to keep track of your credits:
+
+Each API request returns several headers, showing your how many credits you have left for Jobs and Requests: For example:
+x-ratelimit-jobs-limit: 200000
+x-ratelimit-jobs-remaining: 199234
+x-ratelimit-requests-limit: 25000
+x-ratelimit-requests-remaining: 24975
+In addition, there's a header to track the time left in your plan (reset date), in seconds:
+
+x-ratelimit-jobs-reset: 2505077
+You can also track your usage on the Subscription & Usage page: https://rapidapi.com/developer/billing/subscriptions-and-usage
+Important:
+To prevent retrieving duplicate jobs, we encourage using the following strategy:
+
+Call the API on a regular schedule:
+Get Jobs 7 days: Call the API on the same time and day every week or use the 'date_filter' parameter
+
+Get Jobs 24h: Call the API on the same time every day.
+
+Get Jobs 1h: Call the API on the same time every hour
+
+Doing so will ensure that you will not retrieve the same jobs twice.
+
+Most of our filters allow you to combine keywords, do this as much as possible. For example, you may search multiple locations using location_filter="United States" OR "United Kingdom".
+
+If you're ever in doubt, please reach out to remco@fantastic.jobs
+
+Endpoints
+Get Jobs 7 days:
+Contains ATS jobs from the last 7 days
+
+Get Jobs 24h:
+Contains ATS jobs indexed during the last 24h
+
+Get Jobs Hourly - (Ultra & Mega plan)
+Firehose API containing jobs discovered in the last hour (with a 2 hour delay). Perfect for one or more hourly API calls to get the freshest jobs!
+
+The hourly endpoint has a limit of 100 jobs per request which can't be lowered.
+
+Get Expired Jobs - (Ultra & Mega plan)
+API containing IDs of jobs flagged as expired the day before. Updates once per day and contains an array of all ID's. Please note that this array contains 25,000 + ID's.
+
+This endpoint does not count towards your "Jobs" credits!
+
+The Data
+We currently have jobs for the following ATS:
+
+Ashby	Bamboohr	Breezy HR
+CareerPlug	Comeet	CSOD
+Dayforce	Eightfold	Freshteam
+GoHire	Greenhouse	HireHive
+HirhingThing	iCIMS	JazzHR
+Jobvite	JOIN.com	Lever.co
+Oraclecloud	Paycom	Paylocity
+Personio	Phenompeople	Pinpoint
+Polymer	Recruitee	Recooty
+SmartRecruiters	SuccessFactors	TeamTailor
+Trakstar	Workable	Workday
+Zoho Recruit		
+In addition, we currently have jobs for the following organizations not using an ATS:
+
+Apple
+Missing an organization? Please let us know and we might be able to add it to the database
+
+The number of jobs per country are estimated to be the following. Please send us a message if you're country is not in the list:
+
+Country	No. Jobs per month
+United States	800k-900k
+India	60k-70k
+Canada	50k-60k
+United Kingdom	50k-60k
+Germany	40k-50k
+France	30k-40k
+Australia	15k-20k
+Mexico	15k-20k
+Netherlands	10k-15k
+Spain	10k-15k
+Poland	8k-12k
+Brazil	8k-12k
+Austria	8k-12k
+Philippines	8k-12k
+Israel	8k-12k
+China	8k-12k
+Switzerland	5k-8k
+South Africa	5k-8k
+Italy	5k-8k
+Sweden	5k-8k
+United Arab Emirates	5k-8k
+Belgium	3k-5k
+Singapore	3k-5k
+Portugal	3k-5k
+Ireland	3k-5k
+Colombia	3k-5k
+Malaysia	3k-5k
+Japan	2k-4k
+Saudi Arabia	2k-4k
+Indonesia	2k-4k
+Hungary	2k-4k
+New Zealand	2k-4k
+Romania	2k-4k
+Technical Details
+This API calls a database that includes ATS and career site jobs posted during the last 7 days.
+
+The API refreshes every hour with a delay of one to two hours. For example, if a job is posted at 06:00 UTC, it will appear between 07:00 and 08:00 UTC
+
+We will add new ATS platforms regularly, please check every once in a while if you apply filters on 'source'.
+
+All jobs in the database are unique based on their URL. However, organizations occasionally create duplicates themselves. More commonly, organizations sometimes create the same job listing for multiple cities or states. If you wish to create a rich and unique dataset, we recommend further deduplication on title + organization, or title + organization + locations
+
+BETA Feature. We extracti useful job details from the description with an LLM. Please see the AI fields and filters for more information.
+
+BETA Feature. We try to map every company to a LinkedIn profile. Please see the LinkedIn fields and filters for more information
+
+Search & Filters
+Our database can be searched with the following syntax:
+
+Job searches are limited to 100 jobs per API call. You can easily paginate your search by using the 'offset' parameter.
+
+title_filter
+
+Query	Result
+Software	All jobs including software in the job title
+Software Engineer	All jobs including 'software' AND 'engineer' in the job title
+"Software Engineer"	All jobs including 'software' AND 'engineer' in order in the job title
+Software OR Engineer	All jobs including 'software' OR 'engineer' in the job title
+-"Software Engineer"	All jobs excluding 'software' AND 'engineer' in order in the job title
+Advanced Title Filter
+
+Advanced Title filter enables more features like parenthesis, 'AND', and prefix searching.
+
+Can't be used in combination with regular title_filter
+
+Phrares (two words or more) always need to be single quoted or use the operator <->
+
+Instead of using natural language like 'OR' you need to use operators like:
+
+& (AND)
+| (OR)
+! (NOT)
+<-> (FOLLOWED BY)
+' ' (FOLLOWED BY alternative, does not work with 6. Prefix Wildcard)
+:* (Prefix Wildcard)
+For example:
+
+(AI | 'Machine Learning' | 'Robotics') & ! Marketing
+
+Will return all jobs with ai, or machine learning, or robotics in the title except titles with marketing
+
+Project <-> Manag:*
+
+Will return jobs like Project Manager or Project Management
+
+Please send us a message if you're getting errors
+
+For advanced filtering, including parenthesis and prefix wildcard searching, please use the advanced_title_filter. Documentation can be found at the bottom of this page
+
+location_filter
+
+You can use the same syntax as title_filter for searches on Location. Please make sure to search on the full name of the location, abbreviations are not supported.
+
+For US, please search on United States
+For UK, please search on United Kingdom
+For states in the United States, please search on their full name, like "New York"
+For example: location_filter="United States" OR "United Kingdom"
+
+description_filter
+
+You can use the same syntax as the title_filter. Do not make description searches too complex as the API might time out!
+
+organization_filter
+
+Filter on the job's company name. Only allows exact matches (case sensitive!).
+
+You can search on more than one company with a comma delimited list without spaces!. For example: organization_filter:NVIDIA,Walmart
+
+Alternatively, You may also use the new li_organization_slug_filter. Please see more details below
+
+Please send us an email at remco@fantastic.jobs to receive a list of all companies in this API
+
+description_type
+
+You may optionally include the job description in the output.
+
+Option 1 'text': A plain text version of the HTML description. Might include /n breaks
+Option 2 'html': A HTML version of the description, perfect for job boards.
+Make sure you understand the risk of adding HTML to your website, we don't modify any of the indexed HTML data!
+
+source
+
+You may optionally filter on the source, which are the ATS platforms. You can only select one source per call. Your options are:ashby, bamboohr, breezy, careerplug, comeet, csod, dayforce, eightfold, freshteam, greenhouse, gohire, hirehive, hiringthing, icims, jazzhr, jobvite, join.com, lever.co, oraclecloud, paycom, paylocity, personio, phenompeople, pinpoint, polymer, recruitee, recooty, smartrecruiters, successfactors, teamtailor, trakstar, workable, workday, zoho
+
+remote
+
+Set to 'true' to include remote jobs only. Set to 'false' to include jobs that are not remote. Leave empty to include both remote and non remote jobs
+
+This is a derived field and quite broad. We identify remote jobs by title, raw location fields, and the offical google jobs 'TELECOMMUTE' schema.
+
+For a more granular remote filter, we recommend using ai_work_arrangement_filter
+
+limit
+
+You may limit the API output to a value between 10 and 100 jobs.I f left blank, the default value is 100.
+
+( limit is not available for the hourly firehouse API, which defaults to 100)
+
+Use the offset parameter to receive the next batch of jobs
+
+offset
+
+Offset allows you to paginate results. For example, if you want to retrieve 300 jobs from our api you can send 3 requests with limit=100 and offset= 0, 100, and 200.
+
+With a limit of 10, you can fetch 30 jobs using 3 requests with offset= 0, 10, and 20
+
+date_filter
+
+You can use this filter to return only the most recent jobs, instead of all jobs from the last 7 days. This filter is a "greater than" filter. For example, if today's date is 2025-01-03 and you wish to only return jobs posted in 2025, you can filter on '2025-01-01'.
+
+To include time, use the following syntax: '2025-01-01T14:00:00'
+
+Please keep in mind that the jobs posted date/time is UTC and there's a 1 to 2 hour delay before jobs appear on this API.
+
+Please be wary of duplicate jobs when using this filter
+
+(Not available for the hourly firehouse API)
+
+include_ai
+
+BETA Feature
+
+We're now extracting useful insights from the job description with AI. Includes Salary, Benefits, Experience Level, Detailed Remote filters, and more. Please see the table below for all fields.
+
+We're currently including about 99.5% of all jobs
+
+Set this field to true to include all AI-enriched fields.
+
+Do you see a repeated mistake in the output? Please report here
+
+ai_employment_type_filter
+
+BETA Feature.
+
+Filter on a specific job type as identified by our AI, the options are:
+
+FULL_TIME/PART_TIME/CONTRACTOR/TEMPORARY/INTERN/VOLUNTEER/PER_DIEM/OTHER
+
+To filter on more than one job type, please delimit by comma with no space, like such: FULL_TIME,PART_TIME
+
+ai_work_arrangement_filter
+
+BETA Feature.
+
+Filter on a specific work arrangement identified by our AI, This is a more granular version of the 'remote' filter, which is quite broad the options are:
+
+On-site (Job is on site only, no working from home available)
+Hybrid (Job is in the office with one or more days remote)
+Remote OK (Job is fully remote, but an office is available)
+Remote Solely (Job is fully remote, and no office is available)
+To filter on more than one job type, please delimit by comma with no space, like such: Hybrid,Remote OK,Remote Solely
+
+ai_has_salary
+
+BETA Feature.
+
+Set to 'true' to only include jobs with a salary, either listed in salary_raw or extracted from the job description with AI
+
+ai_experience_level_filter
+
+BETA Feature.
+
+Filter on a certain required experience level as identified by our AI, the options are:
+
+0-2/2-5/5-10/10+
+
+To filter on more than one job type, please delimit by comma with no space, like such: 0-2,2-5
+
+ai_visa_sponsorship_filter
+
+BETA Feature.
+
+Filter on jobs that mention Visa sponsorship within the job description.
+
+include_li
+
+BETA Feature.
+
+We're now including LinkedIn Company profiles for ~93% of all jobs.
+
+The accuracy is over 99%, which means that the AI occasionally gets it wrong.
+
+Please report any mistakes here: https://tally.so/r/nW1j8k
+
+li_organization_slug_filter
+
+Filter on the job's company via the slug. You can search on more than one company with a comma delimited list without spaces!.
+
+For example: organization_filter:netflix,walmart
+
+Only allows for exact matches, please check the exact company slug before filtering.
+
+The slug is the company specific part of the url. For example the slug in the following url is 'walmart': https://www.linkedin.com/company/walmart/
+
+Please send us a message or email at remco@fantastic.jobs to receive a list of all companies in our database.
+
+li_organization_slug_exclusion_filter
+
+Similar to the slug filter, but it removes companies from the results.
+
+li_industry_filter
+
+BETA Feature
+
+Filter on the organization's LinkedIn Industry.
+
+Please use the exact Industry name. This filter is case sensitive.
+
+You can filter on more than one industry with a comma-delimited list without spaces. For example: industry_filter=Accounting,Staffing and Recruiting
+
+If the industry contains a comma, please double-quote. For Example: industry_filter:"Air, Water, and Waste Program Management","Accounting"
+
+You can find a list of industries on our website: https://fantastic.jobs/article/linkedin-industries
+
+li_organization_specialties_filter
+
+BETA Feature
+
+Filter on the job's organization LinkedIn specialties, with the same syntax as our job search filters. Please note that not all companies have specialties listed on their company profile.
+
+li_organization_description_filter
+
+Filter on the company's LinkedIn description, with the same syntax as our job search filters
+
+Output
+
+The API's output is a json array. We're currently working on CSV output, stay tuned!
+
+Jobs are ordered on 'dateposted' ascending. Resulting in the most recent jobs being first in the array. Please note that our scrapers don't necessarily find jobs in order of dateposted.
+
+Output Fields
+Name	Description	Type
+id	Our internal ID. We don't recommend this for sorting	string
+title	Job Title	text
+organization	Name of the hiring organization	text
+organization_url	URL to the organization's page	text
+organization_logo	URL to the organization's logo	text
+date_posted	Date & Time of posting	timestamptz
+date_created	Date & Time of indexing in our systems	timestamptz
+date_validthrough	Date & Time of expiration, is null in most cases	timestamptz
+locations_raw	Raw location data, per the Google for Jobs requirements	json[]
+locations_alt_raw	Complimentary raw location field for ATS with limited location data, currently only in use for Workday	text[]
+locations_derived	Derived location data, which is the raw data (locations_raw or location_requirements_raw) matched with a database. This is the field where you search locations on.	text[] [{city, admin (state), country}]
+location_type	To identify remote jobs: 'TELECOMMUTE' per the Google for Jobs requirements	text
+location_requirements_raw	Location requirement to accompany remote (TELECOMMUTE) jobs per the Google for Jobs requirements.	json[]
+salary_raw	raw Salary data per the Google for Jobs requirements	json
+employment_type	Types like 'Full Time", "Contract", "Internship" etc. Is an array but most commonly just a single value.	text[]
+url	The URL of the job, can be used to direct traffic to apply for the job	text
+source	the source ATS or career site	text
+source_type	either 'ats' or 'career-site'	text
+source_domain	the domain of the career site	text
+description_text	plain text job description - if included	text
+description_html	raw HTML job description - if included	text
+cities_derived	All cities from locations_derived	json[]
+regions_derived	All regions/states/provinces from locations_derived	json[]
+countries_derived	All countries from locations_derived	json[]
+timezones_derived	Timezones derived from locations_derived	json[]
+lats_derived	lats derived from locations_derived	json[]
+lngs_derived	lngs derived from locations_derived	json[]
+remote_derived	jobs flagged as remote by inclusion of the word 'remote' in title, description, raw location, and the offical google jobs 'TELECOMMUTE' schema	bool
+AI Output Fields
+BETA Feature
+
+Set include_ai to true to include the fields in this table These fields are derived from the text with an LLM and might contain mistakes.
+
+Name	Description	Type
+ai_salary_currency	The salary currency	text
+ai_salary_value	The salary value, if there's a single salary with no salary range	numeric
+ai_salary_minvalue	The salary minimum salary in a range	numeric
+ai_salary_maxvalue	The salary maximum salary in a range	numeric
+ai_salary_unittext	If the salary is per HOUR/DAY/WEEK/MONTH/YEAR	text
+ai_benefits	An array with other non-salary benefits mentioned in the job listing	text[]
+ai_experience_level	years of experience required, one of: 0-2, 2-5, 5-10, or 10+	text
+ai_work_arrangement	Remote Solely/Remote OK/Hybrid/On-site. Remote solely is remote without an office available, Remote OK is remote with an optional office.	text
+ai_work_arrangement_office_days	when work_arrangement is Hybrid, returns the number of days per week in office	bigint
+ai_remote_location	When remote but only in a certain location, returns the location	text[]
+ai_remote_location_derived	Derived remote location data, which is the raw data (ai_remote_location) matched with a database of locations. This is the same database as the locations_derived field.	text[]
+ai_key_skills	An array of key skills mentioned in the job listing	text[]
+ai_hiring_manager_name	If present, the hiring manager name	text
+ai_hiring_manager_email_address	If present, the hiring manager's email address	text
+ai_core_responsibilities	A 2-sentence summary of the job's core responsibilities	text
+ai_requirements_summary	A 2-sentence summary of the job's requirements	text
+ai_working_hours	The number of required working hours. Defaults to 40 if not mentioned	bigint
+ai_employment_type	One or more employment types as derived from the job description: FULL_TIME/PART_TIME/CONTRACTOR/TEMPORARY/INTERN/VOLUNTEER/PER_DIEM/OTHER	text[]
+ai_job_language	The language of the job description	text
+ai_visa_sponsorship	Returns true if the job description mentions Visa sponsorship opportunities	boolean
+LinkedIN Company Output Feilds
+BETA Feature
+
+Set include_li to true to include the fields in this table These fields are matched to the job company with AI and might contain mistakes.
+
+Name	Description	Type
+linkedin_org_employees	the number of employess within the job's company according to LI	int
+linkedin_org_url	url to the company page	text
+linkedin_org_size	the number of employess within the job's company according to the company	text
+linkedin_org_slogan	the company's slogan	text
+linkedin_org_industry	the company's industry. This is a fixed list that the company can choose from, so could be useful for classification. Keep in mind that this is in the language of the company's HQ	text
+linkedin_org_followers	the company's followers on LI	int
+linkedin_org_headquarters	the company's HQ location	text
+linkedin_org_type	the company's type, like 'privately held', 'public', etc	text
+linkedin_org_foundeddate	the company's founded date	text
+linkedin_org_specialties	a comma delimited list of the company's specialites	text[]
+linkedin_org_locations	the full address of the company's locations	text[]
+linkedin_org_description	the description fo the company's linkedin page	text
+linkedin_org_recruitment_agency_derived	If the company is a recruitment agency, true or false. We identify this for each company using an LLM. The accuracy may value and jobboards might be flagged as false.	bool
