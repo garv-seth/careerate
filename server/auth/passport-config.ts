@@ -77,13 +77,12 @@ export async function registerUser(email: string, password: string): Promise<any
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user with email as the identifier and username to satisfy NOT NULL constraint
-    // We'll use email as the username for backward compatibility
+    // Create user with email as the identifier
     const userData: InsertUser = {
       email,
-      password: hashedPassword,
-      username: email  // Add username field to handle the database constraint
-    } as any;  // Use type assertion to bypass type checking
+      password: hashedPassword
+      // Remove the username field as it's no longer in the database schema
+    };
 
     console.log('User data to insert:', JSON.stringify(userData));
 
