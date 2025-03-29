@@ -9,15 +9,31 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   currentRole: text("current_role"),
   profileCompleted: boolean("profile_completed").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow(),
+  verified: boolean("verified").default(false)
 });
 
+// Create a secure password schema for consistent validation
+export const passwordSchema = z.string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
+
+// Base user schema for validation
+export const userValidationSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  password: passwordSchema
+});
+
+// Schema for inserting a new user
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
 });
 
-// Removing username from InsertUser type
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 

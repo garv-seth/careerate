@@ -1,22 +1,33 @@
 import { Router, Request, Response } from 'express';
-import passport from 'passport';
-import { registerUser } from './passport-config';
 import { storage } from '../storage';
-import jwt from 'jsonwebtoken';
-import { requireAuth } from './replit-auth';
 import { z } from 'zod';
+import { userValidationSchema, passwordSchema } from '@shared/schema';
+import { authService } from './auth-service';
+import { requireAuth, optionalAuth, csrfProtection, setCsrfToken } from './auth-middleware';
+import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
 
 const router = Router();
 
-// Schema validation for registration
-const registerSchema = z.object({
-  email: z.string().email("Valid email is required"),
-  password: z.string().min(6, "Password must be at least 6 characters")
+// Apply CSRF protection to all routes
+router.use(setCsrfToken);
+
+// Apply rate limiting to sensitive routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many attempts, please try again later'
+  }
 });
 
-// Schema validation for login
+// Schema validation for registration
+const registerSchema = userValidationSchema;
+
+// Schema validation for login - less strict for password during login
 const loginSchema = z.object({
   email: z.string().email("Valid email is required"),
   password: z.string().min(1, "Password is required")
@@ -45,165 +56,158 @@ const forgotPasswordSchema = z.object({
 // Schema validation for reset password
 const resetPasswordSchema = z.object({
   token: z.string(),
-  password: z.string().min(8, "Password must be at least 8 characters")
+  password: passwordSchema
 });
 
 // Register a new user
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', csrfProtection, authLimiter, async (req: Request, res: Response) => {
   try {
-    // Validate request body
+    // Validate request body with secure password requirements
     const data = registerSchema.parse(req.body);
     
-    // Check if user exists first
-    const existingUser = await storage.getUserByEmail(data.email);
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        error: 'Registration failed',
-        message: 'This email is already registered. Please login instead.'
-      });
-    }
-    
-    // Register user using email as identifier
-    const user = await registerUser(data.email, data.password);
-    
-    // Generate JWT token with long expiration (30 days)
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || 'careerate-secret-key',
-      { expiresIn: '30d' }
-    );
-    
-    // Set token in HTTP-only cookie for better security
-    res.cookie('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
-      sameSite: 'lax'
-    });
-    
-    // Return user and token
-    res.json({
-      success: true,
-      user,
-      token // Still include for backward compatibility
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({
-        success: false,
-        error: 'Validation Error',
-        details: error.errors
-      });
-    } else {
-      console.error('Registration error details:', error);
-      // Show specific error message to users
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
-      console.error('Registration error details:', error);
-      
-      res.status(400).json({
-        success: false,
-        error: `Registration failed: ${errorMessage}`
-      });
-    }
-  }
-});
-
-// Login
-router.post('/login', async (req: Request, res: Response) => {
-  try {
-    // Validate request body
-    loginSchema.parse(req.body);
-    
-    const { email, password } = req.body;
-    
     try {
-      // Use the loginUser helper function which just verifies credentials
-      const user = await storage.getUserByEmail(email);
+      // Register user with our secure auth service
+      const user = await authService.registerUser(data.email, data.password);
       
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: 'Incorrect email or password'
-        });
-      }
+      // Generate secure JWT token
+      const token = authService.generateToken(user);
       
-      // Check password
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
-        return res.status(401).json({
-          success: false,
-          error: 'Incorrect email or password'
-        });
-      }
-      
-      // Generate JWT token with long expiration (30 days)
-      const token = jwt.sign(
-        { id: user.id, email: user.email },
-        process.env.JWT_SECRET || 'careerate-secret-key',
-        { expiresIn: '30d' } // Increased from 1 day to 30 days
-      );
-      
-      // Set token in HTTP-only cookie for better security
+      // Set token in HTTP-only cookie with secure attributes
       res.cookie('auth_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
-        sameSite: 'lax'
+        sameSite: 'lax',
+        path: '/'
       });
       
-      // Return user without password (still include token in response for legacy clients)
-      const { password: _, ...userWithoutPassword } = user;
-      
-      return res.json({
+      // Return success response with user data
+      res.json({
         success: true,
-        user: userWithoutPassword,
+        user,
         token // Still include for backward compatibility
       });
-    } catch (loginErr) {
-      console.error('Login error:', loginErr);
+    } catch (registrationError: any) {
+      // Handle specific errors
+      if (registrationError.name === 'UserExistsError') {
+        return res.status(409).json({
+          success: false,
+          error: 'Registration failed',
+          message: 'This email is already registered. Please login instead.'
+        });
+      }
+      
+      // Log the detailed error but return a generic message
+      console.error('Registration error:', registrationError);
       return res.status(500).json({
         success: false,
-        error: 'Failed to login'
+        error: 'Failed to register user'
       });
     }
-  } catch (error) {
-    // This block handles validation errors only
-    if (error instanceof z.ZodError) {
+  } catch (validationError) {
+    // Handle validation errors
+    if (validationError instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
         error: 'Validation Error',
-        details: error.errors
-      });
-    } else {
-      console.error('Unexpected login error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'An error occurred during login'
+        details: validationError.errors
       });
     }
+    
+    // Unexpected errors
+    console.error('Unexpected registration error:', validationError);
+    return res.status(500).json({
+      success: false,
+      error: 'An unexpected error occurred'
+    });
+  }
+});
+
+// Login
+router.post('/login', csrfProtection, authLimiter, async (req: Request, res: Response) => {
+  try {
+    // Validate request body
+    const validatedData = loginSchema.parse(req.body);
+    
+    try {
+      // Authenticate user with secure service
+      const user = await authService.authenticateUser(validatedData.email, validatedData.password);
+      
+      // Generate secure token
+      const token = authService.generateToken(user);
+      
+      // Set token in HTTP-only cookie with secure attributes
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+        sameSite: 'lax',
+        path: '/'
+      });
+      
+      // Return success response with user data
+      return res.json({
+        success: true,
+        user,
+        token // Still include for backward compatibility
+      });
+    } catch (authError) {
+      // Use a generic error message to prevent user enumeration
+      return res.status(401).json({
+        success: false,
+        error: 'Incorrect email or password'
+      });
+    }
+  } catch (validationError) {
+    // Handle validation errors
+    if (validationError instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation Error',
+        details: validationError.errors
+      });
+    }
+    
+    // Unexpected errors
+    console.error('Unexpected login error:', validationError);
+    return res.status(500).json({
+      success: false,
+      error: 'An unexpected error occurred'
+    });
   }
 });
 
 // Logout
-router.post('/logout', (req: Request, res: Response) => {
-  // Clear the auth cookie
-  res.clearCookie('auth_token');
+router.post('/logout', csrfProtection, (req: Request, res: Response) => {
+  // Clear the auth cookie with secure attributes
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
   
-  // Also handle session logout if session is being used
-  req.logout((err) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to logout'
+  // Handle passport session logout if being used
+  if (req.logout) {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to logout'
+        });
+      }
+      
+      return res.json({
+        success: true,
+        message: 'Logged out successfully'
       });
-    }
-    
-    res.json({
+    });
+  } else {
+    return res.json({
       success: true,
       message: 'Logged out successfully'
     });
-  });
+  }
 });
 
 // Get current user
@@ -617,8 +621,8 @@ router.post('/reset-password', async (req: Request, res: Response) => {
       });
     }
     
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    // Hash the new password using authService
+    const hashedPassword = await authService.hashPassword(data.password);
     
     // Update user password
     const user = await storage.updatePassword(resetToken.userId, hashedPassword);

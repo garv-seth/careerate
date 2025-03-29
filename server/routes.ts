@@ -28,14 +28,13 @@ import {
 import { getCompanyById, getRolesByCompanyId, getLevelsByCompanyAndRoleId } from "@shared/companyData";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
-import passport from "passport";
 import session from "express-session";
 import connectPgSimpleModule from "connect-pg-simple";
-import { configurePassport } from "./auth/passport-config";
-import { handleReplitAuth } from "./auth/replit-auth";
 import authRoutes from "./auth/auth-routes";
 import resumeRoutes from "./auth/resume-routes";
 import cookieParser from "cookie-parser";
+// New auth system
+import { optionalAuth } from "./auth/auth-middleware";
 import { ReadinessScoreService } from "./apis/readiness/readinessScoreService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -60,13 +59,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
   
-  // Configure passport
-  const passportInstance = configurePassport();
-  app.use(passportInstance.initialize());
-  app.use(passportInstance.session());
+  // Make sure JSON middleware is applied before optional auth
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
   
-  // Configure Replit auth middleware
-  app.use(handleReplitAuth);
+  // Apply optional auth middleware globally
+  app.use(optionalAuth);
   
   // Serve static files from the uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
