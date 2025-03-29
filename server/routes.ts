@@ -30,11 +30,12 @@ import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
 import connectPgSimpleModule from "connect-pg-simple";
-import authRoutes from "./auth/auth-routes";
+import authRoutes from "./auth/v1/auth-routes";
+import userRoutes from "./auth/v1/user-routes";
 import resumeRoutes from "./auth/resume-routes";
 import cookieParser from "cookie-parser";
-// New auth system
-import { optionalAuth } from "./auth/auth-middleware";
+// V1 auth system
+import { optionalAuth } from "./auth/v1/auth-middleware";
 import { ReadinessScoreService } from "./apis/readiness/readinessScoreService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -64,7 +65,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(express.urlencoded({ extended: false }));
   
   // Apply optional auth middleware globally
-  app.use(optionalAuth);
+  // Cast to any to work around TypeScript type issues
+  app.use(optionalAuth as any);
   
   // Serve static files from the uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -75,6 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register auth routes
   apiRouter.use("/auth", authRoutes);
+  apiRouter.use("/user", userRoutes);
   apiRouter.use("/auth", resumeRoutes);
   
   // Register email routes

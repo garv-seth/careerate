@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
-// Import both route systems but use the improved routes by default
-import { registerRoutes as registerOriginalRoutes } from "./routes";
-import { registerRoutes as registerImprovedRoutes } from "./improved-routes";
+// Import only the original routes system
+import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
 import { validateAPIKeys } from "./validateApiKeys";
@@ -53,18 +52,11 @@ app.use((req, res, next) => {
       console.warn("API key validation failed, but continuing with startup:", validationError);
     }
     
-    // Choose which routes to use (improved routes by default)
-    const useImprovedRoutes = process.env.USE_IMPROVED_ROUTES !== "false";
+    // Register routes with our standard function
+    console.log("Using standard authentication system");
     
-    // Register routes with appropriate function
-    console.log(`Using ${useImprovedRoutes ? 'improved' : 'original'} routes system`);
-    
-    let server;
-    if (useImprovedRoutes) {
-      server = await registerImprovedRoutes(app);
-    } else {
-      server = await registerOriginalRoutes(app);
-    }
+    // Initialize server
+    let server = await registerRoutes(app);
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
