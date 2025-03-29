@@ -93,13 +93,18 @@ improvedRouter.get('/api-keys', (req, res) => {
  * POST /api/v2/transitions
  * Start a simple career transition analysis
  */
-improvedRouter.post('/transitions', async (req, res) => {
+improvedRouter.post('/transitions', verifyToken, async (req: AuthenticatedRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized - Authentication required'
+      });
+    }
     // Validate request body
     const schema = z.object({
       currentRole: z.string().min(2).max(100),
-      targetRole: z.string().min(2).max(100),
-      userId: z.number().optional().nullable()
+      targetRole: z.string().min(2).max(100)
     });
     
     const validationResult = schema.safeParse(req.body);
@@ -112,7 +117,8 @@ improvedRouter.post('/transitions', async (req, res) => {
       });
     }
     
-    const { currentRole, targetRole, userId = 1 } = validationResult.data;
+    const { currentRole, targetRole } = validationResult.data;
+    const userId = req.user.userId; // Use authenticated user's ID
     
     // Create a unique ID for this transition
     const transitionId = Date.now();
@@ -125,7 +131,7 @@ improvedRouter.post('/transitions', async (req, res) => {
     agent.analyzeCareerTransition(
       currentRole,
       targetRole,
-      userId ?? 1, // Ensure we have a number, not null
+      userId, // Use the authenticated user's ID
       transitionId
     ).catch(error => {
       console.error(`Background analysis error for transition ${transitionId}:`, error);
@@ -200,13 +206,26 @@ improvedRouter.put('/user/profile', verifyToken, async (req: AuthenticatedReques
     // Validate request body
     // Note: We'll need to create a proper validation schema for profile updates
     
-    // Update profile
+    // First check if the profile exists
     const storage = req.app.locals.storage;
-    const updatedProfile = await storage.updateProfile(req.user.userId, req.body);
+    const userId = req.user.userId;
+    const existingProfile = await storage.getProfile(userId);
+    
+    let profile;
+    if (existingProfile) {
+      // Update existing profile
+      profile = await storage.updateProfile(userId, req.body);
+    } else {
+      // Create new profile with user ID
+      profile = await storage.createProfile({
+        userId,
+        ...req.body
+      });
+    }
     
     return res.json({
       success: true,
-      profile: updatedProfile
+      profile
     });
   } catch (error) {
     console.error('Error in PUT /user/profile endpoint:', error);
@@ -263,9 +282,15 @@ improvedRouter.post('/user/skills', verifyToken, async (req: AuthenticatedReques
     // Validate request body
     // Note: We'll need to create a proper validation schema for skills
     
-    // Add skill
+    // Prepare the skill data with the user ID
+    const skillData = {
+      userId: req.user.userId,
+      ...req.body
+    };
+    
+    // Add skill using the createUserSkill method
     const storage = req.app.locals.storage;
-    const newSkill = await storage.addUserSkill(req.user.userId, req.body);
+    const newSkill = await storage.createUserSkill(skillData);
     
     return res.json({
       success: true,
@@ -284,8 +309,15 @@ improvedRouter.post('/user/skills', verifyToken, async (req: AuthenticatedReques
  * GET /api/v2/transitions/:id
  * Get the status/results of a career transition analysis
  */
-improvedRouter.get('/transitions/:id', async (req, res) => {
+improvedRouter.get('/transitions/:id', verifyToken, async (req: AuthenticatedRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized - Authentication required'
+      });
+    }
+    
     const transitionId = parseInt(req.params.id, 10);
     
     if (isNaN(transitionId)) {
@@ -302,7 +334,7 @@ improvedRouter.get('/transitions/:id', async (req, res) => {
     const result = await agent.analyzeCareerTransition(
       '', // These values are ignored if there's already a memory for this transition
       '',
-      1,
+      req.user.userId, // Use the authenticated user's ID
       transitionId
     );
     
@@ -409,39 +441,30 @@ improvedRouter.get('/auth/me', verifyToken, async (req: AuthenticatedRequest, re
       });
     }
     
-    try {
-      
-      // Get user data
-      const storage = req.app.locals.storage;
-      const user = await storage.getUser(req.user.userId);
-      
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: 'User not found'
-        });
-      }
-      
-      // Remove password from user object
-      const { password, ...userWithoutPassword } = user;
-      
-      // Get profile and skills
-      const profile = await storage.getProfile(user.id);
-      const skills = await storage.getUserSkills(user.id);
-      
-      return res.json({
-        success: true,
-        user: userWithoutPassword,
-        profile: profile || null,
-        skills: skills || []
-      });
-    } catch (tokenError) {
-      console.error('Token verification error:', tokenError);
-      return res.status(401).json({
+    // Get user data
+    const storage = req.app.locals.storage;
+    const user = await storage.getUser(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        error: 'Unauthorized - Invalid token'
+        error: 'User not found'
       });
     }
+    
+    // Remove password from user object
+    const { password, ...userWithoutPassword } = user;
+    
+    // Get profile and skills
+    const profile = await storage.getProfile(user.id);
+    const skills = await storage.getUserSkills(user.id);
+    
+    return res.json({
+      success: true,
+      user: userWithoutPassword,
+      profile: profile || null,
+      skills: skills || []
+    });
   } catch (error) {
     console.error('Error in /me endpoint:', error);
     return res.status(500).json({
@@ -452,7 +475,7 @@ improvedRouter.get('/auth/me', verifyToken, async (req: AuthenticatedRequest, re
 });
 
 // Logout endpoint
-improvedRouter.post('/auth/logout', async (req, res) => {
+improvedRouter.post('/auth/logout', verifyToken, async (req: AuthenticatedRequest, res) => {
   // Clear the auth cookie with secure attributes
   res.clearCookie('auth_token', {
     httpOnly: true,

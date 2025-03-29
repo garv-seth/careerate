@@ -34,7 +34,7 @@ const Login = () => {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("/api/auth/login", {
+      const response = await apiRequest("/api/v2/auth/login", {
         method: "POST",
         data: data
       });

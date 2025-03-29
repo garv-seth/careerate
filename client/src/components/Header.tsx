@@ -25,7 +25,7 @@ const Header: React.FC = () => {
   
   // Check if user is authenticated
   const { data: userData, isLoading } = useQuery<AuthResponse>({
-    queryKey: ['/api/auth/me'],
+    queryKey: ['/api/v2/auth/me'],
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry on 401 errors
     refetchOnWindowFocus: false,
@@ -160,7 +160,7 @@ const Header: React.FC = () => {
               <button
                 onClick={async () => {
                   try {
-                    await apiRequest("/api/auth/logout", { method: "POST" });
+                    await apiRequest("/api/v2/auth/logout", { method: "POST" });
                     window.location.href = "/";
                   } catch (error) {
                     console.error("Logout failed:", error);
@@ -270,7 +270,7 @@ const Header: React.FC = () => {
                   onClick={async () => {
                     try {
                       closeMobileMenu();
-                      await apiRequest("/api/auth/logout", { method: "POST" });
+                      await apiRequest("/api/v2/auth/logout", { method: "POST" });
                       window.location.href = "/";
                     } catch (error) {
                       console.error("Logout failed:", error);
