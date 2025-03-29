@@ -7,14 +7,18 @@
 /**
  * Safely parse a JSON string, returning a default value if parsing fails
  * @param jsonString The JSON string to parse
- * @param defaultValue The default value to return if parsing fails
+ * @param defaultValue The default value to return if parsing fails, or a string identifier for the data
  * @returns The parsed JSON object, or the default value if parsing fails
  */
-export function safeJsonParse<T>(jsonString: string, defaultValue: T): T {
+export function safeJsonParse<T>(jsonString: string, defaultValue: T | string): any {
   try {
-    return JSON.parse(jsonString) as T;
+    return JSON.parse(jsonString);
   } catch (error) {
-    console.error('Error parsing JSON:', error);
+    console.error(`Error parsing JSON${typeof defaultValue === 'string' ? ' for ' + defaultValue : ''}:`, error);
+    // If defaultValue is a string identifier, return an empty object or array
+    if (typeof defaultValue === 'string') {
+      return [];
+    }
     return defaultValue;
   }
 }

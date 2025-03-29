@@ -11,7 +11,7 @@ import { SkillGapAnalysis } from "./langGraphAgent";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { MCPHandler } from "../helpers/mcpHandler";
 import { careerTransitionMemory } from './memoryStore';
-import { safeParseJSON } from '../helpers/jsonParserHelper';
+import { safeJsonParse } from '../helpers/jsonParserHelper';
 import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from '../tools/tavilySearch';
 
 /**
@@ -166,7 +166,7 @@ export class MemoryEnabledAgent {
     
     // Initialize agent state in memory store
     careerTransitionMemory.updateMemory(transitionId, userId, {
-      state: 'initializing',
+      state: 'in_progress',
       data: {}
     });
   }
@@ -232,16 +232,16 @@ export class MemoryEnabledAgent {
       
       // Store initial state
       careerTransitionMemory.updateMemory(transitionId, this.userId, {
-        state: 'initializing',
+        state: 'in_progress',
         data: {}
       });
 
       // Clear existing data for fresh analysis
       await storage.clearTransitionData(transitionId);
       
-      // Update memory state to scraping
+      // Update memory state to in_progress
       careerTransitionMemory.updateMemory(transitionId, this.userId, {
-        state: 'scraping'
+        state: 'in_progress'
       });
 
       // Check if tools exist before trying to bind them
@@ -272,7 +272,7 @@ export class MemoryEnabledAgent {
         
         // Update memory with scraped data
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
-          state: 'analyzing',
+          state: 'in_progress',
           data: {
             scrapedData: stories
           }
@@ -329,7 +329,7 @@ export class MemoryEnabledAgent {
         
         // Update memory with insights
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
-          state: 'planning',
+          state: 'in_progress',
           data: {
             ...careerTransitionMemory.getMemory(transitionId)?.data,
             insights: insights
@@ -342,7 +342,7 @@ export class MemoryEnabledAgent {
         
         // Update memory with fallback insights
         careerTransitionMemory.updateMemory(transitionId, this.userId, {
-          state: 'planning',
+          state: 'in_progress',
           data: {
             ...careerTransitionMemory.getMemory(transitionId)?.data,
             insights: insights
@@ -710,7 +710,7 @@ export class MemoryEnabledAgent {
 
       try {
         // Use our enhanced JSON parser with robust error handling
-        const rawSkillGaps = safeParseJSON(response.content.toString(), "skillGaps");
+        const rawSkillGaps = safeJsonParse(response.content.toString(), "skillGaps");
         
         // Additional normalization for field names
         const normalizedSkillGaps = rawSkillGaps.map((gap: any) => {
@@ -811,7 +811,7 @@ export class MemoryEnabledAgent {
 
       try {
         // Use our enhanced JSON parser with robust error handling
-        insights = safeParseJSON(response.content.toString(), "insights");
+        insights = safeJsonParse(response.content.toString(), "insights");
       } catch (parseError) {
         console.error("Error parsing insights:", parseError);
       }
@@ -1131,10 +1131,10 @@ export class MemoryEnabledAgent {
         
         if (jsonMatch) {
           const possibleJson = jsonMatch[0];
-          plan = safeParseJSON(possibleJson, "plan");
+          plan = safeJsonParse(possibleJson, "plan");
         } else {
           // If no JSON object found, try parsing the entire content
-          plan = safeParseJSON(content, "plan");
+          plan = safeJsonParse(content, "plan");
         }
         
         // If parsing fails or plan is invalid, create a fallback

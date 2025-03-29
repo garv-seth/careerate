@@ -107,6 +107,23 @@ export class CareerTransitionMemory {
     this.memory.clear();
     this.inProgress.clear();
   }
+  
+  /**
+   * Mark a transition as complete
+   * @param transitionId The ID of the transition to mark as complete
+   */
+  public markTransitionComplete(transitionId: number): void {
+    // Remove from in-progress set
+    this.inProgress.delete(transitionId);
+    
+    // Update the memory state if it exists
+    const existing = this.memory.get(transitionId);
+    if (existing) {
+      existing.state = 'complete';
+      existing.timestamp = Date.now();
+      this.memory.set(transitionId, existing);
+    }
+  }
 }
 
 // Create a singleton instance
