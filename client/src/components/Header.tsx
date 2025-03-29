@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import Logo from "./Logo";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { checkAuthMigrationNeeded, clearAllAuth } from "@/utils/authMigration";
 
 // Define the auth response type
 interface AuthResponse {
@@ -22,9 +23,10 @@ interface AuthResponse {
 const Header: React.FC = () => {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [needsMigration, setNeedsMigration] = useState(false);
   
   // Check if user is authenticated
-  const { data: userData, isLoading } = useQuery<AuthResponse>({
+  const { data: userData, isLoading, refetch } = useQuery<AuthResponse>({
     queryKey: ['/api/v2/auth/me'],
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry on 401 errors
@@ -33,6 +35,23 @@ const Header: React.FC = () => {
   
   // Check if user data exists and has a user property
   const isAuthenticated = !!(userData && userData.user);
+  
+  // Check if auth migration is needed
+  useEffect(() => {
+    const checkMigration = async () => {
+      const migrationNeeded = await checkAuthMigrationNeeded();
+      setNeedsMigration(migrationNeeded);
+      
+      // If migration is needed and we're not in login/signup pages, redirect to login
+      if (migrationNeeded && 
+          !location.startsWith('/login') && 
+          !location.startsWith('/signup')) {
+        window.location.href = '/login?migration=true';
+      }
+    };
+    
+    checkMigration();
+  }, [location]);
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -44,6 +63,14 @@ const Header: React.FC = () => {
   
   return (
     <header className="relative bg-background border-b border-primary/10 backdrop-blur-sm z-20">
+      {needsMigration && (
+        <div className="bg-amber-500/90 text-black py-2 px-4 text-center text-sm font-medium">
+          Your account needs to be migrated to our new system. 
+          <Link href="/login?migration=true">
+            <span className="ml-2 underline cursor-pointer font-bold">Click here to login</span>
+          </Link>
+        </div>
+      )}
       <div className="absolute inset-0 bg-cyber-grid bg-20 opacity-5 pointer-events-none"></div>
       <div className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
@@ -160,7 +187,8 @@ const Header: React.FC = () => {
               <button
                 onClick={async () => {
                   try {
-                    await apiRequest("/api/v2/auth/logout", { method: "POST" });
+                    // Clear both old and new auth tokens
+                    await clearAllAuth();
                     window.location.href = "/";
                   } catch (error) {
                     console.error("Logout failed:", error);
@@ -270,7 +298,8 @@ const Header: React.FC = () => {
                   onClick={async () => {
                     try {
                       closeMobileMenu();
-                      await apiRequest("/api/v2/auth/logout", { method: "POST" });
+                      // Clear both old and new auth tokens
+                      await clearAllAuth();
                       window.location.href = "/";
                     } catch (error) {
                       console.error("Logout failed:", error);
