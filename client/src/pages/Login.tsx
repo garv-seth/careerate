@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { clearAllAuth, checkAuthMigrationNeeded } from "@/utils/authMigration";
 
 // Form validation schema
 const formSchema = z.object({
@@ -20,8 +22,18 @@ type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showMigrationNotice, setShowMigrationNotice] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Check if user needs to migrate from old auth system
+  useEffect(() => {
+    const checkMigration = async () => {
+      const migrationNeeded = await checkAuthMigrationNeeded();
+      setShowMigrationNotice(migrationNeeded);
+    };
+    checkMigration();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -31,9 +43,35 @@ const Login = () => {
     }
   });
 
+  // Function to handle auth system migration
+  const handleAuthMigration = async () => {
+    setIsLoading(true);
+    try {
+      await clearAllAuth();
+      setShowMigrationNotice(false);
+      toast({
+        title: "Authentication reset",
+        description: "Your login session has been reset. Please log in again.",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error("Error during auth migration:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reset authentication. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
+      // Clear old tokens first to avoid conflicts
+      await clearAllAuth();
+      
       const response = await apiRequest("/api/v2/auth/login", {
         method: "POST",
         data: data
@@ -87,6 +125,25 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {showMigrationNotice && (
+            <Alert className="mb-6 border-amber-500 bg-amber-50 text-amber-800">
+              <AlertTitle>Authentication Update</AlertTitle>
+              <AlertDescription className="mt-2">
+                <p className="mb-2">
+                  We've updated our authentication system. To ensure a seamless experience, please reset your login session.
+                </p>
+                <Button
+                  variant="outline"
+                  className="border-amber-500 hover:bg-amber-100 hover:text-amber-900"
+                  onClick={handleAuthMigration}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Resetting..." : "Reset Authentication"}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

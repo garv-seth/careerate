@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { clearAllAuth } from "@/utils/authMigration";
 
 // Form validation schema
 const formSchema = z.object({
@@ -34,6 +35,9 @@ const SignUp = () => {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
+      // Clear any old tokens first to avoid conflicts
+      await clearAllAuth();
+      
       const response = await apiRequest("/api/v2/auth/register", {
         method: "POST",
         data: data
