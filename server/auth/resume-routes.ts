@@ -1,8 +1,20 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import multer from 'multer';
-import { requireAuth } from './replit-auth';
+import { requireAuth, AuthenticatedRequest } from './v1/auth-middleware';
 import { uploadFile, isPDF, extractTextFromPDF } from './file-storage';
 import { extractSkillsFromResume, saveResumeUrl } from './resume-processor';
+
+// Extend the AuthenticatedRequest to include the multer file
+interface MulterAuthenticatedRequest extends AuthenticatedRequest {
+  file?: {
+    buffer: Buffer;
+    originalname: string;
+    mimetype: string;
+    size: number;
+    fieldname: string;
+    encoding: string;
+  };
+}
 
 const router = Router();
 
@@ -23,7 +35,7 @@ const upload = multer({
 });
 
 // Upload resume
-router.post('/resume', requireAuth, upload.single('resume'), async (req: Request, res: Response) => {
+router.post('/resume', requireAuth, upload.single('resume'), async (req: MulterAuthenticatedRequest, res: Response) => {
   try {
     // Check if file was uploaded
     if (!req.file) {

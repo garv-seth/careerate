@@ -65,7 +65,7 @@ const Profile = () => {
 
   // Get user data
   const { data: userData, isLoading, error } = useQuery({
-    queryKey: ['/api/v2/auth/me'],
+    queryKey: ['/api/auth/me'],
     onError: (err) => {
       toast({
         title: "Authentication Error",
@@ -124,13 +124,13 @@ const Profile = () => {
   // Mutations
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
-      return apiRequest("/api/v2/user/profile", {
+      return apiRequest("/api/auth/profile", {
         method: "PUT",
         data: data
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v2/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       toast({
         title: "Profile Updated",
         description: "Your profile information has been saved",
@@ -147,13 +147,13 @@ const Profile = () => {
 
   const addSkillMutation = useMutation({
     mutationFn: async (data: SkillFormValues) => {
-      return apiRequest("/api/v2/user/skills", {
+      return apiRequest("/api/auth/skills", {
         method: "POST",
         data: data
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v2/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       toast({
         title: "Skill Added",
         description: "Your skill has been added to your profile",
@@ -175,12 +175,12 @@ const Profile = () => {
 
   const deleteSkillMutation = useMutation({
     mutationFn: async (skillId: number) => {
-      return apiRequest(`/api/v2/user/skills/${skillId}`, {
+      return apiRequest(`/api/auth/skills/${skillId}`, {
         method: "DELETE"
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v2/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       toast({
         title: "Skill Removed",
         description: "The skill has been removed from your profile",
@@ -197,13 +197,13 @@ const Profile = () => {
 
   const updateRoleMutation = useMutation({
     mutationFn: async (data: RoleFormValues) => {
-      return apiRequest("/api/v2/user/current-role", {
+      return apiRequest("/api/auth/current-role", {
         method: "PUT",
         data: data
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/v2/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       toast({
         title: "Current Role Updated",
         description: "Your current role has been updated",

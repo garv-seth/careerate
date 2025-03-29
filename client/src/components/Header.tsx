@@ -27,7 +27,7 @@ const Header: React.FC = () => {
   
   // Check if user is authenticated
   const { data: userData, isLoading, refetch } = useQuery<AuthResponse>({
-    queryKey: ['/api/v2/auth/me'],
+    queryKey: ['/api/auth/me'],
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry on 401 errors
     refetchOnWindowFocus: false,

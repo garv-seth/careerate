@@ -95,11 +95,15 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
  */
 export function optionalAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
+    // Log all requests to help debug
+    console.log(`[Auth Debug] Request path: ${req.method} ${req.path}`);
+    
     // Extract token from request
     const token = extractToken(req);
     
     // If no token, continue without authentication
     if (!token) {
+      console.log('[Auth Debug] No token found');
       return next();
     }
     
@@ -108,8 +112,11 @@ export function optionalAuth(req: AuthenticatedRequest, res: Response, next: Nex
     
     // If invalid token, continue without authentication
     if (!payload) {
+      console.log('[Auth Debug] Invalid token');
       return next();
     }
+    
+    console.log(`[Auth Debug] Valid token for user ${payload.userId}`);
     
     // Get user from database
     storage.getUser(payload.userId)
@@ -118,16 +125,21 @@ export function optionalAuth(req: AuthenticatedRequest, res: Response, next: Nex
           // Attach user to request object (except password)
           const { password, ...userWithoutPassword } = user;
           req.user = userWithoutPassword;
+          console.log(`[Auth Debug] User found: ${user.email}`);
+        } else {
+          console.log('[Auth Debug] User not found in database');
         }
         
         next();
       })
-      .catch(() => {
+      .catch((err) => {
         // Continue if error
+        console.log('[Auth Debug] Error retrieving user:', err);
         next();
       });
   } catch (error) {
     // Continue if error
+    console.log('[Auth Debug] Authentication error:', error);
     next();
   }
 }

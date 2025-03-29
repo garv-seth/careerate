@@ -38,7 +38,7 @@ const SignUp = () => {
       // Clear any old tokens first to avoid conflicts
       await clearAllAuth();
       
-      const response = await apiRequest("/api/v2/auth/register", {
+      const response = await apiRequest("/api/auth/register", {
         method: "POST",
         data: data
       });

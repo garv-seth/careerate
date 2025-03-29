@@ -78,7 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register auth routes
   apiRouter.use("/auth", authRoutes);
   apiRouter.use("/user", userRoutes);
-  apiRouter.use("/auth", resumeRoutes);
+  apiRouter.use("/resume", resumeRoutes);
   
   // Register email routes
   apiRouter.use("/email", emailRoutes);

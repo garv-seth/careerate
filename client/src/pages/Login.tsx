@@ -72,7 +72,7 @@ const Login = () => {
       // Clear old tokens first to avoid conflicts
       await clearAllAuth();
       
-      const response = await apiRequest("/api/v2/auth/login", {
+      const response = await apiRequest("/api/auth/login", {
         method: "POST",
         data: data
       });
