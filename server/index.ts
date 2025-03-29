@@ -1,7 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+// Import both route systems but use the improved routes by default
+import { registerRoutes as registerOriginalRoutes } from "./routes";
+import { registerRoutes as registerImprovedRoutes } from "./improved-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./db";
+import { validateAPIKeys } from "./validateApiKeys";
 
 const app = express();
 app.use(express.json());
@@ -42,7 +45,26 @@ app.use((req, res, next) => {
     // Initialize database tables
     await initializeDatabase();
     
-    const server = await registerRoutes(app);
+    // Validate API keys
+    try {
+      const keysStatus = validateAPIKeys();
+      console.log("API Key Status:", keysStatus);
+    } catch (validationError) {
+      console.warn("API key validation failed, but continuing with startup:", validationError);
+    }
+    
+    // Choose which routes to use (improved routes by default)
+    const useImprovedRoutes = process.env.USE_IMPROVED_ROUTES !== "false";
+    
+    // Register routes with appropriate function
+    console.log(`Using ${useImprovedRoutes ? 'improved' : 'original'} routes system`);
+    
+    let server;
+    if (useImprovedRoutes) {
+      server = await registerImprovedRoutes(app);
+    } else {
+      server = await registerOriginalRoutes(app);
+    }
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;

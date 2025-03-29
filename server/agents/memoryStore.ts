@@ -1,127 +1,113 @@
 /**
- * Memory Store for Career Transition Agent State Management
+ * Memory Store for Career Transitions
  * 
- * This module provides a memory storage system for tracking agent state
- * between API calls and preventing redundant operations.
+ * A lightweight memory system to store information about career transition
+ * analysis processes and their results.
  */
 
-interface AgentMemoryEntry {
-  transitionId: number;
-  userId: number;
-  lastUpdated: Date;
-  state: 'initializing' | 'scraping' | 'analyzing' | 'planning' | 'complete';
-  data: {
-    scrapedData?: any[];
-    skillGaps?: any[];
-    insights?: any;
-    plan?: any;
-  };
+// Define the types for the memory storage
+export interface TransitionMemory {
+  state: 'idle' | 'in_progress' | 'complete' | 'failed';
+  data: any;
+  timestamp: number;
 }
 
-class CareerTransitionMemoryStore {
-  // Using instance variables instead of 'private' keyword to avoid TypeScript issues
-  memory: Map<number, AgentMemoryEntry>;
-  inProgressTransitions: Set<number>;
+// Career transition memory system
+export class CareerTransitionMemory {
+  private memory: Map<number, TransitionMemory>;
+  private inProgress: Set<number>;
   
   constructor() {
     this.memory = new Map();
-    this.inProgressTransitions = new Set();
-    
-    // Auto-cleanup of in-progress states after 10 minutes
-    setInterval(() => this.cleanupStalledTransitions(), 10 * 60 * 1000);
+    this.inProgress = new Set();
   }
   
   /**
-   * Check if a transition is currently being processed
+   * Check if a transition is in memory and/or in progress
    * @param transitionId The ID of the transition to check
-   * @param force Optional parameter to override the in-progress state
+   * @param checkInProgressOnly Only check if the transition is in progress
+   * @returns Whether the transition is in memory/in progress
    */
-  isTransitionInProgress(transitionId: number, force?: boolean): boolean {
-    if (force) {
-      return false;
+  public isTransitionInProgress(transitionId: number, checkInProgressOnly = true): boolean {
+    if (checkInProgressOnly) {
+      return this.inProgress.has(transitionId);
     }
-    return this.inProgressTransitions.has(transitionId);
-  }
-  
-  /**
-   * Mark a transition as in-progress
-   * @param transitionId The ID of the transition to mark as in-progress
-   */
-  markTransitionInProgress(transitionId: number): void {
-    this.inProgressTransitions.add(transitionId);
     
-    // Auto-clear in-progress flag after 5 minutes to prevent deadlocks
-    setTimeout(() => {
-      this.inProgressTransitions.delete(transitionId);
-    }, 5 * 60 * 1000);
+    return this.memory.has(transitionId);
   }
   
   /**
-   * Mark a transition as completed
+   * Mark a transition as in progress
+   * @param transitionId The ID of the transition to mark
    */
-  markTransitionComplete(transitionId: number): void {
-    this.inProgressTransitions.delete(transitionId);
+  public markTransitionInProgress(transitionId: number): void {
+    this.inProgress.add(transitionId);
+    
+    if (!this.memory.has(transitionId)) {
+      this.memory.set(transitionId, {
+        state: 'in_progress',
+        data: {},
+        timestamp: Date.now()
+      });
+    }
   }
   
   /**
-   * Get memory for a transition
+   * Get the memory for a specific transition
+   * @param transitionId The ID of the transition to get
+   * @returns The memory for the transition, or undefined if not found
    */
-  getMemory(transitionId: number): AgentMemoryEntry | undefined {
+  public getMemory(transitionId: number): TransitionMemory | undefined {
     return this.memory.get(transitionId);
   }
   
   /**
-   * Update memory for a transition
+   * Update the memory for a specific transition
+   * @param transitionId The ID of the transition to update
+   * @param userId The ID of the user who owns the transition
+   * @param updates Updates to apply to the memory
    */
-  updateMemory(transitionId: number, userId: number, updates: Partial<AgentMemoryEntry>): void {
-    const existing = this.memory.get(transitionId);
+  public updateMemory(
+    transitionId: number,
+    userId: number,
+    updates: Partial<Omit<TransitionMemory, 'timestamp'>>
+  ): void {
+    const existing = this.memory.get(transitionId) || {
+      state: 'idle',
+      data: { userId },
+      timestamp: Date.now()
+    };
     
-    if (existing) {
-      this.memory.set(transitionId, {
-        ...existing,
-        ...updates,
-        lastUpdated: new Date(),
-      });
-    } else {
-      this.memory.set(transitionId, {
-        transitionId,
-        userId,
-        lastUpdated: new Date(),
-        state: 'initializing',
-        data: {},
-        ...updates,
-      });
-    }
-  }
-  
-  /**
-   * Clear memory for a transition
-   */
-  clearMemory(transitionId: number): void {
-    this.memory.delete(transitionId);
-    this.inProgressTransitions.delete(transitionId);
-  }
-  
-  /**
-   * Clean up stalled transitions (those in progress for more than 10 minutes)
-   */
-  cleanupStalledTransitions(): void {
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-    
-    for (const [id, entry] of this.memory.entries()) {
-      if (this.inProgressTransitions.has(id) && entry.lastUpdated < tenMinutesAgo) {
-        console.log(`Cleaning up stalled transition ${id} that was in progress for >10 minutes`);
-        this.inProgressTransitions.delete(id);
-        
-        // Update memory to mark as incomplete
-        this.updateMemory(id, entry.userId, { 
-          state: 'complete',
-          data: { ...entry.data }
-        });
+    // Update the state if provided
+    if (updates.state) {
+      existing.state = updates.state;
+      
+      // If the state is complete or failed, remove from in progress
+      if (updates.state === 'complete' || updates.state === 'failed') {
+        this.inProgress.delete(transitionId);
       }
     }
+    
+    // Update the data if provided, merging with existing data
+    if (updates.data) {
+      existing.data = { ...existing.data, ...updates.data };
+    }
+    
+    // Update the timestamp
+    existing.timestamp = Date.now();
+    
+    // Save the updated memory
+    this.memory.set(transitionId, existing);
+  }
+  
+  /**
+   * Clear all memory
+   */
+  public clearAll(): void {
+    this.memory.clear();
+    this.inProgress.clear();
   }
 }
 
-// Create a singleton instance of the memory store
-export const careerTransitionMemory = new CareerTransitionMemoryStore();
+// Create a singleton instance
+export const careerTransitionMemory = new CareerTransitionMemory();
