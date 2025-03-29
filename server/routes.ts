@@ -36,6 +36,7 @@ import { handleReplitAuth } from "./auth/replit-auth";
 import authRoutes from "./auth/auth-routes";
 import resumeRoutes from "./auth/resume-routes";
 import cookieParser from "cookie-parser";
+import { ReadinessScoreService } from "./apis/readiness/readinessScoreService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure session
@@ -80,6 +81,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register email routes
   apiRouter.use("/email", emailRoutes);
+  
+  // Initialize readiness service
+  const readinessService = new ReadinessScoreService();
+  
+  // AI Readiness scoring endpoints
+  apiRouter.post("/readiness/generate", async (req, res) => {
+    try {
+      // Validate request
+      const transitionId = parseInt(req.body.transitionId);
+      
+      if (isNaN(transitionId) || transitionId <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid transition ID"
+        });
+      }
+      
+      // Generate readiness score
+      const assessment = await readinessService.generateReadinessScore(transitionId);
+      
+      res.json({
+        success: true,
+        assessment
+      });
+    } catch (error) {
+      console.error("[ReadinessAPI] Generate score error:", error);
+      res.status(500).json({
+        success: false,
+        error: (error as Error).message
+      });
+    }
+  });
+  
+  apiRouter.get("/readiness/:transitionId", async (req, res) => {
+    try {
+      // Validate path parameter
+      const transitionId = parseInt(req.params.transitionId);
+      
+      if (isNaN(transitionId) || transitionId <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid transition ID"
+        });
+      }
+      
+      // Get readiness score
+      const assessment = await readinessService.getReadinessScore(transitionId);
+      
+      if (!assessment) {
+        return res.status(404).json({
+          success: false,
+          error: `No readiness score found for transition ID ${transitionId}`
+        });
+      }
+      
+      res.json({
+        success: true,
+        assessment
+      });
+    } catch (error) {
+      console.error("[ReadinessAPI] Get score error:", error);
+      res.status(500).json({
+        success: false,
+        error: (error as Error).message
+      });
+    }
+  });
 
   // Seed some predefined role skills if they don't exist
   await seedRoleSkills();

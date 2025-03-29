@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, json, timestamp, boolean, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, json, timestamp, boolean, primaryKey, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
@@ -291,3 +291,94 @@ export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTo
 
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// AI Readiness Scoring Module
+
+// Store market trends from various APIs
+export const marketTrends = pgTable("market_trends", {
+  id: serial("id").primaryKey(),
+  skill: text("skill").notNull(),
+  demand: numeric("demand").notNull(), // 0-100 scale
+  growth: numeric("growth").notNull(), // percentage value, could be negative
+  timeframe: text("timeframe").notNull(), // "30_days", "90_days", "6_months", "1_year"
+  category: text("category").notNull(), // "tech", "soft_skill", "industry", "tool"
+  source: text("source").notNull(), // "linkedin", "active_jobs", "google_trends", etc.
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const insertMarketTrendSchema = createInsertSchema(marketTrends).pick({
+  skill: true,
+  demand: true,
+  growth: true,
+  timeframe: true,
+  category: true,
+  source: true
+});
+
+export type InsertMarketTrend = z.infer<typeof insertMarketTrendSchema>;
+export type MarketTrend = typeof marketTrends.$inferSelect;
+
+// Store API Cache to manage rate limits
+export const apiCache = pgTable("api_cache", {
+  id: serial("id").primaryKey(),
+  endpoint: text("endpoint").notNull(),
+  params: json("params").notNull(),
+  response: json("response").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const insertApiCacheSchema = createInsertSchema(apiCache).pick({
+  endpoint: true,
+  params: true,
+  response: true,
+  expiresAt: true
+});
+
+export type InsertApiCache = z.infer<typeof insertApiCacheSchema>;
+export type ApiCache = typeof apiCache.$inferSelect;
+
+// Store AI Readiness scores for transitions
+export const readinessScores = pgTable("readiness_scores", {
+  id: serial("id").primaryKey(),
+  transitionId: integer("transition_id").notNull(),
+  overall: numeric("overall").notNull(), // 0-100 score
+  skillMatch: numeric("skill_match").notNull(), // 0-100 score
+  marketAlignment: numeric("market_alignment").notNull(), // 0-100 score
+  futureReadiness: numeric("future_readiness").notNull(), // 0-100 score
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const insertReadinessScoreSchema = createInsertSchema(readinessScores).pick({
+  transitionId: true,
+  overall: true,
+  skillMatch: true,
+  marketAlignment: true,
+  futureReadiness: true
+});
+
+export type InsertReadinessScore = z.infer<typeof insertReadinessScoreSchema>;
+export type ReadinessScore = typeof readinessScores.$inferSelect;
+
+// Store AI Readiness recommendations
+export const readinessRecommendations = pgTable("readiness_recommendations", {
+  id: serial("id").primaryKey(),
+  readinessScoreId: integer("readiness_score_id").notNull(),
+  category: text("category").notNull(), // "skill", "learning", "market", "network", "experience"
+  priority: integer("priority").notNull(), // 1-5, with 1 being highest
+  content: text("content").notNull(),
+  actionableSteps: json("actionable_steps").$type<string[]>(),
+  supportingEvidence: text("supporting_evidence")
+});
+
+export const insertReadinessRecommendationSchema = createInsertSchema(readinessRecommendations).pick({
+  readinessScoreId: true,
+  category: true,
+  priority: true,
+  content: true,
+  actionableSteps: true,
+  supportingEvidence: true
+});
+
+export type InsertReadinessRecommendation = z.infer<typeof insertReadinessRecommendationSchema>;
+export type ReadinessRecommendation = typeof readinessRecommendations.$inferSelect;
