@@ -10,6 +10,7 @@ import ScrapedInsights from "@/components/ImprovedScrapedInsights";
 import CompanyLogoNetwork from "@/components/CompanyLogoNetwork";
 import DigitalRain from "@/components/DigitalRain";
 import WorkflowStatus, { LoadingStage } from "@/components/WorkflowStatus";
+import ReadinessScore from "@/components/ReadinessScore";
 import { apiRequest } from "@/lib/queryClient";
 import { DashboardData } from "@/types";
 
@@ -437,6 +438,13 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* AI Readiness Score - comprehensive career transition readiness assessment */}
+        <ReadinessScore 
+          readinessScore={data.readinessScore}
+          transitionId={parseInt(transitionId!)}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: [`/api/dashboard/${transitionId}`] })}
+        />
 
         {/* Main insight cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

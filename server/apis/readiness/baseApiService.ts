@@ -1,177 +1,192 @@
-/**
- * Base API Service
- * Common functionality for all API services in the Readiness module
- * Includes caching, error handling, and standardized request patterns
- */
-
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { API_KEYS, CACHE_TTL } from './config';
 import { db } from '../../db';
 import { apiCache } from '../../../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gt } from "drizzle-orm";
 
-export class BaseApiService {
-  apiKey: string;
-  apiHost: string;
-  defaultEndpoint: string;
-  cacheExpirationMinutes: number;
-
-  constructor(
-    apiKey: string,
-    apiHost: string,
-    defaultEndpoint: string,
-    cacheExpirationMinutes: number = 60
-  ) {
-    this.apiKey = apiKey;
-    this.apiHost = apiHost;
-    this.defaultEndpoint = defaultEndpoint;
-    this.cacheExpirationMinutes = cacheExpirationMinutes;
-  }
-
-  /**
-   * Make a request to the API
-   * @param endpoint API endpoint to request
-   * @param params Parameters to send with the request
-   * @param useCache Whether to use cached results if available
-   * @returns Response data from the API
-   */
-  async makeRequest<T>(
-    endpoint: string = this.defaultEndpoint,
-    params: Record<string, any> = {},
-    useCache: boolean = true
-  ): Promise<T> {
-    // Check for cached response if enabled
-    if (useCache) {
-      const cachedResponse = await this.getCachedResponse<T>(endpoint, params);
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-    }
-
-    // Configure the request
-    const options: AxiosRequestConfig = {
-      method: 'GET',
-      url: `https://${this.apiHost}${endpoint}`,
-      params,
+/**
+ * Base API Service class that provides common functionality for all API services
+ * Includes caching, rate limiting, error handling, and request management
+ */
+export abstract class BaseApiService {
+  protected axios: AxiosInstance;
+  protected serviceName: string;
+  protected apiKey: string;
+  
+  constructor(serviceName: string) {
+    this.serviceName = serviceName;
+    this.apiKey = API_KEYS.RAPIDAPI;
+    
+    this.axios = axios.create({
+      timeout: 30000, // 30 seconds
       headers: {
-        'X-RapidAPI-Key': this.apiKey,
-        'X-RapidAPI-Host': this.apiHost
+        'Content-Type': 'application/json',
       }
-    };
-
+    });
+    
+    // Add response interceptor for error handling
+    this.axios.interceptors.response.use(
+      (response) => response,
+      (error) => this.handleApiError(error)
+    );
+  }
+  
+  /**
+   * Make an API request with caching to avoid rate limiting
+   * @param endpoint API endpoint
+   * @param config Axios request configuration
+   * @param cacheTtl Cache TTL in seconds (optional)
+   * @returns API response data
+   */
+  protected async request<T>(
+    endpoint: string,
+    config: AxiosRequestConfig,
+    cacheTtl: number = CACHE_TTL.MEDIUM
+  ): Promise<T> {
+    const cacheKey = this.getCacheKey(endpoint, config);
+    
     try {
-      // Make the request
-      const response = await axios.request(options);
-      
-      // Cache the response for future use
-      if (useCache) {
-        await this.cacheResponse(endpoint, params, response.data);
+      // Check if we have a cached response
+      const cachedData = await this.getCachedResponse(cacheKey);
+      if (cachedData) {
+        console.log(`[${this.serviceName}] Using cached response for ${endpoint}`);
+        return cachedData as T;
       }
       
-      return response.data as T;
+      // Make the API request
+      console.log(`[${this.serviceName}] Making API request to ${endpoint}`);
+      const response = await this.axios.request<T>({
+        url: endpoint,
+        ...config
+      });
+      
+      // Cache the response
+      await this.cacheResponse(cacheKey, response.data, cacheTtl);
+      
+      return response.data;
     } catch (error) {
-      console.error(`[BaseApiService] API request failed: ${(error as Error).message}`);
-      
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error(`Status: ${error.response.status}`);
-          console.error(`Data: ${JSON.stringify(error.response.data)}`);
-          console.error(`Headers: ${JSON.stringify(error.response.headers)}`);
-        } else if (error.request) {
-          // The request was made but no response was received
-          console.error(`No response received: ${error.request}`);
-        }
-      }
-      
-      throw new Error(`API request failed: ${(error as Error).message}`);
+      console.error(`[${this.serviceName}] Error making request to ${endpoint}:`, error);
+      throw error;
     }
   }
-
+  
   /**
-   * Get a cached response if available and not expired
+   * Generate a cache key for a request
    * @param endpoint API endpoint
-   * @param params Request parameters
-   * @returns Cached response data or null if not found/expired
+   * @param config Axios request configuration
+   * @returns Cache key string
    */
-  async getCachedResponse<T>(
-    endpoint: string,
-    params: Record<string, any>
-  ): Promise<T | null> {
+  private getCacheKey(endpoint: string, config: AxiosRequestConfig): string {
+    const { method = 'GET', params = {}, data = {} } = config;
+    return `${this.serviceName}:${endpoint}:${method}:${JSON.stringify(params)}:${JSON.stringify(data)}`;
+  }
+  
+  /**
+   * Get a cached response from the database
+   * @param cacheKey Cache key
+   * @returns Cached response data or null if not found
+   */
+  private async getCachedResponse(cacheKey: string): Promise<any | null> {
     try {
       const now = new Date();
-      
-      // Query for cached response
-      const cacheEntries = await db.select()
-        .from(apiCache)
-        .where(
+      const cachedItem = await db.query.apiCache.findFirst({
+        where: (fields, { eq, and, gt }) => 
           and(
-            eq(apiCache.endpoint, endpoint),
-            eq(apiCache.params, JSON.stringify(params))
+            eq(fields.endpoint, cacheKey),
+            gt(fields.expiresAt, now)
           )
-        )
-        .limit(1);
+      });
       
-      if (cacheEntries.length === 0) {
-        return null;
+      if (cachedItem) {
+        return cachedItem.response;
       }
       
-      const cacheEntry = cacheEntries[0];
-      
-      // Check if cache has expired
-      if (now > cacheEntry.expiresAt) {
-        // Delete expired cache entry
-        await db.delete(apiCache)
-          .where(eq(apiCache.id, cacheEntry.id));
-        return null;
-      }
-      
-      console.log(`[BaseApiService] Using cached response for ${endpoint}`);
-      return cacheEntry.response as T;
+      return null;
     } catch (error) {
-      console.error(`[BaseApiService] Error retrieving cache: ${(error as Error).message}`);
-      return null; // Proceed with API request on cache error
+      console.error(`[${this.serviceName}] Error getting cached response:`, error);
+      return null;
     }
   }
-
+  
   /**
-   * Cache API response for future use
-   * @param endpoint API endpoint
-   * @param params Request parameters
-   * @param response Response data
+   * Cache a response in the database
+   * @param cacheKey Cache key
+   * @param responseData Response data to cache
+   * @param cacheTtl Cache TTL in seconds
    */
-  async cacheResponse(
-    endpoint: string,
-    params: Record<string, any>,
-    response: any
-  ): Promise<void> {
+  private async cacheResponse(cacheKey: string, responseData: any, cacheTtl: number): Promise<void> {
     try {
-      // Calculate expiration time
-      const expiresAt = new Date();
-      expiresAt.setMinutes(expiresAt.getMinutes() + this.cacheExpirationMinutes);
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + (cacheTtl * 1000));
       
-      // Delete any existing cache for this endpoint+params
-      await db.delete(apiCache)
-        .where(
-          and(
-            eq(apiCache.endpoint, endpoint),
-            eq(apiCache.params, JSON.stringify(params))
-          )
-        );
+      // Delete any existing cache items for this key
+      await db.delete(apiCache).where(eq(apiCache.endpoint, cacheKey));
       
-      // Store new cache entry
-      await db.insert(apiCache)
-        .values({
-          endpoint,
-          params: JSON.stringify(params),
-          response,
-          expiresAt
-        });
-      
-      console.log(`[BaseApiService] Cached response for ${endpoint} (expires in ${this.cacheExpirationMinutes} minutes)`);
+      // Insert the new cache item
+      await db.insert(apiCache).values({
+        endpoint: cacheKey,
+        params: {},
+        response: responseData,
+        expiresAt
+      });
     } catch (error) {
-      console.error(`[BaseApiService] Error caching response: ${(error as Error).message}`);
-      // Continue anyway, caching failures shouldn't block the API response
+      console.error(`[${this.serviceName}] Error caching response:`, error);
     }
+  }
+  
+  /**
+   * Handle API errors and provide meaningful error messages
+   * @param error Axios error
+   * @returns Rejected promise with error details
+   */
+  private handleApiError(error: any): Promise<never> {
+    let errorMessage = 'An unknown error occurred';
+    let statusCode = 500;
+    
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      statusCode = error.response.status;
+      const data = error.response.data;
+      
+      if (data && data.message) {
+        errorMessage = data.message;
+      } else if (data && data.error) {
+        errorMessage = data.error;
+      } else {
+        errorMessage = `API error with status ${statusCode}`;
+      }
+      
+      // Handle specific status codes
+      if (statusCode === 429) {
+        errorMessage = 'Rate limit exceeded. Please try again later.';
+      } else if (statusCode === 401 || statusCode === 403) {
+        errorMessage = 'API authentication error. Check your API key.';
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      errorMessage = 'No response received from API server';
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      errorMessage = error.message || 'Error setting up API request';
+    }
+    
+    const enhancedError = {
+      message: `[${this.serviceName}] ${errorMessage}`,
+      status: statusCode,
+      originalError: error
+    };
+    
+    console.error(enhancedError.message);
+    
+    return Promise.reject(enhancedError);
+  }
+  
+  /**
+   * Check if the API key is valid
+   * @returns True if the API key is valid
+   */
+  public isApiKeyValid(): boolean {
+    return !!this.apiKey && this.apiKey.length > 0;
   }
 }

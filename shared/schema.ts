@@ -342,43 +342,32 @@ export type ApiCache = typeof apiCache.$inferSelect;
 export const readinessScores = pgTable("readiness_scores", {
   id: serial("id").primaryKey(),
   transitionId: integer("transition_id").notNull(),
-  overall: numeric("overall").notNull(), // 0-100 score
-  skillMatch: numeric("skill_match").notNull(), // 0-100 score
-  marketAlignment: numeric("market_alignment").notNull(), // 0-100 score
-  futureReadiness: numeric("future_readiness").notNull(), // 0-100 score
+  overallScore: integer("overall_score").notNull(), // 0-100 score
+  marketDemandScore: integer("market_demand_score").notNull(), // 0-100 score
+  skillGapScore: integer("skill_gap_score").notNull(), // 0-100 score
+  educationPathScore: integer("education_path_score").notNull(), // 0-100 score
+  industryTrendScore: integer("industry_trend_score").notNull(), // 0-100 score
+  geographicalFactorScore: integer("geographical_factor_score").notNull(), // 0-100 score
+  recommendations: json("recommendations").notNull(), // JSON structure for all recommendations
+  createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
 export const insertReadinessScoreSchema = createInsertSchema(readinessScores).pick({
   transitionId: true,
-  overall: true,
-  skillMatch: true,
-  marketAlignment: true,
-  futureReadiness: true
+  overallScore: true,
+  marketDemandScore: true,
+  skillGapScore: true,
+  educationPathScore: true,
+  industryTrendScore: true,
+  geographicalFactorScore: true,
+  recommendations: true
 });
 
 export type InsertReadinessScore = z.infer<typeof insertReadinessScoreSchema>;
 export type ReadinessScore = typeof readinessScores.$inferSelect;
 
-// Store AI Readiness recommendations
-export const readinessRecommendations = pgTable("readiness_recommendations", {
-  id: serial("id").primaryKey(),
-  readinessScoreId: integer("readiness_score_id").notNull(),
-  category: text("category").notNull(), // "skill", "learning", "market", "network", "experience"
-  priority: integer("priority").notNull(), // 1-5, with 1 being highest
-  content: text("content").notNull(),
-  actionableSteps: json("actionable_steps").$type<string[]>(),
-  supportingEvidence: text("supporting_evidence")
-});
+// Note: Recommendations are now stored directly in the readinessScores table as a JSON field
+// This simplifies our database structure and makes querying easier
 
-export const insertReadinessRecommendationSchema = createInsertSchema(readinessRecommendations).pick({
-  readinessScoreId: true,
-  category: true,
-  priority: true,
-  content: true,
-  actionableSteps: true,
-  supportingEvidence: true
-});
-
-export type InsertReadinessRecommendation = z.infer<typeof insertReadinessRecommendationSchema>;
-export type ReadinessRecommendation = typeof readinessRecommendations.$inferSelect;
+// API Cache table is defined above

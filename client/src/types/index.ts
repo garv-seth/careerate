@@ -74,6 +74,44 @@ export interface MilestoneWithResources extends Milestone {
   resources: Resource[];
 }
 
+// Readiness Score types
+export interface ReadinessRecommendationResource {
+  title: string;
+  url: string;
+  type: 'course' | 'article' | 'book' | 'video' | 'community' | 'tool';
+}
+
+export interface ReadinessRecommendationItem {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  timeframe?: 'immediate' | 'short-term' | 'long-term';
+  resources?: ReadinessRecommendationResource[];
+}
+
+export interface ReadinessRecommendations {
+  skillDevelopment: ReadinessRecommendationItem[];
+  marketPositioning: ReadinessRecommendationItem[];
+  educationPaths: ReadinessRecommendationItem[];
+  experienceBuilding: ReadinessRecommendationItem[];
+  networkingOpportunities: ReadinessRecommendationItem[];
+  nextSteps: ReadinessRecommendationItem[];
+}
+
+export interface ReadinessScore {
+  id?: number;
+  transitionId: number;
+  overallScore: number;
+  marketDemandScore: number;
+  skillGapScore: number;
+  educationPathScore: number;
+  industryTrendScore: number;
+  geographicalFactorScore: number;
+  recommendations: ReadinessRecommendations;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // API response types
 export interface DashboardData {
   success: boolean;
@@ -84,4 +122,5 @@ export interface DashboardData {
   insights: Insight[];
   scrapedCount: number;
   isComplete: boolean;
+  readinessScore?: ReadinessScore;
 }

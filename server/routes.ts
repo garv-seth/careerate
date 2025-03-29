@@ -1916,6 +1916,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get scraped data
       const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
+      
+      // Get readiness score if available
+      const readinessScore = await readinessService.getReadinessScore(transitionId);
 
       // Return complete dashboard data
       res.json({
@@ -1927,6 +1930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         insights,
         scrapedCount: scrapedData.length,
         isComplete: transition.isComplete,
+        readinessScore
       });
     } catch (error) {
       console.error("Error fetching dashboard:", error);

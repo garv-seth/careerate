@@ -1,72 +1,66 @@
 /**
- * API Configuration for Readiness Score Services
- * Contains API keys, hosts, endpoints, and cache settings
- * for all external API services used in the Readiness module
+ * API keys for accessing RapidAPI services
+ * Sourced from environment variables for security
  */
-
-import axios from 'axios';
-
-// API Keys
 export const API_KEYS = {
   RAPIDAPI: process.env.RAPIDAPI_KEY || ''
 };
 
-// API Hosts
-export const API_HOSTS = {
-  ACTIVE_JOBS: 'active-jobs-db.p.rapidapi.com',
-  LINKEDIN_JOBS: 'linkedin-jobs-search.p.rapidapi.com',
-  REDDIT: 'reddit-api-scraper.p.rapidapi.com',
-  QUORA: 'quora-scraper1.p.rapidapi.com',
-  GOOGLE_TRENDS: 'real-time-news-data.p.rapidapi.com',
-  YOUTUBE: 'youtube-search-and-download.p.rapidapi.com'
-};
-
-// API Endpoints
-export const ENDPOINTS = {
+/**
+ * API endpoints for various services used in readiness scoring
+ */
+export const API_ENDPOINTS = {
   ACTIVE_JOBS: {
-    SEARCH: '/search',
-    DETAILS: '/job'
-  },
-  LINKEDIN_JOBS: {
-    SEARCH: '/search'
-  },
-  REDDIT: {
-    SEARCH: '/search/reddit',
-    COMMENTS: '/comments/reddit'
-  },
-  QUORA: {
-    SEARCH: '/search'
-  },
-  GOOGLE_TRENDS: {
-    NEWS: '/latest-news',
-    SEARCH: '/search'
-  },
-  YOUTUBE: {
-    SEARCH: '/search',
-    VIDEOS: '/video/info'
+    SEARCH: 'https://jsearch.p.rapidapi.com/search',
+    DETAILS: 'https://jsearch.p.rapidapi.com/job-details'
   }
 };
 
-// Cache expiration in minutes
-export const CACHE_EXPIRATION = {
-  JOBS: 60 * 24, // 24 hours
-  FORUMS: 60 * 12, // 12 hours
-  TRENDS: 60 * 6, // 6 hours
-  LEARNING: 60 * 24 * 7 // 7 days
+/**
+ * API hosts for RapidAPI services
+ */
+export const API_HOSTS = {
+  ACTIVE_JOBS: 'jsearch.p.rapidapi.com'
 };
 
-// Add response interceptor to log API call status
-axios.interceptors.response.use(
-  response => {
-    const url = new URL(response.config.url || '');
-    console.log(`[API] ${response.config.method?.toUpperCase()} ${url.pathname} - ${response.status}`);
-    return response;
-  },
-  error => {
-    if (axios.isAxiosError(error) && error.response) {
-      const url = new URL(error.config?.url || '');
-      console.error(`[API] ${error.config?.method?.toUpperCase()} ${url.pathname} - ${error.response.status}`);
-    }
-    return Promise.reject(error);
+/**
+ * Cache Time-To-Live values in seconds
+ * Used to avoid excessive API calls and rate limiting
+ */
+export const CACHE_TTL = {
+  SHORT: 60 * 30, // 30 minutes
+  MEDIUM: 60 * 60 * 6, // 6 hours
+  LONG: 60 * 60 * 24, // 24 hours
+  VERY_LONG: 60 * 60 * 24 * 7 // 1 week
+};
+
+/**
+ * Rate limiting configurations for API calls
+ */
+export const RATE_LIMITS = {
+  ACTIVE_JOBS: {
+    REQUESTS_PER_MINUTE: 3,
+    REQUESTS_PER_DAY: 300
   }
-);
+};
+
+/**
+ * Scoring weights for various factors in the readiness score calculation
+ * Total adds up to 1 (or 100%)
+ */
+export const SCORING_WEIGHTS = {
+  MARKET_DEMAND: 0.25,
+  SKILL_GAP: 0.30,
+  EDUCATION_PATH: 0.20,
+  INDUSTRY_TREND: 0.15,
+  GEOGRAPHICAL_FACTOR: 0.10
+};
+
+/**
+ * Minimum data requirements for reliable analysis
+ */
+export const MIN_DATA_REQUIREMENTS = {
+  SKILL_GAPS: 3,
+  JOB_LISTINGS: 5,
+  FORUM_POSTS: 3
+};
