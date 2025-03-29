@@ -12,14 +12,14 @@ const router = Router();
 
 // Schema validation for registration
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6)
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(6, "Password must be at least 6 characters")
 });
 
 // Schema validation for login
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string()
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(1, "Password is required")
 });
 
 // Schema validation for profile update
@@ -39,13 +39,13 @@ const userSkillSchema = z.object({
 
 // Schema validation for forgot password
 const forgotPasswordSchema = z.object({
-  email: z.string().email()
+  email: z.string().email("Valid email is required")
 });
 
 // Schema validation for reset password
 const resetPasswordSchema = z.object({
   token: z.string(),
-  password: z.string().min(6)
+  password: z.string().min(8, "Password must be at least 8 characters")
 });
 
 // Register a new user
