@@ -1,60 +1,62 @@
 
 # Careerate 🚀
 
-Careerate is an AI-powered career transition platform that helps tech professionals navigate their career paths with precision and confidence. Using advanced multi-agent systems and LLM technology, Careerate analyzes real-world transition data to create personalized career advancement strategies.
+Careerate is an AI-powered career transition platform leveraging advanced multi-agent systems and LLM technology to help tech professionals navigate career paths effectively.
 
-## 🌟 Key Features
+## 🛠️ Technical Stack
 
-### 1. AI-Powered Career Analysis
-- **Multi-Agent System**: Utilizes a sophisticated network of specialized AI agents (Research, Coordinator, Analyst) working together to provide comprehensive career insights
-- **Real-Time Data Analysis**: Scrapes and analyzes current career transition stories and trends from multiple sources
-- **Personalized Success Rate**: Calculates custom success probability based on your specific skills and experience
+### Frontend
+- React + TypeScript for the UI framework
+- TailwindCSS with custom components using Radix UI primitives
+- Vite for build tooling and development
+- React Query for state management
+- React Hook Form for form handling
+- Wouter for lightweight routing
 
-### 2. Skill Gap Analysis
-- **Dynamic Skill Assessment**: Identifies critical skill gaps between your current and target roles
-- **Priority-Based Learning**: Recommends skills to acquire based on market demand and impact
-- **Confidence Scoring**: Provides confidence scores for skill recommendations
+### Backend
+- Node.js + Express for the API server
+- TypeScript for type safety
+- Drizzle ORM with PostgreSQL for data persistence
+- Express Session + Passport.js for authentication
+- Rate limiting and security middleware
 
-### 3. Transition Planning
-- **Custom Development Plans**: Creates milestone-based development plans tailored to your career goals
-- **Resource Recommendations**: Suggests learning resources, courses, and materials for each milestone
-- **Progress Tracking**: Monitors your advancement through interactive milestones
+### AI/ML Infrastructure
+- LangChain for orchestrating multi-agent systems
+- Google Gemini Pro for natural language processing
+- Anthropic Claude for advanced reasoning
+- LangGraph for agent workflow management
+- Custom agents including:
+  - Research Agent for data gathering
+  - Analyst Agent for insight generation
+  - Planning Agent for career roadmap creation
 
-### 4. Data-Driven Insights
-- **Success Stories**: Aggregates and analyzes real transition experiences
-- **Market Intelligence**: Provides current trends in career transitions
-- **Challenge Analysis**: Identifies common obstacles and strategies to overcome them
+### Third-Party Integrations (via RapidAPI)
+- LinkedIn Jobs API for real-time job market analysis
+- Company data enrichment APIs
+- Skills taxonomy APIs
+- Industry trend analysis endpoints
 
-## 🛠️ Technology Stack
+### Cloud Infrastructure
+- Replit for deployment and hosting
+- PostgreSQL (NeonDB) for serverless database
+- Object storage for file management
+- SendGrid for email communications
 
-- **Frontend**: React + TypeScript with TailwindCSS
-- **Backend**: Node.js + Express
-- **Database**: PostgreSQL with Drizzle ORM
-- **AI/ML**: 
-  - LangGraph for multi-agent orchestration
-  - Google Gemini Pro for natural language processing
-  - Custom-built career analysis algorithms
-
-## 🧠 AI Architecture
-
-### Multi-Agent System
-- **Coordinator Agent**: Orchestrates the analysis workflow
-- **Research Agent**: Gathers and validates career transition data
-- **Analyst Agent**: Processes data and generates insights
-- **Plan Execute Agent**: Creates actionable transition plans
-
-### Memory Systems
-- **Long-term Memory**: Stores analyzed career patterns and successful transitions
-- **Working Memory**: Manages active analysis sessions and user context
-- **Vectorized Knowledge Base**: Enables semantic search across career data
-
-### Core Functions
-- Career transition path analysis
+### Core Features
+- Real-time job market analysis
 - Skill gap identification
-- Success rate calculation
-- Resource curation
-- Personalized planning
-- Market trend analysis
+- Career transition planning
+- Success probability calculation
+- Resource recommendation
+- Industry trend analysis
+- Multi-company level mapping
+
+## 🔒 Security & Performance
+- Rate limiting on API endpoints
+- Session-based authentication
+- Environment variable management
+- Request validation using Zod
+- API key rotation and management
 
 ## 🚀 Getting Started
 
@@ -73,7 +75,9 @@ npm install
 # Create a .env file with the following:
 DATABASE_URL=your_postgres_url
 OPENAI_API_KEY=your_openai_key
-TAVILY_API_KEY=your_tavily_key
+GOOGLE_AI_KEY=your_gemini_key
+ANTHROPIC_API_KEY=your_anthropic_key
+SENDGRID_API_KEY=your_sendgrid_key
 ```
 
 4. Start the development server
@@ -84,11 +88,3 @@ npm run dev
 ## 📜 License
 
 MIT License - see LICENSE file for details
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 🌟 Acknowledgments
-
-Special thanks to the amazing open-source community and the cutting-edge AI technologies that make Careerate possible.
