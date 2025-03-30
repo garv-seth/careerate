@@ -481,12 +481,29 @@ export class DatabaseStorage implements IStorage {
             title: milestoneData.title || `Milestone ${i + 1}`,
             description: milestoneData.description || "",
             timeframe: milestoneData.timeframe || "2-4 weeks",
+            durationWeeks: milestoneData.durationWeeks || parseInt(milestoneData.timeframe?.match(/\d+/)?.[0] || '4'),
             order: i + 1,
-            priority: milestoneData.priority || "Medium"
+            priority: milestoneData.priority || "Medium",
+            progress: milestoneData.progress || 0
           });
           
-          // Create resources for this milestone if they exist
+          // Process direct milestone resources first (if available)
+          if (milestoneData.resources && Array.isArray(milestoneData.resources)) {
+            console.log(`Processing ${milestoneData.resources.length} direct resources for milestone ${milestone.id}`);
+            for (const resourceData of milestoneData.resources) {
+              await this.createResource({
+                milestoneId: milestone.id,
+                title: resourceData.title || "Learning Resource",
+                description: resourceData.description || "",
+                url: resourceData.url || "#",
+                type: resourceData.type || "other"
+              });
+            }
+          }
+          
+          // Process resources from tasks (if available)
           if (milestoneData.tasks && Array.isArray(milestoneData.tasks)) {
+            console.log(`Processing tasks for milestone ${milestone.id}`);
             for (const task of milestoneData.tasks) {
               // Create resources for this task
               if (task.resources && Array.isArray(task.resources)) {

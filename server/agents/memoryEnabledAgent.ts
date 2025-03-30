@@ -1092,6 +1092,12 @@ export class MemoryEnabledAgent {
             "title": "Milestone title",
             "description": "Description of this milestone",
             "timeframe": "X weeks",
+            "durationWeeks": 4, // Numeric value in weeks
+            "priority": "High|Medium|Low",
+            "resources": [
+              // Direct milestone resources (will always be displayed)
+              {"title": "EXACT Resource name", "url": "EXACT resource URL", "type": "course/video/book/etc"}
+            ],
             "tasks": [
               {
                 "task": "Specific action item",
@@ -1151,7 +1157,7 @@ export class MemoryEnabledAgent {
         
         // Ensure milestones contain all required properties
         if (plan.milestones && Array.isArray(plan.milestones)) {
-          plan.milestones = plan.milestones.map((milestone, index) => {
+          plan.milestones = plan.milestones.map((milestone: any, index: number) => {
             // Ensure each milestone has required fields
             return {
               title: milestone.title || `Phase ${index + 1}`,
@@ -1164,7 +1170,7 @@ export class MemoryEnabledAgent {
               tasks: Array.isArray(milestone.tasks) ? milestone.tasks : [],
               resources: Array.isArray(milestone.resources) ? milestone.resources : 
                 (Array.isArray(milestone.tasks) ? 
-                  milestone.tasks.flatMap(task => Array.isArray(task.resources) ? task.resources : []) : 
+                  milestone.tasks.flatMap((task: any) => Array.isArray(task.resources) ? task.resources : []) : 
                   [])
             };
           });
@@ -1256,6 +1262,16 @@ export class MemoryEnabledAgent {
         title: "Address Critical Skill Gaps",
         description: "Focus on the highest priority skills needed for the transition",
         timeframe: "4-6 weeks",
+        durationWeeks: 6,
+        priority: "High",
+        progress: 0,
+        resources: [
+          {
+            title: "Critical Skills Learning Path",
+            url: "https://www.linkedin.com/learning/",
+            type: "learning_path"
+          }
+        ],
         tasks: highPriorityTasks
       });
     }
@@ -1304,6 +1320,16 @@ export class MemoryEnabledAgent {
         title: "Build Secondary Skills",
         description: "Develop supporting skills needed for the role",
         timeframe: "3-4 weeks",
+        durationWeeks: 4,
+        priority: "Medium",
+        progress: 0,
+        resources: [
+          {
+            title: "Supporting Skills Bundle",
+            url: "https://www.udemy.com/",
+            type: "course_bundle"
+          }
+        ],
         tasks: mediumPriorityTasks
       });
     }
@@ -1359,6 +1385,16 @@ export class MemoryEnabledAgent {
       title: "Interview Preparation & Networking",
       description: "Prepare for interviews and build professional network",
       timeframe: "2-3 weeks",
+      durationWeeks: 3,
+      priority: "Medium",
+      progress: 0,
+      resources: [
+        {
+          title: "Interview Mastery Guide",
+          url: "https://interviewcake.com/",
+          type: "guide"
+        }
+      ],
       tasks: interviewTasks
     });
     
