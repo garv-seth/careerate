@@ -7,7 +7,7 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { StructuredTool } from "@langchain/core/tools";
 import { storage } from "../storage";
 import { z } from "zod";
-import { SkillGapAnalysis } from "./langGraphAgent";
+import { SkillGapAnalysis } from "../types/skillGapTypes";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { MCPHandler } from "../helpers/mcpHandler";
 import { careerTransitionMemory } from './memoryStore';

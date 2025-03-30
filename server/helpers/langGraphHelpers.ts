@@ -43,7 +43,7 @@ function generateFallbackResponse(prompt: string) {
   };
 }
 
-import { SkillGapAnalysis } from "../agents/langGraphAgent";
+import { SkillGapAnalysis } from "../types/skillGapTypes";
 
 /**
  * Search forums for career transition stories using Tavily search
