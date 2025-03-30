@@ -72,8 +72,8 @@ const Login = () => {
       // Log the attempt for debugging
       console.log("Attempting login with email:", data.email);
       
-      // Clear old tokens first to avoid conflicts
-      await clearAllAuth();
+      // Clear old tokens first to avoid conflicts (but don't redirect)
+      await clearAllAuth(false);
       
       // Use the updated API request function that handles auth endpoints better
       const response = await apiRequest("/api/auth/login", {
@@ -84,14 +84,25 @@ const Login = () => {
       console.log("Login response:", response);
 
       if (response.success) {
+        // Store token in localStorage for client-side access
+        if (response.token) {
+          localStorage.setItem('auth_token', response.token);
+          console.log("Stored token in localStorage");
+        } else {
+          console.warn("No token received in successful login response");
+        }
+
         toast({
           title: "Login successful!",
           description: "Welcome back to Careerate!",
           variant: "default"
         });
         
-        // Redirect to profile page after successful login
-        navigate("/profile");
+        // Small delay before redirecting to ensure token is processed
+        setTimeout(() => {
+          console.log("Redirecting to profile page");
+          navigate("/profile");
+        }, 100);
       } else {
         // Show more detailed error from the response
         toast({
@@ -105,8 +116,11 @@ const Login = () => {
       let errorMessage = "An unexpected error occurred during login. Please try again.";
       let errorTitle = "Login failed";
       
+      console.error("Detailed login error:", error);
+      
       if (error instanceof Error) {
         errorMessage = error.message;
+        console.log("Error message:", errorMessage);
         
         // Handle specific known errors with more user-friendly messages
         if (errorMessage.includes("401")) {
@@ -119,8 +133,15 @@ const Login = () => {
           errorTitle = "Server error";
         }
       } else if (typeof error === 'object' && error !== null) {
-        // @ts-ignore - Try to extract error from response if possible
-        errorMessage = error.response?.data?.error || errorMessage;
+        // Try to extract error from response if possible
+        console.log("Error object:", JSON.stringify(error));
+        try {
+          // @ts-ignore - Try different ways to access error data
+          const errorData = error.response?.data || error.data || error;
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          console.error("Error extracting error message:", e);
+        }
       }
       
       toast({

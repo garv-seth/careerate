@@ -4,20 +4,26 @@ import { apiRequest } from "@/lib/queryClient";
  * Utility to clear authentication state
  * This helps ensure we don't have any stale authentication data
  */
-export const clearAllAuth = async (): Promise<void> => {
+export const clearAllAuth = async (shouldRedirect = false): Promise<void> => {
   try {
     // Log out using the V1 authentication endpoint
     try {
+      console.log("Attempting to logout via API");
       await apiRequest("/api/auth/logout", { method: "POST" });
+      console.log("API logout successful");
     } catch (error: unknown) {
-      console.log("Logout failed or not needed");
+      console.log("Logout API call failed or not needed:", error);
     }
     
     // Clear auth cookie as a backup measure
     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    console.log("Cleared auth cookie manually");
     
-    // Redirect to login page
-    window.location.href = "/login";
+    // Only redirect if explicitly requested
+    if (shouldRedirect) {
+      console.log("Redirecting to login page");
+      window.location.href = "/login";
+    }
   } catch (error: unknown) {
     console.error("Error clearing authentication:", error);
   }

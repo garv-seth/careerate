@@ -27,15 +27,19 @@ function extractToken(req: Request): string | null {
     const authHeader = req.headers.authorization;
     const headerToken = authHeader?.startsWith('Bearer ') 
       ? authHeader.substring(7) 
-      : null;
+      : authHeader || null; // Also accept raw token without Bearer prefix
     
     // Return the first available token
     const token = cookieToken || headerToken || null;
     
-    // Basic validation to ensure token is reasonably formatted
+    // Basic validation to ensure token is reasonably formatted (JWT tokens have 3 parts separated by dots)
     if (token && (token.length < 10 || !token.includes('.'))) {
       console.log('[Auth Debug] Token found but invalid format:', token.substring(0, 5) + '...');
       return null;
+    }
+    
+    if (token) {
+      console.log('[Auth Debug] Valid token found, length:', token.length);
     }
     
     return token;

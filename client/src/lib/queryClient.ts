@@ -39,17 +39,39 @@ export async function apiRequest(
   const data = options?.data;
   
   try {
+    // Get token from localStorage if available
+    const token = localStorage.getItem('auth_token');
+    
+    // Prepare headers with content type and authorization if token exists
+    const headers: Record<string, string> = {};
+    
+    if (data) {
+      headers["Content-Type"] = "application/json";
+    }
+    
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+      console.log("Adding Authorization header with token");
+    }
+    
     const res = await fetch(url, {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
+      headers,
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
+      credentials: "include", // Still include cookies for backward compatibility
     });
 
     // For auth endpoints, handle errors differently
     if (url.includes('/api/auth/')) {
       // Don't throw for auth endpoints, just return the JSON
       const responseData = await res.json();
+      
+      // If this is a successful login, store the token in localStorage
+      if (url.includes('/api/auth/login') && responseData.success && responseData.token) {
+        localStorage.setItem('auth_token', responseData.token);
+        console.log("Token stored from auth response");
+      }
+      
       return responseData;
     } else {
       // For non-auth endpoints, use the standard error handling
@@ -69,8 +91,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Get token from localStorage if available
+    const token = localStorage.getItem('auth_token');
+    
+    // Prepare headers with authorization if token exists
+    const headers: Record<string, string> = {};
+    
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
