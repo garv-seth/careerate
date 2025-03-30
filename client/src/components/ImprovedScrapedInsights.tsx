@@ -14,6 +14,7 @@ interface ScrapedInsightsProps {
 interface TransitionStoriesData {
   keyObservations: string[];
   commonChallenges: string[];
+  stories?: string[];
   sources?: {[key: string]: string};
 }
 
@@ -72,25 +73,40 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
         await new Promise(resolve => setTimeout(resolve, 1500));
       }
       
-      // Load stories analysis data first - this generates fresh insights
-      const storiesResponse = await apiRequest(
-        `/api/stories-analysis/${transitionId}?refresh=${timestamp}`
-      );
-
-      if (storiesResponse && storiesResponse.success && storiesResponse.data) {
-        setStoriesData(storiesResponse.data);
-      }
-      
-      // Then load the actual scraped data that was used for the analysis
+      // Then load the actual scraped data that was used for the analysis first to ensure we have data
       const response = await apiRequest(
         `/api/scraped-data/${transitionId}?refresh=${timestamp}`
       );
 
       if (response && response.success && response.data) {
         setScrapedData(response.data);
+        
+        // Only if we have scraped data, then load the stories analysis
+        if (response.data && response.data.length > 0) {
+          // Load stories analysis data - this generates fresh insights
+          const storiesResponse = await apiRequest(
+            `/api/stories-analysis/${transitionId}?refresh=${timestamp}`
+          );
+
+          if (storiesResponse && storiesResponse.success && storiesResponse.data) {
+            setStoriesData(storiesResponse.data);
+          }
+        } else {
+          // No scraped data, set some default structure for storiesData
+          setStoriesData({
+            keyObservations: [],
+            commonChallenges: []
+          });
+        }
       }
     } catch (error) {
       console.error("Error loading scraped data:", error);
+      // Set default empty structures on error to prevent infinite loading
+      setScrapedData([]);
+      setStoriesData({
+        keyObservations: [],
+        commonChallenges: []
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -203,15 +219,28 @@ const ScrapedInsights: React.FC<ScrapedInsightsProps> = ({
     return stories;
   }).flat(); // Flatten the array of arrays
 
-  // ONLY use real scraped stories from API
-  const allStories = scrapedStories;
+  // Get observations, challenges, and stories from analyzed data if available
+  const keyObservations = storiesData?.keyObservations || [];
+  const commonChallenges = storiesData?.commonChallenges || [];
+  const storiesFromAnalysis = storiesData?.stories || [];
+  
+  // Combine scraped stories and stories from analysis for a complete view
+  const analysisStories = storiesFromAnalysis.map((content, idx) => ({
+    id: 10000 + idx, // Use a high ID to avoid conflicts
+    transitionId: transitionId,
+    type: "story" as "observation" | "challenge" | "story",
+    content,
+    source: "Career Analysis",
+    date: new Date().toISOString().split('T')[0],
+    experienceYears: null,
+    url: null
+  }));
+  
+  // Combine all stories with priority to scraped ones
+  const allStories = [...scrapedStories, ...analysisStories];
   
   // Display only one story if not expanded
   const displayStories = expanded ? allStories : (allStories.length > 0 ? allStories.slice(0, 1) : []);
-
-  // Get observations and challenges from analyzed data if available
-  const keyObservations = storiesData?.keyObservations || [];
-  const commonChallenges = storiesData?.commonChallenges || [];
 
   return (
     <Card className="card rounded-xl p-6 shadow-glow mb-8">

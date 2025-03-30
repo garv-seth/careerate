@@ -17,6 +17,14 @@ export function sanitizeJsonString(jsonString: string): string {
   let sanitized = jsonString;
   
   try {
+    // 0. Extract JSON from markdown code blocks (LangGraph and AI models often return JSON in ```json blocks)
+    const markdownJsonRegex = /```(?:json)?\s*\n?([\s\S]*?)\n?```/;
+    const markdownMatch = sanitized.match(markdownJsonRegex);
+    if (markdownMatch && markdownMatch[1]) {
+      console.log("Successfully extracted JSON from markdown code block");
+      sanitized = markdownMatch[1].trim();
+    }
+
     // 1. Remove any BOM or control characters
     sanitized = sanitized.replace(/^\uFEFF/, '');
     
@@ -59,6 +67,21 @@ export function sanitizeJsonString(jsonString: string): string {
     // 8. Remove trailing commas from objects
     sanitized = sanitized.replace(/,\s*}/g, '}');
     
+    // 9. Balance out remaining braces to ensure valid JSON
+    const finalOpenCurly = (sanitized.match(/{/g) || []).length;
+    const finalCloseCurly = (sanitized.match(/}/g) || []).length;
+    const finalOpenSquare = (sanitized.match(/\[/g) || []).length;
+    const finalCloseSquare = (sanitized.match(/\]/g) || []).length;
+    
+    // Add missing closing braces and brackets
+    for (let i = 0; i < finalOpenCurly - finalCloseCurly; i++) {
+      sanitized += '}';
+    }
+    
+    for (let i = 0; i < finalOpenSquare - finalCloseSquare; i++) {
+      sanitized += ']';
+    }
+    
     return sanitized;
   } catch (error) {
     console.error("Error during JSON sanitization:", error);
@@ -73,6 +96,11 @@ export function sanitizeJsonString(jsonString: string): string {
  * @returns The parsed JSON object, or the default value if parsing fails
  */
 export function safeJsonParse<T>(jsonString: string, defaultValue: T | string): any {
+  if (!jsonString || typeof jsonString !== 'string') {
+    console.warn("Invalid input to safeJsonParse, returning default value");
+    return typeof defaultValue === 'string' ? getDefaultValueForType(defaultValue, jsonString) : defaultValue;
+  }
+
   try {
     // First try direct parsing
     return JSON.parse(jsonString);
@@ -80,33 +108,76 @@ export function safeJsonParse<T>(jsonString: string, defaultValue: T | string): 
     try {
       // If direct parsing fails, try sanitizing the JSON first
       const sanitized = sanitizeJsonString(jsonString);
+      console.log("Successfully parsed JSON using enhanced parser");
       return JSON.parse(sanitized);
     } catch (error) {
       console.error(`Error parsing JSON${typeof defaultValue === 'string' ? ' for ' + defaultValue : ''}:`, error);
       
-      // Generate context-appropriate defaults based on the identifier
+      // If we received a string identifier, get an appropriate default value
       if (typeof defaultValue === 'string') {
-        if (defaultValue.includes('plan')) {
-          return { 
-            overview: "Your development plan",
-            milestones: []
-          };
-        } else if (defaultValue.includes('skill')) {
-          return [];
-        } else if (defaultValue.includes('insight')) {
-          return {
-            observations: [],
-            stories: []
-          };
-        } else {
-          // Default to empty object instead of always returning an array
-          const jsonStart = jsonString.trim().charAt(0);
-          return jsonStart === '[' ? [] : {};
-        }
+        return getDefaultValueForType(defaultValue, jsonString);
       }
       
       return defaultValue;
     }
+  }
+}
+
+/**
+ * Generate an appropriate default value based on the type identifier and content
+ * @param typeIdentifier String describing the expected data type
+ * @param content The original content that failed to parse
+ * @returns An appropriate default value
+ */
+function getDefaultValueForType(typeIdentifier: string, content: string): any {
+  // For plan data
+  if (typeIdentifier.includes('plan')) {
+    return { 
+      overview: "Your development plan",
+      milestones: []
+    };
+  } 
+  // For skill gap data
+  else if (typeIdentifier.includes('skill')) {
+    return [];
+  } 
+  // For insights and observations data
+  else if (typeIdentifier.includes('insight') || typeIdentifier.includes('observation')) {
+    return {
+      observations: [],
+      challenges: [],
+      stories: []
+    };
+  }
+  // For story analysis data
+  else if (typeIdentifier.includes('story') || typeIdentifier.includes('transition story')) {
+    return {
+      keyObservations: [],
+      challengesFaced: [],
+      stories: []
+    };
+  } 
+  // For any other data, make an intelligent guess based on content
+  else {
+    // If content starts with [ probably an array was expected
+    const contentStart = content?.trim().charAt(0);
+    if (contentStart === '[') {
+      return [];
+    }
+    // If content includes "observations", "challenges", or similar keys, it's likely an insights object
+    else if (content && (
+      content.includes('"observations"') || 
+      content.includes('"challenges"') || 
+      content.includes('"stories"')
+    )) {
+      return {
+        observations: [],
+        challenges: [],
+        stories: []
+      };
+    }
+    // Default to empty object
+    return {};
   }
 }
 

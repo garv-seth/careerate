@@ -1280,62 +1280,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: "Transition not found" 
         });
       }
-
+      
+      // Skip clearing insights if we already have them - this prevents constant loading
+      const existingInsights = await storage.getInsightsByTransitionId(transitionId);
+      
+      if (existingInsights.length >= 3) {
+        // We already have enough insights, return them
+        console.log(`Reusing ${existingInsights.length} existing insights for transition ID ${transitionId}`);
+        
+        // Process existing insights to get key observations and challenges
+        const keyObservations = existingInsights
+          .filter(i => i.type === "observation")
+          .map(i => i.content);
+        
+        const commonChallenges = existingInsights
+          .filter(i => i.type === "challenge")
+          .map(i => i.content);
+        
+        // Get stories from scraped data to include in response
+        const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
+        const stories = existingInsights.filter(i => i.type === "story").map(i => i.content);
+        
+        return res.json({ 
+          success: true, 
+          data: {
+            keyObservations,
+            commonChallenges,
+            stories
+          }
+        });
+      }
+      
+      // If we get here, we need new insights
       // Clear existing insights to ensure fresh data
       await storage.deleteInsightsByTransitionId(transitionId);
       console.log(`Cleared existing insights for transition ID: ${transitionId} to ensure fresh analysis`);
       
-      // Get insights (should be empty after deletion)
+      // We need to generate new insights
+      console.log("Generating insights with LangGraph and Tavily");
+      const { currentRole, targetRole } = transition;
+      
       let insights: any[] = [];
-      if (insights.length === 0) {
-        console.log("No insights found, generating insights with LangGraph and Tavily");
+      
+      try {
+        // Get existing scraped data first - use what was already scraped
+        const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
         
-        const { currentRole, targetRole } = transition;
+        // Convert DB data to the format expected by analyzeTransitionStories
+        let formattedData: { source: string; content: string; url: string; date: string }[] = 
+          scrapedData.map(item => ({
+            source: item.source,
+            content: item.content,
+            url: item.url || "", // Empty string fallback for null values
+            date: item.postDate || new Date().toISOString().split('T')[0] // Today's date as fallback
+          }));
         
-        try {
-          // Get existing scraped data first - use what was already scraped
-          const scrapedData = await storage.getScrapedDataByTransitionId(transitionId);
+        // If no scraped data exists yet, only then do a quick search
+        if (formattedData.length === 0) {
+          console.log(`No scraped data found for transition ID: ${transitionId}, fetching some stories`);
+          const searchQuery = `Career transition from ${currentRole} to ${targetRole} experiences, challenges, and success stories`;
           
-          // Convert DB data to the format expected by analyzeTransitionStories
-          let formattedData: { source: string; content: string; url: string; date: string }[] = 
-            scrapedData.map(item => ({
-              source: item.source,
-              content: item.content,
-              url: item.url || "", // Empty string fallback for null values
-              date: item.postDate || new Date().toISOString().split('T')[0] // Today's date as fallback
-            }));
+          console.log(`Searching for career transition stories: ${searchQuery}`);
+          const searchResults = await searchForums(currentRole, targetRole);
           
-          // If no scraped data exists yet, only then do a quick search
-          if (formattedData.length === 0) {
-            console.log(`No scraped data found for transition ID: ${transitionId}, fetching some stories`);
-            const searchQuery = `Career transition from ${currentRole} to ${targetRole} experiences, challenges, and success stories`;
-            
-            console.log(`Searching for career transition stories: ${searchQuery}`);
-            const searchResults = await searchForums(currentRole, targetRole);
-            
-            // The search results are already in the correct format for analyzeTransitionStories
-            formattedData = searchResults;
-            
-            // Save these stories to the database so they're available for later steps
-            for (const item of formattedData) {
-              try {
-                await storage.createScrapedData({
-                  transitionId,
-                  source: item.source,
-                  content: item.content,
-                  url: item.url || null,
-                  postDate: item.date || null,
-                  skillsExtracted: [] 
-                });
-              } catch (saveError) {
-                console.error("Error saving scraped data:", saveError);
-              }
+          // The search results are already in the correct format for analyzeTransitionStories
+          formattedData = searchResults;
+          
+          // Save these stories to the database so they're available for later steps
+          for (const item of formattedData) {
+            try {
+              await storage.createScrapedData({
+                transitionId,
+                source: item.source,
+                content: item.content,
+                url: item.url || null,
+                postDate: item.date || null,
+                skillsExtracted: [] 
+              });
+            } catch (saveError) {
+              console.error("Error saving scraped data:", saveError);
             }
           }
+        }
+        
+        // Now analyze the data with LangGraph
+        if (formattedData.length > 0) {
+          console.log(`Analyzing ${formattedData.length} stories with LangGraph and Tavily`);
           
-          // Now analyze the data with LangGraph
-          if (formattedData.length > 0) {
-            console.log(`Analyzing ${formattedData.length} stories with LangGraph and Tavily`);
+          try {
             const analysisResult = await analyzeTransitionStories(
               currentRole, 
               targetRole, 
@@ -1389,134 +1421,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 experienceYears: null
               });
             }
-            
-            // Add transition stories directly from scraped data
-            if (formattedData && formattedData.length > 0) {
-              for (const story of formattedData.slice(0, 2)) {
-                // Clean/truncate content to a reasonable length for stories
-                if (story && story.content) { 
-                  let storyContent = story.content;
-                  if (storyContent.length > 500) {
-                    storyContent = storyContent.substring(0, 500) + "...";
-                  }
-                  
-                  await storage.createInsight({
-                    transitionId,
-                    type: "story",
-                    content: storyContent,
-                    source: story.source,
-                    date: story.date || new Date().toISOString().split('T')[0],
-                    experienceYears: Math.floor(Math.random() * 5) + 2, // Estimated experience
-                    url: story.url || null
-                  });
+          } catch (analysisError) {
+            console.error("Error analyzing transition stories:", analysisError);
+            // Handle failure and continue with fallbacks
+            await addFallbackInsights(transitionId, currentRole, targetRole);
+          }
+          
+          // Add transition stories directly from scraped data
+          if (formattedData && formattedData.length > 0) {
+            for (const story of formattedData.slice(0, 2)) {
+              // Clean/truncate content to a reasonable length for stories
+              if (story && story.content) { 
+                let storyContent = story.content;
+                if (storyContent.length > 500) {
+                  storyContent = storyContent.substring(0, 500) + "...";
                 }
-              }
-            }
-            
-          } else {
-            // Fallback insights if Tavily search returned no results
-            console.log("No transition stories found with Tavily, creating fallback insights");
-            
-            // Create fallback observations using LangGraph analysis
-            const observationsPrompt = `What are the key observations about career transitions from ${currentRole} to ${targetRole}? Provide 3 specific, data-backed insights. Answer in a JSON array of strings.`;
-            
-            try {
-              const observationsResponse = await callLLM(observationsPrompt, 800);
-              const observationsMatch = observationsResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
-              
-              let observations: string[] = [];
-              if (observationsMatch) {
-                observations = JSON.parse(observationsMatch[0]);
-              }
-              
-              // Store the observations
-              for (const observation of observations.slice(0, 3)) {
+                
                 await storage.createInsight({
                   transitionId,
-                  type: "observation",
-                  content: observation,
-                  source: "LangGraph Analysis",
-                  date: new Date().toISOString().split('T')[0],
-                  experienceYears: null
+                  type: "story",
+                  content: storyContent,
+                  source: story.source,
+                  date: story.date || new Date().toISOString().split('T')[0],
+                  experienceYears: Math.floor(Math.random() * 5) + 2, // Estimated experience
+                  url: story.url || null
                 });
               }
-            } catch (error) {
-              console.error("Failed to generate observations with LangGraph:", error);
-              // Add one fallback observation
-              await storage.createInsight({
-                transitionId,
-                type: "observation",
-                content: `Professionals transitioning from ${currentRole} to ${targetRole} typically need to develop new technical and soft skills specific to the target role.`,
-                source: "System Analysis",
-                date: new Date().toISOString().split('T')[0],
-                experienceYears: null
-              });
-            }
-            
-            // Create fallback challenges using LangGraph analysis
-            const challengesPrompt = `What are the main challenges people face when transitioning from ${currentRole} to ${targetRole}? Provide 3 specific challenges. Answer in a JSON array of strings.`;
-            
-            try {
-              const challengesResponse = await callLLM(challengesPrompt, 800);
-              const challengesMatch = challengesResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
-              
-              let challenges: string[] = [];
-              if (challengesMatch) {
-                challenges = JSON.parse(challengesMatch[0]);
-              }
-              
-              // Store the challenges
-              for (const challenge of challenges.slice(0, 3)) {
-                await storage.createInsight({
-                  transitionId,
-                  type: "challenge",
-                  content: challenge,
-                  source: "LangGraph Analysis",
-                  date: new Date().toISOString().split('T')[0],
-                  experienceYears: null
-                });
-              }
-            } catch (error) {
-              console.error("Failed to generate challenges with LangGraph:", error);
-              // Add one fallback challenge
-              await storage.createInsight({
-                transitionId,
-                type: "challenge",
-                content: `A key challenge in transitioning from ${currentRole} to ${targetRole} is adapting to different organizational structures and processes.`,
-                source: "System Analysis",
-                date: new Date().toISOString().split('T')[0],
-                experienceYears: null
-              });
             }
           }
           
-        } catch (error) {
-          console.error("Error generating insights with LangGraph:", error);
-          
-          // Create minimal fallback insights if all else fails
-          await storage.createInsight({
-            transitionId,
-            type: "observation",
-            content: `Career transitions between similar technical roles typically take 6-12 months to complete.`,
-            source: "System Analysis",
-            date: new Date().toISOString().split('T')[0],
-            experienceYears: null
-          });
-          
-          await storage.createInsight({
-            transitionId,
-            type: "challenge",
-            content: `Gaining practical experience in the target role's technologies is often the biggest challenge in career transitions.`,
-            source: "System Analysis",
-            date: new Date().toISOString().split('T')[0],
-            experienceYears: null
-          });
+        } else {
+          // Fallback insights if no stories found
+          await addFallbackInsights(transitionId, currentRole, targetRole);
         }
         
-        // Retrieve the newly created insights
-        insights = await storage.getInsightsByTransitionId(transitionId);
-        console.log(`Created ${insights.length} insights for transition with LangGraph and Tavily`);
+      } catch (error) {
+        console.error("Error generating insights with LangGraph:", error);
+        
+        // Add fallback insights if there was an error
+        await addFallbackInsights(transitionId, currentRole, targetRole);
       }
+      
+      // Retrieve all the insights we just created
+      insights = await storage.getInsightsByTransitionId(transitionId);
+      console.log(`Created ${insights.length} insights for transition with LangGraph and Tavily`);
       
       // Process insights to get key observations and challenges
       const keyObservations = insights
@@ -1527,11 +1475,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter(i => i.type === "challenge")
         .map(i => i.content);
       
+      // Extract stories for the response
+      const stories = insights
+        .filter(i => i.type === "story")
+        .map(i => i.content);
+      
+      // Ensure we have at least something to return
+      if (keyObservations.length === 0 && commonChallenges.length === 0) {
+        await addFallbackInsights(transitionId, currentRole, targetRole);
+        insights = await storage.getInsightsByTransitionId(transitionId);
+      }
+      
       res.json({ 
         success: true, 
         data: {
-          keyObservations,
-          commonChallenges
+          keyObservations: keyObservations.length > 0 ? keyObservations : ["Professionals making this transition often focus on building a portfolio of relevant projects to demonstrate capabilities."],
+          commonChallenges: commonChallenges.length > 0 ? commonChallenges : ["Adapting to the different organizational culture and expectations of the new role is often challenging."],
+          stories
         }
       });
     } catch (error) {
@@ -1542,6 +1502,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Helper function to add fallback insights when needed
+  async function addFallbackInsights(transitionId: number, currentRole: string, targetRole: string) {
+    try {
+      // Create fallback observations using LLM
+      const observationsPrompt = `What are the key observations about career transitions from ${currentRole} to ${targetRole}? Provide 3 specific, data-backed insights. Answer in a JSON array of strings.`;
+      
+      try {
+        const observationsResponse = await callLLM(observationsPrompt, 800);
+        const observationsMatch = observationsResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
+        
+        let observations: string[] = [];
+        if (observationsMatch) {
+          observations = JSON.parse(observationsMatch[0]);
+        }
+        
+        // Store the observations
+        for (const observation of observations.slice(0, 3)) {
+          await storage.createInsight({
+            transitionId,
+            type: "observation",
+            content: observation,
+            source: "LangGraph Analysis",
+            date: new Date().toISOString().split('T')[0],
+            experienceYears: null
+          });
+        }
+      } catch (error) {
+        console.error("Failed to generate observations with LLM:", error);
+        // Add one fallback observation
+        await storage.createInsight({
+          transitionId,
+          type: "observation",
+          content: `Professionals transitioning from ${currentRole} to ${targetRole} typically need to develop new technical and soft skills specific to the target role.`,
+          source: "System Analysis",
+          date: new Date().toISOString().split('T')[0],
+          experienceYears: null
+        });
+      }
+      
+      // Create fallback challenges using LLM
+      const challengesPrompt = `What are the main challenges people face when transitioning from ${currentRole} to ${targetRole}? Provide 3 specific challenges. Answer in a JSON array of strings.`;
+      
+      try {
+        const challengesResponse = await callLLM(challengesPrompt, 800);
+        const challengesMatch = challengesResponse.match(/\[\s*".*"\s*(?:,\s*".*"\s*)*\]/s);
+        
+        let challenges: string[] = [];
+        if (challengesMatch) {
+          challenges = JSON.parse(challengesMatch[0]);
+        }
+        
+        // Store the challenges
+        for (const challenge of challenges.slice(0, 3)) {
+          await storage.createInsight({
+            transitionId,
+            type: "challenge",
+            content: challenge,
+            source: "LangGraph Analysis",
+            date: new Date().toISOString().split('T')[0],
+            experienceYears: null
+          });
+        }
+      } catch (error) {
+        console.error("Failed to generate challenges with LLM:", error);
+        // Add one fallback challenge
+        await storage.createInsight({
+          transitionId,
+          type: "challenge",
+          content: `A key challenge in transitioning from ${currentRole} to ${targetRole} is adapting to different organizational structures and processes.`,
+          source: "System Analysis",
+          date: new Date().toISOString().split('T')[0],
+          experienceYears: null
+        });
+      }
+      
+      // Create minimal fallback insights if all else fails
+      await storage.createInsight({
+        transitionId,
+        type: "observation",
+        content: `Career transitions between similar technical roles typically take 6-12 months to complete.`,
+        source: "System Analysis",
+        date: new Date().toISOString().split('T')[0],
+        experienceYears: null
+      });
+      
+      await storage.createInsight({
+        transitionId,
+        type: "challenge",
+        content: `Gaining practical experience in the target role's technologies is often the biggest challenge in career transitions.`,
+        source: "System Analysis",
+        date: new Date().toISOString().split('T')[0],
+        experienceYears: null
+      });
+    } catch (error) {
+      console.error("Error generating fallback insights:", error);
+    }
+  }
 
   // Get transition insights
   apiRouter.get("/insights/:transitionId", async (req, res) => {
