@@ -19,17 +19,30 @@ export interface AuthenticatedRequest extends Request {
  * Middleware to extract token from various sources (cookie, auth header)
  */
 function extractToken(req: Request): string | null {
-  // Try to get token from cookies
-  const cookieToken = req.cookies?.auth_token;
-  
-  // Try to get token from Authorization header
-  const authHeader = req.headers.authorization;
-  const headerToken = authHeader?.startsWith('Bearer ') 
-    ? authHeader.substring(7) 
-    : null;
-  
-  // Return the first available token
-  return cookieToken || headerToken || null;
+  try {
+    // Try to get token from cookies
+    const cookieToken = req.cookies?.auth_token;
+    
+    // Try to get token from Authorization header
+    const authHeader = req.headers.authorization;
+    const headerToken = authHeader?.startsWith('Bearer ') 
+      ? authHeader.substring(7) 
+      : null;
+    
+    // Return the first available token
+    const token = cookieToken || headerToken || null;
+    
+    // Basic validation to ensure token is reasonably formatted
+    if (token && (token.length < 10 || !token.includes('.'))) {
+      console.log('[Auth Debug] Token found but invalid format:', token.substring(0, 5) + '...');
+      return null;
+    }
+    
+    return token;
+  } catch (error) {
+    console.error('[Auth Debug] Error extracting token:', error);
+    return null;
+  }
 }
 
 /**

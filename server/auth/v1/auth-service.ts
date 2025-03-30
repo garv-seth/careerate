@@ -8,7 +8,15 @@ import { storage } from '../../storage';
 const BCRYPT_ROUNDS = 12;
 const TOKEN_EXPIRY = '30d';
 const JWT_ALGORITHM = 'HS256';
-const JWT_SECRET = process.env.JWT_SECRET || 'careerate-jwt-secret';
+
+// Use a consistent JWT secret that won't change between server restarts
+// In production, this should be set via environment variable
+const JWT_SECRET = process.env.JWT_SECRET || 'careerate-static-jwt-secret-key-for-development-env';
+
+// Log a warning if using the default secret
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: Using fallback JWT secret. Set JWT_SECRET environment variable in production.');
+}
 
 /**
  * Authentication service with secure practices
@@ -94,17 +102,35 @@ class AuthService {
    */
   verifyToken(token: string): { userId: number; email: string } | null {
     try {
+      // Improved token verification with better error handling
       const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & {
         userId: number;
         email: string;
       };
+      
+      // Validate that all required fields exist in the decoded token
+      if (!decoded || typeof decoded !== 'object') {
+        console.error('Token verification error: Decoded token is not an object');
+        return null;
+      }
+      
+      if (decoded.userId === undefined || decoded.email === undefined) {
+        console.error('Token verification error: Missing required fields in payload', 
+          { hasUserId: decoded.userId !== undefined, hasEmail: decoded.email !== undefined });
+        return null;
+      }
       
       return {
         userId: decoded.userId,
         email: decoded.email
       };
     } catch (error) {
-      console.error('Token verification error:', error);
+      // Log detailed error information for debugging
+      if (error instanceof jwt.JsonWebTokenError) {
+        console.error(`Token verification error: ${error.name}: ${error.message}`);
+      } else {
+        console.error('Token verification error:', error);
+      }
       return null;
     }
   }
