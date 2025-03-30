@@ -83,10 +83,28 @@ export function safeJsonParse<T>(jsonString: string, defaultValue: T | string): 
       return JSON.parse(sanitized);
     } catch (error) {
       console.error(`Error parsing JSON${typeof defaultValue === 'string' ? ' for ' + defaultValue : ''}:`, error);
-      // If defaultValue is a string identifier, return an empty object or array
+      
+      // Generate context-appropriate defaults based on the identifier
       if (typeof defaultValue === 'string') {
-        return [];
+        if (defaultValue.includes('plan')) {
+          return { 
+            overview: "Your development plan",
+            milestones: []
+          };
+        } else if (defaultValue.includes('skill')) {
+          return [];
+        } else if (defaultValue.includes('insight')) {
+          return {
+            observations: [],
+            stories: []
+          };
+        } else {
+          // Default to empty object instead of always returning an array
+          const jsonStart = jsonString.trim().charAt(0);
+          return jsonStart === '[' ? [] : {};
+        }
       }
+      
       return defaultValue;
     }
   }

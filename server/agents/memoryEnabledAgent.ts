@@ -1131,16 +1131,43 @@ export class MemoryEnabledAgent {
         
         if (jsonMatch) {
           const possibleJson = jsonMatch[0];
-          plan = safeJsonParse(possibleJson, "plan");
+          plan = safeJsonParse(possibleJson, "development_plan");
         } else {
           // If no JSON object found, try parsing the entire content
-          plan = safeJsonParse(content, "plan");
+          plan = safeJsonParse(content, "development_plan");
         }
+        
+        // Log the structure of the plan
+        console.log("Plan structure:", 
+          Object.keys(plan).join(", "), 
+          "Milestones:", plan.milestones ? `Array with ${plan.milestones.length} items` : "missing"
+        );
         
         // If parsing fails or plan is invalid, create a fallback
         if (!plan || !plan.milestones || !Array.isArray(plan.milestones) || plan.milestones.length === 0) {
           console.log("Creating fallback plan from resources found");
           plan = this.createFallbackPlan(currentRole, targetRole, skillGaps, skillSpecificResources);
+        }
+        
+        // Ensure milestones contain all required properties
+        if (plan.milestones && Array.isArray(plan.milestones)) {
+          plan.milestones = plan.milestones.map((milestone, index) => {
+            // Ensure each milestone has required fields
+            return {
+              title: milestone.title || `Phase ${index + 1}`,
+              description: milestone.description || `Development phase ${index + 1}`,
+              timeframe: milestone.timeframe || `${4} weeks`,
+              durationWeeks: milestone.durationWeeks || parseInt(milestone.timeframe?.match(/\d+/)?.[0] || '4'),
+              priority: milestone.priority || "Medium",
+              order: index + 1,
+              progress: 0,
+              tasks: Array.isArray(milestone.tasks) ? milestone.tasks : [],
+              resources: Array.isArray(milestone.resources) ? milestone.resources : 
+                (Array.isArray(milestone.tasks) ? 
+                  milestone.tasks.flatMap(task => Array.isArray(task.resources) ? task.resources : []) : 
+                  [])
+            };
+          });
         }
         
         // Store the development plan in the database

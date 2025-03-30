@@ -135,7 +135,13 @@ export class ReadinessScoreService {
    */
   async getReadinessScore(transitionId: number): Promise<ReadinessScore | null> {
     try {
-      // Check if the table exists before querying
+      // Check if readinessScores exists in db.query
+      if (!db.query.readinessScores) {
+        console.log("Readiness scores table not available in database query");
+        return null;
+      }
+      
+      // Query the database for the readiness score
       const score = await db.query.readinessScores.findFirst({
         where: eq(readinessScores.transitionId, transitionId),
         orderBy: (fields, { desc }) => [desc(fields.updatedAt)]
@@ -170,6 +176,12 @@ export class ReadinessScoreService {
    */
   private async saveReadinessScore(score: ReadinessScore): Promise<void> {
     try {
+      // Check if readinessScores exists in db.query
+      if (!db.query.readinessScores) {
+        console.log("Readiness scores table not available in database query");
+        return;
+      }
+      
       // Check if an existing score exists
       const existingScore = await db.query.readinessScores.findFirst({
         where: eq(readinessScores.transitionId, score.transitionId)

@@ -469,7 +469,7 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.4, delay: 0.4 }}
             >
               <SkillGapAnalysis 
-                skillGaps={(data?.insights?.filter(i => (i.type as any) === 'skill_gap') || []) as any}
+                skillGaps={data?.skillGaps || []}
                 loading={isLoading}
               />
             </motion.div>
@@ -496,7 +496,7 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.4, delay: 0.5 }}
             >
               <CareerTrajectory 
-                milestones={(data?.plan as any)?.milestones || []}
+                milestones={data?.milestones || []}
                 plan={data?.plan}
                 loading={isLoading}
               />

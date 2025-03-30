@@ -16,6 +16,7 @@ import {
 import { safeJsonParse, sanitizeJsonString } from "./helpers/jsonParserHelper";
 import { MemoryEnabledAgent } from "./agents/memoryEnabledAgent";
 import emailRoutes from "./email-routes";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   searchForums,
   analyzeSkillGaps,
@@ -1623,9 +1624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               responseText = String(langGraphResponse || '');
             }
             
-            // First, use our enhanced sanitization function
-            const { sanitizeJsonString, safeJsonParse } = require('./helpers/jsonParserHelper');
-            
+            // First, use our enhanced sanitization function from imported functions
             try {
               // Try to parse using our enhanced safeJsonParse
               insightsData = safeJsonParse(responseText, "insights");
@@ -1652,7 +1651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   // Generate insights using Google Gemini as it's more reliable for structured outputs
                   try {
                     console.log("Generating structured insights via Google Gemini");
-                    const { GoogleGenerativeAI } = require("@google/generative-ai");
+                    // GoogleGenerativeAI is imported at the top of the file
                     
                     // Check if we have a Google API Key
                     const apiKey = process.env.GOOGLE_API_KEY;
@@ -1674,13 +1673,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     `;
                     
                     // Generate content with a system prompt for JSON
+                    // Add instruction for JSON format in the prompt itself
+                    const jsonPrompt = `${insightsPrompt}\n\nRespond ONLY with a valid JSON object. No explanations or other text outside the JSON.`;
+                    
                     const result = await geminiModel.generateContent({
-                      contents: [{ role: "user", parts: [{ text: insightsPrompt }] }],
+                      contents: [{ role: "user", parts: [{ text: jsonPrompt }] }],
                       generationConfig: {
                         temperature: 0.2,
                         topP: 0.8,
-                        topK: 40,
-                        responseFormat: { type: "JSON" }
+                        topK: 40
                       }
                     });
                     
