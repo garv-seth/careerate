@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { clearAllAuth, checkAuthMigrationNeeded } from "@/utils/authMigration";
+import { useQuery } from "@tanstack/react-query";
 
 // Form validation schema
 const formSchema = z.object({
@@ -25,6 +26,23 @@ const Login = () => {
   const [showMigrationNotice, setShowMigrationNotice] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Check if user is authenticated
+  const { data: userData } = useQuery({
+    queryKey: ['/api/auth/me'],
+    retry: false,
+    refetchOnWindowFocus: false
+  });
+  
+  // Type assertion since we know the structure
+  const isAuthenticated = !!(userData && (userData as any).user);
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/profile");
+    }
+  }, [isAuthenticated, navigate]);
   
   // Check if user needs to migrate from old auth system
   useEffect(() => {
@@ -244,12 +262,14 @@ const Login = () => {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
-          <p className="text-sm">
-            Don't have an account?{" "}
-            <Button variant="link" className="text-primary p-0" onClick={() => navigate("/signup")}>
-              Sign Up
-            </Button>
-          </p>
+          {!isAuthenticated && (
+            <p className="text-sm">
+              Don't have an account?{" "}
+              <Button variant="link" className="text-primary p-0" onClick={() => navigate("/signup")}>
+                Sign Up
+              </Button>
+            </p>
+          )}
           <div className="w-full border-t border-primary/10 pt-4">
             <Button variant="outline" className="w-full" onClick={() => navigate("/")}>
               Back to Home

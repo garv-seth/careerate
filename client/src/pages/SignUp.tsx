@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { clearAllAuth } from "@/utils/authMigration";
+import { useQuery } from "@tanstack/react-query";
 
 // Form validation schema
 const formSchema = z.object({
@@ -23,6 +24,23 @@ const SignUp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // Check if user is authenticated
+  const { data: userData } = useQuery({
+    queryKey: ['/api/auth/me'],
+    retry: false,
+    refetchOnWindowFocus: false
+  });
+  
+  // Type assertion since we know the structure
+  const isAuthenticated = !!(userData && (userData as any).user);
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/profile");
+    }
+  }, [isAuthenticated, navigate]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -144,12 +162,14 @@ const SignUp = () => {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 text-center">
-          <p className="text-sm">
-            Already have an account?{" "}
-            <Button variant="link" className="text-primary p-0" onClick={() => navigate("/login")}>
-              Log In
-            </Button>
-          </p>
+          {!isAuthenticated && (
+            <p className="text-sm">
+              Already have an account?{" "}
+              <Button variant="link" className="text-primary p-0" onClick={() => navigate("/login")}>
+                Log In
+              </Button>
+            </p>
+          )}
           <div className="w-full border-t border-primary/10 pt-4">
             <Button variant="outline" className="w-full" onClick={() => navigate("/")}>
               Back to Home

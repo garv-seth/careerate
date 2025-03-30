@@ -204,9 +204,9 @@ const Header: React.FC = () => {
                 </svg>
               </button>
             ) : (
-              <Link href="/signup">
+              <Link href={isAuthenticated ? "/transitions/new" : "/signup"}>
                 <div className="inline-flex items-center justify-center px-5 py-2 border border-primary/40 bg-primary/5 text-primary font-medium text-sm rounded-md hover:bg-primary/10 transition-all duration-300 ease-in-out filter hover:drop-shadow-glow cursor-pointer">
-                  <span className="mr-2">GET STARTED</span>
+                  <span className="mr-2">{isAuthenticated ? "EXPLORE TRANSITIONS" : "GET STARTED"}</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -310,9 +310,9 @@ const Header: React.FC = () => {
                   Logout
                 </button>
               ) : (
-                <Link href="/signup" onClick={closeMobileMenu}>
+                <Link href={isAuthenticated ? "/transitions/new" : "/signup"} onClick={closeMobileMenu}>
                   <div className="bg-primary/10 text-primary font-medium text-base rounded-md hover:bg-primary/20 transition-colors py-3 px-4">
-                    Get Started
+                    {isAuthenticated ? "Explore Transitions" : "Get Started"}
                   </div>
                 </Link>
               )}

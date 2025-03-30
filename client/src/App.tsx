@@ -1,6 +1,7 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { ScrollToTop } from "@/components/ui/scroll-top";
 import NotFound from "@/pages/not-found";
@@ -24,6 +25,34 @@ import CookiePolicy from "@/pages/CookiePolicy";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+// Authentication-aware route component
+function AuthRoute({ component: Component, authRequired = false, redirectIfAuth = false, ...rest }: any) {
+  const [location] = useLocation();
+  const { data: userData, isLoading } = useQuery<any>({
+    queryKey: ['/api/auth/me'],
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  
+  const isAuthenticated = !!(userData && userData.user);
+  
+  // While checking auth status, we can return nothing or a loading indicator
+  if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  
+  // Redirect to home if already authenticated and trying to access signup/login
+  if (redirectIfAuth && isAuthenticated) {
+    return <Redirect to="/" />;
+  }
+  
+  // Redirect to login if authentication is required but user is not authenticated
+  if (authRequired && !isAuthenticated) {
+    return <Redirect to={`/login?redirect=${encodeURIComponent(location)}`} />;
+  }
+  
+  return <Component {...rest} />;
+}
+
 function Router() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -33,10 +62,18 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/dashboard/:transitionId" component={Dashboard} />
           <Route path="/transitions/new" component={NewTransition} />
-          <Route path="/signup" component={SignUp} />
-          <Route path="/login" component={Login} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/onboarding" component={OnboardingWizard} />
+          <Route path="/signup">
+            <AuthRoute component={SignUp} redirectIfAuth={true} />
+          </Route>
+          <Route path="/login">
+            <AuthRoute component={Login} redirectIfAuth={true} />
+          </Route>
+          <Route path="/profile">
+            <AuthRoute component={Profile} authRequired={true} />
+          </Route>
+          <Route path="/onboarding">
+            <AuthRoute component={OnboardingWizard} authRequired={true} />
+          </Route>
           <Route path="/forgot-password" component={ForgotPassword} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/contact" component={ContactUs} />
