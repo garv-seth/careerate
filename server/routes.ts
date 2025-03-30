@@ -13,7 +13,7 @@ import {
   RoleLevel
 } from "@shared/schema";
 // Using MemoryEnabledAgent as the primary agent architecture (consolidated approach)
-import { safeParseJSON } from "./helpers/jsonParserHelper";
+import { safeJsonParse, sanitizeJsonString } from "./helpers/jsonParserHelper";
 import { MemoryEnabledAgent } from "./agents/memoryEnabledAgent";
 import emailRoutes from "./email-routes";
 import {
@@ -1623,49 +1623,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
               responseText = String(langGraphResponse || '');
             }
             
-            // First, check if the response contains a JSON object
+            // First, use our enhanced sanitization function
+            const { sanitizeJsonString, safeJsonParse } = require('./helpers/jsonParserHelper');
+            
             try {
-              // Try parsing the entire response as JSON
-              insightsData = JSON.parse(responseText);
+              // Try to parse using our enhanced safeJsonParse
+              insightsData = safeJsonParse(responseText, "insights");
+              console.log("Successfully parsed JSON using enhanced parser");
+              
+              // Check if we got an empty array (failed parsing)
+              if (Array.isArray(insightsData) && insightsData.length === 0) {
+                throw new Error("Empty array returned from safeJsonParse");
+              }
             } catch (jsonError) {
+              console.log("Enhanced JSON parsing failed, trying extraction method");
+              
               // If direct parsing fails, try to extract JSON from text
               const jsonMatch = responseText.match(/\{[\s\S]*?\}/s); // Non-greedy match for first complete JSON object
               if (jsonMatch) {
                 try {
-                  insightsData = JSON.parse(jsonMatch[0]);
-                } catch (matchJsonError) {
-                  console.log("First JSON parse attempt failed, trying with sanitization");
+                  // Try to sanitize the extracted JSON using our helper
+                  const sanitized = sanitizeJsonString(jsonMatch[0]);
+                  console.log("Sanitized JSON:", sanitized.substring(0, 100) + "...");
+                  insightsData = JSON.parse(sanitized);
+                } catch (extractError) {
+                  console.error("JSON extraction and sanitization failed:", extractError);
+                  
+                  // Generate insights using Google Gemini as it's more reliable for structured outputs
                   try {
-                    // If that also fails, try to sanitize the JSON more thoroughly
-                    let sanitized = jsonMatch[0];
+                    console.log("Generating structured insights via Google Gemini");
+                    const { GoogleGenerativeAI } = require("@google/generative-ai");
                     
-                    // Step 1: Normalize property names to have double quotes
-                    sanitized = sanitized.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+                    // Check if we have a Google API Key
+                    const apiKey = process.env.GOOGLE_API_KEY;
+                    if (!apiKey) {
+                      throw new Error("Google API Key not available");
+                    }
                     
-                    // Step 2: Replace single quotes around values with double quotes
-                    sanitized = sanitized.replace(/:(\s*)'([^']*)'/g, ':$1"$2"');
+                    // Initialize the Google GenAI API with a structured prompt
+                    const genAI = new GoogleGenerativeAI(apiKey);
+                    const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                     
-                    // Step 3: Fix trailing commas in arrays/objects
-                    sanitized = sanitized.replace(/,(\s*[\]}])/g, '$1');
+                    const insightsPrompt = `
+                      Generate career transition insights from ${transition.currentRole} to ${transition.targetRole}.
+                      Return ONLY a JSON object with these fields:
+                      - successRate: number (0-100) showing likelihood of successful transition
+                      - avgTransitionTime: number (in months) typical transition time
+                      - commonPaths: array of objects with {path: string, count: number}
+                      - rationale: string explaining insights
+                    `;
                     
-                    console.log("Sanitized JSON:", sanitized.substring(0, 100) + "...");
-                    insightsData = JSON.parse(sanitized);
-                  } catch (sanitizeError) {
-                    console.error("JSON sanitization failed:", sanitizeError);
+                    // Generate content with a system prompt for JSON
+                    const result = await geminiModel.generateContent({
+                      contents: [{ role: "user", parts: [{ text: insightsPrompt }] }],
+                      generationConfig: {
+                        temperature: 0.2,
+                        topP: 0.8,
+                        topK: 40,
+                        responseFormat: { type: "JSON" }
+                      }
+                    });
                     
-                    // Last resort: provide a fallback structure
-                    console.log("Fallback to basic transition insights after LangGraph failures");
-                    insightsData = {
-                      successRate: 70,
-                      avgTransitionTime: 6,
-                      commonPaths: [
-                        {
-                          path: `Direct ${transition.currentRole} to ${transition.targetRole}`,
-                          count: 5
-                        }
-                      ],
-                      rationale: `This is based on general career data for ${transition.currentRole} to ${transition.targetRole} transitions.`
-                    };
+                    // Extract and parse the result
+                    const responseText = result.response.text();
+                    insightsData = safeJsonParse(responseText, "gemini-insights");
+                    console.log("Successfully generated insights with Gemini");
+                  } catch (aiError) {
+                    console.error("AI generation failed:", aiError);
+                    throw new Error("Failed to generate valid insights from API services");
                   }
                 }
               } else {

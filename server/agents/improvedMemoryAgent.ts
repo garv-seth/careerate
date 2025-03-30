@@ -16,7 +16,7 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { storage } from "../storage";
 import { z } from "zod";
 import { careerTransitionMemory } from './memoryStore';
-import { safeParseJSON } from '../helpers/jsonParserHelper';
+import { safeJsonParse } from '../helpers/jsonParserHelper';
 
 // Import this separately since it will be defined or rebuilt separately
 import { SkillGapAnalysis } from "./langGraphAgent";
