@@ -37,6 +37,7 @@ import cookieParser from "cookie-parser";
 // V1 auth system
 import { optionalAuth } from "./auth/v1/auth-middleware";
 import { ReadinessScoreService } from "./apis/readiness/readinessScoreService";
+import { ensureTestAccount } from "./auth/v1/createTestAccount";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure session
@@ -152,6 +153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Seed some predefined role skills if they don't exist
   await seedRoleSkills();
+  
+  // Create a test account for development
+  await ensureTestAccount();
   
   // Company data API endpoints
   apiRouter.get("/companies", async (req, res) => {

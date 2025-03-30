@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { userValidationSchema } from '@shared/schema';
 import { authService } from './auth-service';
@@ -9,18 +9,12 @@ import { storage } from '../../storage';
 // Create router
 const router = Router();
 
-// Apply rate limiting for sensitive routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // Increase max requests to avoid false positives during development
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: 'Too many login attempts, please try again later'
-  },
-  skipFailedRequests: true, // Don't count failed requests against limit
-});
+// Temporarily disable rate limiting as it's causing issues
+// We'll implement a simpler version that doesn't rely on IP detection
+const authLimiter = (req: Request, res: Response, next: NextFunction) => {
+  // Just pass through for now - no rate limiting
+  next();
+};
 
 // Schema for login
 const loginSchema = z.object({

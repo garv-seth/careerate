@@ -77,10 +77,21 @@ class AuthService {
         throw new Error('Invalid email or password');
       }
       
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
-        console.log(`[Auth Debug] Authentication failed - Password is invalid`);
-        throw new Error('Invalid email or password');
+      console.log(`[Auth Debug] Stored hashed password: ${user.password.substring(0, 10)}...`);
+      console.log(`[Auth Debug] Input password length: ${password.length}`);
+      
+      try {
+        // Added extra try/catch for bcrypt.compare to catch any issues
+        const isValid = await bcrypt.compare(password, user.password);
+        console.log(`[Auth Debug] Password comparison result:`, isValid);
+        
+        if (!isValid) {
+          console.log(`[Auth Debug] Authentication failed - Password is invalid`);
+          throw new Error('Invalid email or password');
+        }
+      } catch (bcryptError) {
+        console.error(`[Auth Debug] Bcrypt compare error:`, bcryptError);
+        throw new Error('Password verification failed');
       }
       
       console.log(`[Auth Debug] Authentication successful for user: ${email}`);
