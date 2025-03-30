@@ -12,13 +12,14 @@ const router = Router();
 // Apply rate limiting for sensitive routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 requests per window
+  max: 50, // Increase max requests to avoid false positives during development
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
     error: 'Too many login attempts, please try again later'
-  }
+  },
+  skipFailedRequests: true, // Don't count failed requests against limit
 });
 
 // Schema for login

@@ -61,23 +61,41 @@ class AuthService {
   async authenticateUser(email: string, password: string): Promise<Omit<User, 'password'>> {
     try {
       // Find user by email
+      console.log(`[Auth Debug] Attempting to authenticate user: ${email}`);
+      
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log(`[Auth Debug] Authentication failed - No user found with email: ${email}`);
         throw new Error('Invalid email or password');
       }
       
       // Verify password with bcrypt
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
+      console.log(`[Auth Debug] User found, verifying password...`);
+      
+      if (!user.password) {
+        console.log(`[Auth Debug] Authentication failed - User has no password stored`);
         throw new Error('Invalid email or password');
       }
+      
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        console.log(`[Auth Debug] Authentication failed - Password is invalid`);
+        throw new Error('Invalid email or password');
+      }
+      
+      console.log(`[Auth Debug] Authentication successful for user: ${email}`);
       
       // Return user without password
       const { password: _, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (error) {
+      // Make sure we don't leak sensitive information in error messages
+      const sanitizedError = error instanceof Error ? 
+        new Error('Invalid email or password') : 
+        new Error('Authentication failed');
+      
       console.error('Authentication error:', error);
-      throw error;
+      throw sanitizedError;
     }
   }
   

@@ -69,13 +69,19 @@ const Login = () => {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
+      // Log the attempt for debugging
+      console.log("Attempting login with email:", data.email);
+      
       // Clear old tokens first to avoid conflicts
       await clearAllAuth();
       
+      // Use the updated API request function that handles auth endpoints better
       const response = await apiRequest("/api/auth/login", {
         method: "POST",
         data: data
       });
+
+      console.log("Login response:", response);
 
       if (response.success) {
         toast({
@@ -87,25 +93,38 @@ const Login = () => {
         // Redirect to profile page after successful login
         navigate("/profile");
       } else {
+        // Show more detailed error from the response
         toast({
           title: "Login failed",
-          description: response.error || "Invalid email or password",
+          description: response.error || "Invalid email or password. Please check your credentials and try again.",
           variant: "destructive"
         });
       }
     } catch (error) {
-      // Get the specific error message if available
-      let errorMessage = "An unexpected error occurred. Please try again.";
+      // Enhanced error handling
+      let errorMessage = "An unexpected error occurred during login. Please try again.";
+      let errorTitle = "Login failed";
       
       if (error instanceof Error) {
         errorMessage = error.message;
+        
+        // Handle specific known errors with more user-friendly messages
+        if (errorMessage.includes("401")) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (errorMessage.includes("429")) {
+          errorMessage = "Too many login attempts. Please wait a few minutes before trying again.";
+          errorTitle = "Rate limit reached";
+        } else if (errorMessage.includes("500")) {
+          errorMessage = "Server error. Our team has been notified. Please try again later.";
+          errorTitle = "Server error";
+        }
       } else if (typeof error === 'object' && error !== null) {
         // @ts-ignore - Try to extract error from response if possible
         errorMessage = error.response?.data?.error || errorMessage;
       }
       
       toast({
-        title: "Login failed",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive"
       });

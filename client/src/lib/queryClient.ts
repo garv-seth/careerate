@@ -2,8 +2,29 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let errorMessage = `${res.status}: ${res.statusText}`;
+    
+    try {
+      // Try to parse the response as JSON first for structured error
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await res.json();
+        if (errorData && errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } else {
+        // Fallback to plain text if not JSON
+        const text = await res.text();
+        if (text) {
+          errorMessage = `${res.status}: ${text}`;
+        }
+      }
+    } catch (parseError) {
+      // Ignore JSON parsing errors and use the default message
+      console.error("Error parsing response:", parseError);
+    }
+    
+    throw new Error(errorMessage);
   }
 }
 
@@ -17,15 +38,29 @@ export async function apiRequest(
   const method = options?.method || 'GET';
   const data = options?.data;
   
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: data ? { "Content-Type": "application/json" } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
 
-  await throwIfResNotOk(res);
-  return await res.json();
+    // For auth endpoints, handle errors differently
+    if (url.includes('/api/auth/')) {
+      // Don't throw for auth endpoints, just return the JSON
+      const responseData = await res.json();
+      return responseData;
+    } else {
+      // For non-auth endpoints, use the standard error handling
+      await throwIfResNotOk(res);
+      return await res.json();
+    }
+  } catch (error) {
+    // Add better error logging
+    console.error(`API request failed for ${url}:`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
