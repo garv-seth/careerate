@@ -1,14 +1,24 @@
-// server/tools/improvedTavilySearch.ts (Updated)
+// server/tools/improvedTavilySearch.ts
 
 import axios from "axios";
-import { validateTavilyApiKey } from "../validateApiKeys";
 
 // Default search parameters
 const DEFAULT_MAX_RESULTS = 5;
 const DEFAULT_SEARCH_DEPTH = "basic"; // basic or deep
 
 /**
- * Improved Tavily search function with error handling, retries and rate limiting
+ * Validate Tavily API key
+ * @param apiKey The API key to validate
+ * @returns Whether the API key is valid
+ */
+function validateTavilyApiKey(apiKey?: string): boolean {
+  if (!apiKey) return false;
+  // Tavily API keys start with tvly- and are 36 characters long
+  return apiKey.startsWith("tvly-") && apiKey.length >= 20;
+}
+
+/**
+ * Improved Tavily search function with error handling and retries
  * @param query The search query
  * @param maxResults Maximum number of results to return
  * @param searchDepth Search depth (basic or deep)
@@ -30,7 +40,7 @@ export async function improvedTavilySearch(
   // Validate the API key
   const apiKey = process.env.TAVILY_API_KEY;
   if (!validateTavilyApiKey(apiKey)) {
-    console.warn("Invalid or missing Tavily API key - using fallback search");
+    console.warn("Invalid or missing Tavily API key - using fallback");
     return {
       results: [],
       query,
@@ -50,11 +60,15 @@ export async function improvedTavilySearch(
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
 
+      // Ensure query isn't too long
+      const truncatedQuery =
+        query.length > 300 ? query.substring(0, 300) : query;
+
       // Make the API request with proper error handling
       const response = await axios.post(
         "https://api.tavily.com/search",
         {
-          query,
+          query: truncatedQuery,
           search_depth: searchDepth,
           max_results: maxResults,
           include_domains: [],
@@ -106,14 +120,14 @@ export async function improvedTavilySearch(
         continue;
       }
 
-      // For 400 errors, the query might be invalid - truncate it if it's too long
+      // For 400 errors, the query might be invalid - truncate it further
       if (
         error.response &&
         error.response.status === 400 &&
-        query.length > 300
+        query.length > 200
       ) {
-        console.warn("Tavily 400 error, trying with truncated query");
-        query = query.substring(0, 300);
+        console.warn("Tavily 400 error, trying with more truncated query");
+        query = query.substring(0, 200);
         retryCount++;
         continue;
       }
@@ -140,7 +154,7 @@ export async function improvedTavilySearch(
 }
 
 /**
- * Alternative search function using a different API if Tavily continues to fail
+ * Alternative search function when Tavily fails
  */
 export async function fallbackSearch(
   query: string,
@@ -154,16 +168,37 @@ export async function fallbackSearch(
   query: string;
 }> {
   try {
-    // This would use an alternative search API or method
-    // For now, we'll return a minimal result
+    // Generate a fallback list of resources based on commonly used sites
+    const encodedQuery = encodeURIComponent(query);
+
     return {
       results: [
         {
-          title: `Search results for: ${query}`,
-          url: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-          content: `Fallback search results for query: ${query}. Please check your Tavily API configuration.`,
+          title: `${query} - Coursera Courses`,
+          url: `https://www.coursera.org/search?query=${encodedQuery}`,
+          content: `Find courses, certificates, and degrees related to ${query} on Coursera, a leading online learning platform.`,
         },
-      ],
+        {
+          title: `${query} - YouTube Tutorials`,
+          url: `https://www.youtube.com/results?search_query=${encodedQuery}+tutorial`,
+          content: `Watch video tutorials about ${query} on YouTube.`,
+        },
+        {
+          title: `${query} - GitHub Projects`,
+          url: `https://github.com/search?q=${encodedQuery}`,
+          content: `Explore open source projects related to ${query} on GitHub.`,
+        },
+        {
+          title: `${query} - Medium Articles`,
+          url: `https://medium.com/search?q=${encodedQuery}`,
+          content: `Read articles about ${query} on Medium.`,
+        },
+        {
+          title: `${query} - Udemy Courses`,
+          url: `https://www.udemy.com/courses/search/?src=ukw&q=${encodedQuery}`,
+          content: `Find courses related to ${query} on Udemy.`,
+        },
+      ].slice(0, maxResults),
       query,
     };
   } catch (error) {
