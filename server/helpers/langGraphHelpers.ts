@@ -5,7 +5,7 @@
  * that use Tavily for search and Gemini for processing.
  */
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { CareerTransitionSearch, SkillGapSearch, LearningResourceSearch } from "../tools/tavilySearch";
+import { improvedTavilySearch, fallbackSearch } from "../tools/improvedTavilySearch";
 import { createChatModel, getModelInfo } from "./modelFactory";
 
 // Create a model instance for all our helpers to use
@@ -62,12 +62,11 @@ export async function searchForums(
     const targetRoleTitle = targetRole.split(' ').slice(1, -2).join(' ');
     
     // Search for exact match first
-    const transitionSearch = new CareerTransitionSearch();
-    const searchResults = await transitionSearch._call({
-      query: "career transition experiences success stories challenges",
-      currentRole,
-      targetRole
-    });
+    const searchResults = await improvedTavilySearch(
+      `career transition experiences success stories challenges from ${currentRole} to ${targetRole}`,
+      5,
+      "deep"
+    );
     
     // If no meaningful results, try searching with generic role titles across companies
     if (!searchResults || searchResults.trim().length < 100) {
