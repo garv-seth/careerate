@@ -1,28 +1,58 @@
-// server/helpers/modelFactory.ts
+// server/helpers/modelFactory.ts (Updated)
 
 /**
  * Model Factory - Provides LLM abstractions for Careerate
- * This version eliminates all OpenAI dependencies and uses only Gemini 2.0 Flash Lite
+ * Updated to work in ESM environment with better error handling
  */
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
-import { BaseOutputParser } from "@langchain/core/output_parsers";
-import { z } from "zod";
+
+// Import OpenAI dynamically to avoid require/ESM issues
+let ChatOpenAI: any = null;
+try {
+  // Use dynamic import for OpenAI to avoid ESM/CommonJS conflicts
+  import("@langchain/openai").then(module => {
+    ChatOpenAI = module.ChatOpenAI;
+    console.log("OpenAI ChatModel loaded successfully");
+  }).catch(err => {
+    console.warn("OpenAI import failed, using Gemini only:", err.message);
+  });
+} catch (error) {
+  console.warn("OpenAI import failed, using Gemini only");
+}
 
 /**
- * Create a chat model instance - always uses Gemini
+ * Create a chat model instance with improved fallbacks
  */
-export function createChatModel(options: {
+export async function createChatModel(options: {
   temperature?: number;
   streaming?: boolean;
   modelName?: string;
-}): BaseChatModel {
+}): Promise<BaseChatModel> {
   const { temperature = 0.7, streaming = false, modelName } = options;
 
+  // Try to use OpenAI if available and API key is set
+  if (process.env.OPENAI_API_KEY && ChatOpenAI) {
+    try {
+      return new ChatOpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        temperature,
+        streaming,
+        modelName: modelName || "gpt-4o-mini", // Default to GPT-4o mini
+      });
+    } catch (error) {
+      console.warn(
+        "Failed to initialize OpenAI model, falling back to Gemini:",
+        error
+      );
+    }
+  }
+
+  // Fall back to Google Gemini
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) {
     console.warn(
-      "GOOGLE_API_KEY is not set. Please set it to use Gemini models.",
+      "GOOGLE_API_KEY is not set. Using Gemini without API key may fail."
     );
   }
 
@@ -30,7 +60,7 @@ export function createChatModel(options: {
     apiKey,
     temperature,
     streaming,
-    modelName: modelName || "gemini-2.0-flash-lite", // Always use Gemini 2.0 Flash Lite as default
+    modelName: modelName || "gemini-2.0-flash-lite", // Use latest Gemini model
   });
 }
 
@@ -38,5 +68,15 @@ export function createChatModel(options: {
  * Helper to get model information for logs
  */
 export function getModelInfo(): string {
+  if (process.env.OPENAI_API_KEY && ChatOpenAI) {
+    return "OpenAI GPT-4o Mini";
+  }
   return "Google Gemini 2.0 Flash Lite";
+}
+
+/**
+ * Check if OpenAI is available
+ */
+export function isOpenAIAvailable(): boolean {
+  return !!(process.env.OPENAI_API_KEY && ChatOpenAI);
 }
