@@ -16,7 +16,7 @@ function validateTavilyApiKey(apiKey?: string): boolean {
     return false;
   }
   // Tavily API keys start with tvly- and are 36 characters long
-  return apiKey.startsWith("tvly-") && apiKey.length >= 20;
+  return apiKey.indexOf("tvly-") === 0 && apiKey.length >= 20;
 }
 
 /**
