@@ -1,3 +1,4 @@
+
 // server/helpers/modelFactory.ts (Updated)
 
 /**
@@ -9,17 +10,17 @@ import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 // Import OpenAI dynamically to avoid require/ESM issues
 let ChatOpenAI: any = null;
-try {
-  // Use dynamic import for OpenAI to avoid ESM/CommonJS conflicts
-  import("@langchain/openai").then(module => {
+
+(async () => {
+  try {
+    // Use dynamic import for OpenAI to avoid ESM/CommonJS conflicts
+    const module = await import("@langchain/openai");
     ChatOpenAI = module.ChatOpenAI;
     console.log("OpenAI ChatModel loaded successfully");
-  }).catch(err => {
+  } catch (err) {
     console.warn("OpenAI import failed, using Gemini only:", err.message);
-  });
-} catch (error) {
-  console.warn("OpenAI import failed, using Gemini only");
-}
+  }
+})();
 
 /**
  * Create a chat model instance with improved fallbacks
