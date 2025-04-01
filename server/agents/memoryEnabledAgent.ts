@@ -1,7 +1,6 @@
 // server/agents/memoryEnabledAgent.ts
 
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 import { Document } from "@langchain/core/documents";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { StructuredTool } from "@langchain/core/tools";
@@ -13,25 +12,45 @@ import { MCPHandler } from "../helpers/mcpHandler";
 import { careerTransitionMemory } from "./memoryStore";
 import { safeJsonParse } from "../helpers/jsonParserHelper";
 import {
-  CareerTransitionSearch,
-  SkillGapSearch,
-  LearningResourceSearch,
-} from "../tools/tavilySearch";
+  improvedTavilySearch,
+  fallbackSearch,
+} from "../tools/improvedTavilySearch";
+
+// Resolve dynamic import issues for OpenAI components
+let OpenAIEmbeddings: any = null;
+let ChatOpenAI: any = null;
+
+// Try to dynamically import OpenAI components
+try {
+  import("langchain/embeddings/openai")
+    .then((module) => {
+      OpenAIEmbeddings = module.OpenAIEmbeddings;
+    })
+    .catch(() => console.warn("OpenAI embeddings not available"));
+
+  import("@langchain/openai")
+    .then((module) => {
+      ChatOpenAI = module.ChatOpenAI;
+    })
+    .catch(() => console.warn("OpenAI chat model not available"));
+} catch (error) {
+  console.warn("Error initializing OpenAI imports:", error);
+}
 
 /**
  * A single agent with long-term memory for career transition analysis
  * This replaces the multi-agent system with a simpler, more robust approach
  */
 export class MemoryEnabledAgent {
-  private model: any;
-  private tools: StructuredTool[] = [];
-  private memoryStore: MemoryVectorStore | null = null;
-  private userId: number;
-  private transitionId: number;
-  private mcpHandler: any;
+  transitionId: number;
+  userId: number;
+  model: any;
+  tools: StructuredTool[] = [];
+  memoryStore: MemoryVectorStore | null = null;
+  mcpHandler: any;
 
   // Simple string hashing function for embedding generation
-  private simpleHash(str: string): number {
+  simpleHash(str: string): number {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
@@ -46,29 +65,23 @@ export class MemoryEnabledAgent {
     this.userId = userId;
 
     try {
-      // Initialize the model with OpenAI GPT-4o-mini-realtime-preview (primary choice)
-      if (process.env.OPENAI_API_KEY) {
-        const { ChatOpenAI } = require("@langchain/openai");
-        this.model = new ChatOpenAI({
-          apiKey: process.env.OPENAI_API_KEY,
-          modelName: "gpt-4o-mini-realtime-preview", // Fastest GPT-4 variant
-          temperature: 0.3,
-          maxTokens: 2048,
-        });
-        console.log(
-          "Using OpenAI gpt-4o-mini-realtime-preview as primary model",
-        );
+      // Initialize the model with OpenAI GPT-4o-mini if available
+      if (process.env.OPENAI_API_KEY && ChatOpenAI) {
+        try {
+          this.model = new ChatOpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+            modelName: "gpt-4o-mini",
+            temperature: 0.3,
+            maxTokens: 2048,
+          });
+          console.log("Using OpenAI gpt-4o-mini as primary model");
+        } catch (openaiError) {
+          console.error("Failed to initialize OpenAI model:", openaiError);
+          throw openaiError; // Propagate to the fallback
+        }
       } else {
-        // Fallback to Gemini if no OpenAI key
-        this.model = new ChatGoogleGenerativeAI({
-          apiKey: process.env.GOOGLE_API_KEY || "",
-          modelName: "gemini-2.0-flash-lite", // Use Gemini as fallback
-          temperature: 0.3,
-          maxOutputTokens: 2048,
-        });
-        console.log(
-          "Fallback to Gemini 2.0 Flash Lite (no OpenAI API key found)",
-        );
+        // Fallback to Gemini if no OpenAI key or imports
+        throw new Error("OpenAI not available, using fallback");
       }
     } catch (error) {
       console.error(
@@ -85,89 +98,8 @@ export class MemoryEnabledAgent {
       console.log("Using Gemini 2.0 Flash Lite as fallback");
     }
 
-    // Initialize memory store with OpenAI embeddings when available
-    try {
-      if (process.env.OPENAI_API_KEY) {
-        // Use proper OpenAI embeddings when available
-        const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
-        const embeddings = new OpenAIEmbeddings({
-          apiKey: process.env.OPENAI_API_KEY,
-          modelName: "text-embedding-3-small", // Fast and cost-effective embedding model
-          dimensions: 1536, // Standard embedding size
-        });
-
-        this.memoryStore = new MemoryVectorStore(embeddings);
-        console.log("Initialized memory store with OpenAI embeddings");
-      } else {
-        // Use a simple cosine similarity function for embeddings as fallback
-        const embeddings = {
-          embedDocuments: async (texts: string[]) => {
-            // Create simple word-based embeddings
-            return texts.map((text) => {
-              // Split text into words, normalize, and count word frequencies
-              const words = text
-                .toLowerCase()
-                .split(/\W+/)
-                .filter((w) => w.length > 0);
-              const vector = Array(512).fill(0); // Smaller vector size
-
-              // Hash words into vector positions
-              for (const word of words) {
-                const position = Math.abs(this.simpleHash(word) % 512);
-                vector[position] += 1;
-              }
-
-              // Normalize vector
-              const magnitude = Math.sqrt(
-                vector.reduce((sum, val) => sum + val * val, 0),
-              );
-              return magnitude > 0
-                ? vector.map((val) => val / magnitude)
-                : vector;
-            });
-          },
-          embedQuery: async (text: string) => {
-            // Use the same embedding logic for queries
-            const words = text
-              .toLowerCase()
-              .split(/\W+/)
-              .filter((w) => w.length > 0);
-            const vector = Array(512).fill(0);
-
-            for (const word of words) {
-              const position = Math.abs(this.simpleHash(word) % 512);
-              vector[position] += 1;
-            }
-
-            // Normalize vector
-            const magnitude = Math.sqrt(
-              vector.reduce((sum, val) => sum + val * val, 0),
-            );
-            return magnitude > 0
-              ? vector.map((val) => val / magnitude)
-              : vector;
-          },
-        };
-
-        this.memoryStore = new MemoryVectorStore(embeddings);
-        console.log(
-          "Initialized memory store with fallback simple embeddings (no OpenAI)",
-        );
-      }
-    } catch (error) {
-      console.warn(
-        "Failed to initialize memory store with OpenAI embeddings:",
-        error,
-      );
-      // Use a simple fallback if OpenAI embeddings fail
-      const fallbackEmbeddings = {
-        embedDocuments: async (texts: string[]) =>
-          texts.map(() => Array(512).fill(0)),
-        embedQuery: async (text: string) => Array(512).fill(0),
-      };
-      this.memoryStore = new MemoryVectorStore(fallbackEmbeddings);
-      console.log("Using most basic fallback embeddings");
-    }
+    // Initialize memory store with fallback options
+    this.initializeMemoryStore();
 
     // Initialize MCP handler
     try {
@@ -181,19 +113,8 @@ export class MemoryEnabledAgent {
       console.error("Failed to initialize MCP handler:", error);
     }
 
-    // Initialize tools - using only TavilySearchResults without Zod schema
-    // to avoid serialization issues with Google Gemini
-    try {
-      this.tools = [
-        new TavilySearchResults({
-          maxResults: 5,
-          apiKey: process.env.TAVILY_API_KEY,
-        }),
-      ];
-    } catch (error) {
-      console.error("Failed to initialize tools:", error);
-      this.tools = [];
-    }
+    // Initialize tools with improved search capabilities
+    this.initializeTools();
 
     // Initialize agent state in memory store
     careerTransitionMemory.updateMemory(transitionId, userId, {
@@ -203,10 +124,306 @@ export class MemoryEnabledAgent {
   }
 
   /**
+   * Initialize memory store with proper fallbacks
+   */
+  async initializeMemoryStore(): Promise<void> {
+    try {
+      // Try to use OpenAI embeddings if available
+      if (process.env.OPENAI_API_KEY && OpenAIEmbeddings) {
+        try {
+          const embeddings = new OpenAIEmbeddings({
+            apiKey: process.env.OPENAI_API_KEY,
+            modelName: "text-embedding-3-small",
+            dimensions: 1536,
+          });
+
+          this.memoryStore = new MemoryVectorStore(embeddings);
+          console.log("Initialized memory store with OpenAI embeddings");
+          return;
+        } catch (embeddingError) {
+          console.error(
+            "Failed to initialize OpenAI embeddings:",
+            embeddingError,
+          );
+          // Continue to fallback
+        }
+      }
+
+      // Use a simple fallback embedding system
+      this.useBasicEmbeddings();
+    } catch (error) {
+      console.warn(
+        "Failed to initialize memory store with OpenAI embeddings:",
+        error,
+      );
+      // Use a simple fallback if OpenAI embeddings fail
+      this.useBasicEmbeddings();
+    }
+  }
+
+  /**
+   * Initialize tools with improved search capabilities
+   */
+  initializeTools(): void {
+    try {
+      // Initialize with direct search functions instead of tool classes
+      this.tools = [
+        // Custom structured tool for career transition search
+        {
+          name: "career_transition_search",
+          description:
+            "Search for real-world information about career transitions and skills",
+          func: async ({
+            query,
+            currentRole,
+            targetRole,
+          }: {
+            query: string;
+            currentRole: string;
+            targetRole: string;
+          }) => {
+            const results = await improvedTavilySearch(
+              `${query} ${currentRole} to ${targetRole} career transition experiences challenges success stories`,
+              7, // Max results
+              "deep", // Deep search
+            );
+            return JSON.stringify(results);
+          },
+          schema: z.object({
+            query: z.string().describe("Search query"),
+            currentRole: z.string().describe("Current role"),
+            targetRole: z.string().describe("Target role"),
+          }),
+        } as any,
+
+        // Custom structured tool for skill gap search
+        {
+          name: "skill_gap_search",
+          description:
+            "Search for information about specific skills and their relevance to roles",
+          func: async ({
+            skillName,
+            targetRole,
+          }: {
+            skillName: string;
+            targetRole: string;
+          }) => {
+            const results = await improvedTavilySearch(
+              `${skillName} skill requirements importance for ${targetRole} position job descriptions expectations`,
+              5,
+              "deep",
+            );
+            return JSON.stringify(results);
+          },
+          schema: z.object({
+            skillName: z.string().describe("Skill name"),
+            targetRole: z.string().describe("Target role"),
+          }),
+        } as any,
+
+        // Custom structured tool for learning resources
+        {
+          name: "learning_resource_search",
+          description: "Search for learning resources for skills development",
+          func: async ({
+            skillName,
+            resourceType = "course tutorial video guide",
+            difficulty = "comprehensive",
+          }: {
+            skillName: string;
+            resourceType?: string;
+            difficulty?: string;
+          }) => {
+            const searchQueries = [
+              `best ${resourceType} to learn ${skillName} ${difficulty} skill professional development`,
+              `${skillName} ${resourceType} ${difficulty} level tutorial guide`,
+              `learn ${skillName} ${resourceType} ${difficulty}`,
+            ];
+
+            // Try each query until we get results
+            let results: any = null;
+            for (const query of searchQueries) {
+              results = await improvedTavilySearch(query, 5, "basic");
+              if (results.results.length > 0) break;
+            }
+
+            if (!results || results.results.length === 0) {
+              // Use fallback search if all queries fail
+              results = await fallbackSearch(
+                `${skillName} ${resourceType} ${difficulty}`,
+              );
+            }
+
+            // Format the results
+            return this.formatResourceResults(results, skillName, resourceType);
+          },
+          schema: z.object({
+            skillName: z.string().describe("Skill name"),
+            resourceType: z.string().optional().describe("Resource type"),
+            difficulty: z.string().optional().describe("Difficulty level"),
+          }),
+        } as any,
+      ];
+
+      console.log("Initialized tools with improved search capabilities");
+    } catch (error) {
+      console.error("Failed to initialize tools:", error);
+      this.tools = [];
+    }
+  }
+
+  /**
+   * Format resource search results
+   */
+  formatResourceResults(
+    results: any,
+    skillName: string,
+    resourceType: string,
+  ): string {
+    try {
+      let output = `## Learning Resources for ${skillName}:\n\n`;
+
+      // Categorize resources
+      const categories: Record<string, any[]> = {
+        Courses: [],
+        Videos: [],
+        Tutorials: [],
+        Projects: [],
+        Other: [],
+      };
+
+      // Process results
+      if (results && results.results && Array.isArray(results.results)) {
+        results.results.forEach((result: any) => {
+          const url = result.url || "";
+          const title = result.title || `Resource for ${skillName}`;
+          const content = result.content || "";
+
+          // Determine category
+          let category = "Other";
+          if (
+            url.includes("youtube") ||
+            url.includes("youtu.be") ||
+            title.toLowerCase().includes("video")
+          ) {
+            category = "Videos";
+          } else if (
+            url.includes("course") ||
+            url.includes("udemy") ||
+            url.includes("coursera")
+          ) {
+            category = "Courses";
+          } else if (url.includes("github") || url.includes("project")) {
+            category = "Projects";
+          } else if (
+            url.includes("tutorial") ||
+            url.includes("guide") ||
+            url.includes("how-to")
+          ) {
+            category = "Tutorials";
+          }
+
+          // Add to category
+          categories[category].push({
+            title,
+            url,
+            content:
+              content.substring(0, 200) + (content.length > 200 ? "..." : ""),
+          });
+        });
+      }
+
+      // Generate output
+      for (const [category, categoryItems] of Object.entries(categories)) {
+        if (categoryItems.length > 0) {
+          output += `### ${category}:\n\n`;
+          categoryItems.forEach((item, index) => {
+            output += `#### ${item.title}\n`;
+            output += `URL: ${item.url}\n`;
+            if (item.content) {
+              output += `Description: ${item.content}\n`;
+            }
+            output += "\n";
+          });
+        }
+      }
+
+      // Add fallback if no results
+      if (Object.values(categories).flat().length === 0) {
+        output += `No specific resources found for ${skillName}. Try checking these general learning platforms:\n\n`;
+        output += `- Coursera: https://www.coursera.org/search?query=${encodeURIComponent(skillName)}\n`;
+        output += `- Udemy: https://www.udemy.com/courses/search/?src=ukw&q=${encodeURIComponent(skillName)}\n`;
+        output += `- YouTube: https://www.youtube.com/results?search_query=${encodeURIComponent(skillName + " tutorial")}\n`;
+      }
+
+      return output;
+    } catch (error) {
+      console.error("Error formatting resource results:", error);
+      return `Error formatting resource results: ${error}`;
+    }
+  }
+
+  /**
+   * Use basic embeddings as fallback
+   */
+  useBasicEmbeddings(): void {
+    // Create a simple embedding function that works without external APIs
+    const embeddings = {
+      embedDocuments: async (texts: string[]) => {
+        // Create simple word-based embeddings
+        return texts.map((text) => {
+          // Split text into words, normalize, and count word frequencies
+          const words = text
+            .toLowerCase()
+            .split(/\W+/)
+            .filter((w) => w.length > 0);
+          const vector = Array(512).fill(0); // Smaller vector size
+
+          // Hash words into vector positions
+          for (const word of words) {
+            const position = Math.abs(this.simpleHash(word) % 512);
+            vector[position] += 1;
+          }
+
+          // Normalize vector
+          const magnitude = Math.sqrt(
+            vector.reduce((sum, val) => sum + val * val, 0),
+          );
+          return magnitude > 0 ? vector.map((val) => val / magnitude) : vector;
+        });
+      },
+      embedQuery: async (text: string) => {
+        // Use the same embedding logic for queries
+        const words = text
+          .toLowerCase()
+          .split(/\W+/)
+          .filter((w) => w.length > 0);
+        const vector = Array(512).fill(0);
+
+        for (const word of words) {
+          const position = Math.abs(this.simpleHash(word) % 512);
+          vector[position] += 1;
+        }
+
+        // Normalize vector
+        const magnitude = Math.sqrt(
+          vector.reduce((sum, val) => sum + val * val, 0),
+        );
+        return magnitude > 0 ? vector.map((val) => val / magnitude) : vector;
+      },
+    };
+
+    this.memoryStore = new MemoryVectorStore(embeddings);
+    console.log("Using most basic fallback embeddings");
+  }
+
+  /**
    * Initialize MCP handler by loading contexts
    */
-  private async initializeMCP(): Promise<void> {
-    await this.mcpHandler.initialize();
+  async initializeMCP(): Promise<void> {
+    if (this.mcpHandler) {
+      await this.mcpHandler.initialize();
+    }
   }
 
   /**
@@ -431,6 +648,7 @@ export class MemoryEnabledAgent {
       await storage.updateTransitionStatus(transitionId, true);
 
       // Return the combined results
+      console.log(`Analysis completed for: ${currentRole} → ${targetRole}`);
       return {
         skillGaps,
         insights: {
@@ -483,9 +701,9 @@ export class MemoryEnabledAgent {
   }
 
   /**
-   * Research transition stories using Tavily search
+   * Research transition stories using improved search
    */
-  private async researchTransitionStories(
+  async researchTransitionStories(
     modelWithTools: any,
     currentRole: string,
     targetRole: string,
@@ -530,7 +748,7 @@ export class MemoryEnabledAgent {
       Research career transition stories that can help someone moving from ${currentRole} to ${targetRole}.
 
       Follow these steps:
-      1. Use Tavily search to find relevant transition stories from credible sources
+      1. Use search to find relevant transition stories from credible sources
       2. Consider stories from similar roles or companies if exact matches aren't available
       3. Look at both specific (${currentCompany} to ${targetCompany}) transitions and general role progressions
       4. Extract specific details about:
@@ -541,40 +759,28 @@ export class MemoryEnabledAgent {
 
       Even if you can't find exact matches, find stories of similar transitions that would be relevant.
       Focus on career blogs, tech forums, LinkedIn articles, Medium posts, and company culture insights.
-      
+
       Extract at least 3-5 examples that would be helpful for this specific transition.
       `;
 
-      // Use multiple search approaches with different queries
-      for (
-        let queryIndex = 0;
-        queryIndex < searchQueries.length;
-        queryIndex++
-      ) {
-        const currentQuery = searchQueries[queryIndex];
-        console.log(`Searching: ${currentQuery}`);
-
-        try {
+      // Try direct research with tool first
+      try {
+        if (modelWithTools) {
+          // Use the model with tools if available
           const response = await modelWithTools.invoke([
             new SystemMessage(
               "You are a career researcher who finds and adapts relevant transition stories. Even if exact matches aren't available, find similar transitions that provide valuable insights.",
             ),
-            new HumanMessage(`
-              ${researchPrompt}
-              
-              Current search focus: ${currentQuery}
-              
-              If you don't find exact matches, extract insights from similar transitions that would be useful.
-            `),
+            new HumanMessage(researchPrompt),
           ]);
 
-          // Parse the response to extract stories
+          // Extract stories from the response
           const content = response.content.toString();
           const stories = this.extractStories(content, currentRole, targetRole);
 
           if (stories.length > 0) {
             console.log(
-              `Successfully extracted ${stories.length} stories from search approach ${queryIndex + 1}`,
+              `Successfully extracted ${stories.length} stories from AI response`,
             );
 
             // Save the stories to the database
@@ -595,15 +801,53 @@ export class MemoryEnabledAgent {
 
             return stories;
           }
-        } catch (attemptError) {
-          console.error(
-            `Error in search approach ${queryIndex + 1}:`,
-            attemptError,
-          );
+        }
+      } catch (aiError) {
+        console.error("Error using AI for research:", aiError);
+      }
+
+      // If AI approach fails, try direct search
+      for (const query of searchQueries) {
+        try {
+          console.log(`Searching with query: ${query}`);
+          const searchResults = await improvedTavilySearch(query);
+
+          if (searchResults.results.length > 0) {
+            // Convert search results to stories
+            const stories = searchResults.results.map((result, index) => ({
+              id: index,
+              source: new URL(result.url).hostname,
+              content: result.content || result.title,
+              url: result.url,
+              date: new Date().toISOString().split("T")[0],
+            }));
+
+            console.log(`Found ${stories.length} stories via direct search`);
+
+            // Save the stories to the database
+            for (const story of stories) {
+              try {
+                await storage.createScrapedData({
+                  transitionId,
+                  source: story.source,
+                  content: story.content,
+                  url: story.url || null,
+                  postDate: story.date || null,
+                  skillsExtracted: [],
+                });
+              } catch (dbError) {
+                console.error("Error saving story to database:", dbError);
+              }
+            }
+
+            return stories;
+          }
+        } catch (searchError) {
+          console.error(`Error in search query "${query}":`, searchError);
         }
       }
 
-      // If we reached here, all attempts failed
+      // If all searches fail, use simulated stories
       console.log("All story search attempts failed, using simulated stories");
       const simulatedStories = this.generateSimulatedStories(
         currentRole,
@@ -612,29 +856,31 @@ export class MemoryEnabledAgent {
 
       // Save simulated stories to database
       for (const story of simulatedStories) {
-        await storage.createScrapedData({
-          transitionId,
-          source: story.source,
-          content: story.content,
-          url: null,
-          postDate: null,
-          skillsExtracted: [],
-        });
+        try {
+          await storage.createScrapedData({
+            transitionId,
+            source: story.source,
+            content: story.content,
+            url: null,
+            postDate: null,
+            skillsExtracted: [],
+          });
+        } catch (dbError) {
+          console.error("Error saving simulated story to database:", dbError);
+        }
       }
 
       return simulatedStories;
     } catch (error) {
       console.error("Error researching transition stories:", error);
-
-      // If all else fails, return an empty array
-      return [];
+      return this.generateSimulatedStories(currentRole, targetRole);
     }
   }
 
   /**
    * Extract stories from AI model response
    */
-  private extractStories(
+  extractStories(
     content: string,
     currentRole: string,
     targetRole: string,
@@ -697,22 +943,36 @@ export class MemoryEnabledAgent {
   /**
    * Generate simulated transition stories when research fails
    */
-  private generateSimulatedStories(
-    currentRole: string,
-    targetRole: string,
-  ): any[] {
+  generateSimulatedStories(currentRole: string, targetRole: string): any[] {
+    const currentParts = currentRole.split(" ");
+    const currentCompany = currentParts[0] || "Previous Company";
+    const currentRoleTitle =
+      currentParts.slice(1, -1).join(" ") || "Professional";
+
+    const targetParts = targetRole.split(" ");
+    const targetCompany = targetParts[0] || "New Company";
+    const targetRoleTitle =
+      targetParts.slice(1, -1).join(" ") || "Professional";
+
     return [
       {
         id: 1,
         source: "Professional Transition Blog",
-        content: `After spending 5 years as a ${currentRole}, I decided to transition to a ${targetRole} role. The biggest challenges were learning new technical skills and adapting to a different workflow. I spent about 6 months taking online courses and working on side projects to build my portfolio. What helped most was connecting with people already in ${targetRole} positions who could provide mentorship and advice.`,
+        content: `After spending 5 years as a ${currentRoleTitle} at ${currentCompany}, I decided to transition to a ${targetRoleTitle} role at ${targetCompany}. The biggest challenges were learning new technical skills and adapting to a different workflow. I spent about 6 months taking online courses and working on side projects to build my portfolio. What helped most was connecting with people already in ${targetRoleTitle} positions who could provide mentorship and advice.`,
         url: "",
         date: new Date().toISOString().split("T")[0],
       },
       {
         id: 2,
         source: "Career Forum",
-        content: `My journey from ${currentRole} to ${targetRole} took about 9 months of dedicated effort. I started by identifying the skill gaps - particularly in technical areas I hadn't been exposed to before. The interview process was challenging, but highlighting my transferable skills from my previous role really helped. My advice is to focus on building practical experience through projects rather than just theoretical learning.`,
+        content: `My journey from ${currentCompany} to ${targetCompany} as a ${currentRoleTitle} transitioning to ${targetRoleTitle} took about 9 months of dedicated effort. I started by identifying the skill gaps - particularly in technical areas I hadn't been exposed to before. The interview process was challenging, but highlighting my transferable skills from my previous role really helped. My advice is to focus on building practical experience through projects rather than just theoretical learning.`,
+        url: "",
+        date: new Date().toISOString().split("T")[0],
+      },
+      {
+        id: 3,
+        source: "Tech Career Network",
+        content: `Transitioning from ${currentRole} to ${targetRole} required me to develop several new skills. I found that the company cultures differed significantly - ${currentCompany} was more process-oriented while ${targetCompany} emphasized innovation and rapid iteration. The compensation package was better at ${targetCompany}, but the work expectations were also higher. I recommend networking extensively and preparing specifically for the different interview format. It took me about 4 months to complete the transition successfully.`,
         url: "",
         date: new Date().toISOString().split("T")[0],
       },
@@ -722,7 +982,7 @@ export class MemoryEnabledAgent {
   /**
    * Analyze skill gaps between roles
    */
-  private async analyzeSkillGaps(
+  async analyzeSkillGaps(
     modelWithTools: any,
     currentRole: string,
     targetRole: string,
@@ -780,69 +1040,115 @@ export class MemoryEnabledAgent {
       Return JSON array with these fields.
       `;
 
-      const response = await modelWithTools.invoke([
-        new SystemMessage(
-          "You are a career skills analyst who identifies skill gaps between roles.",
-        ),
-        new HumanMessage(skillGapPrompt),
-      ]);
-
-      // Process the response to extract skill gaps
-      let skillGaps: SkillGapAnalysis[] = [];
-
+      // Try using the model with tools
       try {
-        // Use our enhanced JSON parser with robust error handling
-        const rawSkillGaps = safeJsonParse(
-          response.content.toString(),
-          "skillGaps",
-        );
+        const response = await modelWithTools.invoke([
+          new SystemMessage(
+            "You are a career skills analyst who identifies skill gaps between roles.",
+          ),
+          new HumanMessage(skillGapPrompt),
+        ]);
 
-        // Additional normalization for field names
-        const normalizedSkillGaps = rawSkillGaps
-          .map((gap: any) => {
-            // Check for snake_case fields and convert them
-            const skillName = gap.skillName || gap.skill_name;
-            const gapLevel = gap.gapLevel || gap.gap_level;
-            const confidenceScore = gap.confidenceScore || gap.confidence_score;
-            const mentionCount =
-              gap.mentionCount || gap.number_of_mentions || gap.mentions || 1;
+        // Process the response to extract skill gaps
+        let skillGaps: SkillGapAnalysis[] = [];
 
-            return {
-              skillName,
-              gapLevel,
-              confidenceScore,
-              mentionCount,
-              contextSummary: gap.contextSummary || gap.context_summary,
-            };
-          })
-          .filter((gap: any) => gap.skillName); // Filter out invalid gaps
-
-        skillGaps = normalizedSkillGaps;
-      } catch (parseError) {
-        console.error("Error parsing skill gaps:", parseError);
-      }
-
-      // Save skill gaps to database with validation
-      for (const gap of skillGaps) {
-        if (gap && gap.skillName) {
-          await storage.createSkillGap({
-            transitionId,
-            skillName: gap.skillName,
-            gapLevel: (gap.gapLevel as "Low" | "Medium" | "High") || "Medium",
-            confidenceScore: gap.confidenceScore || 70,
-            mentionCount: gap.mentionCount || 1,
-          });
-        } else {
-          console.warn(
-            "Skipping invalid skill gap with missing skillName:",
-            gap,
+        try {
+          // Use our enhanced JSON parser with robust error handling
+          const rawSkillGaps = safeJsonParse(
+            response.content.toString(),
+            "skillGaps",
           );
+
+          // Additional normalization for field names
+          const normalizedSkillGaps = rawSkillGaps
+            .map((gap: any) => {
+              // Check for snake_case fields and convert them
+              const skillName = gap.skillName || gap.skill_name;
+              const gapLevel = gap.gapLevel || gap.gap_level;
+              const confidenceScore =
+                gap.confidenceScore || gap.confidence_score;
+              const mentionCount =
+                gap.mentionCount || gap.number_of_mentions || gap.mentions || 1;
+
+              return {
+                skillName,
+                gapLevel,
+                confidenceScore,
+                mentionCount,
+                contextSummary: gap.contextSummary || gap.context_summary,
+              };
+            })
+            .filter((gap: any) => gap.skillName); // Filter out invalid gaps
+
+          skillGaps = normalizedSkillGaps;
+        } catch (parseError) {
+          console.error("Error parsing skill gaps:", parseError);
         }
+
+        // Save skill gaps to database with validation
+        for (const gap of skillGaps) {
+          if (gap && gap.skillName) {
+            await storage.createSkillGap({
+              transitionId,
+              skillName: gap.skillName,
+              gapLevel: (gap.gapLevel as "Low" | "Medium" | "High") || "Medium",
+              confidenceScore: gap.confidenceScore || 70,
+              mentionCount: gap.mentionCount || 1,
+            });
+          } else {
+            console.warn(
+              "Skipping invalid skill gap with missing skillName:",
+              gap,
+            );
+          }
+        }
+
+        if (skillGaps.length > 0) {
+          return skillGaps;
+        }
+      } catch (modelError) {
+        console.error("Error analyzing skill gaps with model:", modelError);
       }
 
-      return skillGaps.length > 0
-        ? skillGaps
-        : this.getFallbackSkillGaps(currentRole, targetRole);
+      // If the model fails, try a direct approach using existing data
+      try {
+        // If we have target role skills and existing skills, compare them directly
+        if (targetRoleSkills.length > 0) {
+          const existingSkillsSet = new Set(
+            existingSkills.map((s) => s.toLowerCase()),
+          );
+
+          const directSkillGaps: SkillGapAnalysis[] = targetRoleSkills
+            .filter((skill) => !existingSkillsSet.has(skill.toLowerCase()))
+            .map((skill, index) => ({
+              skillName: skill,
+              gapLevel: index < 3 ? "High" : index < 6 ? "Medium" : "Low",
+              confidenceScore: 70,
+              mentionCount: 1,
+              contextSummary: `Required skill for the ${targetRole} position.`,
+            }));
+
+          // Save these skill gaps to the database
+          for (const gap of directSkillGaps) {
+            await storage.createSkillGap({
+              transitionId,
+              skillName: gap.skillName,
+              gapLevel: gap.gapLevel as "Low" | "Medium" | "High",
+              confidenceScore: gap.confidenceScore || 70,
+              mentionCount: gap.mentionCount || 1,
+            });
+          }
+
+          if (directSkillGaps.length > 0) {
+            return directSkillGaps;
+          }
+        }
+      } catch (directError) {
+        console.error("Error in direct skill gap analysis:", directError);
+      }
+
+      // If everything fails, return fallback skill gaps
+      return this.getFallbackSkillGaps(currentRole, targetRole);
     } catch (error) {
       console.error("Error analyzing skill gaps:", error);
       return this.getFallbackSkillGaps(currentRole, targetRole);
@@ -852,7 +1158,7 @@ export class MemoryEnabledAgent {
   /**
    * Generate insights about the transition
    */
-  private async generateInsights(
+  async generateInsights(
     modelWithTools: any,
     currentRole: string,
     targetRole: string,
@@ -890,53 +1196,60 @@ export class MemoryEnabledAgent {
       Return as JSON with these fields.
       `;
 
-      const response = await modelWithTools.invoke([
-        new SystemMessage(
-          "You are a career insights specialist who extracts patterns and observations from transition data.",
-        ),
-        new HumanMessage(insightsPrompt),
-      ]);
-
-      // Process the response to extract insights
-      let insights: any = {};
-
       try {
-        // Use our enhanced JSON parser with robust error handling
-        insights = safeJsonParse(response.content.toString(), "insights");
-      } catch (parseError) {
-        console.error("Error parsing insights:", parseError);
-      }
+        const response = await modelWithTools.invoke([
+          new SystemMessage(
+            "You are a career insights specialist who extracts patterns and observations from transition data.",
+          ),
+          new HumanMessage(insightsPrompt),
+        ]);
 
-      // Save insights to database
-      if (insights.keyObservations) {
-        for (const observation of insights.keyObservations) {
-          await storage.createInsight({
-            transitionId,
-            type: "observation",
-            content: observation,
-            source: null,
-            date: null,
-            experienceYears: null,
-          });
+        // Process the response to extract insights
+        let insights: any = {};
+
+        try {
+          // Use our enhanced JSON parser with robust error handling
+          insights = safeJsonParse(response.content.toString(), "insights");
+        } catch (parseError) {
+          console.error("Error parsing insights:", parseError);
         }
-      }
 
-      if (insights.commonChallenges) {
-        for (const challenge of insights.commonChallenges) {
-          await storage.createInsight({
-            transitionId,
-            type: "challenge",
-            content: challenge,
-            source: null,
-            date: null,
-            experienceYears: null,
-          });
+        // Save insights to database
+        if (insights.keyObservations) {
+          for (const observation of insights.keyObservations) {
+            await storage.createInsight({
+              transitionId,
+              type: "observation",
+              content: observation,
+              source: null,
+              date: null,
+              experienceYears: null,
+            });
+          }
         }
+
+        if (insights.commonChallenges) {
+          for (const challenge of insights.commonChallenges) {
+            await storage.createInsight({
+              transitionId,
+              type: "challenge",
+              content: challenge,
+              source: null,
+              date: null,
+              experienceYears: null,
+            });
+          }
+        }
+
+        if (Object.keys(insights).length > 0) {
+          return insights;
+        }
+      } catch (modelError) {
+        console.error("Error generating insights with model:", modelError);
       }
 
-      return Object.keys(insights).length > 0
-        ? insights
-        : this.getFallbackInsights(currentRole, targetRole);
+      // If the model fails, return fallback insights
+      return this.getFallbackInsights(currentRole, targetRole);
     } catch (error) {
       console.error("Error generating insights:", error);
       return this.getFallbackInsights(currentRole, targetRole);
@@ -944,11 +1257,9 @@ export class MemoryEnabledAgent {
   }
 
   /**
-   * Create a hyper-personalized development plan for the transition
-   * Uses OpenAI (or Gemini as fallback) with enhanced learning resource search
-   * to create detailed, actionable plans with specific resources
+   * Create a development plan for the career transition
    */
-  private async createDevelopmentPlan(
+  async createDevelopmentPlan(
     modelWithTools: any,
     currentRole: string,
     targetRole: string,
@@ -958,7 +1269,7 @@ export class MemoryEnabledAgent {
   ): Promise<any> {
     try {
       console.log(
-        `Creating hyper-personalized development plan for ${currentRole} → ${targetRole} with specific resources`,
+        `Creating development plan for ${currentRole} → ${targetRole} with specific resources`,
       );
 
       // Format skill gaps
@@ -969,249 +1280,134 @@ export class MemoryEnabledAgent {
         )
         .join("\n");
 
-      // Get transition stories from the memory to inform the plan
-      let transitionStories = "";
-      try {
-        // Only attempt to retrieve memories if memoryStore is initialized
-        if (this.memoryStore) {
-          // Try to retrieve relevant stories from memory
-          const memories = await this.memoryStore.similaritySearch(
-            `career transition from ${currentRole} to ${targetRole} stories and advice`,
-            3,
-            (doc) =>
-              doc.metadata.userId === this.userId &&
-              doc.metadata.type === "story",
-          );
-
-          if (memories && memories.length > 0) {
-            transitionStories =
-              "Relevant transition stories:\n" +
-              memories.map((doc) => doc.pageContent).join("\n\n");
-          }
-        }
-      } catch (error) {
-        console.error(
-          "Error retrieving transition stories from memory:",
-          error,
-        );
-      }
-
-      // Get the user's existing skills
-      let userSkills: any[] = [];
-      try {
-        // Get user ID
-        const userId = this.userId;
-
-        // Get skills from storage
-        const skills = await storage.getUserSkills(userId);
-        userSkills = skills.map(
-          (s) => `${s.skillName} (${s.proficiencyLevel || "Intermediate"})`,
-        );
-      } catch (error) {
-        console.error("Error getting user skills:", error);
-      }
-
+      // Get relevant user skills
+      const userSkills = await storage.getUserSkills(this.userId);
       const userSkillsText =
         userSkills.length > 0
-          ? `\nUser's Existing Skills:\n${userSkills.join("\n")}`
+          ? `\nUser's Existing Skills:\n${userSkills.map((s) => s.skillName).join(", ")}`
           : "\nUser Skills: Not specified";
 
-      // Initialize enhanced learning resource search tool
-      const learningResourceSearch = new LearningResourceSearch();
+      // Get resources for skill gaps
+      const resources: Record<string, any[]> = {};
 
-      // First, search for hyper-specific learning resources for each skill gap
-      console.log(
-        `Searching for hyper-personalized learning resources for ${currentRole} to ${targetRole} transition`,
-      );
-      let skillSpecificResources: Record<string, string> = {};
-
-      // Extract role components for better searches
-      const currentParts = currentRole.split(" ");
-      const currentCompany = currentParts[0] || "";
-      let currentRoleTitle = "";
-      if (currentParts.length > 2) {
-        currentRoleTitle = currentParts.slice(1, -1).join(" ");
-      } else {
-        currentRoleTitle = currentParts.join(" ");
-      }
-
-      const targetParts = targetRole.split(" ");
-      const targetCompany = targetParts[0] || "";
-      let targetRoleTitle = "";
-      if (targetParts.length > 2) {
-        targetRoleTitle = targetParts.slice(1, -1).join(" ");
-      } else {
-        targetRoleTitle = targetParts.join(" ");
-      }
-
-      // Get specific resources for each skill gap
-      try {
-        console.log("Fetching hyper-personalized resources for each skill gap");
-
-        // For each high and medium priority skill gap, find specific resources
-        for (const gap of skillGaps
-          .filter((g) => g.gapLevel !== "Low")
-          .slice(0, 5)) {
-          // Limit to top 5 most important gaps
-          const skillName = gap.skillName;
-          console.log(`Finding specific resources for skill: ${skillName}`);
-
-          try {
-            // Use advanced search to find resources with different difficulty levels
-            const resourceResults = await learningResourceSearch.invoke({
-              skillName: skillName,
-              resourceType: "course tutorial video guide book project",
-              difficulty:
-                gap.gapLevel === "High" ? "comprehensive" : "intermediate",
-            });
-
-            if (resourceResults) {
-              // Store the resources for this skill
-              skillSpecificResources[skillName] = resourceResults;
-            }
-          } catch (resourceError) {
-            console.error(
-              `Error finding resources for ${skillName}:`,
-              resourceError,
-            );
-          }
-        }
-
-        // Also get general career transition resources
-        const careerTransitionResources = await learningResourceSearch.invoke({
-          skillName: `${currentRoleTitle} to ${targetRoleTitle} career transition`,
-          resourceType: "guide roadmap testimonial case study",
-        });
-
-        if (careerTransitionResources) {
-          skillSpecificResources["career_transition"] =
-            careerTransitionResources;
-        }
-
-        // Get company-specific transition resources
-        if (currentCompany !== targetCompany) {
-          const companyTransitionResources =
-            await learningResourceSearch.invoke({
-              skillName: `${currentCompany} to ${targetCompany} company culture transition`,
-              resourceType: "guide article blog testimonial",
-            });
-
-          if (companyTransitionResources) {
-            skillSpecificResources["company_transition"] =
-              companyTransitionResources;
-          }
-        }
-
-        // Get interview preparation resources
-        const interviewResources = await learningResourceSearch.invoke({
-          skillName: `${targetRole} interview preparation`,
-          resourceType: "guide practice questions tips",
-        });
-
-        if (interviewResources) {
-          skillSpecificResources["interview_prep"] = interviewResources;
-        }
-      } catch (error) {
-        console.error(
-          "Error searching for specific learning resources:",
-          error,
-        );
-      }
-
-      // Format hyper-specific resources into structured text
-      let resourcesText = "### Specific Learning Resources:\n\n";
-
-      for (const [skill, resources] of Object.entries(skillSpecificResources)) {
-        // Add a section for this skill
-        resourcesText += `## Resources for ${
-          skill === "career_transition"
-            ? "Career Transition"
-            : skill === "company_transition"
-              ? `${currentCompany} to ${targetCompany} Transition`
-              : skill === "interview_prep"
-                ? "Interview Preparation"
-                : skill
-        }:\n\n`;
-
-        // Try to extract and format the resources
-        try {
-          // See if it's already formatted with sections like Courses, Videos, etc.
-          if (
-            resources.includes("## Courses:") ||
-            resources.includes("## Videos:") ||
-            resources.includes("## Tutorials:")
-          ) {
-            // Already formatted, just add it
-            resourcesText += resources + "\n\n";
-          } else {
-            // Try to parse any URL patterns to identify resources
-            const urlPattern = /(https?:\/\/[^\s]+)/g;
-            const urls = resources.match(urlPattern) || [];
-
-            if (urls.length > 0) {
-              urls.forEach((url, i) => {
-                // Find context for this URL (try to extract title)
-                const urlContext = resources.substring(
-                  Math.max(0, resources.indexOf(url) - 100),
-                  Math.min(resources.length, resources.indexOf(url) + 100),
-                );
-
-                // Try to extract a title, or use a generic one
-                let title = "Resource " + (i + 1);
-                const titleMatch = urlContext.match(/Title: ([^\n]+)/);
-                if (titleMatch) {
-                  title = titleMatch[1];
-                }
-
-                resourcesText += `- ${title}: ${url}\n`;
-              });
-            } else {
-              // Just add the raw resources
-              resourcesText += resources + "\n\n";
-            }
-          }
-        } catch (formatError) {
-          console.error(
-            `Error formatting resources for ${skill}:`,
-            formatError,
+      // Identify top skill gaps to focus on
+      const topSkillGaps = skillGaps
+        .sort((a, b) => {
+          const priorityMap: Record<string, number> = {
+            High: 3,
+            Medium: 2,
+            Low: 1,
+          };
+          return (
+            (priorityMap[b.gapLevel] || 0) - (priorityMap[a.gapLevel] || 0)
           );
-          // Just add the raw resources
-          resourcesText += resources + "\n\n";
+        })
+        .slice(0, 5);
+
+      // Search for resources for each skill gap
+      for (const gap of topSkillGaps) {
+        try {
+          // Using the improved search directly
+          console.log(`Finding resources for skill: ${gap.skillName}`);
+
+          const searchResults = await improvedTavilySearch(
+            `best resources courses tutorials to learn ${gap.skillName} for ${targetRole}`,
+            5,
+            "basic",
+          );
+
+          // Extract resources
+          const skillResources = searchResults.results.map((result: any) => ({
+            title: result.title || `Learn ${gap.skillName}`,
+            url: result.url,
+            type: this.guessResourceType(result.url, result.title),
+          }));
+
+          // Store resources
+          resources[gap.skillName] = skillResources;
+        } catch (searchError) {
+          console.error(
+            `Error finding resources for ${gap.skillName}:`,
+            searchError,
+          );
+
+          // Add fallback resources
+          resources[gap.skillName] = [
+            {
+              title: `${gap.skillName} on Coursera`,
+              url: `https://www.coursera.org/search?query=${encodeURIComponent(gap.skillName)}`,
+              type: "course",
+            },
+            {
+              title: `${gap.skillName} on YouTube`,
+              url: `https://www.youtube.com/results?search_query=${encodeURIComponent(gap.skillName)}+tutorial`,
+              type: "video",
+            },
+          ];
         }
       }
 
-      console.log(
-        `Found hyper-specific resources for ${Object.keys(skillSpecificResources).length} skills`,
-      );
+      // Get interview prep resources
+      try {
+        const interviewSearchResults = await improvedTavilySearch(
+          `${targetRole} interview preparation guide tips questions`,
+          3,
+          "basic",
+        );
 
-      // Create the development plan prompt with a structured format and hyper-specific resources
+        resources["interview_prep"] = interviewSearchResults.results.map(
+          (result: any) => ({
+            title: result.title || "Interview Preparation",
+            url: result.url,
+            type: "guide",
+          }),
+        );
+      } catch (interviewError) {
+        console.error("Error finding interview resources:", interviewError);
+
+        resources["interview_prep"] = [
+          {
+            title: "Interview Preparation Guide",
+            url: `https://www.google.com/search?q=${encodeURIComponent(targetRole)}+interview+questions+guide`,
+            type: "guide",
+          },
+        ];
+      }
+
+      // Format resources for the plan prompt
+      let resourcesText = "### Learning Resources:\n\n";
+
+      for (const [skillName, skillResources] of Object.entries(resources)) {
+        resourcesText += `## Resources for ${skillName === "interview_prep" ? "Interview Preparation" : skillName}:\n\n`;
+
+        skillResources.forEach((resource, i) => {
+          resourcesText += `- ${resource.title}: ${resource.url}\n`;
+        });
+
+        resourcesText += "\n";
+      }
+
+      // Create a detailed plan prompt
       const planPrompt = `
-      Create a hyper-personalized, practical career transition plan from ${currentRole} to ${targetRole} with specific, actionable recommendations.
+      Create a practical career transition plan from ${currentRole} to ${targetRole} with specific recommendations.
 
       ### User Information:
       ${userSkillsText}
 
       ### Skill Gaps to Address:
       ${skillGapsText}
-      
-      ### Learning Resources Available:
+
       ${resourcesText}
-      
-      ${transitionStories || ""}
 
       ### Requirements:
-      - Create a 3-6 month structured plan with SPECIFIC actionable steps
-      - For EACH milestone and task, include AT LEAST TWO specific YouTube videos, online courses, or tutorials
-      - Always include the EXACT title and complete URL for each resource
+      - Create a 3-6 month structured plan with actionable steps
+      - For each milestone and task, include specific resources from the provided list
       - Focus on both technical skills and soft skills needed for this transition
-      - Include detailed networking strategies with specific platforms and groups to join
-      - Provide precise interview preparation tactics for ${targetRole} roles
-      - Structure the plan with 4-5 clear milestones and specific week-by-week timelines
-      - Consider the culture differences between ${currentCompany} and ${targetCompany}
-      - All recommended resources MUST have ACTUAL URLs from the resources provided above
-      
+      - Include networking strategies and interview preparation
+      - Structure the plan with 4-5 clear milestones and timeframes
+
       ### Response Format:
-      Return ONLY a JSON object with this structure:
+      Return a JSON object with this structure:
       {
         "overview": "Brief overview of the transition strategy",
         "estimatedTimeframe": "X-Y months",
@@ -1220,17 +1416,16 @@ export class MemoryEnabledAgent {
             "title": "Milestone title",
             "description": "Description of this milestone",
             "timeframe": "X weeks",
-            "durationWeeks": 4, // Numeric value in weeks
+            "durationWeeks": 4,
             "priority": "High|Medium|Low",
             "resources": [
-              // Direct milestone resources (will always be displayed)
-              {"title": "EXACT Resource name", "url": "EXACT resource URL", "type": "course/video/book/etc"}
+              {"title": "Resource name", "url": "resource URL", "type": "course/video/book/etc"}
             ],
             "tasks": [
               {
                 "task": "Specific action item",
                 "resources": [
-                  {"title": "EXACT Resource name", "url": "EXACT resource URL", "type": "course/video/book/etc"}
+                  {"title": "Resource name", "url": "resource URL", "type": "course/video/book/etc"}
                 ]
               }
             ]
@@ -1239,108 +1434,80 @@ export class MemoryEnabledAgent {
         "successMetrics": ["Metric 1", "Metric 2"],
         "potentialChallenges": ["Challenge 1", "Challenge 2"]
       }
-      
-      Ensure each milestone has 3-5 specific tasks with at least two real learning resources with actual URLs.
       `;
 
-      // Generate the development plan using the configured model
-      console.log(
-        `Generating plan using ${modelWithTools.modelName || "configured LLM"}`,
-      );
-      const response = await modelWithTools.invoke([
-        new SystemMessage(
-          "You are a career development expert who creates hyper-specific transition plans with actual resources.",
-        ),
-        new HumanMessage(planPrompt),
-      ]);
-
-      // Process the response to extract the plan
-      let plan: any = { milestones: [] };
-
       try {
-        // Try to parse as JSON with robust error handling
+        // Generate the plan using the model
+        const response = await modelWithTools.invoke([
+          new SystemMessage(
+            "You are a career development expert who creates specific transition plans with actual resources.",
+          ),
+          new HumanMessage(planPrompt),
+        ]);
+
+        // Process the response
         const content = response.content.toString();
 
-        // First try to extract a JSON object using regex
-        const jsonRegex = /{[\s\S]*}/;
-        const jsonMatch = content.match(jsonRegex);
+        // Try to extract and parse the plan
+        let plan: any = null;
 
-        if (jsonMatch) {
-          const possibleJson = jsonMatch[0];
-          plan = safeJsonParse(possibleJson, "development_plan");
-        } else {
-          // If no JSON object found, try parsing the entire content
-          plan = safeJsonParse(content, "development_plan");
+        try {
+          // First try: extract JSON object using regex
+          const jsonRegex = /{[\s\S]*}/;
+          const jsonMatch = content.match(jsonRegex);
+
+          if (jsonMatch) {
+            plan = safeJsonParse(jsonMatch[0], "development_plan");
+          } else {
+            throw new Error("No JSON found in response");
+          }
+        } catch (jsonError) {
+          console.error("Error parsing plan JSON:", jsonError);
+          throw jsonError;
         }
 
-        // Log the structure of the plan
-        console.log(
-          "Plan structure:",
-          Object.keys(plan).join(", "),
-          "Milestones:",
-          plan.milestones
-            ? `Array with ${plan.milestones.length} items`
-            : "missing",
-        );
-
-        // If parsing fails or plan is invalid, create a fallback
+        // Validate the plan structure
         if (
           !plan ||
           !plan.milestones ||
           !Array.isArray(plan.milestones) ||
           plan.milestones.length === 0
         ) {
-          console.log("Creating fallback plan from resources found");
-          plan = this.createFallbackPlan(
-            currentRole,
-            targetRole,
-            skillGaps,
-            skillSpecificResources,
-          );
+          console.log("Invalid plan structure, creating fallback plan");
+          throw new Error("Invalid plan structure");
         }
 
-        // Ensure milestones contain all required properties
-        if (plan.milestones && Array.isArray(plan.milestones)) {
-          plan.milestones = plan.milestones.map(
-            (milestone: any, index: number) => {
-              // Ensure each milestone has required fields
-              return {
-                title: milestone.title || `Phase ${index + 1}`,
-                description:
-                  milestone.description || `Development phase ${index + 1}`,
-                timeframe: milestone.timeframe || `${4} weeks`,
-                durationWeeks:
-                  milestone.durationWeeks ||
-                  parseInt(milestone.timeframe?.match(/\d+/)?.[0] || "4"),
-                priority: milestone.priority || "Medium",
-                order: index + 1,
-                progress: 0,
-                tasks: Array.isArray(milestone.tasks) ? milestone.tasks : [],
-                resources: Array.isArray(milestone.resources)
-                  ? milestone.resources
-                  : Array.isArray(milestone.tasks)
-                    ? milestone.tasks.flatMap((task: any) =>
-                        Array.isArray(task.resources) ? task.resources : [],
-                      )
-                    : [],
-              };
-            },
-          );
-        }
+        // Ensure all milestones have required properties
+        plan.milestones = plan.milestones.map(
+          (milestone: any, index: number) => ({
+            title: milestone.title || `Phase ${index + 1}`,
+            description:
+              milestone.description || `Development phase ${index + 1}`,
+            timeframe: milestone.timeframe || `${4} weeks`,
+            durationWeeks: milestone.durationWeeks || 4,
+            priority: milestone.priority || "Medium",
+            order: index + 1,
+            progress: 0,
+            resources: Array.isArray(milestone.resources)
+              ? milestone.resources
+              : [],
+            tasks: Array.isArray(milestone.tasks) ? milestone.tasks : [],
+          }),
+        );
 
-        // Store the development plan in the database
+        // Store the plan
         await this.storeDevelopmentPlan(transitionId, plan);
 
         return plan;
       } catch (error) {
-        console.error("Error parsing development plan:", error);
+        console.error("Error generating plan:", error);
 
-        // Create a fallback plan using the resources we found
+        // Create a fallback plan
         const fallbackPlan = this.createFallbackPlan(
           currentRole,
           targetRole,
           skillGaps,
-          skillSpecificResources,
+          resources,
         );
 
         // Store the fallback plan
@@ -1350,19 +1517,18 @@ export class MemoryEnabledAgent {
       }
     } catch (error) {
       console.error("Error creating development plan:", error);
-      return { milestones: [] };
+      return this.createFallbackPlan(currentRole, targetRole, skillGaps, {});
     }
   }
 
   /**
    * Create a fallback plan when the primary plan generation fails
-   * Uses the resources we've already gathered
    */
-  private createFallbackPlan(
+  createFallbackPlan(
     currentRole: string,
     targetRole: string,
     skillGaps: SkillGapAnalysis[],
-    skillSpecificResources: Record<string, string>,
+    resources: Record<string, any[]>,
   ): any {
     console.log("Creating fallback plan with gathered resources");
 
@@ -1372,7 +1538,7 @@ export class MemoryEnabledAgent {
     const targetParts = targetRole.split(" ");
     const targetCompany = targetParts[0] || "";
 
-    // Create milestones
+    // Create milestones based on skill gaps
     const milestones = [];
 
     // Milestone 1: High priority skill gaps
@@ -1382,36 +1548,23 @@ export class MemoryEnabledAgent {
 
       for (const gap of highPriorityGaps) {
         const skillName = gap.skillName;
-        const resources = [];
+        const taskResources = [];
 
         // Try to find resources for this skill
-        if (skillSpecificResources[skillName]) {
-          // Extract URLs from the resources
-          const urlPattern = /(https?:\/\/[^\s]+)/g;
-          const resourceText = skillSpecificResources[skillName];
-          const urls = resourceText.match(urlPattern) || [];
-
-          urls.slice(0, 2).forEach((url, i) => {
-            resources.push({
-              title: `${skillName} Resource ${i + 1}`,
-              url: url,
-              type: "course",
-            });
-          });
-        }
-
-        // If no resources found, add a placeholder
-        if (resources.length === 0) {
-          resources.push({
+        if (resources[skillName] && Array.isArray(resources[skillName])) {
+          taskResources.push(...resources[skillName].slice(0, 2));
+        } else {
+          // Add default resources
+          taskResources.push({
             title: `Learn ${skillName}`,
-            url: "https://www.coursera.org/",
+            url: `https://www.coursera.org/search?query=${encodeURIComponent(skillName)}`,
             type: "course",
           });
         }
 
         highPriorityTasks.push({
           task: `Develop ${skillName} skills`,
-          resources: resources,
+          resources: taskResources,
         });
       }
 
@@ -1422,6 +1575,7 @@ export class MemoryEnabledAgent {
         timeframe: "4-6 weeks",
         durationWeeks: 6,
         priority: "High",
+        order: 1,
         progress: 0,
         resources: [
           {
@@ -1443,36 +1597,23 @@ export class MemoryEnabledAgent {
 
       for (const gap of mediumPriorityGaps.slice(0, 3)) {
         const skillName = gap.skillName;
-        const resources = [];
+        const taskResources = [];
 
         // Try to find resources for this skill
-        if (skillSpecificResources[skillName]) {
-          // Extract URLs from the resources
-          const urlPattern = /(https?:\/\/[^\s]+)/g;
-          const resourceText = skillSpecificResources[skillName];
-          const urls = resourceText.match(urlPattern) || [];
-
-          urls.slice(0, 2).forEach((url, i) => {
-            resources.push({
-              title: `${skillName} Resource ${i + 1}`,
-              url: url,
-              type: "course",
-            });
-          });
-        }
-
-        // If no resources found, add a placeholder
-        if (resources.length === 0) {
-          resources.push({
+        if (resources[skillName] && Array.isArray(resources[skillName])) {
+          taskResources.push(...resources[skillName].slice(0, 2));
+        } else {
+          // Add default resources
+          taskResources.push({
             title: `Learn ${skillName}`,
-            url: "https://www.coursera.org/",
+            url: `https://www.udemy.com/courses/search/?src=ukw&q=${encodeURIComponent(skillName)}`,
             type: "course",
           });
         }
 
         mediumPriorityTasks.push({
           task: `Develop ${skillName} skills`,
-          resources: resources,
+          resources: taskResources,
         });
       }
 
@@ -1482,6 +1623,7 @@ export class MemoryEnabledAgent {
         timeframe: "3-4 weeks",
         durationWeeks: 4,
         priority: "Medium",
+        order: 2,
         progress: 0,
         resources: [
           {
@@ -1498,21 +1640,25 @@ export class MemoryEnabledAgent {
     const interviewTasks = [];
 
     // Add interview prep resources if available
-    if (skillSpecificResources["interview_prep"]) {
-      const urlPattern = /(https?:\/\/[^\s]+)/g;
-      const resourceText = skillSpecificResources["interview_prep"];
-      const urls = resourceText.match(urlPattern) || [];
-
-      if (urls.length > 0) {
-        interviewTasks.push({
-          task: "Prepare for technical interviews",
-          resources: urls.slice(0, 2).map((url, i) => ({
-            title: `Interview Preparation Resource ${i + 1}`,
-            url: url,
+    if (
+      resources["interview_prep"] &&
+      Array.isArray(resources["interview_prep"])
+    ) {
+      interviewTasks.push({
+        task: "Prepare for technical interviews",
+        resources: resources["interview_prep"].slice(0, 2),
+      });
+    } else {
+      interviewTasks.push({
+        task: "Prepare for technical interviews",
+        resources: [
+          {
+            title: "Interview Preparation Guide",
+            url: `https://www.google.com/search?q=${encodeURIComponent(targetRole)}+interview+questions+guide`,
             type: "guide",
-          })),
-        });
-      }
+          },
+        ],
+      });
     }
 
     // Add networking task
@@ -1534,7 +1680,7 @@ export class MemoryEnabledAgent {
         resources: [
           {
             title: `${targetCompany} Company Research`,
-            url: `https://www.glassdoor.com/Overview/Working-at-${targetCompany}`,
+            url: `https://www.glassdoor.com/Overview/Working-at-${targetCompany.replace(/\s+/g, "-")}`,
             type: "research",
           },
         ],
@@ -1547,6 +1693,7 @@ export class MemoryEnabledAgent {
       timeframe: "2-3 weeks",
       durationWeeks: 3,
       priority: "Medium",
+      order: 3,
       progress: 0,
       resources: [
         {
@@ -1564,7 +1711,7 @@ export class MemoryEnabledAgent {
       estimatedTimeframe: "3-6 months",
       milestones: milestones,
       successMetrics: [
-        `Successfully interview for ${targetRole}`,
+        `Successfully interview for ${targetRole} positions`,
         "Demonstrate mastery of required technical skills",
         "Build a professional network in the target role",
         "Complete at least one portfolio project demonstrating key skills",
@@ -1581,12 +1728,81 @@ export class MemoryEnabledAgent {
   /**
    * Store the development plan in the database
    */
-  private async storeDevelopmentPlan(
-    transitionId: number,
-    plan: any,
-  ): Promise<void> {
+  async storeDevelopmentPlan(transitionId: number, plan: any): Promise<void> {
     try {
+      // First store the plan
       await storage.storeDevelopmentPlan(transitionId, plan);
+
+      // Then process each milestone
+      if (plan.milestones && Array.isArray(plan.milestones)) {
+        const planDb = await storage.getPlanByTransitionId(transitionId);
+
+        if (planDb) {
+          for (const [index, milestone] of plan.milestones.entries()) {
+            try {
+              // Store the milestone
+              const storedMilestone = await storage.createMilestone({
+                planId: planDb.id,
+                title: milestone.title || `Phase ${index + 1}`,
+                description: milestone.description || null,
+                priority: milestone.priority || "Medium",
+                durationWeeks: milestone.durationWeeks || 4,
+                order: index + 1,
+                progress: 0,
+              });
+
+              // Store milestone resources
+              if (milestone.resources && Array.isArray(milestone.resources)) {
+                for (const resource of milestone.resources) {
+                  await storage.createResource({
+                    milestoneId: storedMilestone.id,
+                    title: resource.title || "Learning Resource",
+                    url: resource.url || "https://www.google.com",
+                    type: resource.type || "resource",
+                  });
+                }
+              }
+
+              // Store tasks and their resources
+              if (milestone.tasks && Array.isArray(milestone.tasks)) {
+                for (const task of milestone.tasks) {
+                  try {
+                    // Create the task
+                    const storedTask = await storage.createTask({
+                      milestoneId: storedMilestone.id,
+                      content: task.task || "Complete task",
+                      isDone: false,
+                    });
+
+                    // Store task resources
+                    if (task.resources && Array.isArray(task.resources)) {
+                      for (const resource of task.resources) {
+                        await storage.createResource({
+                          milestoneId: storedMilestone.id,
+                          taskId: storedTask.id,
+                          title: resource.title || "Task Resource",
+                          url: resource.url || "https://www.google.com",
+                          type: resource.type || "resource",
+                        });
+                      }
+                    }
+                  } catch (taskError) {
+                    console.error("Error storing task:", taskError);
+                  }
+                }
+              }
+            } catch (milestoneError) {
+              console.error("Error storing milestone:", milestoneError);
+            }
+          }
+
+          console.log(
+            `Successfully stored development plan for transition ID: ${transitionId}`,
+          );
+        } else {
+          console.error("Failed to retrieve stored plan from database");
+        }
+      }
     } catch (error) {
       console.error("Error storing development plan:", error);
     }
@@ -1595,7 +1811,7 @@ export class MemoryEnabledAgent {
   /**
    * Get fallback skill gaps when analysis fails
    */
-  private getFallbackSkillGaps(
+  getFallbackSkillGaps(
     currentRole: string,
     targetRole: string,
   ): SkillGapAnalysis[] {
@@ -1627,7 +1843,7 @@ export class MemoryEnabledAgent {
   /**
    * Get fallback insights when analysis fails
    */
-  private getFallbackInsights(currentRole: string, targetRole: string): any {
+  getFallbackInsights(currentRole: string, targetRole: string): any {
     return {
       keyObservations: [
         `Most successful transitions from ${currentRole} to ${targetRole} take 6-12 months`,
@@ -1648,5 +1864,49 @@ export class MemoryEnabledAgent {
         "Understanding company-specific culture and processes",
       ],
     };
+  }
+
+  /**
+   * Guess the resource type based on URL and title
+   */
+  guessResourceType(url: string, title: string): string {
+    const lowerUrl = url.toLowerCase();
+    const lowerTitle = (title || "").toLowerCase();
+
+    if (
+      lowerUrl.includes("youtube") ||
+      lowerUrl.includes("youtu.be") ||
+      lowerTitle.includes("video")
+    ) {
+      return "video";
+    } else if (
+      lowerUrl.includes("course") ||
+      lowerUrl.includes("udemy") ||
+      lowerUrl.includes("coursera") ||
+      lowerTitle.includes("course")
+    ) {
+      return "course";
+    } else if (
+      lowerUrl.includes("github") ||
+      lowerUrl.includes("project") ||
+      lowerTitle.includes("project")
+    ) {
+      return "project";
+    } else if (
+      lowerUrl.includes("docs") ||
+      lowerUrl.includes("documentation") ||
+      lowerTitle.includes("documentation")
+    ) {
+      return "documentation";
+    } else if (
+      lowerUrl.includes("tutorial") ||
+      lowerTitle.includes("tutorial") ||
+      lowerTitle.includes("guide") ||
+      lowerTitle.includes("how to")
+    ) {
+      return "tutorial";
+    } else {
+      return "resource";
+    }
   }
 }
