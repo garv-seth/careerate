@@ -12,12 +12,13 @@ const DEFAULT_SEARCH_DEPTH = "basic"; // basic or deep
  * @returns Whether the API key is valid
  */
 function validateTavilyApiKey(apiKey?: string): boolean {
+  // Check if API key exists
   if (!apiKey) {
     return false;
   }
   
-  // Simple validation: check if it starts with tvly- prefix and has minimum length
-  if (apiKey.indexOf("tvly-") === 0 && apiKey.length >= 20) {
+  // Simple validation: check prefix and minimum length
+  if (apiKey.substring(0, 5) === "tvly-" && apiKey.length >= 20) {
     return true;
   }
   

@@ -10,7 +10,8 @@ import {
   milestones, type Milestone, type InsertMilestone,
   resources, type Resource, type InsertResource,
   insights, type Insight, type InsertInsight,
-  passwordResetTokens, type PasswordResetToken, type InsertPasswordResetToken
+  passwordResetTokens, type PasswordResetToken, type InsertPasswordResetToken,
+  tasks, type Task, type InsertTask
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -88,6 +89,12 @@ export interface IStorage {
   
   // Store development plan with all milestones and resources
   storeDevelopmentPlan(transitionId: number, planData: any): Promise<void>;
+  
+  // Task methods
+  getTasksByMilestoneId(milestoneId: number): Promise<Task[]>;
+  createTask(task: InsertTask): Promise<Task>;
+  updateTaskStatus(id: number, isDone: boolean): Promise<Task | undefined>;
+  deleteTasksByMilestoneId(milestoneId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -374,6 +381,7 @@ export class DatabaseStorage implements IStorage {
     // Handle type assertion for resources
     const resourceData = {
       milestoneId: insertResource.milestoneId,
+      taskId: insertResource.taskId,
       title: insertResource.title,
       description: insertResource.description,
       url: insertResource.url,
@@ -427,6 +435,8 @@ export class DatabaseStorage implements IStorage {
     for (const milestone of planMilestones) {
       // Delete resources for each milestone
       await this.deleteResourcesByMilestoneId(milestone.id);
+      // Delete tasks for each milestone
+      await this.deleteTasksByMilestoneId(milestone.id);
     }
     
     // Now delete the milestones
@@ -450,12 +460,12 @@ export class DatabaseStorage implements IStorage {
     await this.deleteScrapedDataByTransitionId(transitionId);
     
     // Keep the transition record itself
-    console.log(`Cleared all data for transition ID: ${transitionId}`);
+    console.log(`Cleared all data for transition ID: {transitionId}`);
   }
   
   // Store development plan data
   async storeDevelopmentPlan(transitionId: number, planData: any): Promise<void> {
-    console.log(`Storing development plan for transition ID: ${transitionId}`);
+    console.log(`Storing development plan for transition ID: {transitionId}`);
     
     try {
       // First, clear any existing plan data
@@ -464,7 +474,7 @@ export class DatabaseStorage implements IStorage {
       // Create the plan record
       const plan = await this.createPlan({
         transitionId,
-        overview: planData.overview || `Development plan for transition ${transitionId}`,
+        overview: planData.overview || `Development plan for transition {transitionId}`,
         estimatedTimeframe: planData.estimatedTimeframe || "3-6 months",
         successMetrics: planData.successMetrics || [],
         potentialChallenges: planData.potentialChallenges || []
@@ -478,7 +488,7 @@ export class DatabaseStorage implements IStorage {
           // Create milestone record
           const milestone = await this.createMilestone({
             planId: plan.id,
-            title: milestoneData.title || `Milestone ${i + 1}`,
+            title: milestoneData.title || `Milestone {i + 1}`,
             description: milestoneData.description || "",
             timeframe: milestoneData.timeframe || "2-4 weeks",
             durationWeeks: milestoneData.durationWeeks || parseInt(milestoneData.timeframe?.match(/\d+/)?.[0] || '4'),
@@ -489,7 +499,7 @@ export class DatabaseStorage implements IStorage {
           
           // Process direct milestone resources first (if available)
           if (milestoneData.resources && Array.isArray(milestoneData.resources)) {
-            console.log(`Processing ${milestoneData.resources.length} direct resources for milestone ${milestone.id}`);
+            console.log(`Processing {milestoneData.resources.length} direct resources for milestone {milestone.id}`);
             for (const resourceData of milestoneData.resources) {
               await this.createResource({
                 milestoneId: milestone.id,
@@ -501,16 +511,24 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Process resources from tasks (if available)
+          // Process tasks and their resources (if available)
           if (milestoneData.tasks && Array.isArray(milestoneData.tasks)) {
-            console.log(`Processing tasks for milestone ${milestone.id}`);
+            console.log(`Processing tasks for milestone {milestone.id}`);
             for (const task of milestoneData.tasks) {
+              // Create the task
+              const storedTask = await this.createTask({
+                milestoneId: milestone.id,
+                content: task.task || "Complete task",
+                isDone: false,
+              });
+              
               // Create resources for this task
               if (task.resources && Array.isArray(task.resources)) {
                 for (const resourceData of task.resources) {
                   await this.createResource({
                     milestoneId: milestone.id,
-                    title: resourceData.title || "Learning Resource",
+                    taskId: storedTask.id,
+                    title: resourceData.title || "Task Resource",
                     description: task.task || "",  // Use task description if available
                     url: resourceData.url || "#",
                     type: resourceData.type || "other"
@@ -522,11 +540,37 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      console.log(`Successfully stored development plan for transition ID: ${transitionId}`);
+      console.log(`Successfully stored development plan for transition ID: {transitionId}`);
     } catch (error) {
-      console.error(`Error storing development plan for transition ID: ${transitionId}:`, error);
+      console.error(`Error storing development plan for transition ID: {transitionId}:`, error);
       throw error;
     }
+  }
+  
+  // Task methods
+  async getTasksByMilestoneId(milestoneId: number): Promise<Task[]> {
+    return db.select().from(tasks).where(eq(tasks.milestoneId, milestoneId));
+  }
+  
+  async createTask(insertTask: InsertTask): Promise<Task> {
+    const [task] = await db
+      .insert(tasks)
+      .values(insertTask)
+      .returning();
+    return task;
+  }
+  
+  async updateTaskStatus(id: number, isDone: boolean): Promise<Task | undefined> {
+    const [task] = await db
+      .update(tasks)
+      .set({ isDone })
+      .where(eq(tasks.id, id))
+      .returning();
+    return task;
+  }
+  
+  async deleteTasksByMilestoneId(milestoneId: number): Promise<void> {
+    await db.delete(tasks).where(eq(tasks.milestoneId, milestoneId));
   }
 }
 

@@ -21,24 +21,21 @@ let OpenAIEmbeddings: any = null;
 let ChatOpenAI: any = null;
 
 // Try to dynamically import OpenAI components
-try {
-  import("@langchain/openai").then((module) => {
-    ChatOpenAI = module.ChatOpenAI;
-    console.log("Loaded ChatOpenAI successfully");
-  }).catch((err) => {
-    console.warn("OpenAI chat model not available:", err.message);
-  });
-  
-  // Load embeddings separately with correct path
-  import("@langchain/openai").then((module) => {
-    OpenAIEmbeddings = module.OpenAIEmbeddings;
-    console.log("Loaded OpenAIEmbeddings successfully");
-  }).catch((err) => {
-    console.warn("OpenAI embeddings not available:", err.message);
-  });
-} catch (error) {
+const importOpenAI = async () => {
+  try {
+    const openaiModule = await import("@langchain/openai");
+    ChatOpenAI = openaiModule.ChatOpenAI;
+    OpenAIEmbeddings = openaiModule.OpenAIEmbeddings;
+    console.log("Loaded OpenAI components successfully");
+  } catch (err: any) {
+    console.warn("OpenAI components not available:", err.message);
+  }
+};
+
+// Execute import but don't wait for it
+importOpenAI().catch(error => {
   console.warn("Error initializing OpenAI imports:", error);
-}
+});
 
 /**
  * A single agent with long-term memory for career transition analysis
@@ -186,7 +183,7 @@ export class MemoryEnabledAgent {
             targetRole: string;
           }) => {
             const results = await improvedTavilySearch(
-              `${query} ${currentRole} to ${targetRole} career transition experiences challenges success stories`,
+              `{query} {currentRole} to {targetRole} career transition experiences challenges success stories`,
               7, // Max results
               "deep", // Deep search
             );
@@ -212,7 +209,7 @@ export class MemoryEnabledAgent {
             targetRole: string;
           }) => {
             const results = await improvedTavilySearch(
-              `${skillName} skill requirements importance for ${targetRole} position job descriptions expectations`,
+              `{skillName} skill requirements importance for {targetRole} position job descriptions expectations`,
               5,
               "deep",
             );
@@ -238,9 +235,9 @@ export class MemoryEnabledAgent {
             difficulty?: string;
           }) => {
             const searchQueries = [
-              `best ${resourceType} to learn ${skillName} ${difficulty} skill professional development`,
-              `${skillName} ${resourceType} ${difficulty} level tutorial guide`,
-              `learn ${skillName} ${resourceType} ${difficulty}`,
+              `best {resourceType} to learn {skillName} {difficulty} skill professional development`,
+              `{skillName} {resourceType} {difficulty} level tutorial guide`,
+              `learn {skillName} {resourceType} {difficulty}`,
             ];
 
             // Try each query until we get results
@@ -253,7 +250,7 @@ export class MemoryEnabledAgent {
             if (!results || results.results.length === 0) {
               // Use fallback search if all queries fail
               results = await fallbackSearch(
-                `${skillName} ${resourceType} ${difficulty}`,
+                `{skillName} {resourceType} {difficulty}`,
               );
             }
 
@@ -284,7 +281,7 @@ export class MemoryEnabledAgent {
     resourceType: string,
   ): string {
     try {
-      let output = `## Learning Resources for ${skillName}:\n\n`;
+      let output = `## Learning Resources for {skillName}:\n\n`;
 
       // Categorize resources
       const categories: Record<string, any[]> = {
@@ -299,7 +296,7 @@ export class MemoryEnabledAgent {
       if (results && results.results && Array.isArray(results.results)) {
         results.results.forEach((result: any) => {
           const url = result.url || "";
-          const title = result.title || `Resource for ${skillName}`;
+          const title = result.title || `Resource for {skillName}`;
           const content = result.content || "";
 
           // Determine category
@@ -339,12 +336,12 @@ export class MemoryEnabledAgent {
       // Generate output
       for (const [category, categoryItems] of Object.entries(categories)) {
         if (categoryItems.length > 0) {
-          output += `### ${category}:\n\n`;
+          output += `### {category}:\n\n`;
           categoryItems.forEach((item, index) => {
-            output += `#### ${item.title}\n`;
-            output += `URL: ${item.url}\n`;
+            output += `#### {item.title}\n`;
+            output += `URL: {item.url}\n`;
             if (item.content) {
-              output += `Description: ${item.content}\n`;
+              output += `Description: {item.content}\n`;
             }
             output += "\n";
           });
@@ -353,16 +350,16 @@ export class MemoryEnabledAgent {
 
       // Add fallback if no results
       if (Object.values(categories).flat().length === 0) {
-        output += `No specific resources found for ${skillName}. Try checking these general learning platforms:\n\n`;
-        output += `- Coursera: https://www.coursera.org/search?query=${encodeURIComponent(skillName)}\n`;
-        output += `- Udemy: https://www.udemy.com/courses/search/?src=ukw&q=${encodeURIComponent(skillName)}\n`;
-        output += `- YouTube: https://www.youtube.com/results?search_query=${encodeURIComponent(skillName + " tutorial")}\n`;
+        output += `No specific resources found for {skillName}. Try checking these general learning platforms:\n\n`;
+        output += `- Coursera: https://www.coursera.org/search?query={encodeURIComponent(skillName)}\n`;
+        output += `- Udemy: https://www.udemy.com/courses/search/?src=ukw&q={encodeURIComponent(skillName)}\n`;
+        output += `- YouTube: https://www.youtube.com/results?search_query={encodeURIComponent(skillName + " tutorial")}\n`;
       }
 
       return output;
     } catch (error) {
       console.error("Error formatting resource results:", error);
-      return `Error formatting resource results: ${error}`;
+      return `Error formatting resource results: {error}`;
     }
   }
 
@@ -448,7 +445,7 @@ export class MemoryEnabledAgent {
       careerTransitionMemory.isTransitionInProgress(transitionId, forceRefresh)
     ) {
       console.warn(
-        `Career transition analysis already in progress for ID ${transitionId}, skipping duplicate request`,
+        `Career transition analysis already in progress for ID {transitionId}, skipping duplicate request`,
       );
 
       // Return the current state from memory, or fallbacks if nothing exists
@@ -475,16 +472,16 @@ export class MemoryEnabledAgent {
     // If force refresh is enabled, clear existing data
     if (forceRefresh) {
       console.log(
-        `Force refresh enabled for transition ${transitionId}, clearing existing data...`,
+        `Force refresh enabled for transition {transitionId}, clearing existing data...`,
       );
       try {
         await storage.clearTransitionData(transitionId);
         console.log(
-          `Successfully cleared existing data for transition ${transitionId}`,
+          `Successfully cleared existing data for transition {transitionId}`,
         );
       } catch (error) {
         console.error(
-          `Error clearing data for transition ${transitionId}:`,
+          `Error clearing data for transition {transitionId}:`,
           error,
         );
       }
@@ -495,7 +492,7 @@ export class MemoryEnabledAgent {
 
     try {
       console.log(
-        `Starting career transition analysis: ${currentRole} → ${targetRole}`,
+        `Starting career transition analysis: {currentRole} → {targetRole}`,
       );
 
       // Store initial state
@@ -651,7 +648,7 @@ export class MemoryEnabledAgent {
       await storage.updateTransitionStatus(transitionId, true);
 
       // Return the combined results
-      console.log(`Analysis completed for: ${currentRole} → ${targetRole}`);
+      console.log(`Analysis completed for: {currentRole} → {targetRole}`);
       return {
         skillGaps,
         insights: {
@@ -714,7 +711,7 @@ export class MemoryEnabledAgent {
   ): Promise<any[]> {
     try {
       console.log(
-        `Researching transition stories for ${currentRole} → ${targetRole}`,
+        `Researching transition stories for {currentRole} → {targetRole}`,
       );
 
       // Extract company and role information for broader searches
@@ -731,29 +728,29 @@ export class MemoryEnabledAgent {
       // Define a series of search queries with decreasing specificity
       const searchQueries = [
         // Exact role transition
-        `career transition stories from ${currentRole} to ${targetRole} experiences challenges success`,
+        `career transition stories from {currentRole} to {targetRole} experiences challenges success`,
 
         // Company transition with role
-        `${currentCompany} to ${targetCompany} ${currentRoleTitle} to ${targetRoleTitle} transition stories experiences`,
+        `{currentCompany} to {targetCompany} {currentRoleTitle} to {targetRoleTitle} transition stories experiences`,
 
         // Generic role transition without company
-        `${currentRoleTitle} to ${targetRoleTitle} career transition experiences success stories challenges`,
+        `{currentRoleTitle} to {targetRoleTitle} career transition experiences success stories challenges`,
 
         // Industry transition
         `software engineer career advancement to senior staff engineer transition experiences`,
 
         // Similar role transition (if roles are different)
-        `similar transitions to ${targetRoleTitle} from other technical roles success stories`,
+        `similar transitions to {targetRoleTitle} from other technical roles success stories`,
       ];
 
       // Construct the research prompt with broader search parameters
       const researchPrompt = `
-      Research career transition stories that can help someone moving from ${currentRole} to ${targetRole}.
+      Research career transition stories that can help someone moving from {currentRole} to {targetRole}.
 
       Follow these steps:
       1. Use search to find relevant transition stories from credible sources
       2. Consider stories from similar roles or companies if exact matches aren't available
-      3. Look at both specific (${currentCompany} to ${targetCompany}) transitions and general role progressions
+      3. Look at both specific ({currentCompany} to {targetCompany}) transitions and general role progressions
       4. Extract specific details about:
          - Technical skill requirements
          - Timeline and learning paths
@@ -783,7 +780,7 @@ export class MemoryEnabledAgent {
 
           if (stories.length > 0) {
             console.log(
-              `Successfully extracted ${stories.length} stories from AI response`,
+              `Successfully extracted {stories.length} stories from AI response`,
             );
 
             // Save the stories to the database
@@ -812,7 +809,7 @@ export class MemoryEnabledAgent {
       // If AI approach fails, try direct search
       for (const query of searchQueries) {
         try {
-          console.log(`Searching with query: ${query}`);
+          console.log(`Searching with query: {query}`);
           const searchResults = await improvedTavilySearch(query);
 
           if (searchResults.results.length > 0) {
@@ -825,7 +822,7 @@ export class MemoryEnabledAgent {
               date: new Date().toISOString().split("T")[0],
             }));
 
-            console.log(`Found ${stories.length} stories via direct search`);
+            console.log(`Found {stories.length} stories via direct search`);
 
             // Save the stories to the database
             for (const story of stories) {
@@ -846,7 +843,7 @@ export class MemoryEnabledAgent {
             return stories;
           }
         } catch (searchError) {
-          console.error(`Error in search query "${query}":`, searchError);
+          console.error(`Error in search query "{query}":`, searchError);
         }
       }
 
@@ -891,7 +888,7 @@ export class MemoryEnabledAgent {
     try {
       // Try to extract structured stories from the response
       const storyPattern =
-        /(?:Story|Example|Transition)\s*\d+:\s*([^]+?)(?=(?:Story|Example|Transition)\s*\d+:|$)/gi;
+        /(?:Story|Example|Transition)\s*\d+:\s*([^]+?)(?=(?:Story|Example|Transition)\s*\d+:|)/gi;
       const storyMatches = content.match(storyPattern);
 
       if (storyMatches && storyMatches.length > 0) {
@@ -961,21 +958,21 @@ export class MemoryEnabledAgent {
       {
         id: 1,
         source: "Professional Transition Blog",
-        content: `After spending 5 years as a ${currentRoleTitle} at ${currentCompany}, I decided to transition to a ${targetRoleTitle} role at ${targetCompany}. The biggest challenges were learning new technical skills and adapting to a different workflow. I spent about 6 months taking online courses and working on side projects to build my portfolio. What helped most was connecting with people already in ${targetRoleTitle} positions who could provide mentorship and advice.`,
+        content: `After spending 5 years as a {currentRoleTitle} at {currentCompany}, I decided to transition to a {targetRoleTitle} role at {targetCompany}. The biggest challenges were learning new technical skills and adapting to a different workflow. I spent about 6 months taking online courses and working on side projects to build my portfolio. What helped most was connecting with people already in {targetRoleTitle} positions who could provide mentorship and advice.`,
         url: "",
         date: new Date().toISOString().split("T")[0],
       },
       {
         id: 2,
         source: "Career Forum",
-        content: `My journey from ${currentCompany} to ${targetCompany} as a ${currentRoleTitle} transitioning to ${targetRoleTitle} took about 9 months of dedicated effort. I started by identifying the skill gaps - particularly in technical areas I hadn't been exposed to before. The interview process was challenging, but highlighting my transferable skills from my previous role really helped. My advice is to focus on building practical experience through projects rather than just theoretical learning.`,
+        content: `My journey from {currentCompany} to {targetCompany} as a {currentRoleTitle} transitioning to {targetRoleTitle} took about 9 months of dedicated effort. I started by identifying the skill gaps - particularly in technical areas I hadn't been exposed to before. The interview process was challenging, but highlighting my transferable skills from my previous role really helped. My advice is to focus on building practical experience through projects rather than just theoretical learning.`,
         url: "",
         date: new Date().toISOString().split("T")[0],
       },
       {
         id: 3,
         source: "Tech Career Network",
-        content: `Transitioning from ${currentRole} to ${targetRole} required me to develop several new skills. I found that the company cultures differed significantly - ${currentCompany} was more process-oriented while ${targetCompany} emphasized innovation and rapid iteration. The compensation package was better at ${targetCompany}, but the work expectations were also higher. I recommend networking extensively and preparing specifically for the different interview format. It took me about 4 months to complete the transition successfully.`,
+        content: `Transitioning from {currentRole} to {targetRole} required me to develop several new skills. I found that the company cultures differed significantly - {currentCompany} was more process-oriented while {targetCompany} emphasized innovation and rapid iteration. The compensation package was better at {targetCompany}, but the work expectations were also higher. I recommend networking extensively and preparing specifically for the different interview format. It took me about 4 months to complete the transition successfully.`,
         url: "",
         date: new Date().toISOString().split("T")[0],
       },
@@ -994,7 +991,7 @@ export class MemoryEnabledAgent {
     stories: any[],
   ): Promise<SkillGapAnalysis[]> {
     try {
-      console.log(`Analyzing skill gaps for ${currentRole} → ${targetRole}`);
+      console.log(`Analyzing skill gaps for {currentRole} → {targetRole}`);
 
       // Format stories for analysis
       const storiesText = stories.map((story) => story.content).join("\n\n");
@@ -1015,17 +1012,17 @@ export class MemoryEnabledAgent {
       // Format target role skills for the prompt
       const targetRoleSkillsText =
         targetRoleSkills.length > 0
-          ? `\nSkills typically required for ${targetRole}: ${targetRoleSkills.join(", ")}`
+          ? `\nSkills typically required for {targetRole}: {targetRoleSkills.join(", ")}`
           : "";
 
       const skillGapPrompt = `
-      Analyze skill gaps for transition from ${currentRole} to ${targetRole}.
+      Analyze skill gaps for transition from {currentRole} to {targetRole}.
 
-      User's existing skills: ${formattedExistingSkills}
-      ${targetRoleSkillsText}
+      User's existing skills: {formattedExistingSkills}
+      {targetRoleSkillsText}
 
       Transition stories:
-      ${storiesText}
+      {storiesText}
 
       Instructions:
       1. Carefully analyze which skills from the target role requirements are missing from the user's existing skills
@@ -1128,7 +1125,7 @@ export class MemoryEnabledAgent {
               gapLevel: index < 3 ? "High" : index < 6 ? "Medium" : "Low",
               confidenceScore: 70,
               mentionCount: 1,
-              contextSummary: `Required skill for the ${targetRole} position.`,
+              contextSummary: `Required skill for the {targetRole} position.`,
             }));
 
           // Save these skill gaps to the database
@@ -1170,24 +1167,24 @@ export class MemoryEnabledAgent {
     skillGaps: SkillGapAnalysis[],
   ): Promise<any> {
     try {
-      console.log(`Generating insights for ${currentRole} → ${targetRole}`);
+      console.log(`Generating insights for {currentRole} → {targetRole}`);
 
       const storiesText = stories.map((story) => story.content).join("\n\n");
       const skillGapsText = skillGaps
         .map(
           (gap) =>
-            `${gap.skillName} (${gap.gapLevel} gap): ${gap.contextSummary || ""}`,
+            `{gap.skillName} ({gap.gapLevel} gap): {gap.contextSummary || ""}`,
         )
         .join("\n");
 
       const insightsPrompt = `
-      Generate career transition insights from ${currentRole} to ${targetRole}.
+      Generate career transition insights from {currentRole} to {targetRole}.
 
       Stories:
-      ${storiesText}
+      {storiesText}
 
       Skill Gaps:
-      ${skillGapsText}
+      {skillGapsText}
 
       Provide:
       1. Key observations (3-5 bullet points)
@@ -1272,14 +1269,14 @@ export class MemoryEnabledAgent {
   ): Promise<any> {
     try {
       console.log(
-        `Creating development plan for ${currentRole} → ${targetRole} with specific resources`,
+        `Creating development plan for {currentRole} → {targetRole} with specific resources`,
       );
 
       // Format skill gaps
       const skillGapsText = skillGaps
         .map(
           (gap) =>
-            `${gap.skillName} (${gap.gapLevel} gap): ${gap.contextSummary || ""}`,
+            `{gap.skillName} ({gap.gapLevel} gap): {gap.contextSummary || ""}`,
         )
         .join("\n");
 
@@ -1287,7 +1284,7 @@ export class MemoryEnabledAgent {
       const userSkills = await storage.getUserSkills(this.userId);
       const userSkillsText =
         userSkills.length > 0
-          ? `\nUser's Existing Skills:\n${userSkills.map((s) => s.skillName).join(", ")}`
+          ? `\nUser's Existing Skills:\n{userSkills.map((s) => s.skillName).join(", ")}`
           : "\nUser Skills: Not specified";
 
       // Get resources for skill gaps
@@ -1311,17 +1308,17 @@ export class MemoryEnabledAgent {
       for (const gap of topSkillGaps) {
         try {
           // Using the improved search directly
-          console.log(`Finding resources for skill: ${gap.skillName}`);
+          console.log(`Finding resources for skill: {gap.skillName}`);
 
           const searchResults = await improvedTavilySearch(
-            `best resources courses tutorials to learn ${gap.skillName} for ${targetRole}`,
+            `best resources courses tutorials to learn {gap.skillName} for {targetRole}`,
             5,
             "basic",
           );
 
           // Extract resources
           const skillResources = searchResults.results.map((result: any) => ({
-            title: result.title || `Learn ${gap.skillName}`,
+            title: result.title || `Learn {gap.skillName}`,
             url: result.url,
             type: this.guessResourceType(result.url, result.title),
           }));
@@ -1330,20 +1327,20 @@ export class MemoryEnabledAgent {
           resources[gap.skillName] = skillResources;
         } catch (searchError) {
           console.error(
-            `Error finding resources for ${gap.skillName}:`,
+            `Error finding resources for {gap.skillName}:`,
             searchError,
           );
 
           // Add fallback resources
           resources[gap.skillName] = [
             {
-              title: `${gap.skillName} on Coursera`,
-              url: `https://www.coursera.org/search?query=${encodeURIComponent(gap.skillName)}`,
+              title: `{gap.skillName} on Coursera`,
+              url: `https://www.coursera.org/search?query={encodeURIComponent(gap.skillName)}`,
               type: "course",
             },
             {
-              title: `${gap.skillName} on YouTube`,
-              url: `https://www.youtube.com/results?search_query=${encodeURIComponent(gap.skillName)}+tutorial`,
+              title: `{gap.skillName} on YouTube`,
+              url: `https://www.youtube.com/results?search_query={encodeURIComponent(gap.skillName)}+tutorial`,
               type: "video",
             },
           ];
@@ -1353,7 +1350,7 @@ export class MemoryEnabledAgent {
       // Get interview prep resources
       try {
         const interviewSearchResults = await improvedTavilySearch(
-          `${targetRole} interview preparation guide tips questions`,
+          `{targetRole} interview preparation guide tips questions`,
           3,
           "basic",
         );
@@ -1371,7 +1368,7 @@ export class MemoryEnabledAgent {
         resources["interview_prep"] = [
           {
             title: "Interview Preparation Guide",
-            url: `https://www.google.com/search?q=${encodeURIComponent(targetRole)}+interview+questions+guide`,
+            url: `https://www.google.com/search?q={encodeURIComponent(targetRole)}+interview+questions+guide`,
             type: "guide",
           },
         ];
@@ -1381,10 +1378,10 @@ export class MemoryEnabledAgent {
       let resourcesText = "### Learning Resources:\n\n";
 
       for (const [skillName, skillResources] of Object.entries(resources)) {
-        resourcesText += `## Resources for ${skillName === "interview_prep" ? "Interview Preparation" : skillName}:\n\n`;
+        resourcesText += `## Resources for {skillName === "interview_prep" ? "Interview Preparation" : skillName}:\n\n`;
 
         skillResources.forEach((resource, i) => {
-          resourcesText += `- ${resource.title}: ${resource.url}\n`;
+          resourcesText += `- {resource.title}: {resource.url}\n`;
         });
 
         resourcesText += "\n";
@@ -1392,15 +1389,15 @@ export class MemoryEnabledAgent {
 
       // Create a detailed plan prompt
       const planPrompt = `
-      Create a practical career transition plan from ${currentRole} to ${targetRole} with specific recommendations.
+      Create a practical career transition plan from {currentRole} to {targetRole} with specific recommendations.
 
       ### User Information:
-      ${userSkillsText}
+      {userSkillsText}
 
       ### Skill Gaps to Address:
-      ${skillGapsText}
+      {skillGapsText}
 
-      ${resourcesText}
+      {resourcesText}
 
       ### Requirements:
       - Create a 3-6 month structured plan with actionable steps
@@ -1483,10 +1480,10 @@ export class MemoryEnabledAgent {
         // Ensure all milestones have required properties
         plan.milestones = plan.milestones.map(
           (milestone: any, index: number) => ({
-            title: milestone.title || `Phase ${index + 1}`,
+            title: milestone.title || `Phase {index + 1}`,
             description:
-              milestone.description || `Development phase ${index + 1}`,
-            timeframe: milestone.timeframe || `${4} weeks`,
+              milestone.description || `Development phase {index + 1}`,
+            timeframe: milestone.timeframe || `{4} weeks`,
             durationWeeks: milestone.durationWeeks || 4,
             priority: milestone.priority || "Medium",
             order: index + 1,
@@ -1559,14 +1556,14 @@ export class MemoryEnabledAgent {
         } else {
           // Add default resources
           taskResources.push({
-            title: `Learn ${skillName}`,
-            url: `https://www.coursera.org/search?query=${encodeURIComponent(skillName)}`,
+            title: `Learn {skillName}`,
+            url: `https://www.coursera.org/search?query={encodeURIComponent(skillName)}`,
             type: "course",
           });
         }
 
         highPriorityTasks.push({
-          task: `Develop ${skillName} skills`,
+          task: `Develop {skillName} skills`,
           resources: taskResources,
         });
       }
@@ -1608,14 +1605,14 @@ export class MemoryEnabledAgent {
         } else {
           // Add default resources
           taskResources.push({
-            title: `Learn ${skillName}`,
-            url: `https://www.udemy.com/courses/search/?src=ukw&q=${encodeURIComponent(skillName)}`,
+            title: `Learn {skillName}`,
+            url: `https://www.udemy.com/courses/search/?src=ukw&q={encodeURIComponent(skillName)}`,
             type: "course",
           });
         }
 
         mediumPriorityTasks.push({
-          task: `Develop ${skillName} skills`,
+          task: `Develop {skillName} skills`,
           resources: taskResources,
         });
       }
@@ -1657,7 +1654,7 @@ export class MemoryEnabledAgent {
         resources: [
           {
             title: "Interview Preparation Guide",
-            url: `https://www.google.com/search?q=${encodeURIComponent(targetRole)}+interview+questions+guide`,
+            url: `https://www.google.com/search?q={encodeURIComponent(targetRole)}+interview+questions+guide`,
             type: "guide",
           },
         ],
@@ -1679,11 +1676,11 @@ export class MemoryEnabledAgent {
     // Add company research task
     if (currentCompany !== targetCompany) {
       interviewTasks.push({
-        task: `Research ${targetCompany} culture and values`,
+        task: `Research {targetCompany} culture and values`,
         resources: [
           {
-            title: `${targetCompany} Company Research`,
-            url: `https://www.glassdoor.com/Overview/Working-at-${targetCompany.replace(/\s+/g, "-")}`,
+            title: `{targetCompany} Company Research`,
+            url: `https://www.glassdoor.com/Overview/Working-at-{targetCompany.replace(/\s+/g, "-")}`,
             type: "research",
           },
         ],
@@ -1710,11 +1707,11 @@ export class MemoryEnabledAgent {
 
     // Create the complete plan
     return {
-      overview: `Personalized transition plan from ${currentRole} to ${targetRole} focusing on skill development, networking, and interview preparation.`,
+      overview: `Personalized transition plan from {currentRole} to {targetRole} focusing on skill development, networking, and interview preparation.`,
       estimatedTimeframe: "3-6 months",
       milestones: milestones,
       successMetrics: [
-        `Successfully interview for ${targetRole} positions`,
+        `Successfully interview for {targetRole} positions`,
         "Demonstrate mastery of required technical skills",
         "Build a professional network in the target role",
         "Complete at least one portfolio project demonstrating key skills",
@@ -1723,7 +1720,7 @@ export class MemoryEnabledAgent {
         "Time management while working full-time",
         "Competitive job market for this role",
         "Rapidly evolving skill requirements",
-        `Adjusting to ${targetCompany} culture from ${currentCompany} background`,
+        `Adjusting to {targetCompany} culture from {currentCompany} background`,
       ],
     };
   }
@@ -1746,7 +1743,7 @@ export class MemoryEnabledAgent {
               // Store the milestone
               const storedMilestone = await storage.createMilestone({
                 planId: planDb.id,
-                title: milestone.title || `Phase ${index + 1}`,
+                title: milestone.title || `Phase {index + 1}`,
                 description: milestone.description || null,
                 priority: milestone.priority || "Medium",
                 durationWeeks: milestone.durationWeeks || 4,
@@ -1800,7 +1797,7 @@ export class MemoryEnabledAgent {
           }
 
           console.log(
-            `Successfully stored development plan for transition ID: ${transitionId}`,
+            `Successfully stored development plan for transition ID: {transitionId}`,
           );
         } else {
           console.error("Failed to retrieve stored plan from database");
@@ -1824,7 +1821,7 @@ export class MemoryEnabledAgent {
         gapLevel: "Medium",
         confidenceScore: 70,
         mentionCount: 1,
-        contextSummary: `Core technical skills needed for the ${targetRole} role`,
+        contextSummary: `Core technical skills needed for the {targetRole} role`,
       },
       {
         skillName: "Domain Knowledge",
@@ -1838,7 +1835,7 @@ export class MemoryEnabledAgent {
         gapLevel: "Medium",
         confidenceScore: 75,
         mentionCount: 3,
-        contextSummary: `Leadership expectations for ${targetRole}`,
+        contextSummary: `Leadership expectations for {targetRole}`,
       },
     ];
   }
@@ -1849,7 +1846,7 @@ export class MemoryEnabledAgent {
   getFallbackInsights(currentRole: string, targetRole: string): any {
     return {
       keyObservations: [
-        `Most successful transitions from ${currentRole} to ${targetRole} take 6-12 months`,
+        `Most successful transitions from {currentRole} to {targetRole} take 6-12 months`,
         "Building a portfolio of relevant projects is critical",
         "Networking with professionals already in the target role increases success rate",
       ],

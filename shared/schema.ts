@@ -215,6 +215,7 @@ export type Milestone = typeof milestones.$inferSelect;
 export const resources = pgTable("resources", {
   id: serial("id").primaryKey(),
   milestoneId: integer("milestone_id").notNull(),
+  taskId: integer("task_id"),
   title: text("title").notNull(),
   description: text("description"),
   url: text("url").notNull(),
@@ -223,6 +224,7 @@ export const resources = pgTable("resources", {
 
 export const insertResourceSchema = createInsertSchema(resources).pick({
   milestoneId: true,
+  taskId: true,
   title: true,
   description: true,
   url: true,
@@ -385,5 +387,23 @@ export type ReadinessScore = typeof readinessScores.$inferSelect;
 
 // Note: Recommendations are now stored directly in the readinessScores table as a JSON field
 // This simplifies our database structure and makes querying easier
+
+// Store tasks for milestones
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  milestoneId: integer("milestone_id").notNull(),
+  content: text("content").notNull(),
+  isDone: boolean("is_done").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTaskSchema = createInsertSchema(tasks).pick({
+  milestoneId: true,
+  content: true,
+  isDone: true,
+});
+
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+export type Task = typeof tasks.$inferSelect;
 
 // API Cache table is defined above
