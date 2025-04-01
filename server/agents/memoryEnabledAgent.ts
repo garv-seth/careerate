@@ -22,17 +22,20 @@ let ChatOpenAI: any = null;
 
 // Try to dynamically import OpenAI components
 try {
-  import("langchain/embeddings/openai")
-    .then((module) => {
-      OpenAIEmbeddings = module.OpenAIEmbeddings;
-    })
-    .catch(() => console.warn("OpenAI embeddings not available"));
-
-  import("@langchain/openai")
-    .then((module) => {
-      ChatOpenAI = module.ChatOpenAI;
-    })
-    .catch(() => console.warn("OpenAI chat model not available"));
+  import("@langchain/openai").then((module) => {
+    ChatOpenAI = module.ChatOpenAI;
+    console.log("Loaded ChatOpenAI successfully");
+  }).catch((err) => {
+    console.warn("OpenAI chat model not available:", err.message);
+  });
+  
+  // Load embeddings separately with correct path
+  import("@langchain/openai").then((module) => {
+    OpenAIEmbeddings = module.OpenAIEmbeddings;
+    console.log("Loaded OpenAIEmbeddings successfully");
+  }).catch((err) => {
+    console.warn("OpenAI embeddings not available:", err.message);
+  });
 } catch (error) {
   console.warn("Error initializing OpenAI imports:", error);
 }
