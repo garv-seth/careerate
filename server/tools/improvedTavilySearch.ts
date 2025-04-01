@@ -12,7 +12,9 @@ const DEFAULT_SEARCH_DEPTH = "basic"; // basic or deep
  * @returns Whether the API key is valid
  */
 function validateTavilyApiKey(apiKey?: string): boolean {
-  if (!apiKey) return false;
+  if (!apiKey) {
+    return false;
+  }
   // Tavily API keys start with tvly- and are 36 characters long
   return apiKey.startsWith("tvly-") && apiKey.length >= 20;
 }
