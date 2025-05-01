@@ -20,13 +20,11 @@ const NavLink = ({ href, children }: NavLinkProps) => {
   const isActive = location === href;
 
   return (
-    <WouterLink href={href}>
-      <a className={`font-medium ${isActive 
-        ? "text-primary-600 dark:text-primary-400" 
-        : "text-gray-600 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400"} 
-        transition-colors`}>
-        {children}
-      </a>
+    <WouterLink href={href} className={`font-medium ${isActive 
+      ? "text-primary-600 dark:text-primary-400" 
+      : "text-gray-600 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400"} 
+      transition-colors`}>
+      {children}
     </WouterLink>
   );
 };
@@ -52,15 +50,13 @@ export const TubelightNavbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
-            <WouterLink href="/">
-              <a className="flex items-center">
+            <WouterLink href="/" className="flex items-center">
                 <div className="bg-gradient-to-r from-primary-600 to-secondary-500 p-1.5 rounded-lg mr-2">
                   <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zm5.99 7.176A9.007 9.007 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
                   </svg>
                 </div>
                 <span className="font-heading font-bold text-xl text-slate-900 dark:text-white tracking-tight">Careerate</span>
-              </a>
             </WouterLink>
           </div>
           
@@ -74,13 +70,13 @@ export const TubelightNavbar = () => {
           
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <WouterLink href="/dashboard">
-                <Button variant="default">Dashboard</Button>
-              </WouterLink>
+              <Button variant="default" asChild>
+                <WouterLink href="/dashboard">Dashboard</WouterLink>
+              </Button>
             ) : (
-              <a href="/api/login">
-                <Button className="hidden sm:inline-flex">Sign In</Button>
-              </a>
+              <Button className="hidden sm:inline-flex" asChild>
+                <a href="/api/login">Sign In</a>
+              </Button>
             )}
             
             <button 
@@ -121,23 +117,17 @@ export const TubelightNavbar = () => {
                   <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
                     {isAuthenticated ? (
                       <div className="space-y-3">
-                        <WouterLink href="/dashboard">
-                          <Button className="w-full" onClick={() => setSheetOpen(false)}>
-                            Dashboard
-                          </Button>
-                        </WouterLink>
-                        <a href="/api/logout">
-                          <Button variant="outline" className="w-full" onClick={() => setSheetOpen(false)}>
-                            Logout
-                          </Button>
-                        </a>
+                        <Button className="w-full" onClick={() => setSheetOpen(false)} asChild>
+                          <WouterLink href="/dashboard">Dashboard</WouterLink>
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={() => setSheetOpen(false)} asChild>
+                          <a href="/api/logout">Logout</a>
+                        </Button>
                       </div>
                     ) : (
-                      <a href="/api/login">
-                        <Button className="w-full" onClick={() => setSheetOpen(false)}>
-                          Sign In
-                        </Button>
-                      </a>
+                      <Button className="w-full" onClick={() => setSheetOpen(false)} asChild>
+                        <a href="/api/login">Sign In</a>
+                      </Button>
                     )}
                   </div>
                 </div>
