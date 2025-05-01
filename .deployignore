@@ -1,0 +1,15 @@
+
+.git
+.vscode
+node_modules
+*.test.*
+*.spec.*
+test/
+__tests__/
+coverage/
+tmp/
+.DS_Store
+*.log
+*.temp
+*.tmp
+README.md
