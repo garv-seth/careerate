@@ -47,7 +47,6 @@ const HomePage = () => {
               >
                 <span className="block text-gray-900 dark:text-white">Careerate</span>
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-600 via-primary-500 to-accent-600 dark:from-secondary-400 dark:via-primary-300 dark:to-accent-400">
-                  Career Acceleration
                 </span>
               </motion.h1>
               <motion.p 
