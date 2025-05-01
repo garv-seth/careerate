@@ -1,64 +1,130 @@
 import React from "react";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
+import careerateLogoSrc from "@assets/CareerateICON.png";
 
 const Footer2 = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 }
+    }
+  };
+  
   return (
-    <footer className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="bg-white/95 dark:bg-slate-900/95 border-t border-gray-200 dark:border-slate-800 backdrop-blur-sm">
+      <motion.div 
+        className="container mx-auto px-4 sm:px-6 lg:px-8 py-12"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={containerVariants}
+      >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div className="md:col-span-1">
-            <div className="flex items-center mb-4">
-              <div className="bg-gradient-to-r from-primary-600 to-secondary-500 p-1.5 rounded-lg mr-2">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zm5.99 7.176A9.007 9.007 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
-                </svg>
-              </div>
+          <motion.div 
+            className="md:col-span-1"
+            variants={itemVariants}
+          >
+            <motion.div 
+              className="flex items-center mb-4"
+              whileHover={{ scale: 1.03 }}
+            >
+              <motion.div 
+                className="mr-3"
+                whileHover={{ rotate: 10 }}
+              >
+                <img 
+                  src={careerateLogoSrc}
+                  alt="Careerate Logo" 
+                  className="w-10 h-10 rounded-full tubelight" 
+                />
+              </motion.div>
               <span className="font-heading font-bold text-xl text-slate-900 dark:text-white tracking-tight">Careerate</span>
-            </div>
+            </motion.div>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               AI-powered career acceleration platform helping professionals navigate the future of work.
             </p>
-            <div className="flex space-x-4">
+            <motion.div 
+              className="flex space-x-4"
+              variants={itemVariants}
+            >
               {socialLinks.map((link) => (
-                <a 
+                <motion.a 
                   key={link.name}
                   href={link.href} 
                   className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
                   aria-label={link.name}
+                  whileHover={{ scale: 1.2, y: -3 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   {link.icon}
-                </a>
+                </motion.a>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
           
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider mb-4">
+          {footerSections.map((section, index) => (
+            <motion.div 
+              key={section.title}
+              variants={itemVariants}
+              custom={index}
+            >
+              <h3 className="text-sm font-semibold text-primary-500 dark:text-primary-400 uppercase tracking-wider mb-4">
                 {section.title}
               </h3>
-              <ul className="space-y-3">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <a 
+              <motion.ul 
+                className="space-y-3"
+                variants={containerVariants}
+              >
+                {section.links.map((link, linkIndex) => (
+                  <motion.li 
+                    key={link.label}
+                    variants={itemVariants}
+                    custom={linkIndex}
+                  >
+                    <motion.a 
                       href={link.href} 
                       className="text-base text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                      whileHover={{ x: 5 }}
+                      transition={{ type: "spring", stiffness: 400 }}
                     >
                       {link.label}
-                    </a>
-                  </li>
+                    </motion.a>
+                  </motion.li>
                 ))}
-              </ul>
-            </div>
+              </motion.ul>
+            </motion.div>
           ))}
         </div>
         
-        <div className="border-t border-gray-200 dark:border-slate-800 pt-8 mt-12">
-          <p className="text-base text-gray-500 dark:text-gray-400 text-center">
+        <motion.div 
+          className="border-t border-gray-200 dark:border-slate-800 pt-8 mt-12"
+          variants={itemVariants}
+        >
+          <motion.p 
+            className="text-base text-gray-500 dark:text-gray-400 text-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5 }}
+          >
             &copy; {new Date().getFullYear()} Careerate, Inc. All rights reserved.
-          </p>
-        </div>
-      </div>
+          </motion.p>
+        </motion.div>
+      </motion.div>
     </footer>
   );
 };
