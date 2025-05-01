@@ -47,7 +47,7 @@ const HomePage = () => {
               >
                 <span className="block text-gray-800 dark:text-white drop-shadow-md">Careerate</span>
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-secondary-500 to-accent-500 dark:from-primary-400 dark:via-secondary-300 dark:to-accent-400 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]">
-                  Career Acceleration
+                  
                 </span>
               </motion.h1>
               <motion.p 
@@ -64,7 +64,7 @@ const HomePage = () => {
                   <a href="/api/login">
                     <Button 
                       size="lg" 
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-600/40 transition-all duration-200"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-gray hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-600/40 transition-all duration-200"
                     >
                       Get Early Access
                     </Button>
@@ -75,7 +75,7 @@ const HomePage = () => {
                     <Button 
                       variant="outline" 
                       size="lg"
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 border-2 border-primary-600 bg-white/90 text-primary-700 hover:bg-primary-50 dark:bg-transparent dark:border-white dark:text-white dark:hover:bg-primary-900/20 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 border-2 border-primary-600 bg-gray/90 text-primary-700 hover:bg-primary-50 dark:bg-transparent dark:border-gray dark:text-gray dark:hover:bg-primary-900/20 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       Learn More
                     </Button>
@@ -254,20 +254,20 @@ const HomePage = () => {
       {/* CTA Section */}
       <section className="py-20 bg-primary-600">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-heading font-bold text-white sm:text-4xl mb-4">
+          <h2 className="text-3xl font-heading font-bold text-gray sm:text-4xl mb-4">
             Ready to Future-Proof Your Career?
           </h2>
-          <p className="text-xl text-white mb-10 max-w-3xl mx-auto">
+          <p className="text-xl text-gray mb-10 max-w-3xl mx-auto">
             Get personalized AI insights, industry-specific guidance, and a roadmap to stay ahead in an AI-driven world.
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <a href="/api/login">
-              <Button variant="secondary" size="lg" className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-white hover:bg-gray-50 font-semibold shadow-lg">
+              <Button variant="secondary" size="lg" className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-gray hover:bg-gray-50 font-semibold shadow-lg">
                 Get Early Access
               </Button>
             </a>
             <a href="#features">
-              <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white hover:bg-primary-700/90 hover:border-white font-semibold shadow-lg">
+              <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-gray hover:bg-primary-700/90 hover:border-white font-semibold shadow-lg">
                 Learn More
               </Button>
             </a>
