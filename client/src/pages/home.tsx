@@ -30,7 +30,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TubelightNavbar />
-      
+
       {/* Hero Section */}
       <WarpBackground>
         <div className="pt-20 pb-24 sm:pt-32 sm:pb-40 lg:pt-40 lg:pb-48">
@@ -42,15 +42,16 @@ const HomePage = () => {
               variants={staggerContainer}
             >
               <motion.h1 
-                className="text-4xl font-heading font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-6xl"
+                className="text-4xl font-heading font-bold tracking-tight sm:text-5xl md:text-6xl"
                 variants={fadeIn}
               >
-                <span className="block text-gray-900 dark:text-white">Careerate</span>
-                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-600 via-primary-500 to-accent-600 dark:from-secondary-400 dark:via-primary-300 dark:to-accent-400">
+                <span className="block text-gray-800 dark:text-white drop-shadow-md">Careerate</span>
+                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-secondary-500 to-accent-500 dark:from-primary-400 dark:via-secondary-300 dark:to-accent-400 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]">
+                  Career Acceleration
                 </span>
               </motion.h1>
               <motion.p 
-                className="mt-6 text-xl text-gray-800 dark:text-gray-200 max-w-2xl mx-auto"
+                className="mt-6 text-xl text-gray-700 dark:text-gray-200 max-w-2xl mx-auto font-medium drop-shadow-sm"
                 variants={fadeIn}
               >
                 Don't let AI replace you—embrace it. Stay ahead of the curve with personalized career insights and learning paths driven by next-gen AI.
@@ -59,22 +60,22 @@ const HomePage = () => {
                 className="mt-10 max-w-md mx-auto sm:flex sm:justify-center md:mt-12"
                 variants={fadeIn}
               >
-                <div className="rounded-md shadow">
+                <div className="rounded-md">
                   <a href="/api/login">
                     <Button 
                       size="lg" 
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-600/40 transition-all duration-200"
                     >
                       Get Early Access
                     </Button>
                   </a>
                 </div>
-                <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
+                <div className="mt-3 rounded-md sm:mt-0 sm:ml-3">
                   <a href="#features">
                     <Button 
                       variant="outline" 
                       size="lg"
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 border-2 border-primary-600 bg-transparent text-primary-700 hover:bg-primary-50 dark:border-white dark:text-white dark:hover:bg-primary-900/20 font-semibold"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 border-2 border-primary-600 bg-white/90 text-primary-700 hover:bg-primary-50 dark:bg-transparent dark:border-white dark:text-white dark:hover:bg-primary-900/20 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       Learn More
                     </Button>
@@ -220,7 +221,7 @@ const HomePage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-gray-900 dark:text-white">Learning Recommendations</h3>
@@ -317,7 +318,7 @@ const features = [
   {
     icon: (
       <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253"></path>
       </svg>
     ),
     title: "Sophia",
