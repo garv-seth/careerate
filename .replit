@@ -7,7 +7,7 @@ channel = "stable-24_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "bun install && bun run build"]
+build = ["sh", "-c", "bun install --production && bun run build"]
 run = ["sh", "-c", "bun run start"]
 
 [[ports]]
