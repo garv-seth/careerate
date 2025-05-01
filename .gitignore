@@ -4,3 +4,12 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+node_modules/
+dist/
+.git/
+*.log
+coverage/
+tmp/
+.DS_Store
+*.temp
+*.tmp
