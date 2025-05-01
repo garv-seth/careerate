@@ -42,16 +42,16 @@ const HomePage = () => {
               variants={staggerContainer}
             >
               <motion.h1 
-                className="text-4xl font-heading font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
+                className="text-4xl font-heading font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-6xl"
                 variants={fadeIn}
               >
-                <span className="block">Careerate</span>
-                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-400 via-primary-300 to-accent-400">
+                <span className="block text-gray-900 dark:text-white">Careerate</span>
+                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-600 via-primary-500 to-accent-600 dark:from-secondary-400 dark:via-primary-300 dark:to-accent-400">
                   Career Acceleration
                 </span>
               </motion.h1>
               <motion.p 
-                className="mt-6 text-xl text-gray-200 max-w-2xl mx-auto"
+                className="mt-6 text-xl text-gray-800 dark:text-gray-200 max-w-2xl mx-auto"
                 variants={fadeIn}
               >
                 Don't let AI replace you—embrace it. Stay ahead of the curve with personalized career insights and learning paths driven by next-gen AI.
@@ -64,7 +64,7 @@ const HomePage = () => {
                   <a href="/api/login">
                     <Button 
                       size="lg" 
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
                     >
                       Get Early Access
                     </Button>
@@ -75,7 +75,7 @@ const HomePage = () => {
                     <Button 
                       variant="outline" 
                       size="lg"
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-white text-primary-600 hover:bg-gray-50"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-white text-primary-700 hover:bg-gray-50 dark:bg-transparent dark:text-white dark:hover:bg-primary-900/20"
                     >
                       Learn More
                     </Button>
@@ -257,17 +257,17 @@ const HomePage = () => {
           <h2 className="text-3xl font-heading font-bold text-white sm:text-4xl mb-4">
             Ready to Future-Proof Your Career?
           </h2>
-          <p className="text-xl text-primary-100 mb-10 max-w-3xl mx-auto">
+          <p className="text-xl text-white mb-10 max-w-3xl mx-auto">
             Get personalized AI insights, industry-specific guidance, and a roadmap to stay ahead in an AI-driven world.
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <a href="/api/login">
-              <Button variant="secondary" size="lg" className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-white hover:bg-gray-50">
+              <Button variant="secondary" size="lg" className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-white hover:bg-gray-50 font-semibold">
                 Get Early Access
               </Button>
             </a>
             <a href="#features">
-              <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-white text-white hover:bg-primary-700">
+              <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white hover:bg-primary-700 font-semibold">
                 Learn More
               </Button>
             </a>
