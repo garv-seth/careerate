@@ -1,4 +1,4 @@
-import { createClient } from "@replit/object-storage";
+import { Client } from "@replit/object-storage";
 import multer from "multer";
 import { Express, Request, Response, NextFunction } from "express";
 import { createReadStream } from "fs";
@@ -6,8 +6,8 @@ import { unlink } from "fs/promises";
 import path from "path";
 
 // Initialize Object Storage client
-const objectStorage = createClient({
-  bucket: "careerate-assets",
+const objectStorage = new Client({
+  bucketId: "careerate-assets",
 });
 
 // Configure multer for file upload
@@ -91,8 +91,8 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
       const objectKey = `resumes/${userId}/${Date.now()}-${file.originalname}`;
       const fileStream = createReadStream(filePath);
       
-      await objectStorage.put(objectKey, fileStream, {
-        contentType: file.mimetype,
+      await objectStorage.uploadFromStream(objectKey, fileStream, {
+        compress: true
       });
       
       // Clean up local file
