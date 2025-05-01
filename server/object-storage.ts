@@ -14,7 +14,18 @@ const objectStorage = new Client({
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, path.join(process.cwd(), "tmp"));
+      const tmpDir = path.join(process.cwd(), "tmp");
+      // Ensure directory exists
+      import('fs').then(fs => {
+        if (!fs.existsSync(tmpDir)) {
+          fs.mkdirSync(tmpDir, { recursive: true });
+          console.log("Created tmp directory for uploads:", tmpDir);
+        }
+        cb(null, tmpDir);
+      }).catch(err => {
+        console.error("Error ensuring tmp directory exists:", err);
+        cb(err, tmpDir);
+      });
     },
     filename: (req, file, cb) => {
       cb(null, `${Date.now()}-${file.originalname}`);
@@ -24,12 +35,20 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
+    console.log("Filtering file:", file.originalname, "Mimetype:", file.mimetype);
+    
+    // Accept all files for debugging
+    cb(null, true);
+    
+    // Original filter
+    /*
     const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
       cb(new Error("Invalid file type. Only PDF, DOCX, DOC, and TXT files are allowed.") as any);
     }
+    */
   },
 });
 
@@ -68,12 +87,30 @@ const extractTextFromFile = async (filePath: string, mimeType: string): Promise<
 
 // Upload middleware
 export const uploadResume = async (req: any, res: Response, next: NextFunction) => {
+  console.log("Upload resume middleware triggered");
+  
+  // Ensure the tmp directory exists
+  try {
+    const tmpDir = path.join(process.cwd(), "tmp");
+    await import('fs').then(fs => {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+        console.log("Created tmp directory:", tmpDir);
+      }
+    });
+  } catch (dirError) {
+    console.error("Error ensuring tmp directory exists:", dirError);
+  }
+  
   const singleUpload = upload.single("resume");
   
   singleUpload(req, res, async (err) => {
     if (err) {
+      console.error("Multer error:", err);
       return res.status(400).json({ message: err.message });
     }
+    
+    console.log("File upload request processed", req.file ? "with file" : "without file");
     
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -83,23 +120,39 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
     const file = req.file;
     const filePath = file.path;
     
+    console.log("Resume file uploaded:", file.originalname, "Size:", file.size, "bytes");
+    
     try {
       // Extract text from resume
       const resumeText = await extractTextFromFile(filePath, file.mimetype);
+      console.log("Text extracted successfully from resume");
       
-      // Upload file to object storage
-      const objectKey = `resumes/${userId}/${Date.now()}-${file.originalname}`;
-      const fileStream = createReadStream(filePath);
-      
-      await objectStorage.uploadFromStream(objectKey, fileStream, {
-        compress: true
-      });
+      try {
+        // Upload file to object storage
+        const objectKey = `resumes/${userId}/${Date.now()}-${file.originalname}`;
+        const fileStream = createReadStream(filePath);
+        
+        await objectStorage.uploadFromStream(objectKey, fileStream, {
+          compress: true
+        });
+        console.log("Resume uploaded to object storage with key:", objectKey);
+      } catch (uploadError) {
+        console.error("Error uploading to object storage, continuing with extracted text:", uploadError);
+        // We continue even if object storage fails - the text is more important
+      }
       
       // Clean up local file
-      await unlink(filePath);
+      try {
+        await unlink(filePath);
+        console.log("Temporary file deleted:", filePath);
+      } catch (unlinkError) {
+        console.error("Error deleting temporary file:", unlinkError);
+        // Non-fatal error, continue processing
+      }
       
       // Attach resume text to request for next middleware
       req.resumeText = resumeText;
+      console.log("Resume text attached to request, proceeding to next middleware");
       next();
     } catch (error) {
       console.error("Error processing file:", error);

@@ -104,14 +104,32 @@ const Dashboard = () => {
   };
 
   const handleResumeUpload = async () => {
-    if (!resumeFile) return;
+    if (!resumeFile) {
+      toast({
+        title: "No file selected",
+        description: "Please select a resume file to upload.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Uploading file:", resumeFile.name, "Size:", resumeFile.size, "Type:", resumeFile.type);
     
     const formData = new FormData();
     formData.append("resume", resumeFile);
     
+    // Log form data contents for debugging
+    for (let [key, value] of formData.entries()) {
+      console.log(`Form Data: ${key} = ${value instanceof File ? value.name : value}`);
+    }
+    
     setUploading(true);
     try {
-      await uploadResumeMutation.mutateAsync(formData);
+      console.log("Starting upload mutation");
+      const result = await uploadResumeMutation.mutateAsync(formData);
+      console.log("Upload result:", result);
+    } catch (error) {
+      console.error("Upload error:", error);
     } finally {
       setUploading(false);
       setResumeFile(null);
