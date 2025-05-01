@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import authRouter from "./auth";
 import { uploadResume, getResume } from "./object-storage";
-import { runCareerate } from "../src/agents/graph";
+// Use simplified agent implementation instead of complex LangChain agents
+import { analyzeResume, generateCareerAdvice, generateLearningPlan } from "../src/simplified/agent";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up Replit Auth
@@ -67,16 +68,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No resume found. Please upload your resume first." });
       }
       
-      // Run the multi-agent system
-      const result = await runCareerate(userId, profile.resumeText);
-      res.json(result);
+      // First analyze the resume
+      const resumeAnalysis = await analyzeResume(profile.resumeText);
+      
+      // Then generate career advice based on the analysis
+      const careerAdvice = await generateCareerAdvice(userId, resumeAnalysis);
+      
+      res.json(careerAdvice);
     } catch (error) {
       console.error("Error generating career advice:", error);
       res.status(500).json({ message: "Failed to generate career advice" });
     }
   });
   
-  // Generate roadmap
+  // Generate learning roadmap
   app.post('/api/roadmap/generate', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -86,9 +91,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No resume found. Please upload your resume first." });
       }
       
-      // Run roadmap generation (calls the same function as /api/advise for MVP)
-      await runCareerate(userId, profile.resumeText);
-      res.json({ message: "Roadmap generated successfully" });
+      // First analyze the resume to extract skills
+      const resumeAnalysis = await analyzeResume(profile.resumeText);
+      
+      // Generate a learning plan based on the skills
+      const learningPlan = await generateLearningPlan(userId, resumeAnalysis.skills);
+      
+      res.json(learningPlan);
     } catch (error) {
       console.error("Error generating roadmap:", error);
       res.status(500).json({ message: "Failed to generate roadmap" });

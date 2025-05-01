@@ -99,11 +99,11 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary-500 rounded-md;
+  @apply bg-primary rounded-md;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-600;
+  @apply bg-primary/80;
 }
 
 /* Animation for tubelight effect */
