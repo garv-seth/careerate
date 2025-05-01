@@ -27,22 +27,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Resume upload routes
-  app.post('/api/resume/upload', isAuthenticated, uploadResume, async (req: any, res) => {
+  app.post('/api/resume/upload', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const resumeText = req.resumeText;
+      console.log("Resume upload endpoint hit");
+      console.log("Headers:", req.headers);
+      console.log("Content type:", req.headers['content-type']);
       
-      if (!resumeText) {
-        return res.status(400).json({ message: "No resume text extracted" });
-      }
-      
-      // Update profile with resume text
-      await storage.updateProfileResume(userId, resumeText);
-      
-      res.json({ message: "Resume uploaded and analyzed successfully" });
+      // Use custom upload middleware
+      uploadResume(req, res, async (err) => {
+        if (err) {
+          console.error("Error in upload middleware:", err);
+          return res.status(400).json({ message: err.message || "File upload error" });
+        }
+        
+        const userId = req.user.claims.sub;
+        const resumeText = req.resumeText;
+        
+        if (!resumeText) {
+          return res.status(400).json({ message: "No resume text extracted" });
+        }
+        
+        console.log("Resume text extracted successfully for user:", userId);
+        
+        try {
+          // Update profile with resume text
+          const profile = await storage.updateProfileResume(userId, resumeText);
+          console.log("Profile updated with resume text:", profile);
+          
+          return res.json({ message: "Resume uploaded and analyzed successfully", profile });
+        } catch (profileError) {
+          console.error("Error updating profile:", profileError);
+          return res.status(500).json({ message: "Failed to update profile" });
+        }
+      });
     } catch (error) {
-      console.error("Error processing resume:", error);
-      res.status(500).json({ message: "Failed to process resume" });
+      console.error("Error in upload route handler:", error);
+      res.status(500).json({ message: "Failed to process resume upload" });
     }
   });
   
