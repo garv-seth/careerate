@@ -45,7 +45,7 @@ const HomePage = () => {
                 className="text-4xl font-heading font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
                 variants={fadeIn}
               >
-                <span className="block">AI-Powered</span>
+                <span className="block">Careerate</span>
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-400 via-primary-300 to-accent-400">
                   Career Acceleration
                 </span>
@@ -149,7 +149,7 @@ const HomePage = () => {
           <div className="lg:flex lg:items-center lg:space-x-10">
             <div className="lg:w-1/2 lg:pr-10 mb-10 lg:mb-0">
               <h2 className="text-3xl font-heading font-bold text-gray-900 dark:text-white sm:text-4xl mb-6">
-                Your AI-Powered Career Dashboard
+                Your Careerate Dashboard
               </h2>
               <div className="space-y-6">
                 {dashboardFeatures.map((feature) => (
