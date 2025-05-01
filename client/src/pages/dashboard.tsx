@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useAgentSocket } from "@/hooks/useAgentSocket";
 import TubelightNavbar from "@/components/ui/tubelight-navbar";
 import Footer2 from "@/components/ui/footer2";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { CloudUpload, Upload, BookOpen, BarChart2, AlertCircle, ChevronRight, Download } from "lucide-react";
+import { CloudUpload, Upload, BookOpen, BarChart2, AlertCircle, ChevronRight, Download, Wifi, WifiOff } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import AgentStatusPanel from "@/components/dashboard/AgentStatusPanel";
@@ -62,6 +63,13 @@ const Dashboard = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  
+  // Socket.IO connection for real-time agent updates
+  const { 
+    connected: socketConnected, 
+    startAnalysis, 
+    error: socketError 
+  } = useAgentSocket();
 
   // Fetch user profile
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -81,11 +89,18 @@ const Dashboard = () => {
       const response = await apiRequest("POST", "/api/resume/upload", formData);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Resume uploaded successfully",
         description: "Your resume is being analyzed by our AI.",
       });
+      
+      // Start analysis via socket connection if connected
+      if (socketConnected && data.profile && data.profile.resumeText) {
+        // Start real-time agent analysis
+        startAnalysis(data.profile.resumeText);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/advise"] });
@@ -99,6 +114,17 @@ const Dashboard = () => {
       });
     },
   });
+
+  // Show socket connection error
+  useEffect(() => {
+    if (socketError) {
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to agent monitoring service. Some features may be limited.",
+        variant: "destructive",
+      });
+    }
+  }, [socketError]);
 
   const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -406,103 +432,59 @@ const GetStartedCard = () => (
 );
 
 const AnalyzingCard = () => {
-  // Define mock agent statuses for demonstration
-  const [agentStatuses, setAgentStatuses] = useState<AgentStatuses>({
-    cara: 'thinking',
-    maya: 'active',
-    ellie: 'idle',
-    sophia: 'idle'
-  });
+  const { user } = useAuth();
+  const { 
+    agentStatuses, 
+    agentActivities, 
+    connected, 
+    error 
+  } = useAgentSocket();
   
-  // Define mock activities for demonstration
-  const [activities, setActivities] = useState<AgentActivity[]>([
-    {
-      agent: 'cara',
-      action: 'Planning analysis workflow',
-      detail: 'Determining optimal sequence for analyzing your career data',
-      timestamp: new Date(Date.now() - 60000), // 1 minute ago
-      tools: ['pinecone']
-    },
-    {
-      agent: 'maya',
-      action: 'Analyzing resume content',
-      detail: 'Extracting skills, experience, and job roles from your resume',
-      timestamp: new Date(),
-      tools: ['perplexity', 'database']
-    }
-  ]);
+  const uploadState = 'processing';
   
-  // Simulate agent activity progression
+  // Log connection status and any errors
   useEffect(() => {
-    // Start with initial state: cara thinking, maya active
-    
-    // After 3 seconds, complete cara and make maya thinking
-    const timer1 = setTimeout(() => {
-      setAgentStatuses(prev => ({...prev, cara: 'complete', maya: 'thinking'}));
-      setActivities(prev => [
-        {
-          agent: 'maya',
-          action: 'Assessing automation risk',
-          detail: 'Analyzing vulnerability of your skills to AI automation',
-          timestamp: new Date(),
-          tools: ['perplexity']
-        },
-        ...prev
-      ]);
-    }, 3000);
-    
-    // After 6 seconds, complete maya and make ellie active
-    const timer2 = setTimeout(() => {
-      setAgentStatuses(prev => ({...prev, maya: 'complete', ellie: 'active'}));
-      setActivities(prev => [
-        {
-          agent: 'ellie',
-          action: 'Researching industry trends',
-          detail: 'Gathering information on job market and technology trends',
-          timestamp: new Date(),
-          tools: ['brave', 'browserbase']
-        },
-        ...prev
-      ]);
-    }, 6000);
-    
-    // After 9 seconds, make ellie thinking
-    const timer3 = setTimeout(() => {
-      setAgentStatuses(prev => ({...prev, ellie: 'thinking'}));
-      setActivities(prev => [
-        {
-          agent: 'ellie',
-          action: 'Analyzing market opportunities',
-          detail: 'Finding potential career paths based on your skills and interests',
-          timestamp: new Date(),
-          tools: ['firecrawl']
-        },
-        ...prev
-      ]);
-    }, 9000);
-    
-    // Clean up timers
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, []);
+    if (error) {
+      console.error("Socket error:", error);
+      toast({
+        title: "Connection Error",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error]);
   
   return (
     <div className="space-y-6">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Analyzing Your Career Data</CardTitle>
-          <CardDescription>
-            Our AI agents are working on your personalized career insights
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Analyzing Your Career Data</CardTitle>
+              <CardDescription>
+                Our AI agents are working on your personalized career insights
+              </CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              {connected ? (
+                <div className="flex items-center text-green-600 dark:text-green-400 text-xs">
+                  <Wifi className="h-4 w-4 mr-1" />
+                  <span>Connected</span>
+                </div>
+              ) : (
+                <div className="flex items-center text-red-600 dark:text-red-400 text-xs">
+                  <WifiOff className="h-4 w-4 mr-1" />
+                  <span>Disconnected</span>
+                </div>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <AgentStatusPanel 
-            uploadState="processing"
+            uploadState={uploadState}
             agentStatuses={agentStatuses}
-            recentActivities={activities}
+            recentActivities={agentActivities}
           />
         </CardContent>
       </Card>
@@ -517,7 +499,7 @@ const AnalyzingCard = () => {
           </CardHeader>
           <CardContent>
             <AgentActivityPanel 
-              activities={activities}
+              activities={agentActivities}
               agentStatuses={agentStatuses}
               className="max-h-96 overflow-y-auto px-0"
             />

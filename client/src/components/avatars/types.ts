@@ -1,4 +1,4 @@
-// Agent status types
+// Agent statuses for UI display and tracking
 export type AgentStatuses = {
   cara: 'idle' | 'active' | 'thinking' | 'complete';
   maya: 'idle' | 'active' | 'thinking' | 'complete';
@@ -6,7 +6,7 @@ export type AgentStatuses = {
   sophia: 'idle' | 'active' | 'thinking' | 'complete';
 };
 
-// Agent activities that will be displayed in real-time
+// Agent activity events for tracking what agents are doing
 export type AgentActivity = {
   agent: 'cara' | 'maya' | 'ellie' | 'sophia';
   action: string;
@@ -15,34 +15,26 @@ export type AgentActivity = {
   tools?: Array<'brave' | 'firecrawl' | 'browserbase' | 'database' | 'perplexity' | 'pinecone'>;
 };
 
-// Agent descriptions for tooltips and info panels
+// Descriptions of each agent's role and capabilities for UI display
 export const agentDescriptions = {
   cara: {
-    role: 'Orchestration Agent',
-    description: 'Coordinates the entire analysis process and synthesizes insights from all other agents.',
-    capabilities: ['Plan-Execute-Reflect pattern', 'Task delegation', 'Executive summary generation', 'Multi-agent orchestration'],
-    tools: ['Pinecone vector database', 'Perplexity API'],
-    color: 'blue'
+    role: "Career Coach & Orchestrator",
+    description: "Cara orchestrates your career analysis by coordinating with other specialized agents. She creates a comprehensive career action plan based on their inputs.",
+    specialty: "Career planning"
   },
   maya: {
-    role: 'Resume Analysis Agent',
-    description: 'Analyzes your resume to identify strengths, weaknesses, and automation risks.',
-    capabilities: ['Resume parsing', 'Skill extraction', 'Automation risk assessment', 'Gap analysis'],
-    tools: ['Perplexity API', 'Browserbase', 'Database'],
-    color: 'purple'
+    role: "Resume Analyzer",
+    description: "Maya specializes in analyzing your resume to identify your skills, experience, and career trajectory. She helps identify strengths and areas for improvement.",
+    specialty: "Profile analysis"
   },
   ellie: {
-    role: 'Industry Analysis Agent',
-    description: 'Researches industry trends, emerging technologies, and potential career directions.',
-    capabilities: ['Web research', 'Industry trend analysis', 'Technology forecasting', 'Job market research'],
-    tools: ['Brave Search API', 'Firecrawl', 'Browserbase'],
-    color: 'pink'
+    role: "Industry Analyst",
+    description: "Ellie researches market trends, industry developments, and automation risks relevant to your career. She helps identify future opportunities and challenges.",
+    specialty: "Market research"
   },
   sophia: {
-    role: 'Learning Advisor Agent',
-    description: 'Creates personalized learning plans and recommends resources to bridge skill gaps.',
-    capabilities: ['Course recommendation', 'Learning path creation', 'Content curation', 'Skill prioritization'],
-    tools: ['Database', 'Browserbase', 'Perplexity API'],
-    color: 'green'
+    role: "Learning Advisor",
+    description: "Sophia creates personalized learning plans based on your skills and career goals. She recommends courses, resources, and learning paths for skill development.",
+    specialty: "Skill development"
   }
 };

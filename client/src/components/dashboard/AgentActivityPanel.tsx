@@ -1,23 +1,28 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { AgentActivity, AgentStatuses, agentDescriptions } from '../avatars/types';
-import { AgentAvatar, agentColors } from '../avatars/AgentAvatars';
-import { 
-  Search, 
-  Database, 
-  Globe, 
-  Brain, 
-  Sparkles, 
-  Loader2
-} from 'lucide-react';
+import { AgentActivity, AgentStatuses, agentDescriptions } from '@/components/avatars/types';
+import { AgentAvatar, agentColors } from '@/components/avatars/AgentAvatars';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { FileText, Database, Search, Globe, BookOpen, Brain } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
+// Tool icon mappings
 export const toolIcons = {
-  brave: <Search className="h-4 w-4" />,
-  firecrawl: <Search className="h-4 w-4" />,
-  browserbase: <Globe className="h-4 w-4" />,
-  database: <Database className="h-4 w-4" />,
-  perplexity: <Brain className="h-4 w-4" />,
-  pinecone: <Sparkles className="h-4 w-4" />
+  brave: <Search className="h-3.5 w-3.5" />,
+  firecrawl: <Globe className="h-3.5 w-3.5" />,
+  browserbase: <Globe className="h-3.5 w-3.5" />,
+  database: <Database className="h-3.5 w-3.5" />,
+  perplexity: <Brain className="h-3.5 w-3.5" />,
+  pinecone: <FileText className="h-3.5 w-3.5" />
+};
+
+// Tool names for tooltips
+const toolNames = {
+  brave: 'Brave Search',
+  firecrawl: 'Firecrawl Web Crawler',
+  browserbase: 'Browserbase Scraper',
+  database: 'Knowledge Database',
+  perplexity: 'Perplexity AI Search',
+  pinecone: 'Pinecone Vector Database'
 };
 
 interface AgentActivityPanelProps {
@@ -32,85 +37,86 @@ interface AgentActivityPanelProps {
 }
 
 export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
-  activities = [],
+  activities,
   agentStatuses,
   className = ''
 }) => {
-  // Format time to show either "just now", "X minutes ago", or time if older than 60 minutes
+  // Format timestamp
   const formatTime = (timestamp: Date) => {
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - timestamp.getTime()) / 1000 / 60);
-    
-    if (diff < 1) return 'just now';
-    if (diff < 60) return `${diff} min ago`;
-    
     return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
   
-  // Sort activities by timestamp, newest first
-  const sortedActivities = [...activities].sort((a, b) => 
-    b.timestamp.getTime() - a.timestamp.getTime()
-  );
-  
   return (
     <div className={`space-y-4 ${className}`}>
-      {sortedActivities.length === 0 ? (
-        <div className="text-center p-4 text-gray-500 dark:text-gray-400">
-          No agent activity yet.
+      {activities.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500 dark:text-gray-400">
+          <FileText className="h-10 w-10 mb-3 text-gray-400 dark:text-gray-600" />
+          <p className="text-sm">No agent activities yet</p>
+          <p className="text-xs mt-1">Activity will appear here once AI agents start working</p>
         </div>
       ) : (
-        sortedActivities.map((activity, index) => {
-          const colors = agentColors[activity.agent];
-          const isActive = agentStatuses[activity.agent] === 'active' || agentStatuses[activity.agent] === 'thinking';
-          
-          return (
-            <motion.div 
-              key={`${activity.agent}-${index}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className={`p-4 border-l-4 rounded-r-lg ${colors.border} ${isActive ? `${colors.bgLight} bg-opacity-10` : 'bg-white dark:bg-slate-800'}`}
-            >
-              <div className="flex items-start">
+        <div className="space-y-3">
+          {activities.map((activity, index) => {
+            const colors = agentColors[activity.agent];
+            
+            return (
+              <div key={index} className="flex items-start space-x-3 pb-3 border-b last:border-b-0 dark:border-gray-800">
                 <AgentAvatar 
                   name={activity.agent} 
-                  status={agentStatuses[activity.agent]}
                   size="sm" 
-                  className="mr-3 mt-0.5"
+                  status={agentStatuses[activity.agent]}
+                  className="mt-1"
                 />
                 
-                <div className="flex-1">
-                  <div className="flex justify-between mb-1">
-                    <div className="font-medium text-sm">{activity.action}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                      {formatTime(activity.timestamp)}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between">
+                    <div className="flex gap-1 items-center">
+                      <span className={`font-medium ${colors.text}`}>
+                        {activity.agent.charAt(0).toUpperCase() + activity.agent.slice(1)}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {agentDescriptions[activity.agent].specialty}
+                      </span>
                     </div>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      {formatTime(activity.timestamp)}
+                    </span>
                   </div>
                   
+                  <p className="text-sm mt-1">{activity.action}</p>
+                  
                   {activity.detail && (
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
                       {activity.detail}
                     </p>
                   )}
                   
                   {activity.tools && activity.tools.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex space-x-1 mt-2">
                       {activity.tools.map(tool => (
-                        <div 
-                          key={tool}
-                          className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-700"
-                        >
-                          <span className="mr-1">{toolIcons[tool]}</span>
-                          <span className="capitalize">{tool}</span>
-                        </div>
+                        <TooltipProvider key={tool} delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className={cn(
+                                "flex items-center justify-center h-6 w-6 rounded-full",
+                                "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                              )}>
+                                {toolIcons[tool]}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">{toolNames[tool]}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       ))}
                     </div>
                   )}
                 </div>
               </div>
-            </motion.div>
-          );
-        })
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -118,34 +124,20 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
 
 export const AgentInfoCard: React.FC<{
   agent: 'cara' | 'maya' | 'ellie' | 'sophia';
-  status: 'idle' | 'active' | 'thinking' | 'complete';
-}> = ({ agent, status }) => {
-  const description = agentDescriptions[agent];
+  className?: string;
+}> = ({ agent, className = '' }) => {
   const colors = agentColors[agent];
   
   return (
-    <div className={`p-4 rounded-lg border ${colors.border} ${colors.bgLight} bg-opacity-5`}>
-      <div className="flex items-start mb-3">
-        <AgentAvatar name={agent} status={status} size="md" className="mr-3" />
-        <div>
-          <h3 className="font-medium">{agent.charAt(0).toUpperCase() + agent.slice(1)}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{description.role}</p>
-        </div>
-        {status === 'thinking' && (
-          <Loader2 className="ml-auto h-5 w-5 animate-spin text-gray-500" />
-        )}
+    <div className={`rounded-lg overflow-hidden border ${colors.border} ${className}`}>
+      <div className={`${colors.bg} p-3 text-white font-medium`}>
+        {agent.charAt(0).toUpperCase() + agent.slice(1)}: {agentDescriptions[agent].role}
       </div>
-      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">{description.description}</p>
-      <div className="space-y-2">
-        <div>
-          <span className="text-xs font-medium">Tools:</span>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {description.tools.map(tool => (
-              <span key={tool} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
-                {tool}
-              </span>
-            ))}
-          </div>
+      <div className="p-3 text-sm">
+        <p>{agentDescriptions[agent].description}</p>
+        <div className="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
+          <BookOpen className="h-3.5 w-3.5 mr-1" />
+          <span>Specialty: {agentDescriptions[agent].specialty}</span>
         </div>
       </div>
     </div>

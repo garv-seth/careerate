@@ -1,18 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AgentActivity, AgentStatuses } from '../avatars/types';
-import { AgentAvatarWithLabel, agentColors } from '../avatars/AgentAvatars';
-import { 
-  ArrowRightCircle, 
-  CheckCircle, 
-  XCircle, 
-  RefreshCw, 
-  AlertCircle,
-  Search,
-  Database,
-  Globe,
-  Brain
-} from 'lucide-react';
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { AgentAvatar, AgentAvatarWithLabel, AgentStatusBadge, agentColors } from '@/components/avatars/AgentAvatars';
+import { AgentActivity, AgentStatuses, agentDescriptions } from '@/components/avatars/types';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { CheckCircle, Clock, AlertCircle, RefreshCcw, FileText, Database } from 'lucide-react';
 
 interface AgentStatusPanelProps {
   uploadState: 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
@@ -21,211 +13,155 @@ interface AgentStatusPanelProps {
   className?: string;
 }
 
-export const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
+const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   uploadState,
   agentStatuses,
-  recentActivities = [],
+  recentActivities,
   className = ''
 }) => {
-  const [activeAgent, setActiveAgent] = useState<'cara' | 'maya' | 'ellie' | 'sophia' | null>(null);
+  // Calculate overall progress percentage based on agent statuses
+  const completedAgents = Object.values(agentStatuses).filter(status => status === 'complete').length;
+  const overallProgress = (completedAgents / 4) * 100;
   
-  // Find the currently active agent based on statuses
-  useEffect(() => {
-    const active = Object.entries(agentStatuses).find(
-      ([_, status]) => status === 'active' || status === 'thinking'
-    );
+  // Get the most recent activity for each agent
+  const latestActivities = new Map<string, AgentActivity>();
+  recentActivities.forEach(activity => {
+    if (!latestActivities.has(activity.agent)) {
+      latestActivities.set(activity.agent, activity);
+    }
+  });
+  
+  // Format timestamp to relative time (e.g., "2m ago")
+  const getRelativeTime = (timestamp: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - timestamp.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
     
-    if (active) {
-      setActiveAgent(active[0] as 'cara' | 'maya' | 'ellie' | 'sophia');
+    if (diffSec < 60) {
+      return `${diffSec}s ago`;
+    } else if (diffMin < 60) {
+      return `${diffMin}m ago`;
     } else {
-      setActiveAgent(null);
-    }
-  }, [agentStatuses]);
-  
-  // Get the most recent activity for an agent
-  const getAgentActivity = (agent: 'cara' | 'maya' | 'ellie' | 'sophia') => {
-    return recentActivities
-      .filter(activity => activity.agent === agent)
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
-  };
-  
-  // Render upload status
-  const renderUploadState = () => {
-    switch (uploadState) {
-      case 'idle':
-        return (
-          <div className="text-center my-8">
-            <p className="text-gray-500">Upload your resume to begin analysis</p>
-          </div>
-        );
-      case 'uploading':
-        return (
-          <div className="text-center my-8 text-blue-600">
-            <RefreshCw className="animate-spin h-8 w-8 mx-auto mb-2" />
-            <p>Uploading resume...</p>
-          </div>
-        );
-      case 'processing':
-        return (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4">
-            <h3 className="font-medium mb-2 flex items-center">
-              <RefreshCw className="animate-spin h-5 w-5 mr-2 text-blue-500" />
-              Resume Analysis in Progress
-            </h3>
-            <p className="text-sm text-gray-600">
-              Our AI agents are analyzing your resume and gathering relevant career insights.
-            </p>
-          </div>
-        );
-      case 'complete':
-        return (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 my-4">
-            <h3 className="font-medium mb-2 flex items-center">
-              <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
-              Analysis Complete
-            </h3>
-            <p className="text-sm text-gray-600">
-              All agents have completed their analysis. Review your personalized career insights below.
-            </p>
-          </div>
-        );
-      case 'error':
-        return (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
-            <h3 className="font-medium mb-2 flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2 text-red-500" />
-              Analysis Error
-            </h3>
-            <p className="text-sm text-gray-600">
-              There was an error processing your resume. Please try uploading again.
-            </p>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-  
-  const getAgentRole = (agent: 'cara' | 'maya' | 'ellie' | 'sophia') => {
-    const roles = {
-      cara: 'Orchestration Agent',
-      maya: 'Resume Analysis Agent',
-      ellie: 'Industry Analysis Agent',
-      sophia: 'Learning Advisor Agent'
-    };
-    return roles[agent];
-  };
-  
-  // Tool icons for showing what tools agent is using
-  const getToolIcon = (tool: string) => {
-    switch (tool) {
-      case 'brave':
-      case 'firecrawl':
-        return <Search className="h-4 w-4" />;
-      case 'browserbase':
-        return <Globe className="h-4 w-4" />;
-      case 'database':
-        return <Database className="h-4 w-4" />;
-      case 'perplexity':
-      case 'pinecone':
-        return <Brain className="h-4 w-4" />;
-      default:
-        return null;
+      return `${diffHour}h ago`;
     }
   };
   
   return (
-    <div className={`bg-white dark:bg-slate-800 rounded-lg shadow p-4 ${className}`}>
-      <h3 className="text-lg font-semibold mb-4">Processing Status</h3>
-      
-      {renderUploadState()}
-      
-      {uploadState === 'processing' && (
-        <div className="mt-6">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm font-medium">Analysis Progress</span>
-            <span className="text-sm text-gray-500">
-              {Object.values(agentStatuses).filter(status => status === 'complete').length} / 4 Agents
-            </span>
-          </div>
-          
-          <div className="h-2 bg-gray-200 rounded-full mb-6">
-            <motion.div 
-              className="h-full bg-blue-600 rounded-full"
-              initial={{ width: '0%' }}
-              animate={{ 
-                width: `${Object.values(agentStatuses).filter(status => status === 'complete').length * 25}%` 
-              }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-          
-          <div className="space-y-4">
-            {(['cara', 'maya', 'ellie', 'sophia'] as const).map(agent => {
-              const agentStatus = agentStatuses[agent];
-              const activity = getAgentActivity(agent);
-              const colors = agentColors[agent];
-              
-              return (
-                <div key={agent} className={`p-3 rounded-lg border ${agentStatus === 'active' || agentStatus === 'thinking' 
-                  ? `${colors.border} bg-opacity-10 ${colors.bgLight}` 
-                  : 'border-gray-200 dark:border-gray-700'}`}>
-                  <div className="flex items-start">
-                    <AgentAvatarWithLabel 
-                      name={agent} 
-                      status={agentStatus} 
-                      size="md" 
-                    />
-                    
-                    <div className="ml-auto text-sm">
-                      {agentStatus === 'complete' && (
-                        <span className="text-green-600 dark:text-green-400 flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Complete
-                        </span>
-                      )}
-                      {agentStatus === 'thinking' && (
-                        <span className="text-yellow-600 dark:text-yellow-400 flex items-center">
-                          <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
-                          Thinking...
-                        </span>
-                      )}
-                      {agentStatus === 'active' && (
-                        <span className="text-blue-600 dark:text-blue-400 flex items-center">
-                          <ArrowRightCircle className="h-4 w-4 mr-1" />
-                          Active
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {activity && (agentStatus === 'active' || agentStatus === 'thinking') && (
-                    <div className="mt-2 pl-12">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      {activity.detail && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{activity.detail}</p>
-                      )}
-                      
-                      {activity.tools && activity.tools.length > 0 && (
-                        <div className="flex mt-2 gap-1">
-                          {activity.tools.map(tool => (
-                            <div key={tool} className="inline-flex items-center text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
-                              {getToolIcon(tool)}
-                              <span className="ml-1 text-xs">{tool}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+    <div className={`space-y-6 ${className}`}>
+      {/* Overall Progress */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">Analysis Progress</span>
+          <span className="text-sm">{Math.round(overallProgress)}%</span>
         </div>
-      )}
+        <Progress value={overallProgress} className="h-2" />
+      </div>
+      
+      {/* Upload Status */}
+      <div className="flex items-center space-x-3 text-sm">
+        <span className="font-medium">Resume Status:</span>
+        {uploadState === 'idle' && (
+          <span className="text-gray-500 flex items-center">
+            <Clock className="h-4 w-4 mr-1" />
+            Ready for upload
+          </span>
+        )}
+        {uploadState === 'uploading' && (
+          <span className="text-blue-500 flex items-center">
+            <RefreshCcw className="h-4 w-4 mr-1 animate-spin" />
+            Uploading
+          </span>
+        )}
+        {uploadState === 'processing' && (
+          <span className="text-amber-500 flex items-center">
+            <RefreshCcw className="h-4 w-4 mr-1 animate-spin" />
+            Processing
+          </span>
+        )}
+        {uploadState === 'complete' && (
+          <span className="text-green-500 flex items-center">
+            <CheckCircle className="h-4 w-4 mr-1" />
+            Processed
+          </span>
+        )}
+        {uploadState === 'error' && (
+          <span className="text-red-500 flex items-center">
+            <AlertCircle className="h-4 w-4 mr-1" />
+            Error
+          </span>
+        )}
+      </div>
+      
+      <Separator />
+      
+      {/* Agent Statuses Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        {(['cara', 'maya', 'ellie', 'sophia'] as const).map(agent => {
+          const status = agentStatuses[agent];
+          const activity = latestActivities.get(agent);
+          const colors = agentColors[agent];
+          
+          return (
+            <Card key={agent} className={`overflow-hidden border-l-4 ${colors.border}`}>
+              <CardContent className="p-4">
+                <div className="flex space-x-4">
+                  <AgentAvatar name={agent} status={status} />
+                  <div className="flex flex-col justify-between py-1 flex-grow">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{agent.charAt(0).toUpperCase() + agent.slice(1)}</span>
+                        <AgentStatusBadge status={status} />
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {agentDescriptions[agent].role}
+                      </div>
+                    </div>
+                    
+                    {activity && (
+                      <div className="text-xs mt-2">
+                        <div className="font-medium text-gray-700 dark:text-gray-300">
+                          {activity.action}
+                        </div>
+                        <div className="flex justify-between items-center mt-1">
+                          <div className="flex items-center space-x-1 text-gray-500 dark:text-gray-400">
+                            {activity.tools?.map(tool => (
+                              <span key={tool} className="inline-flex items-center">
+                                {renderToolIcon(tool)}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-gray-400 dark:text-gray-500">
+                            {getRelativeTime(activity.timestamp)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
+};
+
+const renderToolIcon = (tool: any) => {
+  switch (tool) {
+    case 'database':
+      return <Database className="h-3 w-3" />;
+    case 'pinecone':
+    case 'perplexity':
+    case 'brave':
+    case 'firecrawl':
+    case 'browserbase':
+      return <FileText className="h-3 w-3" />;
+    default:
+      return null;
+  }
 };
 
 export default AgentStatusPanel;

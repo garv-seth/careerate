@@ -6,6 +6,9 @@ import authRouter from "./auth";
 import { uploadResume, getResume } from "./object-storage";
 // Use simplified agent implementation instead of complex LangChain agents
 import { analyzeResume, generateCareerAdvice, generateLearningPlan } from "../src/simplified/agent";
+import { Server as SocketIOServer } from "socket.io";
+import { agentEmitter } from "../src/agents/graph";
+import type { AgentActivity, AgentStatuses } from "../src/agents/graph";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up Replit Auth
@@ -125,5 +128,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Set up Socket.IO for real-time agent activity updates
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+  
+  // Store agent statuses for each user session
+  const userAgentStatuses = new Map<string, AgentStatuses>();
+  const userAgentActivities = new Map<string, AgentActivity[]>();
+  
+  // Initialize with default statuses
+  const getDefaultAgentStatuses = (): AgentStatuses => ({
+    cara: 'idle',
+    maya: 'idle',
+    ellie: 'idle',
+    sophia: 'idle'
+  });
+  
+  // Socket.IO middleware for authentication
+  io.use((socket: any, next) => {
+    const userId = socket.handshake.auth.userId;
+    if (!userId) {
+      return next(new Error("Authentication error"));
+    }
+    
+    // Store user ID in socket data
+    socket.userId = userId;
+    
+    // Initialize user's agent statuses if not exist
+    if (!userAgentStatuses.has(userId)) {
+      userAgentStatuses.set(userId, getDefaultAgentStatuses());
+      userAgentActivities.set(userId, []);
+    }
+    
+    next();
+  });
+  
+  // Socket.IO connection handler
+  io.on("connection", (socket: any) => {
+    const userId = socket.userId;
+    console.log(`User connected to socket: ${userId}`);
+    
+    // Join user-specific room
+    socket.join(userId);
+    
+    // Send initial statuses and activities
+    const statuses = userAgentStatuses.get(userId) || getDefaultAgentStatuses();
+    const activities = userAgentActivities.get(userId) || [];
+    
+    socket.emit("init_agent_status", statuses);
+    socket.emit("init_agent_activities", activities);
+    
+    // Listen for agent status updates from the client (for testing)
+    socket.on("update_agent_status", (data: { agent: keyof AgentStatuses; status: 'idle' | 'active' | 'thinking' | 'complete' }) => {
+      const statuses = userAgentStatuses.get(userId) || getDefaultAgentStatuses();
+      statuses[data.agent] = data.status;
+      userAgentStatuses.set(userId, statuses);
+      
+      // Emit to user's room
+      io.to(userId).emit("agent_status_update", statuses);
+    });
+    
+    // Listen for analysis request
+    socket.on("start_analysis", async (data: { resumeText: string }) => {
+      try {
+        // Reset agent statuses
+        const statuses = getDefaultAgentStatuses();
+        userAgentStatuses.set(userId, statuses);
+        userAgentActivities.set(userId, []);
+        
+        // Emit initial state
+        io.to(userId).emit("agent_status_update", statuses);
+        io.to(userId).emit("agent_activities", []);
+        
+        // Start analysis process (simulated for now)
+        console.log(`Starting analysis for user ${userId}`);
+        
+        // Update cara to active
+        statuses.cara = 'active';
+        io.to(userId).emit("agent_status_update", statuses);
+        
+        // Add activity
+        const activities = userAgentActivities.get(userId) || [];
+        const newActivity: AgentActivity = {
+          agent: 'cara',
+          action: 'Starting career analysis',
+          detail: 'Planning analysis workflow',
+          timestamp: new Date(),
+          tools: ['pinecone']
+        };
+        activities.unshift(newActivity);
+        userAgentActivities.set(userId, activities);
+        io.to(userId).emit("agent_activities", activities);
+        
+        // Simulate agent work with timeouts
+        setTimeout(() => {
+          statuses.cara = 'thinking';
+          io.to(userId).emit("agent_status_update", statuses);
+          
+          // Add another activity
+          const activities = userAgentActivities.get(userId) || [];
+          activities.unshift({
+            agent: 'cara',
+            action: 'Analyzing resume structure',
+            detail: 'Extracting key information from resume',
+            timestamp: new Date(),
+            tools: ['perplexity']
+          });
+          userAgentActivities.set(userId, activities);
+          io.to(userId).emit("agent_activities", activities);
+        }, 2000);
+        
+        // Mark cara as complete and activate maya
+        setTimeout(() => {
+          statuses.cara = 'complete';
+          statuses.maya = 'active';
+          io.to(userId).emit("agent_status_update", statuses);
+          
+          // Add maya activity
+          const activities = userAgentActivities.get(userId) || [];
+          activities.unshift({
+            agent: 'maya',
+            action: 'Analyzing skills and experience',
+            detail: 'Extracting skills and assessing competency levels',
+            timestamp: new Date(),
+            tools: ['database', 'perplexity']
+          });
+          userAgentActivities.set(userId, activities);
+          io.to(userId).emit("agent_activities", activities);
+        }, 5000);
+        
+        // Additional simulated agent activities would continue here...
+        
+      } catch (error) {
+        console.error("Error in analysis:", error);
+        socket.emit("analysis_error", { message: "Failed to analyze resume" });
+      }
+    });
+    
+    // Handle disconnect
+    socket.on("disconnect", () => {
+      console.log(`User disconnected: ${userId}`);
+    });
+  });
+  
+  // Listen for agent events from the LangChain agents
+  agentEmitter.on('activity', (activity: AgentActivity) => {
+    // This would normally have user context, but for now broadcast to all
+    io.emit("agent_activity", activity);
+  });
+  
+  agentEmitter.on('status_update', (update: { agent: keyof AgentStatuses; status: 'idle' | 'active' | 'thinking' | 'complete' }) => {
+    // This would normally have user context, but for now broadcast to all
+    io.emit("agent_status_single", update);
+  });
+  
+  // Add Socket.IO endpoints
+  app.get('/api/agent/activities', isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const activities = userAgentActivities.get(userId) || [];
+    res.json(activities);
+  });
+  
+  app.get('/api/agent/statuses', isAuthenticated, async (req: any, res) => {
+    const userId = req.user.claims.sub;
+    const statuses = userAgentStatuses.get(userId) || getDefaultAgentStatuses();
+    res.json(statuses);
+  });
+  
   return httpServer;
 }
