@@ -8,6 +8,8 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import AgentTestPage from "@/pages/agent-test";
+import Settings from "@/pages/settings";
+import Profile from "@/pages/profile";
 
 function Router() {
   return (
