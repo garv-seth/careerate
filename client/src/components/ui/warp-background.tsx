@@ -1,50 +1,150 @@
-import React, { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import React, { HTMLAttributes, useCallback, useMemo } from "react";
 
-interface WarpBackgroundProps {
-  children: ReactNode;
+interface WarpBackgroundProps extends HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  perspective?: number;
+  beamsPerSide?: number;
+  beamSize?: number;
+  beamDelayMax?: number;
+  beamDelayMin?: number;
+  beamDuration?: number;
+  gridColor?: string;
 }
 
-export const WarpBackground: React.FC<WarpBackgroundProps> = ({ children }) => {
-  return (
-    <div className="relative overflow-hidden">
-      {/* Warp Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 opacity-90"></div>
-        <div className="absolute inset-0">
-          <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="0.5"></path>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid-pattern)"></rect>
-          </svg>
-        </div>
-        <div className="absolute h-full w-full">
-          {/* Animated dots */}
-          <motion.div 
-            className="absolute top-1/4 left-1/3 w-96 h-96 bg-primary-600/20 rounded-full filter blur-3xl"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          />
-          <motion.div 
-            className="absolute top-1/2 left-2/3 w-64 h-64 bg-secondary-600/20 rounded-full filter blur-3xl"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-          />
-          <motion.div 
-            className="absolute top-3/4 left-1/4 w-72 h-72 bg-accent-500/20 rounded-full filter blur-3xl"
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 4, repeat: Infinity, delay: 2 }}
-          />
-        </div>
-      </div>
+const Beam = ({
+  width,
+  x,
+  delay,
+  duration,
+}: {
+  width: string | number;
+  x: string | number;
+  delay: number;
+  duration: number;
+}) => {
+  const hue = Math.floor(Math.random() * 360);
+  const ar = Math.floor(Math.random() * 10) + 1;
 
-      {/* Content */}
-      <div className="relative z-10">
-        {children}
+  return (
+    <motion.div
+      style={
+        {
+          "--x": `${x}`,
+          "--width": `${width}`,
+          "--aspect-ratio": `${ar}`,
+          "--background": `linear-gradient(hsl(${hue} 80% 60%), transparent)`,
+        } as React.CSSProperties
+      }
+      className={`absolute left-[var(--x)] top-0 [aspect-ratio:1/var(--aspect-ratio)] [background:var(--background)] [width:var(--width)]`}
+      initial={{ y: "100cqmax", x: "-50%" }}
+      animate={{ y: "-100%", x: "-50%" }}
+      transition={{
+        duration,
+        delay,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+    />
+  );
+};
+
+export const WarpBackground: React.FC<WarpBackgroundProps> = ({
+  children,
+  perspective = 100,
+  className,
+  beamsPerSide = 3,
+  beamSize = 5,
+  beamDelayMax = 3,
+  beamDelayMin = 0,
+  beamDuration = 3,
+  gridColor = "hsl(var(--border))",
+  ...props
+}) => {
+  const generateBeams = useCallback(() => {
+    const beams = [];
+    const cellsPerSide = Math.floor(100 / beamSize);
+    const step = cellsPerSide / beamsPerSide;
+
+    for (let i = 0; i < beamsPerSide; i++) {
+      const x = Math.floor(i * step);
+      const delay =
+        Math.random() * (beamDelayMax - beamDelayMin) + beamDelayMin;
+      beams.push({ x, delay });
+    }
+    return beams;
+  }, [beamsPerSide, beamSize, beamDelayMax, beamDelayMin]);
+
+  const topBeams = useMemo(() => generateBeams(), [generateBeams]);
+  const rightBeams = useMemo(() => generateBeams(), [generateBeams]);
+  const bottomBeams = useMemo(() => generateBeams(), [generateBeams]);
+  const leftBeams = useMemo(() => generateBeams(), [generateBeams]);
+
+  return (
+    <div className={cn("relative rounded border p-20", className)} {...props}>
+      <div
+        style={
+          {
+            "--perspective": `${perspective}px`,
+            "--grid-color": gridColor,
+            "--beam-size": `${beamSize}%`,
+          } as React.CSSProperties
+        }
+        className={
+          "pointer-events-none absolute left-0 top-0 size-full overflow-hidden [clip-path:inset(0)] [container-type:size] [perspective:var(--perspective)] [transform-style:preserve-3d]"
+        }
+      >
+        {/* top side */}
+        <div className="absolute [transform-style:preserve-3d] [background-size:var(--beam-size)_var(--beam-size)] [background:linear-gradient(var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_-0.5px_/var(--beam-size)_var(--beam-size),linear-gradient(90deg,_var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_50%_/var(--beam-size)_var(--beam-size)] [container-type:inline-size] [height:100cqmax] [transform-origin:50%_0%] [transform:rotateX(-90deg)] [width:100cqi]">
+          {topBeams.map((beam, index) => (
+            <Beam
+              key={`top-${index}`}
+              width={`${beamSize}%`}
+              x={`${beam.x * beamSize}%`}
+              delay={beam.delay}
+              duration={beamDuration}
+            />
+          ))}
+        </div>
+        {/* bottom side */}
+        <div className="absolute top-full [transform-style:preserve-3d] [background-size:var(--beam-size)_var(--beam-size)] [background:linear-gradient(var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_-0.5px_/var(--beam-size)_var(--beam-size),linear-gradient(90deg,_var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_50%_/var(--beam-size)_var(--beam-size)] [container-type:inline-size] [height:100cqmax] [transform-origin:50%_0%] [transform:rotateX(-90deg)] [width:100cqi]">
+          {bottomBeams.map((beam, index) => (
+            <Beam
+              key={`bottom-${index}`}
+              width={`${beamSize}%`}
+              x={`${beam.x * beamSize}%`}
+              delay={beam.delay}
+              duration={beamDuration}
+            />
+          ))}
+        </div>
+        {/* left side */}
+        <div className="absolute left-0 top-0 [transform-style:preserve-3d] [background-size:var(--beam-size)_var(--beam-size)] [background:linear-gradient(var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_-0.5px_/var(--beam-size)_var(--beam-size),linear-gradient(90deg,_var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_50%_/var(--beam-size)_var(--beam-size)] [container-type:inline-size] [height:100cqmax] [transform-origin:0%_0%] [transform:rotate(90deg)_rotateX(-90deg)] [width:100cqh]">
+          {leftBeams.map((beam, index) => (
+            <Beam
+              key={`left-${index}`}
+              width={`${beamSize}%`}
+              x={`${beam.x * beamSize}%`}
+              delay={beam.delay}
+              duration={beamDuration}
+            />
+          ))}
+        </div>
+        {/* right side */}
+        <div className="absolute right-0 top-0 [transform-style:preserve-3d] [background-size:var(--beam-size)_var(--beam-size)] [background:linear-gradient(var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_-0.5px_/var(--beam-size)_var(--beam-size),linear-gradient(90deg,_var(--grid-color)_0_1px,_transparent_1px_var(--beam-size))_50%_50%_/var(--beam-size)_var(--beam-size)] [container-type:inline-size] [height:100cqmax] [width:100cqh] [transform-origin:100%_0%] [transform:rotate(-90deg)_rotateX(-90deg)]">
+          {rightBeams.map((beam, index) => (
+            <Beam
+              key={`right-${index}`}
+              width={`${beamSize}%`}
+              x={`${beam.x * beamSize}%`}
+              delay={beam.delay}
+              duration={beamDuration}
+            />
+          ))}
+        </div>
       </div>
+      <div className="relative">{children}</div>
     </div>
   );
 };
