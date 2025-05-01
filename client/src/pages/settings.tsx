@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from 'next-themes';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -11,6 +12,7 @@ import Footer2 from '@/components/ui/footer2';
 
 const SettingsPage = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -89,6 +91,22 @@ const SettingsPage = () => {
                   <p className="text-sm text-muted-foreground">Include latest market trends in analysis</p>
                 </div>
                 <Switch defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme Settings</CardTitle>
+              <CardDescription>Configure the appearance of the application</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Dark Mode</Label>
+                  <p className="text-sm text-muted-foreground">Toggle between light and dark theme</p>
+                </div>
+                <Switch checked={theme === 'dark'} onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} />
               </div>
             </CardContent>
           </Card>
