@@ -67,9 +67,14 @@ export const TubelightNavbar = () => {
           
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <Button variant="default" asChild>
-                <WouterLink href="/dashboard">Dashboard</WouterLink>
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button variant="default" asChild>
+                  <WouterLink href="/dashboard">Dashboard</WouterLink>
+                </Button>
+                <Button variant="outline" asChild>
+                  <WouterLink href="/agent-test">Agent System</WouterLink>
+                </Button>
+              </div>
             ) : (
               <Button className="hidden sm:inline-flex" asChild>
                 <a href="/api/login">Sign In</a>
@@ -123,6 +128,9 @@ export const TubelightNavbar = () => {
                       <div className="space-y-3">
                         <Button className="w-full" onClick={() => setSheetOpen(false)} asChild>
                           <WouterLink href="/dashboard">Dashboard</WouterLink>
+                        </Button>
+                        <Button className="w-full" onClick={() => setSheetOpen(false)} asChild>
+                          <WouterLink href="/agent-test">Agent System</WouterLink>
                         </Button>
                         <Button variant="outline" className="w-full" onClick={() => setSheetOpen(false)} asChild>
                           <a href="/api/logout">Logout</a>
