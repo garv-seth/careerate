@@ -47,7 +47,6 @@ const HomePage = () => {
               >
                 <span className="block text-gray-900 dark:text-white">Careerate</span>
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-600 via-primary-500 to-accent-600 dark:from-secondary-400 dark:via-primary-300 dark:to-accent-400">
-                  Career Acceleration
                 </span>
               </motion.h1>
               <motion.p 
@@ -64,7 +63,7 @@ const HomePage = () => {
                   <a href="/api/login">
                     <Button 
                       size="lg" 
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold"
                     >
                       Get Early Access
                     </Button>
@@ -75,7 +74,7 @@ const HomePage = () => {
                     <Button 
                       variant="outline" 
                       size="lg"
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-white text-primary-700 hover:bg-gray-50 dark:bg-transparent dark:text-white dark:hover:bg-primary-900/20"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 border-2 border-primary-600 bg-transparent text-primary-700 hover:bg-primary-50 dark:border-white dark:text-white dark:hover:bg-primary-900/20 font-semibold"
                     >
                       Learn More
                     </Button>
@@ -262,12 +261,12 @@ const HomePage = () => {
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <a href="/api/login">
-              <Button variant="secondary" size="lg" className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-white hover:bg-gray-50 font-semibold">
+              <Button variant="secondary" size="lg" className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-white hover:bg-gray-50 font-semibold shadow-lg">
                 Get Early Access
               </Button>
             </a>
             <a href="#features">
-              <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white hover:bg-primary-700 font-semibold">
+              <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white hover:bg-primary-700/90 hover:border-white font-semibold shadow-lg">
                 Learn More
               </Button>
             </a>
