@@ -12,6 +12,9 @@ import { toast } from "@/hooks/use-toast";
 import { CloudUpload, Upload, BookOpen, BarChart2, AlertCircle, ChevronRight, Download } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
+import AgentStatusPanel from "@/components/dashboard/AgentStatusPanel";
+import { AgentActivityPanel } from "@/components/dashboard/AgentActivityPanel";
+import { AgentActivity, AgentStatuses } from "@/components/avatars/types";
 
 interface RiskCategory {
   category: string;
@@ -402,50 +405,154 @@ const GetStartedCard = () => (
   </Card>
 );
 
-const AnalyzingCard = () => (
-  <Card className="w-full">
-    <CardHeader>
-      <CardTitle>Analyzing Your Career Data</CardTitle>
-      <CardDescription>
-        Our AI agents are working on your personalized career insights
-      </CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="h-2 w-2 rounded-full bg-primary-500 animate-pulse"></div>
-            <span className="text-sm font-medium">Maya</span>
-          </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400">Analyzing resume...</span>
-        </div>
-        <Progress value={75} />
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="h-2 w-2 rounded-full bg-secondary-500 animate-pulse"></div>
-            <span className="text-sm font-medium">Ellie</span>
-          </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400">Gathering industry insights...</span>
-        </div>
-        <Progress value={45} />
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="h-2 w-2 rounded-full bg-accent-500 animate-pulse"></div>
-            <span className="text-sm font-medium">Sophia</span>
-          </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400">Building learning plan...</span>
-        </div>
-        <Progress value={30} />
-      </div>
+const AnalyzingCard = () => {
+  // Define mock agent statuses for demonstration
+  const [agentStatuses, setAgentStatuses] = useState<AgentStatuses>({
+    cara: 'thinking',
+    maya: 'active',
+    ellie: 'idle',
+    sophia: 'idle'
+  });
+  
+  // Define mock activities for demonstration
+  const [activities, setActivities] = useState<AgentActivity[]>([
+    {
+      agent: 'cara',
+      action: 'Planning analysis workflow',
+      detail: 'Determining optimal sequence for analyzing your career data',
+      timestamp: new Date(Date.now() - 60000), // 1 minute ago
+      tools: ['pinecone']
+    },
+    {
+      agent: 'maya',
+      action: 'Analyzing resume content',
+      detail: 'Extracting skills, experience, and job roles from your resume',
+      timestamp: new Date(),
+      tools: ['perplexity', 'database']
+    }
+  ]);
+  
+  // Simulate agent activity progression
+  useEffect(() => {
+    // Start with initial state: cara thinking, maya active
+    
+    // After 3 seconds, complete cara and make maya thinking
+    const timer1 = setTimeout(() => {
+      setAgentStatuses(prev => ({...prev, cara: 'complete', maya: 'thinking'}));
+      setActivities(prev => [
+        {
+          agent: 'maya',
+          action: 'Assessing automation risk',
+          detail: 'Analyzing vulnerability of your skills to AI automation',
+          timestamp: new Date(),
+          tools: ['perplexity']
+        },
+        ...prev
+      ]);
+    }, 3000);
+    
+    // After 6 seconds, complete maya and make ellie active
+    const timer2 = setTimeout(() => {
+      setAgentStatuses(prev => ({...prev, maya: 'complete', ellie: 'active'}));
+      setActivities(prev => [
+        {
+          agent: 'ellie',
+          action: 'Researching industry trends',
+          detail: 'Gathering information on job market and technology trends',
+          timestamp: new Date(),
+          tools: ['brave', 'browserbase']
+        },
+        ...prev
+      ]);
+    }, 6000);
+    
+    // After 9 seconds, make ellie thinking
+    const timer3 = setTimeout(() => {
+      setAgentStatuses(prev => ({...prev, ellie: 'thinking'}));
+      setActivities(prev => [
+        {
+          agent: 'ellie',
+          action: 'Analyzing market opportunities',
+          detail: 'Finding potential career paths based on your skills and interests',
+          timestamp: new Date(),
+          tools: ['firecrawl']
+        },
+        ...prev
+      ]);
+    }, 9000);
+    
+    // Clean up timers
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, []);
+  
+  return (
+    <div className="space-y-6">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Analyzing Your Career Data</CardTitle>
+          <CardDescription>
+            Our AI agents are working on your personalized career insights
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AgentStatusPanel 
+            uploadState="processing"
+            agentStatuses={agentStatuses}
+            recentActivities={activities}
+          />
+        </CardContent>
+      </Card>
       
-      <div className="rounded-lg bg-gray-50 dark:bg-slate-800 p-4 text-sm text-gray-600 dark:text-gray-400">
-        This process typically takes 1-2 minutes. Please wait while our AI agents analyze your data.
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Agent Activity Feed</CardTitle>
+            <CardDescription>
+              Real-time updates from our specialized AI agents
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AgentActivityPanel 
+              activities={activities}
+              agentStatuses={agentStatuses}
+              className="max-h-96 overflow-y-auto px-0"
+            />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Analysis Progress</CardTitle>
+            <CardDescription>
+              Overall completion status of your career analysis
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Overall Progress</span>
+                <span>{Math.round((Object.values(agentStatuses).filter(s => s === 'complete').length / 4) * 100)}%</span>
+              </div>
+              <Progress 
+                value={(Object.values(agentStatuses).filter(s => s === 'complete').length / 4) * 100} 
+                className="h-2"
+              />
+            </div>
+            
+            <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-800">
+              <p className="font-medium mb-1">Analysis in Progress</p>
+              <p>This typically takes 1-2 minutes. Our AI agents are analyzing your data to provide personalized career insights.</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </CardContent>
-  </Card>
-);
+    </div>
+  );
+};
 
 const RiskAnalysisTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
   if (!careerAdvice) return <div>No data available</div>;
