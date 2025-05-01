@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link as WouterLink, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
+import careerateLogoSrc from "@assets/CareerateICON.png";
 
 interface NavLinkProps {
   href: string;
@@ -20,11 +18,23 @@ const NavLink = ({ href, children }: NavLinkProps) => {
   const isActive = location === href;
 
   return (
-    <WouterLink href={href} className={`font-medium ${isActive 
-      ? "text-primary-600 dark:text-primary-400" 
-      : "text-gray-600 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400"} 
-      transition-colors`}>
-      {children}
+    <WouterLink href={href}>
+      <motion.div
+        className={`relative font-medium ${isActive 
+          ? "text-primary-600 dark:text-primary-400" 
+          : "text-gray-600 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400"} 
+          transition-colors`}
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+      >
+        {children}
+        {isActive && (
+          <motion.div
+            className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary-500 rounded-full"
+            layoutId="underline"
+          />
+        )}
+      </motion.div>
     </WouterLink>
   );
 };
@@ -33,6 +43,15 @@ export const TubelightNavbar = () => {
   const { user, isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -46,19 +65,37 @@ export const TubelightNavbar = () => {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 shadow-md">
+    <motion.nav 
+      className={`sticky top-0 z-50 ${
+        scrolled 
+          ? "bg-white/90 dark:bg-slate-900/90 shadow-md" 
+          : "bg-transparent"
+      } backdrop-filter backdrop-blur-md transition-all duration-300`}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center">
+          <motion.div 
+            className="flex items-center"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
             <WouterLink href="/" className="flex items-center">
-                <div className="bg-gradient-to-r from-primary-600 to-secondary-500 p-1.5 rounded-lg mr-2">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zm5.99 7.176A9.007 9.007 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"></path>
-                  </svg>
-                </div>
-                <span className="font-heading font-bold text-xl text-slate-900 dark:text-white tracking-tight">Careerate</span>
+              <motion.div 
+                className="mr-2 p-1 rounded-full tubelight"
+                whileHover={{ rotate: 10 }}
+                transition={{ duration: 0.3 }}
+              >
+                <img 
+                  src={careerateLogoSrc} 
+                  alt="Careerate" 
+                  className="w-8 h-8"
+                />
+              </motion.div>
             </WouterLink>
-          </div>
+          </motion.div>
           
           <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
@@ -69,48 +106,92 @@ export const TubelightNavbar = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <Button variant="default" asChild>
-                <WouterLink href="/dashboard">Dashboard</WouterLink>
-              </Button>
-            ) : (
-              <Button className="hidden sm:inline-flex" asChild>
-                <a href="/api/login">Sign In</a>
-              </Button>
-            )}
+            <AnimatePresence mode="wait">
+              {isAuthenticated ? (
+                <motion.div
+                  key="dashboard-button"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Button variant="default" asChild className="shadow-md">
+                    <WouterLink href="/dashboard">Dashboard</WouterLink>
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="signin-button"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Button className="hidden sm:inline-flex shadow-md" asChild>
+                    <a href="/api/login">Sign In</a>
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
             
-            <button 
+            <motion.button 
               onClick={toggleTheme} 
               className="p-2 rounded-full text-gray-600 dark:text-gray-200 focus:outline-none"
+              whileHover={{ scale: 1.1, rotate: 15 }}
+              whileTap={{ scale: 0.9 }}
             >
-              {theme === 'dark' ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-            </button>
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </motion.button>
             
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
               <SheetTrigger asChild>
-                <button className="inline-flex md:hidden items-center justify-center p-2 rounded-md text-gray-600 dark:text-gray-200 focus:outline-none">
-                  <Menu className="h-6 w-6" />
-                </button>
+                <motion.button 
+                  className="inline-flex md:hidden items-center justify-center p-2 rounded-md text-gray-600 dark:text-gray-200 focus:outline-none"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Menu className="h-5 w-5" />
+                </motion.button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[250px] sm:w-[300px]">
-                <div className="flex flex-col h-full">
+                <motion.div 
+                  className="flex flex-col h-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, staggerChildren: 0.1 }}
+                >
                   <div className="flex items-center justify-between mb-6">
-                    <span className="font-heading font-bold text-xl">Menu</span>
-                    <button onClick={() => setSheetOpen(false)}>
+                    <div className="flex items-center">
+                      <img 
+                        src={careerateLogoSrc} 
+                        alt="Careerate" 
+                        className="w-6 h-6 mr-2" 
+                      />
+                      <span className="font-heading font-bold text-xl">Menu</span>
+                    </div>
+                    <motion.button 
+                      onClick={() => setSheetOpen(false)}
+                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
                       <X className="h-5 w-5" />
-                    </button>
+                    </motion.button>
                   </div>
                   
-                  <div className="flex flex-col space-y-4">
-                    {navLinks.map((link) => (
-                      <a
+                  <div className="flex flex-col space-y-2">
+                    {navLinks.map((link, index) => (
+                      <motion.a
                         key={link.href}
                         href={link.href}
                         className="px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white rounded-md"
                         onClick={() => setSheetOpen(false)}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ scale: 1.03, x: 5 }}
                       >
                         {link.label}
-                      </a>
+                      </motion.a>
                     ))}
                   </div>
                   
@@ -130,13 +211,13 @@ export const TubelightNavbar = () => {
                       </Button>
                     )}
                   </div>
-                </div>
+                </motion.div>
               </SheetContent>
             </Sheet>
           </div>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 
