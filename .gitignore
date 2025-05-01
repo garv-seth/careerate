@@ -1,3 +1,4 @@
+
 node_modules
 dist
 .DS_Store
@@ -13,3 +14,14 @@ tmp/
 .DS_Store
 *.temp
 *.tmp
+.next
+.cache
+build
+*.tsbuildinfo
+.env.local
+.env.development
+test/
+__tests__/
+*.test.*
+*.spec.*
+.vscode/
