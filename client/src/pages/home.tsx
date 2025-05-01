@@ -42,16 +42,16 @@ const HomePage = () => {
               variants={staggerContainer}
             >
               <motion.h1 
-                className="text-4xl font-heading font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
+                className="text-4xl font-heading font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-6xl"
                 variants={fadeIn}
               >
                 <span className="block">Careerate</span>
-                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-400 via-primary-300 to-accent-400">
+                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary-600 via-primary-500 to-accent-600 dark:from-secondary-400 dark:via-primary-300 dark:to-accent-400">
                   Career Acceleration
                 </span>
               </motion.h1>
               <motion.p 
-                className="mt-6 text-xl text-gray-200 max-w-2xl mx-auto"
+                className="mt-6 text-xl text-gray-700 dark:text-gray-200 max-w-2xl mx-auto"
                 variants={fadeIn}
               >
                 Don't let AI replace you—embrace it. Stay ahead of the curve with personalized career insights and learning paths driven by next-gen AI.
@@ -64,7 +64,7 @@ const HomePage = () => {
                   <a href="/api/login">
                     <Button 
                       size="lg" 
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
                     >
                       Get Early Access
                     </Button>
@@ -75,7 +75,7 @@ const HomePage = () => {
                     <Button 
                       variant="outline" 
                       size="lg"
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-white text-primary-600 hover:bg-gray-50"
+                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-white text-primary-700 hover:bg-gray-50 dark:bg-transparent dark:text-white dark:hover:bg-primary-900/20"
                     >
                       Learn More
                     </Button>
