@@ -20,9 +20,11 @@ if (process.env.REPLIT_DOMAINS) {
   allowedDomains = process.env.REPLIT_DOMAINS.split(",");
 }
 
-// Add production domain if specified
-if (process.env.PRODUCTION_DOMAIN) {
-  allowedDomains.push(process.env.PRODUCTION_DOMAIN);
+// Add production domains if specified
+if (process.env.PRODUCTION_DOMAINS) {
+  const productionDomains = process.env.PRODUCTION_DOMAINS.split(',');
+  allowedDomains.push(...productionDomains);
+  console.log(`Adding production domains: ${productionDomains.join(', ')}`);
 }
 
 const getOidcConfig = memoize(
@@ -54,6 +56,7 @@ export function getSession() {
       secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
       sameSite: "lax",
+      domain: process.env.NODE_ENV === "production" ? ".gocareerate.com" : undefined,
     },
   });
 }

@@ -183,6 +183,30 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     </WouterLink>
                   );
                 })}
+                
+                {/* Auth Menu Item */}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    isAuthenticated ? logout() : login();
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
+                    "text-foreground/80 hover:bg-muted hover:text-primary"
+                  )}
+                >
+                  {isAuthenticated ? (
+                    <>
+                      <LogOut size={16} strokeWidth={2.5} />
+                      <span>Logout</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn size={16} strokeWidth={2.5} />
+                      <span>Login</span>
+                    </>
+                  )}
+                </button>
               </div>
             </motion.div>
           )}
