@@ -111,23 +111,42 @@ interface AgentState {
 
 // The LLM to use for all agents (only create when OPENAI_API_KEY is available)
 let openai: ChatOpenAI;
-try {
-  if (process.env.OPENAI_API_KEY) {
-    openai = new ChatOpenAI({
-      modelName: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-      temperature: 0.1,
-      openAIApiKey: process.env.OPENAI_API_KEY
-    });
-  } else {
-    console.log("OPENAI_API_KEY not provided, using mock implementation");
+const initializeOpenAI = async () => {
+  try {
+    if (process.env.OPENAI_API_KEY) {
+      console.log("✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o");
+      openai = new ChatOpenAI({
+        modelName: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      // Test the API connection
+      console.log("Testing OpenAI API connection...");
+      try {
+        const testMessage = await openai.invoke("Test connection");
+        const content = typeof testMessage.content === 'string' 
+          ? testMessage.content 
+          : JSON.stringify(testMessage.content);
+        console.log("✅ OpenAI API test successful! Response:", content.substring(0, 50) + "...");
+      } catch (testError) {
+        console.error("❌ Error testing OpenAI API:", testError);
+        throw testError;
+      }
+    } else {
+      console.log("⚠️ OPENAI_API_KEY not provided, using mock implementation");
+      // Create a minimal implementation that won't throw errors
+      openai = { invoke: async () => ({ content: "Mock response" }) } as any;
+    }
+  } catch (error) {
+    console.error("❌ Error initializing OpenAI:", error);
     // Create a minimal implementation that won't throw errors
+    console.log("⚠️ Falling back to mock implementation due to error");
     openai = { invoke: async () => ({ content: "Mock response" }) } as any;
   }
-} catch (error) {
-  console.error("Error initializing OpenAI:", error);
-  // Create a minimal implementation that won't throw errors
-  openai = { invoke: async () => ({ content: "Mock response" }) } as any;
-}
+};
+
+// Initialize OpenAI (this runs asynchronously but won't block execution)
+initializeOpenAI().catch(err => console.error("Failed to initialize OpenAI:", err));
 
 // Create the agents
 let caraAgent, mayaAgent, ellieAgent, sophiaAgent;
