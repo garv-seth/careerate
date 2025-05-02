@@ -66,12 +66,14 @@ const Footer2 = ({
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
+    setIsVisible(false); // Initially hide
+    
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
-      const isAtBottom = (windowHeight + currentScrollY) >= (documentHeight - 100);
-      setIsVisible(isAtBottom);
+      const isAtBottom = (windowHeight + currentScrollY) >= (documentHeight - 150);
+      setIsVisible(isAtBottom && documentHeight > windowHeight + 100); // Only show when there's scrollable content
       setLastScrollY(currentScrollY);
     };
 
@@ -85,7 +87,7 @@ const Footer2 = ({
         ? 'opacity-100 translate-y-0 scale-100' 
         : 'opacity-0 translate-y-full scale-95'
     }`}>
-      <div className="bg-background/5 border border-border backdrop-blur-lg py-4 px-6 rounded-full shadow-lg">
+      <div className="bg-background border border-border py-4 px-6 rounded-full shadow-lg">
         <div className="flex flex-wrap items-center justify-center gap-8">
           {menuItems.map((section, idx) => (
             <div key={idx} className="flex flex-col items-center gap-2">
