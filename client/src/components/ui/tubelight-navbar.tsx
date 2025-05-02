@@ -19,6 +19,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
     { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -30,23 +32,57 @@ export function TubelightNavbar({ className }: { className?: string }) {
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    document.addEventListener("mousedown", handleClickOutside);
+    
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   if (!isAuthenticated) {
     return null;
   }
 
+  const handleMobileNavClick = (url: string) => {
+    setActiveTab(url);
+    setMobileMenuOpen(false);
+  };
+
+  // Animations for mobile menu
+  const menuVariants = {
+    closed: {
+      opacity: 0,
+      y: -20,
+      display: "none",
+    },
+    open: {
+      opacity: 1,
+      y: 0,
+      display: "block",
+    },
+  };
+
   return (
     <div className={cn(
       "fixed top-4 left-1/2 -translate-x-1/2 z-50",
       className
     )}>
-      <div className="flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.url;
@@ -62,13 +98,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
                 isActive && "bg-muted text-primary"
               )}
             >
-              <span className="hidden md:inline">{item.name}</span>
-              <span className="md:hidden">
-                <Icon size={18} strokeWidth={2.5} />
-              </span>
+              <span>{item.name}</span>
               {isActive && (
                 <motion.div
-                  layoutId="lamp"
+                  layoutId="lamp-desktop"
                   className="absolute inset-0 w-full bg-primary/5 rounded-full -z-10"
                   initial={false}
                   transition={{
@@ -87,6 +120,59 @@ export function TubelightNavbar({ className }: { className?: string }) {
             </WouterLink>
           );
         })}
+      </div>
+
+      {/* Mobile Navigation Button */}
+      <div 
+        ref={menuRef}
+        className="md:hidden relative"
+      >
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="flex items-center justify-center w-12 h-12 bg-background/5 border border-border backdrop-blur-lg rounded-full shadow-lg p-3 text-foreground hover:text-primary transition-colors"
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        {/* Mobile Dropdown Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial="closed"
+              animate="open"
+              exit="closed"
+              variants={menuVariants}
+              transition={{ duration: 0.2 }}
+              className="absolute top-16 right-0 bg-background border border-border rounded-lg shadow-lg overflow-hidden w-48"
+            >
+              <div className="pt-2 pb-2">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location === item.url;
+                  
+                  return (
+                    <WouterLink
+                      key={item.name}
+                      href={item.url}
+                      onClick={() => handleMobileNavClick(item.name)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative",
+                        "text-foreground/80 hover:bg-muted hover:text-primary",
+                        isActive && "bg-muted text-primary"
+                      )}
+                    >
+                      <Icon size={16} strokeWidth={2.5} />
+                      <span>{item.name}</span>
+                      {isActive && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                      )}
+                    </WouterLink>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
