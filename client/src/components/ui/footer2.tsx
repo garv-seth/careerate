@@ -77,7 +77,11 @@ const Footer2 = ({
   }, [lastScrollY]);
 
   return (
-    <footer className={`fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-50 transition-transform duration-300 ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+    <footer className={`fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-50 transition-all duration-300 ${
+      isVisible 
+        ? 'opacity-100 translate-y-0 scale-100' 
+        : 'opacity-0 translate-y-full scale-95'
+    }`}>
       <div className="bg-background/5 border border-border backdrop-blur-lg py-4 px-6 rounded-full shadow-lg">
         <div className="flex flex-wrap items-center justify-center gap-8">
           {menuItems.map((section, idx) => (
