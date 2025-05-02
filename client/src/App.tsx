@@ -67,12 +67,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light">
         <TooltipProvider>
-          <div className="min-h-screen flex flex-col">
-            <div className="pt-20 flex-grow"> {/* Navbar padding */}
+          <div className="min-h-screen flex flex-col bg-background">
+            <div className="pt-20 flex-grow pb-24"> {/* Navbar padding and footer spacing */}
               <Toaster />
               <Router />
-            </div>
-            <div className="h-24"> {/* Footer reserved space */}
             </div>
           </div>
         </TooltipProvider>

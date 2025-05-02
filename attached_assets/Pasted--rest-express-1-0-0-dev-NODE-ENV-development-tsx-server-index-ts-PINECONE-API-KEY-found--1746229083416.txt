@@ -1,0 +1,100 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+✅ PINECONE_API_KEY found! Initializing Pinecone client
+Testing Pinecone API connection...
+Initializing OpenAI embeddings...
+✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o
+Testing OpenAI API connection...
+Creating simplified ADK-inspired workflow implementation
+Auth configured for domain: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+11:36:27 PM [express] serving on port 5000
+✅ OpenAI embeddings test successful! Generated vector of length 1536
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✅ OpenAI API test successful! Response: It seems like you're trying to test a connection. ...
+Creating agents with initialized OpenAI client
+✅ All agents created successfully
+✅ Pinecone API test successful! Found 0 indexes
+No indexes found. Will create one if needed during operation.
+11:36:32 PM [express] GET /api/auth/user 304 in 144ms :: {"id":"33980514","username":"garvse","email"…
+11:36:34 PM [express] GET /api/auth/user 304 in 70ms :: {"id":"33980514","username":"garvse","email":…
+User connected to socket: 33980514
+11:36:34 PM [express] GET /api/profile 304 in 71ms :: {"id":1,"userId":"33980514","resumeText":"Extra…
+Analyzing resume text: Extracted text from 1746226979207-GarvSeth_Resume....
+Generating career advice for user: 33980514
+11:36:35 PM [express] GET /api/advise 304 in 72ms :: {"riskReport":{"overallRisk":0.45,"categories":[…
+User connected to socket: 33980514
+User disconnected: 33980514
+11:36:49 PM [express] GET /api/auth/user 304 in 141ms :: {"id":"33980514","username":"garvse","email"…
+User connected to socket: 33980514
+11:37:34 PM [vite] hmr update /src/components/ui/footer2.tsx
+11:37:34 PM [vite] Internal server error: /home/runner/workspace/client/src/components/ui/footer2.tsx: Unexpected token (71:44)
+
+  69 |     <footer className="fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10 bg-background/95 backdrop-blur-sm opacity-100 translate-y-0 scale-100
+  70 |     }`}>
+> 71 |       <div className="py-4 px-6 rounded-full">
+     |                                             ^
+  72 |         <div className="flex flex-wrap items-center justify-center gap-8">
+  73 |           {menuItems.map((section, idx) => (
+  74 |             <div key={idx} className="flex flex-col items-center gap-2">
+  Plugin: vite:react-babel
+  File: /home/runner/workspace/client/src/components/ui/footer2.tsx:71:44
+  69 |      <footer className="fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10 bg-background/95 backdrop-blur-sm opacity-100 translate-y-0 scale-100
+  70 |      }`}>
+  71 |        <div className="py-4 px-6 rounded-full">
+     |                                              ^
+  72 |          <div className="flex flex-wrap items-center justify-center gap-8">
+  73 |            {menuItems.map((section, idx) => (
+      at toParseError (/home/runner/workspace/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at raise (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1503:19)
+      at unexpected (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1543:16)
+      at jsxParseIdentifier (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:278:14)
+      at jsxParseNamespacedName (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:288:25)
+      at jsxParseAttribute (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:413:24)
+      at jsxParseOpeningElementAfterName (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:440:30)
+      at jsxParseOpeningElementAfterName (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:4125:20)
+      at jsxParseOpeningElementAt (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:430:19)
+      at jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:470:35)
+      at jsxParseElement (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:559:19)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:573:21)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:723:23)
+      at parseUpdate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:702:21)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:664:23)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3809:20)
+      at parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:398:14)
+      at parseExprOps (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:410:23)
+      at parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:365:23)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:296:21)
+      at fn (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3662:23)
+      at tryParse (/home/runner/workspace/node_modules/@babel/parser/src/parser/util.ts:175:20)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3661:20)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:252:12)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3136:12)
+      at parseMaybeAssignAllowIn (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:251:17)
+      at parseParenAndDistinguishExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1784:16)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1146:21)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:723:23)
+      at parseUpdate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:702:21)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:664:23)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3809:20)
+      at parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:398:14)
+      at parseExprOps (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:410:23)
+      at parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:365:23)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:296:21)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3681:22)
+      at parseExpressionBase (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:221:23)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:39)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3131:16)
+      at parseExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:17)
+      at parseReturnStatement (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1086:28)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:510:21)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3142:20)
+      at parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:449:17)
+      at parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:398:17)
+      at parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1415:16)
+      at parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1388:10)
+      at parseBlock (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1356:10)
