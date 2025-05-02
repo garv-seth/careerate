@@ -1,10 +1,10 @@
 
 "use client"
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link as WouterLink, useLocation } from "wouter";
-import { LayoutDashboard, Settings, User2, Brain } from "lucide-react";
+import { LayoutDashboard, Settings, User2, Brain, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
