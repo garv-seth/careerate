@@ -17,6 +17,7 @@ interface NavItem {
 export function TubelightNavbar({ className }: { className?: string }) {
   const [location] = useLocation();
   const { isAuthenticated } = useAuth();
+  const { login, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

@@ -1,5 +1,6 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
+
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
@@ -8,7 +9,20 @@ import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
 if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+  console.warn("Environment variable REPLIT_DOMAINS not provided. Auth will be limited to local domains only.");
+}
+
+// Will store allowed domains for auth
+let allowedDomains: string[] = [];
+
+// Add Replit domains if available
+if (process.env.REPLIT_DOMAINS) {
+  allowedDomains = process.env.REPLIT_DOMAINS.split(",");
+}
+
+// Add production domain if specified
+if (process.env.PRODUCTION_DOMAIN) {
+  allowedDomains.push(process.env.PRODUCTION_DOMAIN);
 }
 
 const getOidcConfig = memoize(
@@ -26,19 +40,20 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET || "careerate-secret",
+    secret: process.env.SESSION_SECRET || "developmentsecret", // You should set SESSION_SECRET in production
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
+      sameSite: "lax",
     },
   });
 }
@@ -53,12 +68,9 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(
-  claims: any,
-) {
-  const userId = claims["sub"];
-  await storage.upsertUser({
-    id: userId,
+async function upsertUser(claims: any) {
+  return await storage.upsertUser({
+    id: claims["sub"],
     username: claims["username"],
     email: claims["email"],
     firstName: claims["first_name"],
@@ -66,16 +78,6 @@ async function upsertUser(
     bio: claims["bio"],
     profileImageUrl: claims["profile_image_url"],
   });
-  
-  // Create profile if it doesn't exist
-  const existingProfile = await storage.getProfileByUserId(userId);
-  if (!existingProfile) {
-    await storage.createProfile({
-      userId,
-      resumeText: null,
-      lastScan: null
-    });
-  }
 }
 
 export async function setupAuth(app: Express) {
@@ -96,8 +98,7 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  for (const domain of allowedDomains) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
@@ -108,21 +109,45 @@ export async function setupAuth(app: Express) {
       verify,
     );
     passport.use(strategy);
+    console.log(`Auth configured for domain: ${domain}`);
   }
 
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const domain = req.hostname;
+    const strategyName = `replitauth:${domain}`;
+    
+    // Check if we have a strategy for this domain
+    const isAllowedDomain = allowedDomains.includes(domain);
+    
+    if (!isAllowedDomain) {
+      console.warn(`Login attempt from non-configured domain: ${domain}`);
+      return res.status(400).json({ 
+        error: "Domain not configured for authentication",
+        configuredDomains: allowedDomains
+      });
+    }
+    
+    passport.authenticate(strategyName, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/dashboard",
+    const domain = req.hostname;
+    const strategyName = `replitauth:${domain}`;
+    
+    if (!allowedDomains.includes(domain)) {
+      return res.status(400).json({ 
+        error: "Domain not configured for authentication"
+      });
+    }
+    
+    passport.authenticate(strategyName, {
+      successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
   });
@@ -137,8 +162,9 @@ export async function setupAuth(app: Express) {
       );
     });
   });
-  
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+
+  // Add route to check if user is authenticated
+  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
