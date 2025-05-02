@@ -91,67 +91,70 @@ const Footer2 = ({
   return (
     <motion.footer 
       style={{ scale, opacity }}
-      className="w-full bg-background border-t border-border py-6"
+      className="w-full bg-background border-t border-border py-8"
     >
-      <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
+          <div className="flex flex-col gap-4">
             <a href={logo.url} className="flex items-center gap-2">
               <img
                 src={logo.src}
                 alt={logo.alt}
                 title={logo.title}
-                className="h-6 w-6"
+                className="h-8 w-8"
               />
-              <span className="text-sm font-semibold">{logo.title}</span>
+              <span className="text-lg font-semibold">{logo.title}</span>
             </a>
-            
-            <nav className="hidden md:flex items-center gap-6">
-              {menuItems.map((section, idx) => (
-                <div key={idx} className="flex items-center gap-4">
-                  {section.links.map((link, linkIdx) => (
-                    <a
-                      key={linkIdx}
-                      href={link.url}
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.text}
-                    </a>
-                  ))}
-                </div>
-              ))}
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-4">
             <Toggle
               variant="outline"
               size="sm"
-              className="rounded-full bg-background/5 border-border"
+              className="w-fit rounded-full bg-background/5 border-border"
               pressed={theme === 'dark'}
               onPressedChange={(pressed) => setTheme(pressed ? 'dark' : 'light')}
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
-                <Moon className="h-3 w-3" />
+                <Moon className="h-4 w-4" />
               ) : (
-                <Sun className="h-3 w-3" />
+                <Sun className="h-4 w-4" />
               )}
             </Toggle>
-
-            <div className="hidden md:flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">{copyright}</span>
-              {bottomLinks.map((link, idx) => (
-                <a
-                  key={idx}
-                  href={link.url}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {link.text}
-                </a>
-              ))}
-            </div>
           </div>
+          
+          {menuItems.map((section, idx) => (
+            <div key={idx} className="flex flex-col gap-3">
+              <h3 className="font-semibold text-sm">{section.title}</h3>
+              <div className="flex flex-col gap-2">
+                {section.links.map((link, linkIdx) => (
+                  <a
+                    key={linkIdx}
+                    href={link.url}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {link.text}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-border gap-4">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>{copyright}</span>
+            {bottomLinks.map((link, idx) => (
+              <a
+                key={idx}
+                href={link.url}
+                className="hover:text-primary transition-colors"
+              >
+                {link.text}
+              </a>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Made with <span className="text-blue-500">♥</span> in Seattle
+          </p>
         </div>
       </div>
     </motion.footer>
