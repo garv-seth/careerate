@@ -171,7 +171,9 @@ try {
     return {
       ...state,
       maya: {
-        messages: [...(state.maya?.messages || []), new HumanMessage(input), result.message],
+        messages: [...(state.maya?.messages || []), 
+                   new HumanMessage({content: input}), 
+                   result.message],
         results: resultData,
         skills,
         experience,
@@ -207,7 +209,9 @@ try {
     return {
       ...state,
       ellie: {
-        messages: [...(state.ellie?.messages || []), new HumanMessage(skillsInput), result.message],
+        messages: [...(state.ellie?.messages || []), 
+                   new HumanMessage({content: skillsInput}), 
+                   result.message],
         results: resultData,
         marketInsights,
         trends,
@@ -244,7 +248,9 @@ try {
     return {
       ...state,
       sophia: {
-        messages: [...(state.sophia?.messages || []), new HumanMessage(input), result.message],
+        messages: [...(state.sophia?.messages || []), 
+                   new HumanMessage({content: input}), 
+                   result.message],
         results: resultData,
         learningPlan,
         resources,
@@ -347,7 +353,7 @@ const updateAgentStatus = (agent: 'cara' | 'maya' | 'ellie' | 'sophia', status: 
 };
 
 // Function to run the career analysis with user input implementing the Plan-Execute-Reflect pattern
-// Using LangGraph for orchestration (similar to Google's Agent Development Kit approach)
+// Using our custom orchestration inspired by Google's Agent Development Kit approach
 export const runCareerate = async (userId: string, resumeText: string) => {
   try {
     // Check if we have necessary API keys
@@ -374,11 +380,11 @@ export const runCareerate = async (userId: string, resumeText: string) => {
     trackAgentActivity({
       agent: 'cara',
       action: 'Initializing agent workflow',
-      detail: 'Setting up the LangGraph workflow for coordinated analysis',
+      detail: 'Setting up the workflow for coordinated analysis',
       timestamp: new Date()
     });
     
-    // Initial state for the graph
+    // Initial state for the workflow
     const initialState: AgentState = {
       input: resumeText,
       userId: userId,
@@ -390,22 +396,23 @@ export const runCareerate = async (userId: string, resumeText: string) => {
     };
     
     try {
-      // Run the compiled LangGraph workflow
-      // This will automatically execute the graph: cara -> maya -> ellie -> sophia -> synthesize
-      const result = await agentGraph.invoke(initialState);
+      // Run our custom agent workflow executor
+      // This will execute all agents in sequence: cara -> maya -> ellie -> sophia -> synthesize
+      console.log("Starting agent workflow for career analysis");
+      const result = await executeAgentWorkflow(initialState);
       
       // Store vectors in Pinecone for future retrieval
       try {
         console.log(`Storing vectors for user ${userId} in Pinecone...`);
-        if (process.env.PINECONE_API_KEY) {
-          await storeResumeEmbeddings(
+        if (process.env.PINECONE_API_KEY && pinecone) {
+          const mayaResultsStr = JSON.stringify(result.maya?.results || {});
+          const ellieResultsStr = JSON.stringify(result.ellie?.results || {});
+          const sophiaResultsStr = JSON.stringify(result.sophia?.results || {});
+          
+          await pinecone.storeResumeEmbeddings(
             userId,
             resumeText,
-            [
-              JSON.stringify(result.maya?.results || {}),
-              JSON.stringify(result.ellie?.results || {}),
-              JSON.stringify(result.sophia?.results || {})
-            ]
+            [mayaResultsStr, ellieResultsStr, sophiaResultsStr]
           );
         }
       } catch (error) {
@@ -414,23 +421,23 @@ export const runCareerate = async (userId: string, resumeText: string) => {
       
       // Return the final synthesized results
       return result.final_output || createSampleCareerAdvice();
-    } catch (graphError) {
-      console.error("Error running agent graph:", graphError);
+    } catch (workflowError) {
+      console.error("Error running agent workflow:", workflowError);
       
-      // If the graph fails, fall back to the sequential execution approach
-      console.log("Falling back to sequential execution approach...");
+      // If our workflow fails, fall back to the legacy sequential execution approach
+      console.log("Falling back to legacy sequential execution approach...");
       
       // Initialize the state
       updateAgentStatus('cara', 'active');
       trackAgentActivity({
         agent: 'cara',
         action: 'Starting career analysis (fallback mode)',
-        detail: 'Using sequential approach due to graph execution failure',
+        detail: 'Using legacy sequential approach due to workflow execution failure',
         timestamp: new Date(),
         tools: ['pinecone']
       });
       
-      // Execute each agent in sequence
+      // Execute each agent in sequence (legacy approach)
       updateAgentStatus('cara', 'thinking');
       const initialPlan = await runCaraForPlanning(resumeText);
       
