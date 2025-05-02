@@ -135,7 +135,8 @@ export const getPineconeIndex = async () => {
 // Function to store a resume in the vector database
 export const storeResumeEmbeddings = async (
   userId: string,
-  resumeText: string
+  resumeText: string,
+  agentAnalyses: string[] = []
 ): Promise<string[]> => {
   try {
     const index = await getPineconeIndex();
@@ -143,8 +144,8 @@ export const storeResumeEmbeddings = async (
     // Split resume into chunks for better retrieval
     const chunks = splitTextIntoChunks(resumeText);
     
-    // Create documents with metadata
-    const documents = chunks.map(
+    // Create documents with metadata for resume chunks
+    const resumeDocuments = chunks.map(
       (chunk, i) => 
         new Document({
           pageContent: chunk,
@@ -156,9 +157,26 @@ export const storeResumeEmbeddings = async (
         })
     );
     
+    // Create documents for agent analyses results
+    const analysisDocuments = agentAnalyses.map(
+      (analysis, i) => 
+        new Document({
+          pageContent: analysis,
+          metadata: {
+            userId,
+            source: "agent_analysis",
+            agentIndex: i,
+            agentType: i === 0 ? "maya" : i === 1 ? "ellie" : "sophia",
+          },
+        })
+    );
+    
+    // Combine all documents
+    const allDocuments = [...resumeDocuments, ...analysisDocuments];
+    
     // Create the vector store and add the documents
     const vectorStore = await PineconeStore.fromDocuments(
-      documents,
+      allDocuments,
       embeddings,
       {
         pineconeIndex: index,
@@ -167,10 +185,14 @@ export const storeResumeEmbeddings = async (
     );
     
     // Return the vectorIds for reference
-    return documents.map((doc, i) => `${userId}-resume-${i}`);
+    return allDocuments.map((doc, i) => {
+      const source = doc.metadata.source;
+      const index = source === "resume" ? doc.metadata.chunkIndex : doc.metadata.agentIndex;
+      return `${userId}-${source}-${index}`;
+    });
   } catch (error) {
     console.error("Error storing resume embeddings:", error);
-    throw error;
+    return []; // Return empty array instead of throwing to prevent workflow interruption
   }
 };
 
