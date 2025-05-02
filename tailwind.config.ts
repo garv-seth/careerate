@@ -7,11 +7,11 @@ import defaultColors from "tailwindcss/colors";
 // Define our complete colors object
 const colors = {
   ...defaultColors,
-  slate: defaultColors.slate,
-  gray: defaultColors.gray,
+  slate: defaultColors.slate, // formerly blueGray
+  gray: defaultColors.gray,   // formerly coolGray
   zinc: defaultColors.zinc,
-  neutral: defaultColors.neutral,
-  stone: defaultColors.stone,
+  neutral: defaultColors.neutral, // formerly trueGray
+  stone: defaultColors.stone,    // formerly warmGray
   red: defaultColors.red,
   orange: defaultColors.orange,
   amber: defaultColors.amber,
