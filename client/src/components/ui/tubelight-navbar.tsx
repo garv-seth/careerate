@@ -4,10 +4,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link as WouterLink, useLocation } from "wouter";
-import { LayoutDashboard, Settings, User2, Brain, Menu, X, LogIn, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, User2, Brain, Menu, X, LogIn, LogOut, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
 
 interface NavItem {
   name: string;
