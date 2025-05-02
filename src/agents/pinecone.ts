@@ -5,39 +5,51 @@ import { PineconeStore } from "@langchain/pinecone";
 
 // Initialize Pinecone client safely
 export let pinecone: Pinecone;
-try {
-  if (process.env.PINECONE_API_KEY) {
-    pinecone = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY,
-    });
-  } else {
-    console.log("Warning: PINECONE_API_KEY not provided, using mock implementation");
-    // Create a minimal implementation that won't throw errors
-    pinecone = {
-      listIndexes: async () => ({ indexes: [] }) as any,
-      createIndex: async () => ({}),
-      Index: () => ({
-        namespace: () => ({
-          upsert: async () => ({}),
-          query: async () => ({ matches: [] }),
-        }),
-      }),
-    } as any;
-  }
-} catch (error) {
-  console.error("Error initializing Pinecone:", error);
-  // Create a minimal implementation that won't throw errors
-  pinecone = {
-    listIndexes: async () => ({ indexes: [] }) as any,
-    createIndex: async () => ({}),
-    Index: () => ({
-      namespace: () => ({
-        upsert: async () => ({}),
-        query: async () => ({ matches: [] }),
-      }),
+
+// Initialize as a mock first to avoid undefined errors
+pinecone = {
+  listIndexes: async () => ({ indexes: [] }) as any,
+  createIndex: async () => ({}),
+  Index: () => ({
+    namespace: () => ({
+      upsert: async () => ({}),
+      query: async () => ({ matches: [] }),
     }),
-  } as any;
-}
+  }),
+} as any;
+
+const initializePinecone = async () => {
+  try {
+    if (process.env.PINECONE_API_KEY) {
+      console.log("✅ PINECONE_API_KEY found! Initializing Pinecone client");
+      pinecone = new Pinecone({
+        apiKey: process.env.PINECONE_API_KEY,
+      });
+      
+      // Test the Pinecone connection
+      console.log("Testing Pinecone API connection...");
+      const indexes = await pinecone.listIndexes();
+      console.log(`✅ Pinecone API test successful! Found ${indexes.indexes?.length || 0} indexes`);
+      if (indexes.indexes && indexes.indexes.length > 0) {
+        console.log("Available indexes:", indexes.indexes.map(idx => idx.name).join(", "));
+      } else {
+        console.log("No indexes found. Will create one if needed during operation.");
+      }
+    } else {
+      console.log("⚠️ PINECONE_API_KEY not provided, using mock implementation");
+      // Already initialized with mock above
+    }
+  } catch (error) {
+    console.error("❌ Error initializing Pinecone:", error);
+    console.log("Error details:", error);
+    // Create a minimal implementation that won't throw errors
+    console.log("⚠️ Falling back to mock implementation due to error");
+    // Already initialized with mock above
+  }
+};
+
+// Initialize pinecone (runs asynchronously)
+initializePinecone().catch(err => console.error("Failed to initialize Pinecone:", err));
 
 // Initialize OpenAI embeddings safely
 let embeddings: OpenAIEmbeddings;
