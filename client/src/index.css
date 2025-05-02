@@ -1,6 +1,4 @@
-/* Tailwind CSS imports */
-/* We need to use these special comments for compatibility with the version installed */
-/* ! tailwindcss v4.1.5 | MIT License | https://tailwindcss.com */
+/* ! Tailwind CSS v4.1.5 | MIT License | https://tailwindcss.com */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

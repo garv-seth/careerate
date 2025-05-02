@@ -1,70 +1,61 @@
+// Using basic type to avoid type issues
+type Config = any;
 
-import type { Config } from "tailwindcss";
-
-/**
- * Simplified Tailwind configuration with direct color references
- * to avoid compatibility issues between different Tailwind versions.
- */
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
-  safelist: [
-    'border-slate-200',
-    'border-slate-700',
-    'bg-slate-200',
-    'bg-slate-800',
-    'text-slate-200',
-    'text-slate-800'
-  ],
   theme: {
     extend: {
       colors: {
-        // Direct hex code color definitions
+        // Essential slate shades defined with hex codes
         slate: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
           200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
           700: '#334155',
-          800: '#1e293b'
+          800: '#1e293b',
+          900: '#0f172a',
+          950: '#020617',
         },
-        gray: {
-          200: '#e5e7eb',
-          700: '#374151',
-          800: '#1f2937'
-        },
-        // HSL variables for design system
+        // CSS variables for design system
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
           DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))"
+          foreground: "hsl(var(--card-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))"
+          foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))"
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))"
+          foreground: "hsl(var(--secondary-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))"
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))"
+          foreground: "hsl(var(--accent-foreground))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))"
+          foreground: "hsl(var(--destructive-foreground))",
         },
         border: {
           DEFAULT: "hsl(var(--border))",
           light: "hsl(var(--border-light))",
-          dark: "hsl(var(--border-dark))"
+          dark: "hsl(var(--border-dark))",
         },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -73,7 +64,7 @@ export default {
           "2": "hsl(var(--chart-2))",
           "3": "hsl(var(--chart-3))",
           "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))"
+          "5": "hsl(var(--chart-5))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -83,50 +74,46 @@ export default {
           accent: "hsl(var(--sidebar-accent))",
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))"
-        }
+          ring: "hsl(var(--sidebar-ring))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)"
+        sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" }
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" }
-        }
+          to: { height: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out"
-      }
-    }
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
   },
+  // Fixed plugins syntax compatible with Tailwind 4.x
   plugins: [
-    // Add custom utility classes for slate colors
     {
-      handler: ({ addBase, addUtilities }) => {
+      handler: ({ addBase }) => {
         addBase({
           '*': {
-            borderColor: '#e2e8f0' // Default border color using hex code
+            borderColor: '#e2e8f0',
+          },
+          'body': {
+            fontFamily: 'system-ui, sans-serif',
+            backgroundColor: 'hsl(var(--background))',
+            color: 'hsl(var(--foreground))',
+            WebkitFontSmoothing: 'antialiased',
           }
-        });
-        
-        // Add hardcoded utilities for slate colors
-        addUtilities({
-          '.border-slate-200': { borderColor: '#e2e8f0' },
-          '.border-slate-700': { borderColor: '#334155' },
-          '.bg-slate-200': { backgroundColor: '#e2e8f0' },
-          '.bg-slate-800': { backgroundColor: '#1e293b' },
-          '.text-slate-200': { color: '#e2e8f0' },
-          '.text-slate-800': { color: '#1e293b' }
         });
       }
     }
-  ]
+  ],
 } satisfies Config;
