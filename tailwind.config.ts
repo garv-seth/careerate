@@ -6,9 +6,11 @@ export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
+    colors: {
+      ...colors,
+    },
     extend: {
       colors: {
-        slate: colors.slate,
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
