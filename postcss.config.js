@@ -1,8 +1,11 @@
-
-// We're letting Vite handle Tailwind through its integration
+/** 
+ * @type {import('@tailwindcss/postcss').Config} 
+ */
 export default {
   plugins: {
-    'tailwindcss': {},
-    'autoprefixer': {},
+    '@tailwindcss/postcss': {
+      config: './tailwind.config.ts'
+    },
+    'autoprefixer': {}
   },
 }
