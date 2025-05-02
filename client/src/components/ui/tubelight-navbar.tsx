@@ -80,7 +80,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
 
   return (
     <div className={cn(
-      "fixed top-4 left-1/2 -translate-x-1/2 z-50",
+      "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 transform translate-y-[calc(100%+1rem)] opacity-0",
+      "peer-[.scroll-end]:translate-y-0 peer-[.scroll-end]:opacity-100",
       className
     )}>
       {/* Desktop Navigation */}

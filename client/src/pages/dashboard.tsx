@@ -63,7 +63,7 @@ const Dashboard = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  
+
   // Socket.IO connection for real-time agent updates
   const { 
     connected: socketConnected, 
@@ -94,13 +94,13 @@ const Dashboard = () => {
         title: "Resume uploaded successfully",
         description: "Your resume is being analyzed by our AI.",
       });
-      
+
       // Start analysis via socket connection if connected
       if (socketConnected && data.profile && data.profile.resumeText) {
         // Start real-time agent analysis
         startAnalysis(data.profile.resumeText);
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/advise"] });
@@ -141,17 +141,17 @@ const Dashboard = () => {
       });
       return;
     }
-    
+
     console.log("Uploading file:", resumeFile.name, "Size:", resumeFile.size, "Type:", resumeFile.type);
-    
+
     const formData = new FormData();
     formData.append("resume", resumeFile);
-    
+
     // Log form data contents for debugging
     for (let [key, value] of formData.entries()) {
       console.log(`Form Data: ${key} = ${value instanceof File ? value.name : value}`);
     }
-    
+
     setUploading(true);
     try {
       console.log("Starting upload mutation");
@@ -198,8 +198,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       <TubelightNavbar />
-      
-      <main className="flex-grow container mx-auto px-4 py-8">
+
+      <main className="flex-grow container mx-auto px-4 py-8 min-h-screen bg-gradient-to-br from-blue-500 to-cyan-500">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <div className="w-full lg:w-1/4">
@@ -214,7 +214,7 @@ const Dashboard = () => {
               generatingRoadmap={generateRoadmapMutation.isPending}
             />
           </div>
-          
+
           {/* Main Content */}
           <div className="w-full lg:w-3/4">
             {!profile?.resumeText ? (
@@ -228,15 +228,15 @@ const Dashboard = () => {
                   <TabsTrigger value="skills">Skill Gaps</TabsTrigger>
                   <TabsTrigger value="roadmap">Career Roadmap</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="risk" className="mt-6">
                   <RiskAnalysisTab careerAdvice={careerAdvice} />
                 </TabsContent>
-                
+
                 <TabsContent value="skills" className="mt-6">
                   <SkillGapsTab careerAdvice={careerAdvice} />
                 </TabsContent>
-                
+
                 <TabsContent value="roadmap" className="mt-6">
                   <RoadmapTab careerAdvice={careerAdvice} />
                 </TabsContent>
@@ -245,7 +245,7 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
-      
+
       <Footer2 />
     </div>
   );
@@ -286,7 +286,7 @@ const ProfileSidebar = ({
             <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email || ""}</p>
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Resume</span>
@@ -305,7 +305,7 @@ const ProfileSidebar = ({
         </div>
       </CardContent>
     </Card>
-    
+
     <Card>
       <CardHeader>
         <CardTitle>Upload Resume</CardTitle>
@@ -332,7 +332,7 @@ const ProfileSidebar = ({
             </Button>
           </label>
         </div>
-        
+
         <Button 
           className="w-full" 
           disabled={!resumeFile || uploading}
@@ -343,7 +343,7 @@ const ProfileSidebar = ({
         </Button>
       </CardContent>
     </Card>
-    
+
     <Card>
       <CardHeader>
         <CardTitle>Career Tools</CardTitle>
@@ -364,7 +364,7 @@ const ProfileSidebar = ({
           </span>
           <ChevronRight className="h-4 w-4" />
         </Button>
-        
+
         <Button variant="outline" className="w-full justify-between" disabled={!profile?.resumeText}>
           <span className="flex items-center">
             <BarChart2 className="mr-2 h-4 w-4" />
@@ -403,7 +403,7 @@ const GetStartedCard = () => (
           </div>
         </div>
       </div>
-      
+
       <div className="rounded-lg bg-gray-50 dark:bg-slate-800 p-6 border border-gray-100 dark:border-gray-700">
         <h3 className="font-medium text-lg mb-2">What You'll Get</h3>
         <ul className="space-y-3 mt-4">
@@ -439,9 +439,9 @@ const AnalyzingCard = () => {
     connected, 
     error 
   } = useAgentSocket();
-  
+
   const uploadState = 'processing';
-  
+
   // Log connection status and any errors
   useEffect(() => {
     if (error) {
@@ -453,7 +453,7 @@ const AnalyzingCard = () => {
       });
     }
   }, [error]);
-  
+
   return (
     <div className="space-y-6">
       <Card className="w-full">
@@ -488,7 +488,7 @@ const AnalyzingCard = () => {
           />
         </CardContent>
       </Card>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="pb-3">
@@ -505,7 +505,7 @@ const AnalyzingCard = () => {
             />
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Analysis Progress</CardTitle>
@@ -524,7 +524,7 @@ const AnalyzingCard = () => {
                 className="h-2"
               />
             </div>
-            
+
             <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-800">
               <p className="font-medium mb-1">Analysis in Progress</p>
               <p>This typically takes 1-2 minutes. Our AI agents are analyzing your data to provide personalized career insights.</p>
@@ -538,16 +538,16 @@ const AnalyzingCard = () => {
 
 const RiskAnalysisTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
   if (!careerAdvice) return <div>No data available</div>;
-  
+
   const { riskReport } = careerAdvice;
   const riskLevel = 
     riskReport.overallRisk < 0.3 ? "Low" : 
     riskReport.overallRisk < 0.6 ? "Medium" : "High";
-  
+
   const riskColor = 
     riskReport.overallRisk < 0.3 ? "bg-green-500" : 
     riskReport.overallRisk < 0.6 ? "bg-yellow-500" : "bg-red-500";
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -575,13 +575,13 @@ const RiskAnalysisTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
               <div className={`h-full ${riskColor}`} style={{ width: `${riskReport.overallRisk * 100}%` }}></div>
             </div>
           </div>
-          
+
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <p>{riskReport.summary}</p>
           </div>
-          
+
           <Separator className="my-6" />
-          
+
           <h3 className="text-lg font-medium mb-4">Risk by Category</h3>
           <div className="space-y-6">
             {riskReport.categories.map((category) => (
@@ -617,9 +617,9 @@ const RiskAnalysisTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
 
 const SkillGapsTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
   if (!careerAdvice) return <div>No data available</div>;
-  
+
   const { learningPlan } = careerAdvice;
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -665,9 +665,9 @@ const SkillGapsTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
               </div>
             ))}
           </div>
-          
+
           <Separator className="my-6" />
-          
+
           <div>
             <h3 className="text-lg font-medium mb-4">Recommended Resources</h3>
             <div className="space-y-4">
@@ -710,7 +710,7 @@ const SkillGapsTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
               ))}
             </div>
           </div>
-          
+
           <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
             <p>Estimated time to complete all recommended training: {learningPlan.timeEstimate}</p>
           </div>
@@ -722,9 +722,9 @@ const SkillGapsTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
 
 const RoadmapTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
   if (!careerAdvice) return <div>No data available</div>;
-  
+
   const { nextSteps } = careerAdvice;
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -752,7 +752,7 @@ const RoadmapTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <h3 className="text-lg font-medium mb-4 flex items-center">
                 <div className="h-2 w-2 bg-yellow-500 rounded-full mr-2"></div>
@@ -769,7 +769,7 @@ const RoadmapTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice }) => {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <h3 className="text-lg font-medium mb-4 flex items-center">
                 <div className="h-2 w-2 bg-green-500 rounded-full mr-2"></div>

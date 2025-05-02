@@ -67,8 +67,15 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light">
         <TooltipProvider>
-          <div className="min-h-screen flex flex-col bg-background">
-            <div className="pt-20 flex-grow pb-24"> {/* Navbar padding and footer spacing */}
+          <div 
+            className="min-h-screen flex flex-col scroll-container" 
+            onScroll={(e) => {
+              const target = e.target as HTMLDivElement;
+              const isAtBottom = target.scrollHeight - target.scrollTop === target.clientHeight;
+              target.classList.toggle('scroll-end', isAtBottom);
+            }}
+          >
+            <div className="flex-grow pb-24"> {/* Navbar padding and footer spacing */}
               <Toaster />
               <Router />
             </div>
