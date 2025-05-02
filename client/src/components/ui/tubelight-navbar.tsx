@@ -139,16 +139,12 @@ export function TubelightNavbar({ className }: { className?: string }) {
         </Button>
       </div>
 
-      {/* Mobile Navigation Button */}
+      {/* Mobile Navigation Button - Positioned to the right */}
       <div 
         ref={menuRef}
-        className="md:hidden flex items-center gap-2"
+        className="md:hidden flex justify-end w-full"
       >
-        <div className="text-muted-foreground text-sm font-medium py-2 px-3 bg-background/5 border border-border backdrop-blur-lg rounded-full">
-          Careerate
-        </div>
-        
-        <div className="relative ml-auto">
+        <div className="relative">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="flex items-center justify-center w-12 h-12 bg-background/5 border border-border backdrop-blur-lg rounded-full shadow-lg p-3 text-foreground hover:text-primary transition-colors"
