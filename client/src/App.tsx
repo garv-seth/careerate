@@ -53,6 +53,10 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
+      {/* Public Legal Pages */}
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      
       <Route component={NotFound} />
     </Switch>
   );
