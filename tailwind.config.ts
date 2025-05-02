@@ -43,6 +43,14 @@ const colors = {
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  safelist: [
+    'border-slate-200',
+    'border-slate-700',
+    'bg-slate-200',
+    'bg-slate-800',
+    'text-slate-200',
+    'text-slate-800'
+  ],
   theme: {
     extend: {
       colors: {
