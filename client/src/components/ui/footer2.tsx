@@ -5,6 +5,7 @@ import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import careerateLogoSrc from "@assets/CareerateICON.png";
 import { Switch } from "@/components/ui/switch";
+import { useEffect, useState } from "react";
 
 interface MenuItem {
   title: string;
@@ -61,9 +62,22 @@ const Footer2 = ({
   ],
 }: Footer2Props) => {
   const { theme, setTheme } = useTheme();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setIsVisible(currentScrollY < lastScrollY || currentScrollY < 100);
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-50">
+    <footer className={`fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-50 transition-transform duration-300 ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
       <div className="bg-background/5 border border-border backdrop-blur-lg py-4 px-6 rounded-full shadow-lg">
         <div className="flex flex-wrap items-center justify-center gap-8">
           {menuItems.map((section, idx) => (
@@ -84,12 +98,16 @@ const Footer2 = ({
           ))}
 
           <div className="flex items-center gap-4 border-l border-border pl-4">
-            <Switch
-              checked={theme === 'dark'}
-              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-              className="bg-background/5"
-              aria-label="Toggle theme"
-            />
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4" />
+              <Switch
+                checked={theme === 'dark'}
+                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                className="bg-background/5"
+                aria-label="Toggle theme"
+              />
+              <Moon className="h-4 w-4" />
+            </div>
             <p className="text-sm text-muted-foreground">
               Made with <span className="text-blue-500">♥</span> in Seattle
             </p>
