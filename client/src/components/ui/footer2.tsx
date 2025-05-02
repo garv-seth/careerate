@@ -1,8 +1,10 @@
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 import careerateLogoSrc from "@assets/CareerateICON.png";
 
@@ -82,29 +84,34 @@ const Footer2 = ({
   ],
 }: Footer2Props) => {
   const { theme, setTheme } = useTheme();
+  const { scrollYProgress } = useScroll();
+  const scale = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8, 1], [0, 0.8, 1]);
   
   return (
-    <footer className="w-full bg-background border-t border-border">
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex flex-col md:flex-row justify-between">
+    <motion.footer 
+      style={{ scale, opacity }}
+      className="w-full bg-background border-t border-border py-6"
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-8">
           {/* Logo and tagline */}
-          <div className="mb-10 md:mb-0">
+          <div className="w-full md:w-auto">
             <div className="flex items-center gap-2">
               <a href={logo.url} className="flex items-center">
                 <img
                   src={logo.src}
                   alt={logo.alt}
                   title={logo.title}
-                  className="h-10 w-10"
+                  className="h-8 w-8"
                 />
-                <p className="text-xl font-semibold ml-2">{logo.title}</p>
+                <p className="text-lg font-semibold ml-2">{logo.title}</p>
               </a>
             </div>
-            <p className="mt-4 text-muted-foreground">{tagline}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{tagline}</p>
             
-            {/* Theme toggle in footer */}
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Theme:</span>
+            {/* Theme toggle */}
+            <div className="mt-3 flex items-center gap-2">
               <Toggle
                 variant="outline" 
                 size="sm"
@@ -114,28 +121,25 @@ const Footer2 = ({
                 aria-label="Toggle theme"
               >
                 {theme === 'dark' ? (
-                  <Moon className="h-4 w-4" />
+                  <Moon className="h-3 w-3" />
                 ) : (
-                  <Sun className="h-4 w-4" />
+                  <Sun className="h-3 w-3" />
                 )}
               </Toggle>
-              <span className="text-sm text-muted-foreground">
-                {theme === 'dark' ? 'Dark' : 'Light'}
-              </span>
             </div>
           </div>
           
           {/* Navigation sections */}
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 w-full md:w-auto">
             {menuItems.map((section, sectionIdx) => (
-              <div key={sectionIdx}>
-                <h3 className="font-bold text-foreground mb-4">{section.title}</h3>
-                <ul className="space-y-3">
+              <div key={sectionIdx} className="space-y-2">
+                <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
+                <ul className="space-y-1">
                   {section.links.map((link, linkIdx) => (
                     <li key={linkIdx}>
                       <a 
                         href={link.url} 
-                        className="text-muted-foreground hover:text-primary transition-colors"
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
                       >
                         {link.text}
                       </a>
@@ -148,14 +152,14 @@ const Footer2 = ({
         </div>
         
         {/* Bottom bar */}
-        <div className="mt-12 pt-6 border-t border-border flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-muted-foreground">{copyright}</p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
+        <div className="mt-6 pt-4 border-t border-border flex flex-col md:flex-row justify-between items-center">
+          <p className="text-xs text-muted-foreground">{copyright}</p>
+          <div className="flex space-x-4 mt-2 md:mt-0">
             {bottomLinks.map((link, linkIdx) => (
               <a 
                 key={linkIdx} 
                 href={link.url} 
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
                 {link.text}
               </a>
@@ -163,7 +167,7 @@ const Footer2 = ({
           </div>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 };
 
