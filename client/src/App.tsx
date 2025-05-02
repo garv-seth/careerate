@@ -17,6 +17,7 @@ import PrivacyPage from "@/pages/privacy";
 
 function Router() {
   return (
+    <div className="pt-20"> {/* Add padding top for navbar */}
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth-test" component={AuthTestPage} />
@@ -59,6 +60,7 @@ function Router() {
       
       <Route component={NotFound} />
     </Switch>
+    </div>
   );
 }
 
