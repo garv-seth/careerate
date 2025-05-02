@@ -34,9 +34,9 @@ const HomePage = () => {
     <div className="min-h-screen flex flex-col">
       <TubelightNavbar />
 
-      {/* Hero Section */}
+      {/* Hero Section - Full screen height */}
       <WarpBackground>
-        <div className="pt-20 pb-24 sm:pt-32 sm:pb-40 lg:pt-40 lg:pb-48">
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               className="text-center max-w-4xl mx-auto"
@@ -67,7 +67,7 @@ const HomePage = () => {
                   <Button 
                     size="lg" 
                     className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-gray hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-600/40 transition-all duration-200"
-                    onClick={isAuthenticated ? logout : login}
+                    onClick={() => isAuthenticated ? window.location.href = "/dashboard" : window.location.href = "/auth"}
                   >
                     {isAuthenticated ? "Your Dashboard" : "Get Early Access"}
                   </Button>
@@ -168,7 +168,7 @@ const HomePage = () => {
               </div>
               <div className="mt-10">
                 <Button 
-                  onClick={isAuthenticated ? () => window.location.href = "/dashboard" : login} 
+                  onClick={() => isAuthenticated ? window.location.href = "/dashboard" : window.location.href = "/auth"} 
                   className="inline-flex items-center px-6 py-3"
                 >
                   {isAuthenticated ? "Your Dashboard" : "Explore Dashboard"}
@@ -265,7 +265,7 @@ const HomePage = () => {
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Button 
-              onClick={isAuthenticated ? logout : login}
+              onClick={() => isAuthenticated ? window.location.href = "/dashboard" : window.location.href = "/auth"}
               variant="secondary" 
               size="lg" 
               className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-gray hover:bg-gray-50 font-semibold shadow-lg"
