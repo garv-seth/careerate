@@ -205,65 +205,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         io.to(userId).emit("agent_status_update", statuses);
         io.to(userId).emit("agent_activities", []);
         
-        // Start analysis process (simulated for now)
+        // Start the real analysis process using runCareerate from our graph.ts
         console.log(`Starting analysis for user ${userId}`);
         
-        // Update cara to active
-        statuses.cara = 'active';
-        io.to(userId).emit("agent_status_update", statuses);
-        
-        // Add activity
-        const activities = userAgentActivities.get(userId) || [];
-        const newActivity: AgentActivity = {
-          agent: 'cara',
-          action: 'Starting career analysis',
-          detail: 'Planning analysis workflow',
-          timestamp: new Date(),
-          tools: ['pinecone']
-        };
-        activities.unshift(newActivity);
-        userAgentActivities.set(userId, activities);
-        io.to(userId).emit("agent_activities", activities);
-        
-        // Simulate agent work with timeouts
-        setTimeout(() => {
-          statuses.cara = 'thinking';
-          io.to(userId).emit("agent_status_update", statuses);
+        try {
+          // Save the resume text to the user's profile
+          const profile = await storage.getProfileByUserId(userId);
           
-          // Add another activity
-          const activities = userAgentActivities.get(userId) || [];
-          activities.unshift({
-            agent: 'cara',
-            action: 'Analyzing resume structure',
-            detail: 'Extracting key information from resume',
-            timestamp: new Date(),
-            tools: ['perplexity']
-          });
-          userAgentActivities.set(userId, activities);
-          io.to(userId).emit("agent_activities", activities);
-        }, 2000);
-        
-        // Mark cara as complete and activate maya
-        setTimeout(() => {
-          statuses.cara = 'complete';
-          statuses.maya = 'active';
-          io.to(userId).emit("agent_status_update", statuses);
+          if (profile) {
+            await storage.updateProfileResume(userId, data.resumeText);
+          } else {
+            await storage.createProfile({
+              userId,
+              resumeText: data.resumeText,
+              lastScan: new Date()
+            });
+          }
           
-          // Add maya activity
-          const activities = userAgentActivities.get(userId) || [];
-          activities.unshift({
-            agent: 'maya',
-            action: 'Analyzing skills and experience',
-            detail: 'Extracting skills and assessing competency levels',
-            timestamp: new Date(),
-            tools: ['database', 'perplexity']
+          // Import at run time to avoid circular dependencies
+          const { runCareerate, agentEmitter } = await import('../src/agents/graph');
+          
+          // Register a temporary listener for this specific user
+          const activityListener = (activity: AgentActivity) => {
+            const activities = userAgentActivities.get(userId) || [];
+            activities.unshift(activity);
+            userAgentActivities.set(userId, activities);
+            io.to(userId).emit("agent_activities", activities);
+            io.to(userId).emit("agent_activity", activity);
+          };
+          
+          const statusListener = (update: { agent: keyof AgentStatuses; status: 'idle' | 'active' | 'thinking' | 'complete' }) => {
+            const statuses = userAgentStatuses.get(userId) || getDefaultAgentStatuses();
+            statuses[update.agent] = update.status;
+            userAgentStatuses.set(userId, statuses);
+            io.to(userId).emit("agent_status_update", statuses);
+            io.to(userId).emit("agent_status_single", update);
+          };
+          
+          // Add temporary listeners for this user
+          agentEmitter.on('activity', activityListener);
+          agentEmitter.on('status_update', statusListener);
+          
+          // Run the agent workflow (this will take some time)
+          const careerAdvice = await runCareerate(userId, data.resumeText);
+          
+          // Remove the temporary listeners
+          agentEmitter.off('activity', activityListener);
+          agentEmitter.off('status_update', statusListener);
+          
+          // Send completion notification
+          io.to(userId).emit("analysis_complete", { success: true, careerAdvice });
+          
+        } catch (agentError) {
+          console.error("Error running agent workflow:", agentError);
+          socket.emit("analysis_error", { 
+            message: "Error running agent workflow. The system may have encountered an issue with one of the AI models." 
           });
-          userAgentActivities.set(userId, activities);
-          io.to(userId).emit("agent_activities", activities);
-        }, 5000);
-        
-        // Additional simulated agent activities would continue here...
-        
+        }
       } catch (error) {
         console.error("Error in analysis:", error);
         socket.emit("analysis_error", { message: "Failed to analyze resume" });

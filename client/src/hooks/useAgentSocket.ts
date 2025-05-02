@@ -104,6 +104,21 @@ export function useAgentSocket(): UseAgentSocketReturn {
       setAgentActivities(prev => [processedActivity, ...prev]);
     });
     
+    // Handle completion notification
+    newSocket.on('analysis_complete', (data: { success: boolean, careerAdvice: any }) => {
+      console.log('Analysis complete:', data);
+      if (data.success) {
+        const completionActivity: AgentActivity = {
+          agent: 'cara',
+          action: 'Analysis completed successfully',
+          detail: 'All agents have finished processing your resume',
+          timestamp: new Date(),
+          tools: []
+        };
+        setAgentActivities(prev => [completionActivity, ...prev]);
+      }
+    });
+    
     // Handle errors
     newSocket.on('analysis_error', (error: { message: string }) => {
       console.error('Analysis error:', error);
