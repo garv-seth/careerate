@@ -208,198 +208,7 @@ const AgentTestPage = () => {
     return null;
   }
   
-  // Component for risk analysis tab
-  const RiskAnalysisTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice | null }) => {
-    if (!careerAdvice) return <div className="p-4 text-center text-muted-foreground">No analysis data available yet</div>;
-    
-    return (
-      <div className="space-y-4">
-        <div className="flex flex-col gap-2 bg-background/50 p-4 rounded-lg border">
-          <h3 className="text-lg font-medium">Overall Automation Risk</h3>
-          <div className="flex items-center gap-3">
-            <Progress value={careerAdvice.riskReport.overallRisk * 100} className="h-3" />
-            <span className="text-sm font-semibold">{Math.round(careerAdvice.riskReport.overallRisk * 100)}%</span>
-          </div>
-          <p className="text-sm mt-2 text-muted-foreground">
-            {careerAdvice.riskReport.summary}
-          </p>
-        </div>
-        
-        <div className="grid gap-4 mt-6">
-          <h3 className="text-lg font-medium">Risk Categories</h3>
-          {careerAdvice.riskReport.categories.map((category, i) => (
-            <div key={i} className="p-4 rounded-lg border">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">{category.category}</span>
-                <span className={`text-sm font-semibold px-2 py-1 rounded ${
-                  category.risk > 0.7 ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
-                  category.risk > 0.4 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' :
-                  'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                }`}>
-                  {Math.round(category.risk * 100)}%
-                </span>
-              </div>
-              <Progress 
-                value={category.risk * 100} 
-                className={`h-2 mb-2 ${
-                  category.risk > 0.7 ? 'bg-red-200 dark:bg-red-900/50' :
-                  category.risk > 0.4 ? 'bg-amber-200 dark:bg-amber-900/50' :
-                  'bg-green-200 dark:bg-green-900/50'
-                }`} 
-              />
-              <p className="text-sm text-muted-foreground">{category.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-  
-  // Component for skill gaps tab
-  const SkillGapsTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice | null }) => {
-    if (!careerAdvice) return <div className="p-4 text-center text-muted-foreground">No analysis data available yet</div>;
-    
-    return (
-      <div className="space-y-4">
-        <div className="bg-background/50 p-4 rounded-lg border">
-          <h3 className="text-lg font-medium mb-4">Skills Gap Analysis</h3>
-          {careerAdvice.learningPlan.skills.map((skill, i) => (
-            <div key={i} className="mb-6">
-              <div className="flex justify-between items-center mb-1">
-                <div className="flex items-center">
-                  <span className="font-medium">{skill.skill}</span>
-                  {skill.importance > 0.8 && (
-                    <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                      High Value
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  Level {skill.currentLevel} → {skill.targetLevel}
-                </span>
-              </div>
-              
-              <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                <div 
-                  className="absolute left-0 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"
-                  style={{ width: `${(skill.currentLevel / 10) * 100}%` }}
-                ></div>
-                <div
-                  className="absolute right-0 h-2 bg-primary/60 rounded-r-full"
-                  style={{ width: `${((skill.targetLevel - skill.currentLevel) / 10) * 100}%`, 
-                           left: `${(skill.currentLevel / 10) * 100}%` }}
-                ></div>
-              </div>
-              
-              <p className="text-xs text-muted-foreground mt-1">
-                Current proficiency vs. recommended level
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  };
-  
-  // Component for roadmap tab
-  const RoadmapTab = ({ careerAdvice }: { careerAdvice?: CareerAdvice | null }) => {
-    if (!careerAdvice) return <div className="p-4 text-center text-muted-foreground">No analysis data available yet</div>;
-    
-    return (
-      <div className="space-y-4">
-        <div className="bg-background/50 p-4 rounded-lg border">
-          <h3 className="text-lg font-medium">Learning Resources</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Estimated time to complete: {careerAdvice.learningPlan.timeEstimate}
-          </p>
-          
-          <div className="grid gap-4">
-            {careerAdvice.learningPlan.resources.map((resource, i) => (
-              <div key={i} className="p-3 rounded-lg border">
-                <div className="flex justify-between">
-                  <h4 className="font-medium">{resource.title}</h4>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    resource.level === "Beginner" ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" :
-                    resource.level === "Intermediate" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300" :
-                    "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300"
-                  }`}>
-                    {resource.level}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                  <span>{resource.type}</span>
-                  <span>•</span>
-                  <span>{resource.provider}</span>
-                  <span>•</span>
-                  <span>{resource.duration}</span>
-                </div>
-                
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {resource.skillsAddressed.map((skill, j) => (
-                    <span key={j} className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-                
-                <a 
-                  href={resource.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-primary hover:underline mt-2"
-                >
-                  View resource
-                  <ChevronRight className="h-3 w-3" />
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <div className="bg-background/50 p-4 rounded-lg border mt-6">
-          <h3 className="text-lg font-medium mb-3">Action Plan</h3>
-          
-          <div className="space-y-6">
-            <div>
-              <h4 className="font-medium flex items-center gap-1.5 mb-2">
-                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
-                Immediate Actions
-              </h4>
-              <ul className="space-y-1 text-sm pl-6 list-disc">
-                {careerAdvice.nextSteps.immediate.map((step, i) => (
-                  <li key={i}>{step}</li>
-                ))}
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium flex items-center gap-1.5 mb-2">
-                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">2</span>
-                Short-term Goals
-              </h4>
-              <ul className="space-y-1 text-sm pl-6 list-disc">
-                {careerAdvice.nextSteps.shortTerm.map((step, i) => (
-                  <li key={i}>{step}</li>
-                ))}
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium flex items-center gap-1.5 mb-2">
-                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">3</span>
-                Long-term Strategy
-              </h4>
-              <ul className="space-y-1 text-sm pl-6 list-disc">
-                {careerAdvice.nextSteps.longTerm.map((step, i) => (
-                  <li key={i}>{step}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
@@ -547,37 +356,203 @@ const AgentTestPage = () => {
                       </Button>
                     </div>
                   ) : (
-                    <Tabs defaultValue="risk" className="w-full">
-                      <TabsList className="w-full grid grid-cols-3 mb-6">
-                        <TabsTrigger value="risk">
-                          <BarChart2 className="h-4 w-4 mr-1.5 inline-block" />
-                          <span className="hidden sm:inline-block">Risk Analysis</span>
-                          <span className="inline-block sm:hidden">Risk</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="skills">
-                          <Brain className="h-4 w-4 mr-1.5 inline-block" />
-                          <span className="hidden sm:inline-block">Skill Gaps</span>
-                          <span className="inline-block sm:hidden">Skills</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="roadmap">
-                          <BookOpen className="h-4 w-4 mr-1.5 inline-block" />
-                          <span className="hidden sm:inline-block">Learning Roadmap</span>
-                          <span className="inline-block sm:hidden">Roadmap</span>
-                        </TabsTrigger>
-                      </TabsList>
+                    <div className="space-y-8">
+                      {/* Risk Analysis Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold flex items-center">
+                          <BarChart2 className="h-5 w-5 mr-2 text-primary" />
+                          Risk Analysis
+                        </h3>
+                        <div className="flex flex-col gap-2 bg-background/50 p-4 rounded-lg border">
+                          <h4 className="text-lg font-medium">Overall Automation Risk</h4>
+                          <div className="flex items-center gap-3">
+                            <Progress value={careerAdvice.riskReport.overallRisk * 100} className="h-3" />
+                            <span className="text-sm font-semibold">{Math.round(careerAdvice.riskReport.overallRisk * 100)}%</span>
+                          </div>
+                          <p className="text-sm mt-2 text-muted-foreground">
+                            {careerAdvice.riskReport.summary}
+                          </p>
+                        </div>
+                        
+                        <div className="grid gap-4 mt-4">
+                          <h4 className="text-lg font-medium">Risk Categories</h4>
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {careerAdvice.riskReport.categories.map((category, i) => (
+                              <div key={i} className="p-4 rounded-lg border">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="font-medium">{category.category}</span>
+                                  <span className={`text-sm font-semibold px-2 py-1 rounded ${
+                                    category.risk > 0.7 ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                                    category.risk > 0.4 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' :
+                                    'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                  }`}>
+                                    {Math.round(category.risk * 100)}%
+                                  </span>
+                                </div>
+                                <Progress 
+                                  value={category.risk * 100} 
+                                  className={`h-2 mb-2 ${
+                                    category.risk > 0.7 ? 'bg-red-200 dark:bg-red-900/50' :
+                                    category.risk > 0.4 ? 'bg-amber-200 dark:bg-amber-900/50' :
+                                    'bg-green-200 dark:bg-green-900/50'
+                                  }`} 
+                                />
+                                <p className="text-sm text-muted-foreground">{category.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
                       
-                      <TabsContent value="risk">
-                        <RiskAnalysisTab careerAdvice={careerAdvice} />
-                      </TabsContent>
+                      {/* Skills Gap Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold flex items-center">
+                          <Brain className="h-5 w-5 mr-2 text-primary" />
+                          Skill Gaps Analysis
+                        </h3>
+                        <div className="bg-background/50 p-4 rounded-lg border">
+                          <div className="grid gap-6 sm:grid-cols-2">
+                            {careerAdvice.learningPlan.skills.map((skill, i) => (
+                              <div key={i} className="mb-2">
+                                <div className="flex justify-between items-center mb-1">
+                                  <div className="flex items-center">
+                                    <span className="font-medium">{skill.skill}</span>
+                                    {skill.importance > 0.8 && (
+                                      <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                                        High Value
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">
+                                    Level {skill.currentLevel} → {skill.targetLevel}
+                                  </span>
+                                </div>
+                                
+                                <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                  <div 
+                                    className="absolute left-0 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"
+                                    style={{ width: `${(skill.currentLevel / 10) * 100}%` }}
+                                  ></div>
+                                  <div
+                                    className="absolute right-0 h-2 bg-primary/60 rounded-r-full"
+                                    style={{ width: `${((skill.targetLevel - skill.currentLevel) / 10) * 100}%`, 
+                                             left: `${(skill.currentLevel / 10) * 100}%` }}
+                                  ></div>
+                                </div>
+                                
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Current proficiency vs. recommended level
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
                       
-                      <TabsContent value="skills">
-                        <SkillGapsTab careerAdvice={careerAdvice} />
-                      </TabsContent>
-                      
-                      <TabsContent value="roadmap">
-                        <RoadmapTab careerAdvice={careerAdvice} />
-                      </TabsContent>
-                    </Tabs>
+                      {/* Learning Plan Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold flex items-center">
+                          <BookOpen className="h-5 w-5 mr-2 text-primary" />
+                          Learning Plan
+                        </h3>
+                        <div className="bg-background/50 p-4 rounded-lg border">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-lg font-medium">Recommended Resources</h4>
+                            <span className="text-sm text-muted-foreground px-2 py-1 bg-background/80 rounded">
+                              Est. time: {careerAdvice.learningPlan.timeEstimate}
+                            </span>
+                          </div>
+                          
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {careerAdvice.learningPlan.resources.map((resource, i) => (
+                              <div key={i} className="p-3 rounded-lg border">
+                                <div className="flex justify-between">
+                                  <h4 className="font-medium">{resource.title}</h4>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                    resource.level === "Beginner" ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" :
+                                    resource.level === "Intermediate" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300" :
+                                    "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300"
+                                  }`}>
+                                    {resource.level}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                  <span>{resource.type}</span>
+                                  <span>•</span>
+                                  <span>{resource.provider}</span>
+                                  <span>•</span>
+                                  <span>{resource.duration}</span>
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {resource.skillsAddressed.map((skill, j) => (
+                                    <span key={j} className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                                
+                                <a 
+                                  href={resource.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                                >
+                                  View resource
+                                  <ChevronRight className="h-3 w-3" />
+                                </a>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-background/50 p-4 rounded-lg border mt-6">
+                          <h4 className="text-lg font-medium mb-4">Action Plan</h4>
+                          
+                          <div className="grid gap-6 md:grid-cols-3">
+                            <div>
+                              <h5 className="font-medium flex items-center gap-1.5 mb-2">
+                                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
+                                Immediate Actions
+                              </h5>
+                              <ul className="space-y-1 text-sm pl-6 list-disc">
+                                {careerAdvice.nextSteps.immediate.map((step, i) => (
+                                  <li key={i}>{step}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            
+                            <div>
+                              <h5 className="font-medium flex items-center gap-1.5 mb-2">
+                                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">2</span>
+                                Short-term Goals
+                              </h5>
+                              <ul className="space-y-1 text-sm pl-6 list-disc">
+                                {careerAdvice.nextSteps.shortTerm.map((step, i) => (
+                                  <li key={i}>{step}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            
+                            <div>
+                              <h5 className="font-medium flex items-center gap-1.5 mb-2">
+                                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">3</span>
+                                Long-term Strategy
+                              </h5>
+                              <ul className="space-y-1 text-sm pl-6 list-disc">
+                                {careerAdvice.nextSteps.longTerm.map((step, i) => (
+                                  <li key={i}>{step}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
