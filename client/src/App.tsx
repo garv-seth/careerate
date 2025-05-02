@@ -4,21 +4,46 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import AgentTestPage from "@/pages/agent-test";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
+import AuthTestPage from "@/pages/auth-test";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/agent-test" component={AgentTestPage} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/profile" component={Profile} />
+      <Route path="/auth-test" component={AuthTestPage} />
+      
+      {/* Protected Routes */}
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/agent-test">
+        <ProtectedRoute>
+          <AgentTestPage />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/profile">
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      </Route>
+      
       <Route component={NotFound} />
     </Switch>
   );
