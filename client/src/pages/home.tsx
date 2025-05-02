@@ -167,12 +167,13 @@ const HomePage = () => {
                 ))}
               </div>
               <div className="mt-10">
-                <a href="/api/login">
-                  <Button className="inline-flex items-center px-6 py-3">
-                    Explore Dashboard
-                    <ArrowRight className="ml-2 -mr-1 w-5 h-5" />
-                  </Button>
-                </a>
+                <Button 
+                  onClick={isAuthenticated ? () => window.location.href = "/dashboard" : login} 
+                  className="inline-flex items-center px-6 py-3"
+                >
+                  {isAuthenticated ? "Your Dashboard" : "Explore Dashboard"}
+                  <ArrowRight className="ml-2 -mr-1 w-5 h-5" />
+                </Button>
               </div>
             </div>
             <div className="lg:w-1/2 shadow-2xl rounded-2xl">
@@ -263,11 +264,14 @@ const HomePage = () => {
             Get personalized AI insights, industry-specific guidance, and a roadmap to stay ahead in an AI-driven world.
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <a href="/api/login">
-              <Button variant="secondary" size="lg" className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-gray hover:bg-gray-50 font-semibold shadow-lg">
-                Get Early Access
-              </Button>
-            </a>
+            <Button 
+              onClick={isAuthenticated ? logout : login}
+              variant="secondary" 
+              size="lg" 
+              className="inline-flex items-center justify-center px-8 py-4 text-primary-700 bg-gray hover:bg-gray-50 font-semibold shadow-lg"
+            >
+              {isAuthenticated ? "View Dashboard" : "Get Early Access"}
+            </Button>
             <a href="#features">
               <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-gray hover:bg-primary-700/90 hover:border-white font-semibold shadow-lg">
                 Learn More

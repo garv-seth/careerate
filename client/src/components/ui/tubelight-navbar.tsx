@@ -17,8 +17,7 @@ interface NavItem {
 
 export function TubelightNavbar({ className }: { className?: string }) {
   const [location] = useLocation();
-  const { isAuthenticated } = useAuth();
-  const { login, logout } = useAuth();
+  const { isAuthenticated, login, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -120,6 +119,21 @@ export function TubelightNavbar({ className }: { className?: string }) {
             </WouterLink>
           );
         })}
+        
+        {/* Auth Button */}
+        <Button
+          onClick={isAuthenticated ? logout : login}
+          className={cn(
+            "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
+            "text-foreground/80 hover:text-primary bg-primary/10"
+          )}
+        >
+          {isAuthenticated ? (
+            <><LogOut className="w-4 h-4 mr-2" /> Logout</>
+          ) : (
+            <><LogIn className="w-4 h-4 mr-2" /> Login</>
+          )}
+        </Button>
       </div>
 
       {/* Mobile Navigation Button */}
