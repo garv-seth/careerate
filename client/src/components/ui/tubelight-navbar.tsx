@@ -85,58 +85,70 @@ export function TubelightNavbar({ className }: { className?: string }) {
     )}>
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location === item.url;
+        {isAuthenticated ? (
+          // Only show nav items when authenticated
+          <>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location === item.url;
 
-          return (
-            <WouterLink
-              key={item.name}
-              href={item.url}
-              onClick={() => setActiveTab(item.name)}
+              return (
+                <WouterLink
+                  key={item.name}
+                  href={item.url}
+                  onClick={() => setActiveTab(item.name)}
+                  className={cn(
+                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
+                    "text-foreground/80 hover:text-primary",
+                    isActive && "bg-muted text-primary"
+                  )}
+                >
+                  <span>{item.name}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="lamp-desktop"
+                      className="absolute inset-0 w-full bg-primary/5 rounded-full -z-10"
+                      initial={false}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
+                    >
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full">
+                        <div className="absolute w-12 h-6 bg-primary/20 rounded-full blur-md -top-2 -left-2" />
+                        <div className="absolute w-8 h-6 bg-primary/20 rounded-full blur-md -top-1" />
+                        <div className="absolute w-4 h-4 bg-primary/20 rounded-full blur-sm top-0 left-2" />
+                      </div>
+                    </motion.div>
+                  )}
+                </WouterLink>
+              );
+            })}
+            
+            {/* Logout Button when authenticated */}
+            <Button
+              onClick={logout}
               className={cn(
-                "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-                "text-foreground/80 hover:text-primary",
-                isActive && "bg-muted text-primary"
+                "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
+                "text-foreground/80 hover:text-primary bg-primary/10"
               )}
             >
-              <span>{item.name}</span>
-              {isActive && (
-                <motion.div
-                  layoutId="lamp-desktop"
-                  className="absolute inset-0 w-full bg-primary/5 rounded-full -z-10"
-                  initial={false}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30,
-                  }}
-                >
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full">
-                    <div className="absolute w-12 h-6 bg-primary/20 rounded-full blur-md -top-2 -left-2" />
-                    <div className="absolute w-8 h-6 bg-primary/20 rounded-full blur-md -top-1" />
-                    <div className="absolute w-4 h-4 bg-primary/20 rounded-full blur-sm top-0 left-2" />
-                  </div>
-                </motion.div>
-              )}
-            </WouterLink>
-          );
-        })}
-        
-        {/* Auth Button */}
-        <Button
-          onClick={isAuthenticated ? logout : login}
-          className={cn(
-            "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-            "text-foreground/80 hover:text-primary bg-primary/10"
-          )}
-        >
-          {isAuthenticated ? (
-            <><LogOut className="w-4 h-4 mr-2" /> Logout</>
-          ) : (
-            <><LogIn className="w-4 h-4 mr-2" /> Login</>
-          )}
-        </Button>
+              <LogOut className="w-4 h-4 mr-2" /> Logout
+            </Button>
+          </>
+        ) : (
+          // Only show login button when not authenticated
+          <Button
+            onClick={() => window.location.href = "/auth"}
+            className={cn(
+              "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
+              "text-foreground/80 hover:text-primary bg-primary/10"
+            )}
+          >
+            <LogIn className="w-4 h-4 mr-2" /> Login
+          </Button>
+        )}
       </div>
 
       {/* Mobile Navigation Button - Positioned to the right */}
@@ -164,53 +176,64 @@ export function TubelightNavbar({ className }: { className?: string }) {
                 className="absolute top-16 right-0 bg-background border border-border rounded-lg shadow-lg overflow-hidden w-48"
               >
                 <div className="pt-2 pb-2">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location === item.url;
-                    
-                    return (
-                      <WouterLink
-                        key={item.name}
-                        href={item.url}
-                        onClick={() => handleMobileNavClick(item.name)}
+                  {isAuthenticated ? (
+                    // Only show nav items when authenticated in mobile menu
+                    <>
+                      {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location === item.url;
+                        
+                        return (
+                          <WouterLink
+                            key={item.name}
+                            href={item.url}
+                            onClick={() => handleMobileNavClick(item.name)}
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative",
+                              "text-foreground/80 hover:bg-muted hover:text-primary",
+                              isActive && "bg-muted text-primary"
+                            )}
+                          >
+                            <Icon size={16} strokeWidth={2.5} />
+                            <span>{item.name}</span>
+                            {isActive && (
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                            )}
+                          </WouterLink>
+                        );
+                      })}
+                      
+                      {/* Logout button when authenticated */}
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          logout();
+                        }}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative",
-                          "text-foreground/80 hover:bg-muted hover:text-primary",
-                          isActive && "bg-muted text-primary"
+                          "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
+                          "text-foreground/80 hover:bg-muted hover:text-primary"
                         )}
                       >
-                        <Icon size={16} strokeWidth={2.5} />
-                        <span>{item.name}</span>
-                        {isActive && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
-                        )}
-                      </WouterLink>
-                    );
-                  })}
-                  
-                  {/* Auth Menu Item */}
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      isAuthenticated ? logout() : login();
-                    }}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
-                      "text-foreground/80 hover:bg-muted hover:text-primary"
-                    )}
-                  >
-                    {isAuthenticated ? (
-                      <>
                         <LogOut size={16} strokeWidth={2.5} />
                         <span>Logout</span>
-                      </>
-                    ) : (
-                      <>
-                        <LogIn size={16} strokeWidth={2.5} />
-                        <span>Login</span>
-                      </>
-                    )}
-                  </button>
+                      </button>
+                    </>
+                  ) : (
+                    // Only show login when not authenticated
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        window.location.href = "/auth";
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
+                        "text-foreground/80 hover:bg-muted hover:text-primary"
+                      )}
+                    >
+                      <LogIn size={16} strokeWidth={2.5} />
+                      <span>Login</span>
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
