@@ -63,7 +63,7 @@ const Footer2 = ({
   const { theme, setTheme } = useTheme();
 
   return (
-    <footer className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-auto">
+    <footer className="fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-50">
       <div className="bg-background/5 border border-border backdrop-blur-lg py-4 px-6 rounded-full shadow-lg">
         <div className="flex flex-wrap items-center justify-center gap-8">
           {menuItems.map((section, idx) => (
