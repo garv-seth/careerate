@@ -84,7 +84,10 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-secondary-400 via-primary-300 to-accent-400;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(to right, hsl(var(--secondary)), hsl(var(--primary)), hsl(var(--accent)));
   }
   
   .glow-text {
@@ -99,15 +102,19 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-slate-200 dark:bg-slate-800;
+  background-color: #e2e8f0;
+}
+.dark ::-webkit-scrollbar-track {
+  background-color: #1e293b;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary rounded-md;
+  background-color: hsl(var(--primary));
+  border-radius: 0.375rem;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/80;
+  background-color: hsl(var(--primary) / 0.8);
 }
 
 /* Animation for tubelight effect */
