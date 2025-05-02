@@ -51,30 +51,43 @@ const initializePinecone = async () => {
 // Initialize pinecone (runs asynchronously)
 initializePinecone().catch(err => console.error("Failed to initialize Pinecone:", err));
 
-// Initialize OpenAI embeddings safely
-let embeddings: OpenAIEmbeddings;
-try {
-  if (process.env.OPENAI_API_KEY) {
-    embeddings = new OpenAIEmbeddings({
-      openAIApiKey: process.env.OPENAI_API_KEY,
-      modelName: "text-embedding-3-small",
-    });
-  } else {
-    console.log("Warning: OPENAI_API_KEY not provided for embeddings, using mock implementation");
-    // Create a minimal implementation that won't throw errors
-    embeddings = {
-      embedDocuments: async () => [[0.1, 0.2, 0.3]], // Return mock embeddings
-      embedQuery: async () => [0.1, 0.2, 0.3], // Return mock embeddings
-    } as any;
+// Initialize OpenAI embeddings safely with mock implementation first
+let embeddings: OpenAIEmbeddings = {
+  embedDocuments: async () => [[0.1, 0.2, 0.3]], // Return mock embeddings
+  embedQuery: async () => [0.1, 0.2, 0.3], // Return mock embeddings
+} as any;
+
+// Initialize embeddings asynchronously
+const initializeEmbeddings = async () => {
+  try {
+    if (process.env.OPENAI_API_KEY) {
+      console.log("Initializing OpenAI embeddings...");
+      embeddings = new OpenAIEmbeddings({
+        openAIApiKey: process.env.OPENAI_API_KEY,
+        modelName: "text-embedding-3-small",
+      });
+      
+      // Test embeddings
+      try {
+        const testEmbedding = await embeddings.embedQuery("Test embedding");
+        console.log(`✅ OpenAI embeddings test successful! Generated vector of length ${testEmbedding.length}`);
+      } catch (testError) {
+        console.error("❌ Error testing OpenAI embeddings:", testError);
+        throw testError;
+      }
+    } else {
+      console.log("⚠️ OPENAI_API_KEY not provided for embeddings, using mock implementation");
+      // Already using mock implementation
+    }
+  } catch (error) {
+    console.error("❌ Error initializing OpenAI embeddings:", error);
+    console.log("⚠️ Falling back to mock embeddings implementation due to error");
+    // Already using mock implementation
   }
-} catch (error) {
-  console.error("Error initializing OpenAI embeddings:", error);
-  // Create a minimal implementation that won't throw errors
-  embeddings = {
-    embedDocuments: async () => [[0.1, 0.2, 0.3]], // Return mock embeddings
-    embedQuery: async () => [0.1, 0.2, 0.3], // Return mock embeddings
-  } as any;
-}
+};
+
+// Initialize embeddings (runs asynchronously)
+initializeEmbeddings().catch(err => console.error("Failed to initialize embeddings:", err));
 
 // Export Pinecone index to be used by agents
 export const getPineconeIndex = async () => {
