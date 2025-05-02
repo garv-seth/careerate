@@ -7,8 +7,14 @@ import defaultColors from "tailwindcss/colors";
 // Define our complete colors object with modern Tailwind color names
 const colors = {
   ...defaultColors,
-  // Make sure we're using the updated color names to avoid warnings
-  sky: defaultColors.sky, // new name for lightBlue
+  // Explicitly exclude deprecated colors to silence warnings
+  lightBlue: undefined,
+  blueGray: undefined,
+  coolGray: undefined,
+  trueGray: undefined,
+  warmGray: undefined,
+  // Use the modern color names
+  sky: defaultColors.sky,
   slate: defaultColors.slate,
   gray: defaultColors.gray,
   zinc: defaultColors.zinc,
@@ -151,6 +157,34 @@ export default {
     },
   },
   plugins: [
-    // Using imports directly for ESM compatibility
+    // Add safelist for slate utility classes to make sure they're available
+    {
+      handler: ({ addBase, addUtilities }) => {
+        addBase({
+          '*': {
+            borderColor: '#e2e8f0', // Default border color using hex code
+          },
+        });
+        
+        // Add utilities that might be getting purged
+        addUtilities({
+          '.border-slate-200': {
+            borderColor: '#e2e8f0' // slate-200 color
+          },
+          '.bg-slate-200': {
+            backgroundColor: '#e2e8f0' // slate-200 color
+          },
+          '.bg-slate-800': {
+            backgroundColor: '#1e293b' // slate-800 color
+          },
+          '.text-slate-200': {
+            color: '#e2e8f0' // slate-200 color
+          },
+          '.text-slate-800': {
+            color: '#1e293b' // slate-800 color
+          }
+        });
+      }
+    }
   ],
 } satisfies Config;
