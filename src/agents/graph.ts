@@ -3,7 +3,7 @@ import { HumanMessage, AIMessage, BaseMessage, SystemMessage } from "@langchain/
 import { createCaraAgent, createMayaAgent, createEllieAgent, createSophiaAgent } from "./agents";
 import { caraInitialSystemPrompt, mayaInitialSystemPrompt, ellieInitialSystemPrompt, sophiaInitialSystemPrompt } from "./prompts";
 import { storage } from "../../server/storage";
-import { pinecone } from "./pinecone";
+import { pinecone, storeResumeEmbeddings } from "./pinecone";
 import { createTools } from "./tools";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { AgentExecutor } from "langchain/agents";

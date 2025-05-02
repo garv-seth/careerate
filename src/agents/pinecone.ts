@@ -91,12 +91,12 @@ export const getPineconeIndex = async () => {
       
       if (!indexExists) {
         console.log(`Creating new Pinecone index: ${indexName}`);
+        // The Pinecone API has changed, so we need to adapt our code
         await pinecone.createIndex({
           name: indexName,
-          spec: {
-            dimension: 1536, // OpenAI embedding dimensions
-            metric: "cosine"
-          }
+          dimension: 1536, // OpenAI embedding dimensions
+          metric: "cosine",
+          spec: {} as any // Use empty spec with type assertion
         });
         
         // Wait for index initialization
@@ -186,8 +186,10 @@ export const storeResumeEmbeddings = async (
     
     // Return the vectorIds for reference
     return allDocuments.map((doc, i) => {
-      const source = doc.metadata.source;
-      const index = source === "resume" ? doc.metadata.chunkIndex : doc.metadata.agentIndex;
+      const source = doc.metadata.source as string;
+      // Use type assertions to handle the union type correctly
+      const metadata = doc.metadata as any;
+      const index = source === "resume" ? metadata.chunkIndex : metadata.agentIndex;
       return `${userId}-${source}-${index}`;
     });
   } catch (error) {
