@@ -21,6 +21,7 @@ export type AgentActivity = {
   detail?: string;
   timestamp: Date;
   tools?: Array<'brave' | 'firecrawl' | 'browserbase' | 'database' | 'perplexity' | 'pinecone'>;
+  userId?: string; // User ID for directing events to specific users
 };
 
 // Agent statuses tracking
@@ -322,32 +323,73 @@ try {
     };
   };
   
-  // Create an orchestration function that runs all agents in sequence
-  // This is our custom implementation that follows the same principles as LangGraph
+  // Create a proper LangGraph workflow based on Google's ADK design
+  // Using StateGraph for better orchestration and conditional flows
+  const createWorkflow = () => {
+    try {
+      console.log("Creating LangGraph workflow");
+      
+      // Create a new state graph
+      const builder = new StateGraph<AgentState>({
+        channels: {
+          input: {
+            value: (x: AgentState) => x.input || "",
+          },
+          userId: {
+            value: (x: AgentState) => x.userId || "",
+          },
+          // Channels for agent results
+          mayaResults: {
+            value: (x: AgentState) => x.maya?.results || {}
+          },
+          ellieResults: {
+            value: (x: AgentState) => x.ellie?.results || {}
+          },
+          sophiaResults: {
+            value: (x: AgentState) => x.sophia?.results || {}
+          }
+        }
+      });
+      
+      // Add nodes to the graph
+      builder.addNode("cara", caraNode);
+      builder.addNode("maya", mayaNode);
+      builder.addNode("ellie", ellieNode);
+      builder.addNode("sophia", sophiaNode);
+      builder.addNode("synthesize", synthesizeNode);
+      
+      // Define the workflow edges
+      builder.addEdge(["cara"], "maya");
+      builder.addEdge(["maya"], "ellie");
+      builder.addEdge(["ellie"], "sophia");
+      builder.addEdge(["sophia"], "synthesize");
+      
+      // Set the entry point
+      builder.setEntryPoint("cara");
+      
+      // Compile the graph into an executable
+      const graph = builder.compile();
+      
+      console.log("LangGraph workflow created successfully");
+      return graph;
+    } catch (error) {
+      console.error("Error creating LangGraph workflow:", error);
+      throw error;
+    }
+  };
+  
+  // Create an orchestration function using our LangGraph workflow
+  const graph = createWorkflow();
+  
   executeAgentWorkflow = async (initialState: AgentState): Promise<AgentState> => {
     try {
-      console.log("Starting agent workflow execution");
+      console.log("Starting agent workflow execution with LangGraph");
       
-      // Execute the workflow: cara -> maya -> ellie -> sophia -> synthesize
-      let currentState = initialState;
-      
-      // Cara (orchestration planning)
-      currentState = await caraNode(currentState);
-      
-      // Maya (resume analysis)
-      currentState = await mayaNode(currentState);
-      
-      // Ellie (industry analysis)
-      currentState = await ellieNode(currentState);
-      
-      // Sophia (learning plan)
-      currentState = await sophiaNode(currentState);
-      
-      // Final synthesis
-      currentState = await synthesizeNode(currentState);
+      // Execute the LangGraph workflow
+      const result = await graph.invoke(initialState);
       
       console.log("Agent workflow execution completed successfully");
-      return currentState;
+      return result;
     } catch (error) {
       console.error("Error in agent workflow execution:", error);
       throw error;
@@ -368,16 +410,31 @@ try {
 
 // Function to add an agent activity and emit an event
 const trackAgentActivity = (activity: AgentActivity) => {
+  // Ensure the userId is included if available in the state
+  const currentState = getCurrentState();
+  if (currentState?.userId && !activity.userId) {
+    activity.userId = currentState.userId;
+  }
+  
   agentEmitter.emit('activity', activity);
-  console.log(`Agent ${activity.agent}: ${activity.action}`);
+  console.log(`Agent ${activity.agent}: ${activity.action}${activity.userId ? ` (User: ${activity.userId})` : ''}`);
   return activity;
 };
+
+// Current state for the active workflow
+let currentAgentState: AgentState | null = null;
+const getCurrentState = () => currentAgentState;
 
 // Update agent status and emit the event
 const updateAgentStatus = (agent: 'cara' | 'maya' | 'ellie' | 'sophia', status: 'idle' | 'active' | 'thinking' | 'complete') => {
   agentStatuses[agent] = status;
-  agentEmitter.emit('status_update', { agent, status });
-  console.log(`Agent ${agent} status: ${status}`);
+  
+  // Include user context if available
+  const currentState = getCurrentState();
+  const userId = currentState?.userId;
+  
+  agentEmitter.emit('status_update', { agent, status, userId });
+  console.log(`Agent ${agent} status: ${status}${userId ? ` (User: ${userId})` : ''}`);
 };
 
 // Function to run the career analysis with user input implementing the Plan-Execute-Reflect pattern

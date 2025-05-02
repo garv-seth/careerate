@@ -276,13 +276,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Listen for agent events from the LangChain agents
   agentEmitter.on('activity', (activity: AgentActivity) => {
-    // This would normally have user context, but for now broadcast to all
-    io.emit("agent_activity", activity);
+    // If the user context is available in the activity, only send to that user
+    if (activity.userId) {
+      io.to(activity.userId).emit("agent_activity", activity);
+    } else {
+      // This would normally have user context, but for now broadcast to all
+      io.emit("agent_activity", activity);
+    }
   });
   
-  agentEmitter.on('status_update', (update: { agent: keyof AgentStatuses; status: 'idle' | 'active' | 'thinking' | 'complete' }) => {
-    // This would normally have user context, but for now broadcast to all
-    io.emit("agent_status_single", update);
+  agentEmitter.on('status_update', (update: { 
+    agent: keyof AgentStatuses; 
+    status: 'idle' | 'active' | 'thinking' | 'complete';
+    userId?: string;
+  }) => {
+    // If the user context is available in the update, only send to that user
+    if (update.userId) {
+      io.to(update.userId).emit("agent_status_single", update);
+      
+      // Also update the stored status for this user
+      const statuses = userAgentStatuses.get(update.userId) || getDefaultAgentStatuses();
+      statuses[update.agent] = update.status;
+      userAgentStatuses.set(update.userId, statuses);
+      io.to(update.userId).emit("agent_status_update", statuses);
+    } else {
+      // Broadcast to all if no user context
+      io.emit("agent_status_single", update);
+    }
   });
   
   // Add Socket.IO endpoints
