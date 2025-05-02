@@ -580,7 +580,9 @@ export const runCareerate = async (userId: string, resumeText: string) => {
     console.error("Error running agent workflow:", workflowError);
     
     // If our workflow fails, fall back to the legacy sequential execution approach
-    console.log("Falling back to legacy sequential execution approach...");
+    console.log("❌❌❌ ERROR: Falling back to legacy sequential execution approach...");
+    console.log("❌❌❌ Workflow error details:", workflowError);
+    console.log("❌❌❌ This should NOT happen if the APIs are properly initialized!");
     
     // Initialize the state
     updateAgentStatus('cara', 'active');
