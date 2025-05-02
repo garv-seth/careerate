@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
-import "./index.css";
+import "./tailwind-generated.css";
 
 // Add Clash Display font
 const link = document.createElement("link");
