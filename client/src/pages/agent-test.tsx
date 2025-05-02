@@ -10,7 +10,7 @@ import AgentStatusPanel from '@/components/dashboard/AgentStatusPanel';
 import { AgentActivityPanel, AgentInfoCard } from '@/components/dashboard/AgentActivityPanel';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import Footer2 from '@/components/ui/footer2';
-import { Wifi, WifiOff, Send, Info } from 'lucide-react';
+import { Wifi, WifiOff, Send, Info, Upload, FileText, AlertTriangle, Brain } from 'lucide-react';
 
 const AgentTestPage = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -69,60 +69,120 @@ const AgentTestPage = () => {
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Agent System Test</h1>
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold flex items-center">
+                <Brain className="h-8 w-8 mr-2 text-primary" />
+                AI Career Agents
+              </h1>
+              <p className="mt-1 text-muted-foreground">
+                Our intelligent agent system analyzes your resume and provides personalized career insights
+              </p>
+            </div>
+            <div className="flex items-center space-x-2 self-start md:self-center">
               {connected ? (
-                <div className="flex items-center text-green-600 dark:text-green-400 text-sm">
-                  <Wifi className="h-4 w-4 mr-1" />
-                  <span>Connected to agents</span>
+                <div className="flex items-center text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/20 py-1 px-3 rounded-full">
+                  <Wifi className="h-4 w-4 mr-2" />
+                  <span>Connected to agent system</span>
                 </div>
               ) : (
-                <div className="flex items-center text-red-600 dark:text-red-400 text-sm">
-                  <WifiOff className="h-4 w-4 mr-1" />
-                  <span>Disconnected</span>
+                <div className="flex items-center text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 py-1 px-3 rounded-full">
+                  <WifiOff className="h-4 w-4 mr-2" />
+                  <span>Agents unavailable</span>
                 </div>
               )}
             </div>
           </div>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Resume Analysis</CardTitle>
-              <CardDescription>
-                Enter your resume text to test the multi-agent system
-              </CardDescription>
+          <Card className="overflow-hidden border-2 border-primary/10">
+            <CardHeader className="bg-primary/5">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <div>
+                  <CardTitle>Resume Analyzer</CardTitle>
+                  <CardDescription>
+                    Paste your resume text below to get insights from our AI agent system
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">Analysis Error</p>
+                    <p className="text-xs text-red-700 dark:text-red-400">{error}</p>
+                  </div>
+                </div>
+              )}
+              
               <Textarea
-                placeholder="Paste your resume text here..."
-                className="min-h-[200px] resize-none"
+                placeholder="Paste your resume text here or enter a sample job description to analyze..."
+                className="min-h-[200px] resize-none font-mono text-sm"
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}
                 disabled={analyzing}
               />
-            </CardContent>
-            <CardFooter className="justify-between">
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Sample résumé text will be analyzed by all 4 agents
+              
+              <div className="mt-4 flex flex-col sm:flex-row gap-2 items-center justify-between">
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Info className="h-3 w-3" />
+                  <span>Your resume is analyzed by Cara, Maya, Ellie, and Sophia agents</span>
+                </div>
+                
+                <Button 
+                  size="lg"
+                  variant="default"
+                  onClick={handleStartAnalysis} 
+                  disabled={!resumeText.trim() || !connected || analyzing}
+                  className="w-full sm:w-auto"
+                >
+                  {analyzing ? (
+                    <>
+                      <span className="animate-pulse">Analyzing...</span>
+                      <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    </>
+                  ) : (
+                    <>
+                      Start Analysis
+                      <Upload className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
               </div>
-              <Button 
-                onClick={handleStartAnalysis} 
-                disabled={!resumeText.trim() || !connected || analyzing}
-              >
-                Start Analysis
-                <Send className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
+            </CardContent>
           </Card>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Agent Status</CardTitle>
-                <CardDescription>
-                  Current status of all AI agents in the system
-                </CardDescription>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Agent Status Dashboard</CardTitle>
+                    <CardDescription>
+                      Live monitoring of all AI agent processes
+                    </CardDescription>
+                  </div>
+                  {/* Status indicator */}
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${
+                    analyzing 
+                      ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300' 
+                      : 'bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300'
+                  }`}>
+                    {analyzing ? (
+                      <>
+                        <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span>Analysis in progress</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="h-2 w-2 rounded-full bg-slate-400" />
+                        <span>Ready</span>
+                      </>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <AgentStatusPanel 
@@ -134,30 +194,43 @@ const AgentTestPage = () => {
             </Card>
             
             <Card>
-              <CardHeader>
-                <CardTitle>Activity Feed</CardTitle>
-                <CardDescription>
-                  Real-time agent activity tracking
-                </CardDescription>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Real-time Agent Activities</CardTitle>
+                    <CardDescription>
+                      Watch AI agents working on your resume in real-time
+                    </CardDescription>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-background/80 rounded-md px-2 py-1">
+                    {agentActivities.length} activities logged
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <AgentActivityPanel 
                   activities={agentActivities}
                   agentStatuses={agentStatuses}
-                  className="max-h-96 overflow-y-auto"
+                  className="max-h-[350px] overflow-y-auto px-1"
                 />
               </CardContent>
             </Card>
           </div>
           
-          <Separator />
+          <Separator className="my-8" />
           
-          <h2 className="text-xl font-semibold flex items-center">
-            <Info className="h-5 w-5 mr-2" />
-            About Our Agents
-          </h2>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold flex items-center justify-center">
+              <Brain className="h-6 w-6 mr-2 text-primary" />
+              Meet Our AI Agent Team
+            </h2>
+            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+              Our intelligent agents work together to analyze your career data and provide personalized insights,
+              each with their own specialized role in the process
+            </p>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AgentInfoCard agent="cara" />
             <AgentInfoCard agent="maya" />
             <AgentInfoCard agent="ellie" />

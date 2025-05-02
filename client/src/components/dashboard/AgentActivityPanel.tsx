@@ -2,7 +2,7 @@ import React from 'react';
 import { AgentActivity, AgentStatuses, agentDescriptions } from '@/components/avatars/types';
 import { AgentAvatar, agentColors } from '@/components/avatars/AgentAvatars';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { FileText, Database, Search, Globe, BookOpen, Brain } from 'lucide-react';
+import { FileText, Database, Search, Globe, BookOpen, Brain, BarChart2, LightbulbIcon, Wrench, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Tool icon mappings
@@ -128,16 +128,48 @@ export const AgentInfoCard: React.FC<{
 }> = ({ agent, className = '' }) => {
   const colors = agentColors[agent];
   
+  // Define agent icons
+  const agentIcons = {
+    cara: <Brain className="h-6 w-6" />,
+    maya: <FileText className="h-6 w-6" />,
+    ellie: <BarChart2 className="h-6 w-6" />,
+    sophia: <LightbulbIcon className="h-6 w-6" />
+  };
+  
   return (
-    <div className={`rounded-lg overflow-hidden border ${colors.border} ${className}`}>
-      <div className={`${colors.bg} p-3 text-white font-medium`}>
-        {agent.charAt(0).toUpperCase() + agent.slice(1)}: {agentDescriptions[agent].role}
+    <div className={`rounded-lg overflow-hidden border shadow-sm ${colors.border} hover:shadow-md transition-shadow ${className}`}>
+      <div className={`${colors.bg} p-4 text-white font-medium flex items-center justify-between`}>
+        <div className="flex items-center">
+          <div className="bg-white/20 p-2 rounded-full mr-3">
+            {agentIcons[agent]}
+          </div>
+          <div>
+            <div className="text-lg font-bold">{agent.charAt(0).toUpperCase() + agent.slice(1)}</div>
+            <div className="text-xs font-normal text-white/80">{agentDescriptions[agent].role}</div>
+          </div>
+        </div>
+        <Sparkles className="h-5 w-5 text-white/70" />
       </div>
-      <div className="p-3 text-sm">
-        <p>{agentDescriptions[agent].description}</p>
-        <div className="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
-          <BookOpen className="h-3.5 w-3.5 mr-1" />
-          <span>Specialty: {agentDescriptions[agent].specialty}</span>
+      <div className="p-4">
+        <p className="text-sm">{agentDescriptions[agent].description}</p>
+        
+        <div className="mt-4 flex flex-col gap-2">
+          <div className="flex items-center text-xs text-muted-foreground">
+            <BookOpen className="h-3.5 w-3.5 mr-2 text-primary/70" />
+            <span className="font-medium">Specialty:</span>
+            <span className="ml-1.5">{agentDescriptions[agent].specialty}</span>
+          </div>
+          
+          <div className="flex items-center text-xs text-muted-foreground">
+            <Wrench className="h-3.5 w-3.5 mr-2 text-primary/70" />
+            <span className="font-medium">Tools:</span>
+            <span className="ml-1.5">
+              {agent === 'cara' ? 'Orchestration, Planning' : 
+               agent === 'maya' ? 'Resume Analysis, Skills Extraction' :
+               agent === 'ellie' ? 'Market Research, Trend Analysis' :
+               'Learning Resources, Roadmap Planning'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
