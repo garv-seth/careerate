@@ -79,7 +79,7 @@ const AgentTestPage = () => {
         agentStatuses.cara === 'complete' &&
         agentActivities.some(activity => 
           activity.agent === 'cara' && 
-          activity.action.includes('Analysis complete'));
+          (activity.action.includes('Analysis complete') || activity.action.includes('Analysis completed')));
       
       if (isComplete && !analysisComplete) {
         setAnalysisComplete(true);
@@ -88,10 +88,15 @@ const AgentTestPage = () => {
         // Check for career advice in activity data
         const completeActivity = agentActivities.find(activity => 
           activity.agent === 'cara' && 
-          activity.action.includes('Analysis complete'));
+          ((activity.action.includes('Analysis complete') || activity.action.includes('Analysis completed')) && 
+          (activity as any).careerAdvice));
           
         if (completeActivity && (completeActivity as any).careerAdvice) {
+          console.log('Career advice found:', (completeActivity as any).careerAdvice);
           setCareerAdvice((completeActivity as any).careerAdvice);
+        } else {
+          console.warn('Analysis complete but no career advice found in activities:', 
+            agentActivities.filter(a => a.agent === 'cara').map(a => ({action: a.action, hasAdvice: !!(a as any).careerAdvice})));
         }
       }
     };
@@ -528,6 +533,18 @@ const AgentTestPage = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         Our AI agents are analyzing your resume. This may take a few minutes.
                       </p>
+                    </div>
+                  ) : !careerAdvice ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <AlertTriangle className="h-10 w-10 text-amber-500 mb-4" />
+                      <p className="text-lg font-medium">Analysis Complete But No Report Available</p>
+                      <p className="text-sm text-muted-foreground mt-2 max-w-lg mx-auto">
+                        All agents have completed their work, but the career advice report is not available. 
+                        This may happen if the analysis encountered issues. Please try uploading your resume again.
+                      </p>
+                      <Button variant="outline" className="mt-4" onClick={() => setActiveTab('upload')}>
+                        Go Back to Upload
+                      </Button>
                     </div>
                   ) : (
                     <Tabs defaultValue="risk" className="w-full">
