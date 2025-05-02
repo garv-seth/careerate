@@ -70,11 +70,13 @@
 
 @layer base {
   * {
-    @apply border-slate-200 dark:border-slate-700;
+    border-color: #e2e8f0; /* Use hex code instead of border-slate-200 */
   }
-
   body {
-    @apply font-sans bg-background text-foreground antialiased;
+    font-family: system-ui, sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
   }
 }
 
@@ -96,15 +98,20 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-slate-200 dark:bg-slate-800;
+  background-color: #e2e8f0; /* Light gray - slate-200 */
+}
+
+.dark ::-webkit-scrollbar-track {
+  background-color: #1e293b; /* Dark gray - slate-800 */
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary rounded-md;
+  background-color: hsl(var(--primary));
+  border-radius: 0.375rem;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary/80;
+  background-color: hsl(var(--primary) / 0.8);
 }
 
 /* Animation for tubelight effect */

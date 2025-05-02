@@ -4,14 +4,16 @@ import type { Config } from "tailwindcss";
 // Import directly from node_modules to avoid ESM issues
 import defaultColors from "tailwindcss/colors";
 
-// Define our complete colors object
+// Define our complete colors object with modern Tailwind color names
 const colors = {
   ...defaultColors,
-  slate: defaultColors.slate, // formerly blueGray
-  gray: defaultColors.gray,   // formerly coolGray
+  // Make sure we're using the updated color names to avoid warnings
+  sky: defaultColors.sky, // new name for lightBlue
+  slate: defaultColors.slate,
+  gray: defaultColors.gray,
   zinc: defaultColors.zinc,
-  neutral: defaultColors.neutral, // formerly trueGray
-  stone: defaultColors.stone,    // formerly warmGray
+  neutral: defaultColors.neutral,
+  stone: defaultColors.stone,
   red: defaultColors.red,
   orange: defaultColors.orange,
   amber: defaultColors.amber,
@@ -21,7 +23,6 @@ const colors = {
   emerald: defaultColors.emerald,
   teal: defaultColors.teal,
   cyan: defaultColors.cyan,
-  sky: defaultColors.sky,
   blue: defaultColors.blue,
   indigo: defaultColors.indigo,
   violet: defaultColors.violet,
