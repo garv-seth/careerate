@@ -140,7 +140,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
         ) : (
           // Only show login button when not authenticated
           <Button
-            onClick={() => window.location.href = "/auth"}
+            onClick={() => window.location.href = "/api/login"}
             className={cn(
               "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
               "text-foreground/80 hover:text-primary bg-primary/10"
@@ -151,10 +151,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
         )}
       </div>
 
-      {/* Mobile Navigation Button - Positioned to the right */}
+      {/* Mobile Navigation Button - Positioned to the right edge */}
       <div 
         ref={menuRef}
-        className="md:hidden flex justify-end w-full"
+        className="md:hidden flex justify-end w-full absolute right-0 top-0"
       >
         <div className="relative">
           <button
@@ -223,7 +223,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        window.location.href = "/auth";
+                        window.location.href = "/api/login";
                       }}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
