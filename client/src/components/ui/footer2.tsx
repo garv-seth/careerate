@@ -66,14 +66,12 @@ const Footer2 = ({
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
-    setIsVisible(false); // Initially hide footer
-    
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
       const isAtBottom = (windowHeight + currentScrollY) >= (documentHeight - 100);
-      setIsVisible(isAtBottom && currentScrollY > 100); // Only show when scrolled past initial view
+      setIsVisible(isAtBottom);
       setLastScrollY(currentScrollY);
     };
 
