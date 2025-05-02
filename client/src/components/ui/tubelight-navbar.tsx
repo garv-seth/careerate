@@ -4,9 +4,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link as WouterLink, useLocation } from "wouter";
-import { LayoutDashboard, Settings, User2, Brain, Menu, X } from "lucide-react";
+import { LayoutDashboard, Settings, User2, Brain, Menu, X, LogIn, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface NavItem {
   name: string;
@@ -54,9 +55,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
     };
   }, []);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  // We render the navbar whether authenticated or not, but with different options
 
   const handleMobileNavClick = (url: string) => {
     setActiveTab(url);

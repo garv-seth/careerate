@@ -6,6 +6,7 @@ import TubelightNavbar from "@/components/ui/tubelight-navbar";
 import Footer2 from "@/components/ui/footer2";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -27,6 +28,8 @@ const staggerContainer = {
 };
 
 const HomePage = () => {
+  const { isAuthenticated, login, logout } = useAuth();
+  
   return (
     <div className="min-h-screen flex flex-col">
       <TubelightNavbar />
@@ -61,14 +64,13 @@ const HomePage = () => {
                 variants={fadeIn}
               >
                 <div className="rounded-md">
-                  <a href="/api/login">
-                    <Button 
-                      size="lg" 
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-gray hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-600/40 transition-all duration-200"
-                    >
-                      Get Early Access
-                    </Button>
-                  </a>
+                  <Button 
+                    size="lg" 
+                    className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-gray hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-600/40 transition-all duration-200"
+                    onClick={isAuthenticated ? logout : login}
+                  >
+                    {isAuthenticated ? "Your Dashboard" : "Get Early Access"}
+                  </Button>
                 </div>
                 <div className="mt-3 rounded-md sm:mt-0 sm:ml-3">
                   <a href="#features">
