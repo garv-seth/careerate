@@ -172,13 +172,15 @@ try {
       const resultData = result.results || {};
       console.log("Maya resultData:", JSON.stringify(resultData).substring(0, 200) + "...");
       
-      const skills = Array.isArray(resultData.skills) ? resultData.skills : [];
+      // Use type assertion to access properties safely
+      const mayaData = resultData as any;
+      const skills = Array.isArray(mayaData.skills) ? mayaData.skills : [];
       console.log("Extracted skills:", skills);
       
-      const experience = resultData.experience || {};
+      const experience = mayaData.experience || {};
       console.log("Extracted experience:", JSON.stringify(experience).substring(0, 100) + "...");
       
-      const education = typeof resultData.education === 'string' ? resultData.education : '';
+      const education = typeof mayaData.education === 'string' ? mayaData.education : '';
       console.log("Extracted education:", education);
       
       // Return updated state
@@ -230,9 +232,12 @@ try {
     
     // Extract relevant data from result with type safety
     const resultData = result.results || {};
-    const marketInsights = resultData.marketInsights || {};
-    const trends = Array.isArray(resultData.trends) ? resultData.trends : [];
-    const opportunities = Array.isArray(resultData.opportunities) ? resultData.opportunities : [];
+    
+    // Use type assertion to access properties safely
+    const ellieData = resultData as any;
+    const marketInsights = ellieData.marketInsights || {};
+    const trends = Array.isArray(ellieData.trends) ? ellieData.trends : [];
+    const opportunities = Array.isArray(ellieData.opportunities) ? ellieData.opportunities : [];
     
     // Return updated state
     return {
@@ -269,9 +274,12 @@ try {
     
     // Extract relevant data from result with type safety
     const resultData = result.results || {};
-    const learningPlan = resultData.learningPlan || {};
-    const resources = Array.isArray(resultData.resources) ? resultData.resources : [];
-    const roadmap = resultData.roadmap || {};
+    
+    // Use type assertion to access properties safely
+    const sophiaData = resultData as any;
+    const learningPlan = sophiaData.learningPlan || {};
+    const resources = Array.isArray(sophiaData.resources) ? sophiaData.resources : [];
+    const roadmap = sophiaData.roadmap || {};
     
     // Return updated state
     return {
@@ -323,75 +331,64 @@ try {
     };
   };
   
-  // Create a proper LangGraph workflow based on Google's ADK design
-  // Using StateGraph for better orchestration and conditional flows
-  const createWorkflow = () => {
-    try {
-      console.log("Creating LangGraph workflow");
-      
-      // Create a new state graph
-      const builder = new StateGraph<AgentState>({
-        channels: {
-          input: {
-            value: (x: AgentState) => x.input || "",
-          },
-          userId: {
-            value: (x: AgentState) => x.userId || "",
-          },
-          // Channels for agent results
-          mayaResults: {
-            value: (x: AgentState) => x.maya?.results || {}
-          },
-          ellieResults: {
-            value: (x: AgentState) => x.ellie?.results || {}
-          },
-          sophiaResults: {
-            value: (x: AgentState) => x.sophia?.results || {}
-          }
-        }
-      });
-      
-      // Add nodes to the graph
-      builder.addNode("cara", caraNode);
-      builder.addNode("maya", mayaNode);
-      builder.addNode("ellie", ellieNode);
-      builder.addNode("sophia", sophiaNode);
-      builder.addNode("synthesize", synthesizeNode);
-      
-      // Define the workflow edges
-      builder.addEdge(["cara"], "maya");
-      builder.addEdge(["maya"], "ellie");
-      builder.addEdge(["ellie"], "sophia");
-      builder.addEdge(["sophia"], "synthesize");
-      
-      // Set the entry point
-      builder.setEntryPoint("cara");
-      
-      // Compile the graph into an executable
-      const graph = builder.compile();
-      
-      console.log("LangGraph workflow created successfully");
-      return graph;
-    } catch (error) {
-      console.error("Error creating LangGraph workflow:", error);
-      throw error;
-    }
-  };
+  // Given the TypeScript errors with LangGraph typing, we'll create our simplified state management
+  // implementation that follows the same principles but with simpler implementation
+  // This is inspired by Google's ADK but adapted for our needs with proper typing
   
-  // Create an orchestration function using our LangGraph workflow
-  const graph = createWorkflow();
+  console.log("Creating simplified ADK-inspired workflow implementation");
   
+  // Create an orchestration function that runs all agents in sequence with proper state tracking
   executeAgentWorkflow = async (initialState: AgentState): Promise<AgentState> => {
     try {
-      console.log("Starting agent workflow execution with LangGraph");
+      console.log("Starting agent workflow execution");
       
-      // Execute the LangGraph workflow
-      const result = await graph.invoke(initialState);
+      // Execute the workflow: cara -> maya -> ellie -> sophia -> synthesize
+      let currentState = initialState;
+      
+      // Store the state for userId context in the activity tracking
+      currentAgentState = currentState;
+      
+      // Cara (orchestration planning)
+      console.log("Executing Cara node");
+      currentState = await caraNode(currentState);
+      
+      // Store the updated state for context
+      currentAgentState = currentState;
+      
+      // Maya (resume analysis)
+      console.log("Executing Maya node");
+      currentState = await mayaNode(currentState);
+      
+      // Store the updated state for context
+      currentAgentState = currentState;
+      
+      // Ellie (industry analysis)
+      console.log("Executing Ellie node");
+      currentState = await ellieNode(currentState);
+      
+      // Store the updated state for context
+      currentAgentState = currentState;
+      
+      // Sophia (learning plan)
+      console.log("Executing Sophia node");
+      currentState = await sophiaNode(currentState);
+      
+      // Store the updated state for context
+      currentAgentState = currentState;
+      
+      // Final synthesis
+      console.log("Executing synthesis node");
+      currentState = await synthesizeNode(currentState);
+      
+      // Clear the state after workflow completion
+      currentAgentState = null;
       
       console.log("Agent workflow execution completed successfully");
-      return result;
+      return currentState;
     } catch (error) {
       console.error("Error in agent workflow execution:", error);
+      // Clear the state in case of error
+      currentAgentState = null;
       throw error;
     }
   };
@@ -481,6 +478,9 @@ export const runCareerate = async (userId: string, resumeText: string) => {
     };
     
     try {
+      // Set the current state for context in agent activities and status updates
+      currentAgentState = initialState;
+      
       // Run our custom agent workflow executor
       // This will execute all agents in sequence: cara -> maya -> ellie -> sophia -> synthesize
       console.log("Starting agent workflow for career analysis");
@@ -494,7 +494,8 @@ export const runCareerate = async (userId: string, resumeText: string) => {
           const ellieResultsStr = JSON.stringify(result.ellie?.results || {});
           const sophiaResultsStr = JSON.stringify(result.sophia?.results || {});
           
-          await pinecone.storeResumeEmbeddings(
+          // Use the storeResumeEmbeddings function from pinecone.ts
+          await storeResumeEmbeddings(
             userId,
             resumeText,
             [mayaResultsStr, ellieResultsStr, sophiaResultsStr]
