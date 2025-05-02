@@ -123,21 +123,6 @@ export function TubelightNavbar({ className }: { className?: string }) {
           );
         })}
         
-        {/* Theme Toggle */}
-        <Toggle
-          variant="outline" 
-          size="sm"
-          className="rounded-full bg-background/10 backdrop-blur-sm"
-          pressed={theme === 'dark'}
-          onPressedChange={(pressed) => setTheme(pressed ? 'dark' : 'light')}
-        >
-          {theme === 'dark' ? (
-            <Moon className="h-4 w-4" />
-          ) : (
-            <Sun className="h-4 w-4" />
-          )}
-        </Toggle>
-        
         {/* Auth Button */}
         <Button
           onClick={isAuthenticated ? logout : login}
@@ -157,101 +142,84 @@ export function TubelightNavbar({ className }: { className?: string }) {
       {/* Mobile Navigation Button */}
       <div 
         ref={menuRef}
-        className="md:hidden relative"
+        className="md:hidden flex items-center gap-2"
       >
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="flex items-center justify-center w-12 h-12 bg-background/5 border border-border backdrop-blur-lg rounded-full shadow-lg p-3 text-foreground hover:text-primary transition-colors"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="text-muted-foreground text-sm font-medium py-2 px-3 bg-background/5 border border-border backdrop-blur-lg rounded-full">
+          Careerate
+        </div>
+        
+        <div className="relative ml-auto">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex items-center justify-center w-12 h-12 bg-background/5 border border-border backdrop-blur-lg rounded-full shadow-lg p-3 text-foreground hover:text-primary transition-colors"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
 
-        {/* Mobile Dropdown Menu */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial="closed"
-              animate="open"
-              exit="closed"
-              variants={menuVariants}
-              transition={{ duration: 0.2 }}
-              className="absolute top-16 right-0 bg-background border border-border rounded-lg shadow-lg overflow-hidden w-48"
-            >
-              <div className="pt-2 pb-2">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location === item.url;
+          {/* Mobile Dropdown Menu - Now right-aligned */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial="closed"
+                animate="open"
+                exit="closed"
+                variants={menuVariants}
+                transition={{ duration: 0.2 }}
+                className="absolute top-16 right-0 bg-background border border-border rounded-lg shadow-lg overflow-hidden w-48"
+              >
+                <div className="pt-2 pb-2">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location === item.url;
+                    
+                    return (
+                      <WouterLink
+                        key={item.name}
+                        href={item.url}
+                        onClick={() => handleMobileNavClick(item.name)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative",
+                          "text-foreground/80 hover:bg-muted hover:text-primary",
+                          isActive && "bg-muted text-primary"
+                        )}
+                      >
+                        <Icon size={16} strokeWidth={2.5} />
+                        <span>{item.name}</span>
+                        {isActive && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                        )}
+                      </WouterLink>
+                    );
+                  })}
                   
-                  return (
-                    <WouterLink
-                      key={item.name}
-                      href={item.url}
-                      onClick={() => handleMobileNavClick(item.name)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative",
-                        "text-foreground/80 hover:bg-muted hover:text-primary",
-                        isActive && "bg-muted text-primary"
-                      )}
-                    >
-                      <Icon size={16} strokeWidth={2.5} />
-                      <span>{item.name}</span>
-                      {isActive && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
-                      )}
-                    </WouterLink>
-                  );
-                })}
-                
-                {/* Theme Toggle Menu Item */}
-                <button
-                  onClick={() => {
-                    setTheme(theme === 'dark' ? 'light' : 'dark');
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
-                    "text-foreground/80 hover:bg-muted hover:text-primary"
-                  )}
-                >
-                  {theme === 'dark' ? (
-                    <>
-                      <Sun size={16} strokeWidth={2.5} />
-                      <span>Light Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon size={16} strokeWidth={2.5} />
-                      <span>Dark Mode</span>
-                    </>
-                  )}
-                </button>
-                
-                {/* Auth Menu Item */}
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    isAuthenticated ? logout() : login();
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
-                    "text-foreground/80 hover:bg-muted hover:text-primary"
-                  )}
-                >
-                  {isAuthenticated ? (
-                    <>
-                      <LogOut size={16} strokeWidth={2.5} />
-                      <span>Logout</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogIn size={16} strokeWidth={2.5} />
-                      <span>Login</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  {/* Auth Menu Item */}
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      isAuthenticated ? logout() : login();
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
+                      "text-foreground/80 hover:bg-muted hover:text-primary"
+                    )}
+                  >
+                    {isAuthenticated ? (
+                      <>
+                        <LogOut size={16} strokeWidth={2.5} />
+                        <span>Logout</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={16} strokeWidth={2.5} />
+                        <span>Login</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
