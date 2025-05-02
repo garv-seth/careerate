@@ -68,7 +68,10 @@ const Footer2 = ({
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      setIsVisible(currentScrollY < lastScrollY || currentScrollY < 100);
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const isAtBottom = (windowHeight + currentScrollY) >= (documentHeight - 100);
+      setIsVisible(isAtBottom);
       setLastScrollY(currentScrollY);
     };
 
