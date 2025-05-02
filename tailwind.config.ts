@@ -1,45 +1,10 @@
 
 import type { Config } from "tailwindcss";
 
-// Import directly from node_modules to avoid ESM issues
-import defaultColors from "tailwindcss/colors";
-
-// Define our complete colors object with modern Tailwind color names
-const colors = {
-  ...defaultColors,
-  // Explicitly exclude deprecated colors to silence warnings
-  lightBlue: undefined,
-  blueGray: undefined,
-  coolGray: undefined,
-  trueGray: undefined,
-  warmGray: undefined,
-  // Use the modern color names
-  sky: defaultColors.sky,
-  slate: defaultColors.slate,
-  gray: defaultColors.gray,
-  zinc: defaultColors.zinc,
-  neutral: defaultColors.neutral,
-  stone: defaultColors.stone,
-  red: defaultColors.red,
-  orange: defaultColors.orange,
-  amber: defaultColors.amber,
-  yellow: defaultColors.yellow,
-  lime: defaultColors.lime,
-  green: defaultColors.green,
-  emerald: defaultColors.emerald,
-  teal: defaultColors.teal,
-  cyan: defaultColors.cyan,
-  blue: defaultColors.blue,
-  indigo: defaultColors.indigo,
-  violet: defaultColors.violet,
-  purple: defaultColors.purple,
-  fuchsia: defaultColors.fuchsia,
-  pink: defaultColors.pink,
-  rose: defaultColors.rose,
-  white: '#ffffff',
-  black: '#000000',
-};
-
+/**
+ * Simplified Tailwind configuration with direct color references
+ * to avoid compatibility issues between different Tailwind versions.
+ */
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
@@ -54,66 +19,52 @@ export default {
   theme: {
     extend: {
       colors: {
-        slate: colors.slate,
-        gray: colors.gray,
-        zinc: colors.zinc,
-        neutral: colors.neutral,
-        stone: colors.stone,
-        red: colors.red,
-        orange: colors.orange,
-        amber: colors.amber,
-        yellow: colors.yellow,
-        lime: colors.lime,
-        green: colors.green,
-        emerald: colors.emerald,
-        teal: colors.teal,
-        cyan: colors.cyan,
-        sky: colors.sky,
-        blue: colors.blue,
-        indigo: colors.indigo,
-        violet: colors.violet,
-        purple: colors.purple,
-        fuchsia: colors.fuchsia,
-        pink: colors.pink,
-        rose: colors.rose,
-        white: colors.white,
-        black: colors.black,
-        transparent: 'transparent',
-        current: 'currentColor',
+        // Direct hex code color definitions
+        slate: {
+          200: '#e2e8f0',
+          700: '#334155',
+          800: '#1e293b'
+        },
+        gray: {
+          200: '#e5e7eb',
+          700: '#374151',
+          800: '#1f2937'
+        },
+        // HSL variables for design system
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
           DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          foreground: "hsl(var(--card-foreground))"
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          foreground: "hsl(var(--popover-foreground))"
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          foreground: "hsl(var(--primary-foreground))"
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          foreground: "hsl(var(--secondary-foreground))"
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          foreground: "hsl(var(--muted-foreground))"
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          foreground: "hsl(var(--accent-foreground))"
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          foreground: "hsl(var(--destructive-foreground))"
         },
         border: {
           DEFAULT: "hsl(var(--border))",
           light: "hsl(var(--border-light))",
-          dark: "hsl(var(--border-dark))",
+          dark: "hsl(var(--border-dark))"
         },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -122,7 +73,7 @@ export default {
           "2": "hsl(var(--chart-2))",
           "3": "hsl(var(--chart-3))",
           "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
+          "5": "hsl(var(--chart-5))"
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -132,67 +83,50 @@ export default {
           accent: "hsl(var(--sidebar-accent))",
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
-        },
+          ring: "hsl(var(--sidebar-ring))"
+        }
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 4px)"
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" }
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
-        },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-      },
-    },
+        "accordion-up": "accordion-up 0.2s ease-out"
+      }
+    }
   },
   plugins: [
-    // Add safelist for slate utility classes to make sure they're available
+    // Add custom utility classes for slate colors
     {
       handler: ({ addBase, addUtilities }) => {
         addBase({
           '*': {
-            borderColor: '#e2e8f0', // Default border color using hex code
-          },
+            borderColor: '#e2e8f0' // Default border color using hex code
+          }
         });
         
-        // Add utilities that might be getting purged
+        // Add hardcoded utilities for slate colors
         addUtilities({
-          '.border-slate-200': {
-            borderColor: '#e2e8f0' // slate-200 color
-          },
-          '.bg-slate-200': {
-            backgroundColor: '#e2e8f0' // slate-200 color
-          },
-          '.bg-slate-800': {
-            backgroundColor: '#1e293b' // slate-800 color
-          },
-          '.text-slate-200': {
-            color: '#e2e8f0' // slate-200 color
-          },
-          '.text-slate-800': {
-            color: '#1e293b' // slate-800 color
-          }
+          '.border-slate-200': { borderColor: '#e2e8f0' },
+          '.border-slate-700': { borderColor: '#334155' },
+          '.bg-slate-200': { backgroundColor: '#e2e8f0' },
+          '.bg-slate-800': { backgroundColor: '#1e293b' },
+          '.text-slate-200': { color: '#e2e8f0' },
+          '.text-slate-800': { color: '#1e293b' }
         });
       }
     }
-  ],
+  ]
 } satisfies Config;
