@@ -37,52 +37,86 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     console.log("Filtering file:", file.originalname, "Mimetype:", file.mimetype);
     
-    // Accept all files for debugging
-    cb(null, true);
+    // Accept common document types for resume uploads
+    const allowedTypes = [
+      "application/pdf", 
+      "application/msword", 
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+      "text/plain",
+      // Also accept common browser MIME types that might be sent
+      "application/octet-stream"
+    ];
     
-    // Original filter
-    /*
-    const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
-    if (allowedTypes.includes(file.mimetype)) {
+    // For development/testing, log the MIME type
+    console.log(`Received file with MIME type: ${file.mimetype}`);
+    
+    // Be lenient with MIME types for better user experience
+    if (allowedTypes.includes(file.mimetype) || 
+        file.originalname.endsWith(".pdf") || 
+        file.originalname.endsWith(".docx") || 
+        file.originalname.endsWith(".doc") || 
+        file.originalname.endsWith(".txt")) {
       cb(null, true);
     } else {
       cb(new Error("Invalid file type. Only PDF, DOCX, DOC, and TXT files are allowed.") as any);
     }
-    */
   },
 });
 
-// Simple text extraction for MVP
-// In a production app, we would use a more robust solution like pdf.js, docx-parser, etc.
+// Text extraction for various file types
+// This is a simplified version that handles TXT files directly
+// and returns content for other types
 const extractTextFromFile = async (filePath: string, mimeType: string): Promise<string> => {
-  // For the MVP, we'll simulate text extraction
-  // In a production app, use proper libraries for each file type
-  const fileContent = `Sample resume text extracted from ${path.basename(filePath)}. 
+  console.log(`Extracting text from file: ${filePath} with mimeType: ${mimeType}`);
   
-  EDUCATION
-  - Master of Science in Computer Science, Stanford University, 2018-2020
-  - Bachelor of Science in Software Engineering, MIT, 2014-2018
-  
-  EXPERIENCE
-  - Senior Software Engineer, Tech Company, 2020-Present
-    - Led development of cloud-based applications using React and Node.js
-    - Implemented CI/CD pipelines improving deployment time by 40%
-  
-  - Software Developer, Startup Inc., 2018-2020
-    - Developed RESTful APIs using Express and MongoDB
-    - Implemented authentication systems with JWT
-  
-  SKILLS
-  - Programming: JavaScript, TypeScript, Python, Java
-  - Frameworks: React, Node.js, Express, Django
-  - Tools: Git, Docker, AWS, CI/CD
-  - Databases: MongoDB, PostgreSQL, Firebase
-  
-  CERTIFICATIONS
-  - AWS Certified Developer
-  - Google Cloud Professional Developer`;
-  
-  return fileContent;
+  try {
+    const fs = await import('fs');
+    
+    // For text files, read directly
+    if (mimeType === 'text/plain') {
+      const text = fs.readFileSync(filePath, 'utf-8');
+      console.log("Successfully extracted text from TXT file");
+      return text;
+    }
+    
+    // For PDF, DOCX, etc. we would normally use specialized libraries
+    // For now, if not plaintext, we use a simplified approach - in production,
+    // we would integrate PDF.js, mammoth.js, etc. for proper extraction
+    
+    // Log file size for debugging
+    const stats = fs.statSync(filePath);
+    console.log(`File size: ${stats.size} bytes`);
+    
+    // Simplified extraction for MVP - just reads first 2KB as text
+    const buffer = fs.readFileSync(filePath);
+    let extractedText = "";
+    
+    // Try to extract readable text from binary files
+    for (let i = 0; i < Math.min(buffer.length, 2048); i++) {
+      const char = buffer[i];
+      // Only include printable ASCII characters
+      if (char >= 32 && char <= 126) {
+        extractedText += String.fromCharCode(char);
+      }
+      else if (char === 10 || char === 13) {
+        // Include newlines
+        extractedText += '\n';
+      }
+    }
+    
+    if (extractedText.length > 0) {
+      console.log("Extracted some readable text from binary file");
+      return `Extracted text from ${path.basename(filePath)}:\n\n${extractedText}`;
+    } else {
+      console.log("Could not extract readable text, using a placeholder");
+      // Fallback to a placeholder asking for plain text
+      return `Unable to fully extract text from ${path.basename(filePath)}. 
+      Please upload a plain text version of your resume for best results.`;
+    }
+  } catch (error) {
+    console.error("Error extracting text from file:", error);
+    throw new Error("Failed to extract text from resume file");
+  }
 };
 
 // Upload middleware
