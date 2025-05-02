@@ -1,5 +1,9 @@
 import React from "react";
 import { Link } from "wouter";
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
 import careerateLogoSrc from "@assets/CareerateICON.png";
 
 interface MenuItem {
@@ -77,6 +81,8 @@ const Footer2 = ({
     { text: "Privacy Policy", url: "/privacy" },
   ],
 }: Footer2Props) => {
+  const { theme, setTheme } = useTheme();
+  
   return (
     <footer className="w-full bg-background border-t border-border">
       <div className="container mx-auto px-4 py-12">
@@ -95,6 +101,28 @@ const Footer2 = ({
               </a>
             </div>
             <p className="mt-4 text-muted-foreground">{tagline}</p>
+            
+            {/* Theme toggle in footer */}
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Theme:</span>
+              <Toggle
+                variant="outline" 
+                size="sm"
+                className="rounded-full bg-background border-border"
+                pressed={theme === 'dark'}
+                onPressedChange={(pressed) => setTheme(pressed ? 'dark' : 'light')}
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
+              </Toggle>
+              <span className="text-sm text-muted-foreground">
+                {theme === 'dark' ? 'Dark' : 'Light'}
+              </span>
+            </div>
           </div>
           
           {/* Navigation sections */}
