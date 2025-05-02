@@ -146,6 +146,7 @@ try {
   };
   
   const mayaNode = async (state: AgentState): Promise<AgentState> => {
+    console.log("Starting Maya node in agent workflow");
     updateAgentStatus('maya', 'active');
     trackAgentActivity({
       agent: 'maya',
@@ -158,28 +159,55 @@ try {
     updateAgentStatus('maya', 'thinking');
     // Execute the Maya agent
     const input = state.input || '';
-    const result = await mayaAgent(input);
-    updateAgentStatus('maya', 'complete');
+    console.log(`Executing Maya agent with input: ${input.substring(0, 50)}...`);
     
-    // Extract relevant data from result with type safety
-    const resultData = result.results || {};
-    const skills = Array.isArray(resultData.skills) ? resultData.skills : [];
-    const experience = resultData.experience || {};
-    const education = typeof resultData.education === 'string' ? resultData.education : '';
-    
-    // Return updated state
-    return {
-      ...state,
-      maya: {
-        messages: [...(state.maya?.messages || []), 
-                   new HumanMessage({content: input}), 
-                   result.message],
-        results: resultData,
-        skills,
-        experience,
-        education
-      }
-    };
+    try {
+      console.log("Calling Maya agent...");
+      const result = await mayaAgent(input);
+      console.log("Maya agent returned results successfully");
+      updateAgentStatus('maya', 'complete');
+      
+      // Extract relevant data from result with type safety
+      const resultData = result.results || {};
+      console.log("Maya resultData:", JSON.stringify(resultData).substring(0, 200) + "...");
+      
+      const skills = Array.isArray(resultData.skills) ? resultData.skills : [];
+      console.log("Extracted skills:", skills);
+      
+      const experience = resultData.experience || {};
+      console.log("Extracted experience:", JSON.stringify(experience).substring(0, 100) + "...");
+      
+      const education = typeof resultData.education === 'string' ? resultData.education : '';
+      console.log("Extracted education:", education);
+      
+      // Return updated state
+      return {
+        ...state,
+        maya: {
+          messages: [...(state.maya?.messages || []), 
+                     new HumanMessage({content: input}), 
+                     result.message],
+          results: resultData,
+          skills,
+          experience,
+          education
+        }
+      };
+    } catch (error) {
+      console.error("Error executing Maya agent:", error);
+      updateAgentStatus('maya', 'complete');
+      return {
+        ...state,
+        maya: {
+          messages: [...(state.maya?.messages || []), 
+                     new HumanMessage({content: input})],
+          results: { error: "Error analyzing resume" },
+          skills: [],
+          experience: {},
+          education: ""
+        }
+      };
+    }
   };
   
   const ellieNode = async (state: AgentState): Promise<AgentState> => {
