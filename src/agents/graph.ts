@@ -22,6 +22,41 @@ export type AgentActivity = {
   timestamp: Date;
   tools?: Array<'brave' | 'firecrawl' | 'browserbase' | 'database' | 'perplexity' | 'pinecone'>;
   userId?: string; // User ID for directing events to specific users
+  careerAdvice?: { // Career advice data for the UI
+    riskReport: {
+      overallRisk: number;
+      categories: Array<{
+        category: string;
+        risk: number;
+        description: string;
+      }>;
+      summary: string;
+    };
+    learningPlan: {
+      skills: Array<{
+        skill: string;
+        currentLevel: number;
+        targetLevel: number;
+        importance: number;
+      }>;
+      resources: Array<{
+        id: string;
+        title: string;
+        type: string;
+        provider: string;
+        duration: string;
+        level: string;
+        url: string;
+        skillsAddressed: string[];
+      }>;
+      timeEstimate: string;
+    };
+    nextSteps: {
+      immediate: string[];
+      shortTerm: string[];
+      longTerm: string[];
+    };
+  };
 };
 
 // Agent statuses tracking
@@ -317,12 +352,18 @@ try {
     );
     updateAgentStatus('cara', 'complete');
     
-    trackAgentActivity({
+    // Create an enhanced activity with the career advice attached
+    const completeActivity: AgentActivity = {
       agent: 'cara',
       action: 'Analysis complete',
       detail: 'Career advice ready for review',
-      timestamp: new Date()
-    });
+      timestamp: new Date(),
+      // Add career advice data to be picked up by the frontend
+      careerAdvice: finalResults
+    };
+    
+    // Emit activity with the career advice data attached
+    trackAgentActivity(completeActivity);
     
     // Return updated state with final output
     return {
@@ -586,12 +627,19 @@ export const runCareerate = async (userId: string, resumeText: string) => {
       );
       
       updateAgentStatus('cara', 'complete');
-      trackAgentActivity({
+      
+      // Create an enhanced activity with the career advice attached (fallback mode)
+      const completeActivity: AgentActivity = {
         agent: 'cara',
         action: 'Analysis complete (fallback mode)',
         detail: 'Career advice ready for review',
-        timestamp: new Date()
-      });
+        timestamp: new Date(),
+        // Add career advice data to be picked up by the frontend
+        careerAdvice: finalResults
+      };
+      
+      // Emit activity with the career advice data attached
+      trackAgentActivity(completeActivity);
       
       return finalResults;
     }
