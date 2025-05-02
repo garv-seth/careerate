@@ -151,10 +151,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
         )}
       </div>
 
-      {/* Mobile Navigation Button - Positioned to the right edge */}
+      {/* Mobile Navigation Button - Right aligned */}
       <div 
         ref={menuRef}
-        className="md:hidden flex justify-end w-full absolute right-0 top-0"
+        className="md:hidden flex justify-end w-auto absolute right-4 top-0"
       >
         <div className="relative">
           <button
