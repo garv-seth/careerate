@@ -428,10 +428,9 @@ const AgentTestPage = () => {
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full mb-6 grid grid-cols-2 lg:grid-cols-3">
+            <TabsList className="w-full mb-6 grid grid-cols-2">
               <TabsTrigger value="upload">Resume Upload</TabsTrigger>
-              <TabsTrigger value="text">Text Input</TabsTrigger>
-              <TabsTrigger value="results" className="hidden lg:inline-flex">Analysis Results</TabsTrigger>
+              <TabsTrigger value="results">Analysis Results</TabsTrigger>
             </TabsList>
             
             <TabsContent value="upload">
@@ -499,68 +498,6 @@ const AgentTestPage = () => {
                       ) : (
                         <>
                           Upload & Analyze
-                          <Upload className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="text">
-              <Card className="overflow-hidden border-2 border-primary/10">
-                <CardHeader className="bg-primary/5">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <div>
-                      <CardTitle>Resume Text Input</CardTitle>
-                      <CardDescription>
-                        Paste your resume text below to get insights from our AI agent system
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {error && (
-                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-start gap-2">
-                      <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-red-800 dark:text-red-300">Analysis Error</p>
-                        <p className="text-xs text-red-700 dark:text-red-400">{error}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <Textarea
-                    placeholder="Paste your resume text here or enter a sample job description to analyze..."
-                    className="min-h-[200px] resize-none font-mono text-sm"
-                    value={resumeText}
-                    onChange={(e) => setResumeText(e.target.value)}
-                    disabled={analyzing}
-                  />
-                  
-                  <div className="mt-4 flex flex-col sm:flex-row gap-2 items-center justify-between">
-                    <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <Info className="h-3 w-3" />
-                      <span>Your resume is analyzed by Cara, Maya, Ellie, and Sophia agents</span>
-                    </div>
-                    
-                    <Button 
-                      size="lg"
-                      variant="default"
-                      onClick={handleStartAnalysis} 
-                      disabled={!resumeText.trim() || !connected || analyzing}
-                      className="w-full sm:w-auto"
-                    >
-                      {analyzing ? (
-                        <>
-                          <span className="animate-pulse">Analyzing...</span>
-                          <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        </>
-                      ) : (
-                        <>
-                          Start Analysis
                           <Upload className="ml-2 h-4 w-4" />
                         </>
                       )}
