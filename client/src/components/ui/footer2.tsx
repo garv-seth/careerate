@@ -82,7 +82,7 @@ const Footer2 = ({
   }, [lastScrollY]);
 
   return (
-    <footer className={`fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-50 transition-all duration-300 bg-background ${
+    <footer className={`fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10 transition-all duration-300 bg-background/95 backdrop-blur-sm ${
       isVisible 
         ? 'opacity-100 translate-y-0 scale-100' 
         : 'opacity-0 translate-y-full scale-95'
