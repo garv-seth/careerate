@@ -20,6 +20,7 @@ interface NavItem {
 export function TubelightNavbar({ className }: { className?: string }) {
   const [location] = useLocation();
   const { isAuthenticated, login, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,7 +28,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
 
   const navItems = [
     { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-    { name: 'Agents', url: '/agent-test', icon: Brain },
+    { name: 'Agents', url: '/agents', icon: Brain },
     { name: 'Settings', url: '/settings', icon: Settings },
     { name: 'Profile', url: '/profile', icon: User2 }
   ];
@@ -122,6 +123,21 @@ export function TubelightNavbar({ className }: { className?: string }) {
           );
         })}
         
+        {/* Theme Toggle */}
+        <Toggle
+          variant="outline" 
+          size="sm"
+          className="rounded-full bg-background/10 backdrop-blur-sm"
+          pressed={theme === 'dark'}
+          onPressedChange={(pressed) => setTheme(pressed ? 'dark' : 'light')}
+        >
+          {theme === 'dark' ? (
+            <Moon className="h-4 w-4" />
+          ) : (
+            <Sun className="h-4 w-4" />
+          )}
+        </Toggle>
+        
         {/* Auth Button */}
         <Button
           onClick={isAuthenticated ? logout : login}
@@ -185,6 +201,29 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     </WouterLink>
                   );
                 })}
+                
+                {/* Theme Toggle Menu Item */}
+                <button
+                  onClick={() => {
+                    setTheme(theme === 'dark' ? 'light' : 'dark');
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
+                    "text-foreground/80 hover:bg-muted hover:text-primary"
+                  )}
+                >
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun size={16} strokeWidth={2.5} />
+                      <span>Light Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <Moon size={16} strokeWidth={2.5} />
+                      <span>Dark Mode</span>
+                    </>
+                  )}
+                </button>
                 
                 {/* Auth Menu Item */}
                 <button

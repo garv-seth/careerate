@@ -12,6 +12,8 @@ import AgentTestPage from "@/pages/agent-test";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import AuthTestPage from "@/pages/auth-test";
+import TermsPage from "@/pages/terms";
+import PrivacyPage from "@/pages/privacy";
 
 function Router() {
   return (
