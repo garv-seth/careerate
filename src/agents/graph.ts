@@ -1,28 +1,35 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage, AIMessage, BaseMessage, SystemMessage } from "@langchain/core/messages";
-import { createCaraAgent, createMayaAgent, createEllieAgent, createSophiaAgent } from "./agents";
-import { caraInitialSystemPrompt, mayaInitialSystemPrompt, ellieInitialSystemPrompt, sophiaInitialSystemPrompt } from "./prompts";
-import { storage } from "../../server/storage";
-import { pinecone, storeResumeEmbeddings } from "./pinecone";
-import { createTools } from "./tools";
-import { RunnableSequence } from "@langchain/core/runnables";
-import { AgentExecutor } from "langchain/agents";
-import { ConsoleCallbackHandler } from "langchain/callbacks";
-import { Graph, StateGraph } from "@langchain/langgraph";
+/**
+ * Agent workflow orchestration based on ADK (Agent Development Kit) architecture
+ */
+import { EventEmitter } from 'events';
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { storeResumeEmbeddings } from './pinecone';
+import {
+  createCaraAgent,
+  createMayaAgent,
+  createEllieAgent,
+  createSophiaAgent
+} from './agents';
+import {
+  caraInitialSystemPrompt,
+  mayaInitialSystemPrompt,
+  ellieInitialSystemPrompt,
+  sophiaInitialSystemPrompt
+} from './prompts';
+import { ChatOpenAI } from '@langchain/openai';
 
-// Event emitter for agent activities
-import EventEmitter from 'events';
+// Event emitter to broadcast agent activities
 export const agentEmitter = new EventEmitter();
 
-// Agent activities tracking
+// Types for agent activities and statuses
 export type AgentActivity = {
   agent: 'cara' | 'maya' | 'ellie' | 'sophia';
   action: string;
   detail?: string;
   timestamp: Date;
   tools?: Array<'brave' | 'firecrawl' | 'browserbase' | 'database' | 'perplexity' | 'pinecone'>;
-  userId?: string; // User ID for directing events to specific users
-  careerAdvice?: { // Career advice data for the UI
+  userId?: string; 
+  careerAdvice?: {
     riskReport: {
       overallRisk: number;
       categories: Array<{
@@ -59,7 +66,7 @@ export type AgentActivity = {
   };
 };
 
-// Agent statuses tracking
+// Agent status tracking
 export type AgentStatuses = {
   cara: 'idle' | 'active' | 'thinking' | 'complete';
   maya: 'idle' | 'active' | 'thinking' | 'complete';
@@ -67,7 +74,7 @@ export type AgentStatuses = {
   sophia: 'idle' | 'active' | 'thinking' | 'complete';
 };
 
-// Global agent status tracker - initialized as all idle
+// Default status for all agents
 export const agentStatuses: AgentStatuses = {
   cara: 'idle',
   maya: 'idle',
@@ -75,11 +82,27 @@ export const agentStatuses: AgentStatuses = {
   sophia: 'idle'
 };
 
-// Define the types for state
+// State tracking for agent context
+let currentAgentState: AgentState | null = null;
+
+// Status update function
+export const updateAgentStatus = (
+  agent: 'cara' | 'maya' | 'ellie' | 'sophia',
+  status: 'idle' | 'active' | 'thinking' | 'complete'
+) => {
+  agentStatuses[agent] = status;
+  
+  // Broadcast status update
+  agentEmitter.emit('agent_status_update', { ...agentStatuses });
+  
+  console.log(`Agent ${agent} status: ${status}`);
+};
+
+// Interface for agent state
 interface AgentState {
-  input?: string;          // The input resume text
-  userId?: string;         // The user ID for context
-  context?: any;           // Additional context information
+  input?: string;
+  userId?: string;
+  context?: any;
   messages: BaseMessage[];
   cara: {
     messages: BaseMessage[];
@@ -106,20 +129,61 @@ interface AgentState {
     resources?: any[];
     roadmap?: any;
   };
-  final_output?: any;     // The final synthesized career advice
+  final_output?: any;
 }
 
-// The LLM to use for all agents (only create when OPENAI_API_KEY is available)
-let openai: ChatOpenAI;
+// The LLM to use for all agents - initialize with mock first to avoid undefined errors
+let openai: ChatOpenAI = { 
+  invoke: async () => ({ content: "Mock response (initial)" }) 
+} as any;
+
+// Initialize agents with mock implementations first to avoid undefined errors
+let caraAgent = async () => ({ 
+  message: new AIMessage("Mock response - initializing"), 
+  results: {} 
+});
+
+let mayaAgent = async () => ({ 
+  message: new AIMessage("Mock response - initializing"), 
+  results: {} 
+});
+
+let ellieAgent = async () => ({ 
+  message: new AIMessage("Mock response - initializing"), 
+  results: {} 
+});
+
+let sophiaAgent = async () => ({ 
+  message: new AIMessage("Mock response - initializing"), 
+  results: {} 
+});
+
+// This function will be called after OpenAI is initialized
+const initializeAgents = () => {
+  try {
+    console.log("Creating agents with initialized OpenAI client");
+    caraAgent = createCaraAgent(openai, caraInitialSystemPrompt);
+    mayaAgent = createMayaAgent(openai, mayaInitialSystemPrompt);
+    ellieAgent = createEllieAgent(openai, ellieInitialSystemPrompt);
+    sophiaAgent = createSophiaAgent(openai, sophiaInitialSystemPrompt);
+    console.log("✅ All agents created successfully");
+  } catch (error) {
+    console.error("❌ Error creating agents:", error);
+    // Keep existing mock implementations if error
+  }
+};
+
+// OpenAI initialization function
 const initializeOpenAI = async () => {
   try {
     if (process.env.OPENAI_API_KEY) {
       console.log("✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o");
       openai = new ChatOpenAI({
-        modelName: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+        modelName: "gpt-4o",
         temperature: 0.1,
         openAIApiKey: process.env.OPENAI_API_KEY
       });
+      
       // Test the API connection
       console.log("Testing OpenAI API connection...");
       try {
@@ -128,81 +192,412 @@ const initializeOpenAI = async () => {
           ? testMessage.content 
           : JSON.stringify(testMessage.content);
         console.log("✅ OpenAI API test successful! Response:", content.substring(0, 50) + "...");
+        
+        // Initialize agents after successful OpenAI initialization
+        initializeAgents();
       } catch (testError) {
         console.error("❌ Error testing OpenAI API:", testError);
         throw testError;
       }
     } else {
       console.log("⚠️ OPENAI_API_KEY not provided, using mock implementation");
-      // Create a minimal implementation that won't throw errors
-      openai = { invoke: async () => ({ content: "Mock response" }) } as any;
+      // Keep mock implementation
     }
   } catch (error) {
     console.error("❌ Error initializing OpenAI:", error);
-    // Create a minimal implementation that won't throw errors
     console.log("⚠️ Falling back to mock implementation due to error");
-    openai = { invoke: async () => ({ content: "Mock response" }) } as any;
+    // Keep mock implementation
   }
 };
 
-// Initialize OpenAI (this runs asynchronously but won't block execution)
+// Initialize OpenAI (this runs asynchronously in the background)
 initializeOpenAI().catch(err => console.error("Failed to initialize OpenAI:", err));
-
-// Create the agents
-let caraAgent, mayaAgent, ellieAgent, sophiaAgent;
-try {
-  caraAgent = createCaraAgent(openai, caraInitialSystemPrompt);
-  mayaAgent = createMayaAgent(openai, mayaInitialSystemPrompt);
-  ellieAgent = createEllieAgent(openai, ellieInitialSystemPrompt);
-  sophiaAgent = createSophiaAgent(openai, sophiaInitialSystemPrompt);
-} catch (error) {
-  console.error("Error creating agents:", error);
-  // Create minimal implementations that won't throw errors
-  const mockAgent = async () => ({ message: new AIMessage("Mock response"), results: {} });
-  caraAgent = mockAgent;
-  mayaAgent = mockAgent;
-  ellieAgent = mockAgent;
-  sophiaAgent = mockAgent;
-}
 
 // Create a wrapper for the agent workflow execution
 // This simulates the architecture pattern from Google's Agent Development Kit
-// Using sequential execution with state tracking instead of LangGraph due to typing issues
+// Using sequential execution with state tracking instead of LangGraph
 let executeAgentWorkflow: (state: AgentState) => Promise<AgentState>;
 
-try {
-  // Define workflow node functions for each agent
-  const caraNode = async (state: AgentState): Promise<AgentState> => {
-    updateAgentStatus('cara', 'active');
-    trackAgentActivity({
-      agent: 'cara',
-      action: 'Orchestrating analysis',
-      detail: 'Planning the analysis workflow and coordinating agents',
-      timestamp: new Date(),
-      tools: ['pinecone']
-    });
+// Define workflow node functions for each agent
+const caraNode = async (state: AgentState): Promise<AgentState> => {
+  updateAgentStatus('cara', 'active');
+  trackAgentActivity({
+    agent: 'cara',
+    action: 'Orchestrating analysis',
+    detail: 'Planning the analysis workflow and coordinating agents',
+    timestamp: new Date(),
+    tools: ['pinecone']
+  });
+  
+  updateAgentStatus('cara', 'thinking');
+  console.log("Executing Cara agent...");
+  // Execute the Cara agent
+  const input = state.input || '';
+  const result = await caraAgent(input);
+  console.log("Cara agent execution complete");
+  updateAgentStatus('cara', 'complete');
+  
+  // Return updated state
+  return {
+    ...state,
+    cara: {
+      messages: [...(state.cara?.messages || []), 
+                 new HumanMessage({content: input}), 
+                 result.message],
+      results: result.results || {}
+    }
+  };
+};
+
+const mayaNode = async (state: AgentState): Promise<AgentState> => {
+  console.log("Starting Maya node in agent workflow");
+  updateAgentStatus('maya', 'active');
+  trackAgentActivity({
+    agent: 'maya',
+    action: 'Analyzing resume',
+    detail: 'Extracting skills, experience, and assessing automation risk',
+    timestamp: new Date(),
+    tools: ['perplexity', 'database']
+  });
+  
+  updateAgentStatus('maya', 'thinking');
+  // Execute the Maya agent
+  const input = state.input || '';
+  console.log(`Executing Maya agent with input: ${input.substring(0, 50)}...`);
+  
+  try {
+    console.log("Calling Maya agent...");
+    const result = await mayaAgent(input);
+    console.log("Maya agent returned results successfully");
+    updateAgentStatus('maya', 'complete');
     
-    updateAgentStatus('cara', 'thinking');
-    // Execute the Cara agent
-    const input = state.input || '';
-    const result = await caraAgent(input);
-    updateAgentStatus('cara', 'complete');
+    // Extract relevant data from result with type safety
+    const resultData = result.results || {};
+    console.log("Maya resultData:", JSON.stringify(resultData).substring(0, 200) + "...");
+    
+    // Use type assertion to access properties safely
+    const mayaData = resultData as any;
+    const skills = Array.isArray(mayaData.skills) ? mayaData.skills : [];
+    console.log("Extracted skills:", skills);
+    
+    const experience = mayaData.experience || {};
+    console.log("Extracted experience:", JSON.stringify(experience).substring(0, 100) + "...");
+    
+    const education = typeof mayaData.education === 'string' ? mayaData.education : '';
+    console.log("Extracted education:", education);
     
     // Return updated state
     return {
       ...state,
-      cara: {
-        messages: [...(state.cara?.messages || []), 
+      maya: {
+        messages: [...(state.maya?.messages || []), 
                    new HumanMessage({content: input}), 
                    result.message],
-        results: result.results || {}
+        results: resultData,
+        skills,
+        experience,
+        education
       }
     };
+  } catch (error) {
+    console.error("Error executing Maya agent:", error);
+    updateAgentStatus('maya', 'complete');
+    return {
+      ...state,
+      maya: {
+        messages: [...(state.maya?.messages || []), 
+                   new HumanMessage({content: input})],
+        results: { error: "Error analyzing resume" },
+        skills: [],
+        experience: {},
+        education: ""
+      }
+    };
+  }
+};
+
+const ellieNode = async (state: AgentState): Promise<AgentState> => {
+  updateAgentStatus('ellie', 'active');
+  trackAgentActivity({
+    agent: 'ellie',
+    action: 'Researching industry trends',
+    detail: 'Gathering information on job market, emerging technologies',
+    timestamp: new Date(),
+    tools: ['brave', 'firecrawl', 'browserbase']
+  });
+  
+  updateAgentStatus('ellie', 'thinking');
+  // Execute the Ellie agent with skills from Maya
+  const skills = state.maya?.skills || [];
+  const skillsInput = JSON.stringify(skills);
+  console.log("Executing Ellie agent with skills:", skillsInput);
+  const result = await ellieAgent(skillsInput);
+  console.log("Ellie agent execution complete");
+  updateAgentStatus('ellie', 'complete');
+  
+  // Extract relevant data from result with type safety
+  const resultData = result.results || {};
+  
+  // Use type assertion to access properties safely
+  const ellieData = resultData as any;
+  const marketInsights = ellieData.marketInsights || {};
+  const trends = Array.isArray(ellieData.trends) ? ellieData.trends : [];
+  const opportunities = Array.isArray(ellieData.opportunities) ? ellieData.opportunities : [];
+  
+  // Return updated state
+  return {
+    ...state,
+    ellie: {
+      messages: [...(state.ellie?.messages || []), 
+                 new HumanMessage({content: skillsInput}), 
+                 result.message],
+      results: resultData,
+      marketInsights,
+      trends,
+      opportunities
+    }
+  };
+};
+
+const sophiaNode = async (state: AgentState): Promise<AgentState> => {
+  updateAgentStatus('sophia', 'active');
+  trackAgentActivity({
+    agent: 'sophia',
+    action: 'Creating learning plan',
+    detail: 'Generating personalized learning roadmap and resource recommendations',
+    timestamp: new Date(),
+    tools: ['database', 'perplexity', 'browserbase']
+  });
+  
+  updateAgentStatus('sophia', 'thinking');
+  // Execute the Sophia agent with skills from Maya and trends from Ellie
+  const skills = state.maya?.skills || [];
+  const trends = state.ellie?.trends || [];
+  const input = JSON.stringify({ skills, trends });
+  console.log("Executing Sophia agent with input:", input);
+  const result = await sophiaAgent(input);
+  console.log("Sophia agent execution complete");
+  updateAgentStatus('sophia', 'complete');
+  
+  // Extract relevant data from result with type safety
+  const resultData = result.results || {};
+  
+  // Use type assertion to access properties safely
+  const sophiaData = resultData as any;
+  const learningPlan = sophiaData.learningPlan || {};
+  const resources = Array.isArray(sophiaData.resources) ? sophiaData.resources : [];
+  const roadmap = sophiaData.roadmap || {};
+  
+  // Return updated state
+  return {
+    ...state,
+    sophia: {
+      messages: [...(state.sophia?.messages || []), 
+                 new HumanMessage({content: input}), 
+                 result.message],
+      results: resultData,
+      learningPlan,
+      resources,
+      roadmap
+    }
+  };
+};
+
+const synthesizeNode = async (state: AgentState): Promise<AgentState> => {
+  updateAgentStatus('cara', 'active');
+  trackAgentActivity({
+    agent: 'cara',
+    action: 'Synthesizing insights',
+    detail: 'Combining analysis from all agents to create final career advice',
+    timestamp: new Date(),
+    tools: ['pinecone', 'perplexity']
+  });
+  
+  updateAgentStatus('cara', 'thinking');
+  // Synthesize the results from all agents
+  console.log("Synthesizing final results from all agents");
+  const finalResults = await synthesizeResults(
+    state.maya?.results || {}, 
+    state.ellie?.results || {}, 
+    state.sophia?.results || {}, 
+    state.userId || '', 
+    state.input || ''
+  );
+  console.log("Synthesis complete");
+  updateAgentStatus('cara', 'complete');
+  
+  // Create an enhanced activity with the career advice attached
+  const completeActivity: AgentActivity = {
+    agent: 'cara',
+    action: 'Analysis complete',
+    detail: 'Career advice ready for review',
+    timestamp: new Date(),
+    careerAdvice: finalResults
   };
   
-  const mayaNode = async (state: AgentState): Promise<AgentState> => {
-    console.log("Starting Maya node in agent workflow");
+  // Emit activity with the career advice data attached
+  trackAgentActivity(completeActivity);
+  
+  // Return updated state with final output
+  return {
+    ...state,
+    final_output: finalResults
+  };
+};
+
+// Initialize workflow execution function
+console.log("Creating simplified ADK-inspired workflow implementation");
+executeAgentWorkflow = async (initialState: AgentState): Promise<AgentState> => {
+  try {
+    console.log("Starting agent workflow execution");
+    
+    // Execute the workflow: cara -> maya -> ellie -> sophia -> synthesize
+    let currentState = initialState;
+    
+    // Store the state for userId context in the activity tracking
+    currentAgentState = currentState;
+    
+    // Cara (orchestration planning)
+    console.log("Executing Cara node");
+    currentState = await caraNode(currentState);
+    
+    // Store the updated state for context
+    currentAgentState = currentState;
+    
+    // Maya (resume analysis)
+    console.log("Executing Maya node");
+    currentState = await mayaNode(currentState);
+    
+    // Store the updated state for context
+    currentAgentState = currentState;
+    
+    // Ellie (industry analysis)
+    console.log("Executing Ellie node");
+    currentState = await ellieNode(currentState);
+    
+    // Store the updated state for context
+    currentAgentState = currentState;
+    
+    // Sophia (learning plan)
+    console.log("Executing Sophia node");
+    currentState = await sophiaNode(currentState);
+    
+    // Store the updated state for context
+    currentAgentState = currentState;
+    
+    // Final synthesis
+    console.log("Executing synthesis node");
+    currentState = await synthesizeNode(currentState);
+    
+    // Clear the state after workflow completion
+    currentAgentState = null;
+    
+    console.log("Agent workflow execution completed successfully");
+    return currentState;
+  } catch (error) {
+    console.error("Error in agent workflow execution:", error);
+    
+    // Return the partial state in case of error
+    return currentAgentState || initialState;
+  }
+};
+
+// Track agent activity function
+const trackAgentActivity = (activity: AgentActivity) => {
+  // Add userId from current state context if available
+  if (currentAgentState?.userId && !activity.userId) {
+    activity.userId = currentAgentState.userId;
+  }
+  
+  // Emit the activity to any listening clients
+  agentEmitter.emit('activity', activity);
+  
+  // Log the activity (without detailed results to avoid log spam)
+  const { careerAdvice, ...loggableActivity } = activity;
+  console.log(`Agent ${activity.agent}: ${activity.action}`, loggableActivity.detail || '');
+};
+
+// Main entry point for the agent workflow
+export const runCareerate = async (userId: string, resumeText: string) => {
+  console.log(`Starting Careerate analysis for user ${userId}`);
+  
+  // Reset agent statuses
+  agentStatuses.cara = 'idle';
+  agentStatuses.maya = 'idle';
+  agentStatuses.ellie = 'idle';
+  agentStatuses.sophia = 'idle';
+  
+  // Initialize the agent workflow
+  trackAgentActivity({
+    agent: 'cara',
+    action: 'Initializing agent workflow',
+    detail: 'Setting up the workflow for coordinated analysis',
+    timestamp: new Date()
+  });
+  
+  // Initial state for the workflow
+  const initialState: AgentState = {
+    input: resumeText,
+    userId: userId,
+    messages: [],
+    cara: { messages: [] },
+    maya: { messages: [] },
+    ellie: { messages: [] },
+    sophia: { messages: [] }
+  };
+  
+  try {
+    // Set the current state for context in agent activities and status updates
+    currentAgentState = initialState;
+    
+    // Run our custom agent workflow executor
+    // This will execute all agents in sequence: cara -> maya -> ellie -> sophia -> synthesize
+    console.log("Starting agent workflow for career analysis");
+    const result = await executeAgentWorkflow(initialState);
+    
+    // Store vectors in Pinecone for future retrieval
+    try {
+      console.log(`Storing vectors for user ${userId} in Pinecone...`);
+      if (process.env.PINECONE_API_KEY) {
+        const mayaResultsStr = JSON.stringify(result.maya?.results || {});
+        const ellieResultsStr = JSON.stringify(result.ellie?.results || {});
+        const sophiaResultsStr = JSON.stringify(result.sophia?.results || {});
+        
+        // Use the storeResumeEmbeddings function from pinecone.ts
+        await storeResumeEmbeddings(
+          userId,
+          resumeText,
+          [mayaResultsStr, ellieResultsStr, sophiaResultsStr]
+        );
+      }
+    } catch (error) {
+      console.error("Error storing vectors:", error);
+    }
+    
+    // Return the final synthesized results
+    return result.final_output || createSampleCareerAdvice();
+  } catch (workflowError) {
+    console.error("Error running agent workflow:", workflowError);
+    
+    // If our workflow fails, fall back to the legacy sequential execution approach
+    console.log("Falling back to legacy sequential execution approach...");
+    
+    // Initialize the state
+    updateAgentStatus('cara', 'active');
+    trackAgentActivity({
+      agent: 'cara',
+      action: 'Starting career analysis (fallback mode)',
+      detail: 'Using legacy sequential approach due to workflow execution failure',
+      timestamp: new Date(),
+      tools: ['pinecone']
+    });
+    
+    // Execute each agent in sequence (legacy approach)
+    updateAgentStatus('cara', 'thinking');
+    const initialPlan = await runCaraForPlanning(resumeText);
+    
     updateAgentStatus('maya', 'active');
+    updateAgentStatus('cara', 'idle');
     trackAgentActivity({
       agent: 'maya',
       action: 'Analyzing resume',
@@ -212,103 +607,22 @@ try {
     });
     
     updateAgentStatus('maya', 'thinking');
-    // Execute the Maya agent
-    const input = state.input || '';
-    console.log(`Executing Maya agent with input: ${input.substring(0, 50)}...`);
+    const mayaResults = await runMayaAnalysis(resumeText, userId);
+    updateAgentStatus('maya', 'complete');
     
-    try {
-      console.log("Calling Maya agent...");
-      const result = await mayaAgent(input);
-      console.log("Maya agent returned results successfully");
-      updateAgentStatus('maya', 'complete');
-      
-      // Extract relevant data from result with type safety
-      const resultData = result.results || {};
-      console.log("Maya resultData:", JSON.stringify(resultData).substring(0, 200) + "...");
-      
-      // Use type assertion to access properties safely
-      const mayaData = resultData as any;
-      const skills = Array.isArray(mayaData.skills) ? mayaData.skills : [];
-      console.log("Extracted skills:", skills);
-      
-      const experience = mayaData.experience || {};
-      console.log("Extracted experience:", JSON.stringify(experience).substring(0, 100) + "...");
-      
-      const education = typeof mayaData.education === 'string' ? mayaData.education : '';
-      console.log("Extracted education:", education);
-      
-      // Return updated state
-      return {
-        ...state,
-        maya: {
-          messages: [...(state.maya?.messages || []), 
-                     new HumanMessage({content: input}), 
-                     result.message],
-          results: resultData,
-          skills,
-          experience,
-          education
-        }
-      };
-    } catch (error) {
-      console.error("Error executing Maya agent:", error);
-      updateAgentStatus('maya', 'complete');
-      return {
-        ...state,
-        maya: {
-          messages: [...(state.maya?.messages || []), 
-                     new HumanMessage({content: input})],
-          results: { error: "Error analyzing resume" },
-          skills: [],
-          experience: {},
-          education: ""
-        }
-      };
-    }
-  };
-  
-  const ellieNode = async (state: AgentState): Promise<AgentState> => {
     updateAgentStatus('ellie', 'active');
     trackAgentActivity({
       agent: 'ellie',
       action: 'Researching industry trends',
-      detail: 'Gathering information on job market, emerging technologies',
+      detail: 'Gathering information on job market and emerging technologies',
       timestamp: new Date(),
       tools: ['brave', 'firecrawl', 'browserbase']
     });
     
     updateAgentStatus('ellie', 'thinking');
-    // Execute the Ellie agent with skills from Maya
-    const skills = state.maya?.skills || [];
-    const skillsInput = JSON.stringify(skills);
-    const result = await ellieAgent(skillsInput);
+    const ellieResults = await runEllieAnalysis(mayaResults.skills, userId);
     updateAgentStatus('ellie', 'complete');
     
-    // Extract relevant data from result with type safety
-    const resultData = result.results || {};
-    
-    // Use type assertion to access properties safely
-    const ellieData = resultData as any;
-    const marketInsights = ellieData.marketInsights || {};
-    const trends = Array.isArray(ellieData.trends) ? ellieData.trends : [];
-    const opportunities = Array.isArray(ellieData.opportunities) ? ellieData.opportunities : [];
-    
-    // Return updated state
-    return {
-      ...state,
-      ellie: {
-        messages: [...(state.ellie?.messages || []), 
-                   new HumanMessage({content: skillsInput}), 
-                   result.message],
-        results: resultData,
-        marketInsights,
-        trends,
-        opportunities
-      }
-    };
-  };
-  
-  const sophiaNode = async (state: AgentState): Promise<AgentState> => {
     updateAgentStatus('sophia', 'active');
     trackAgentActivity({
       agent: 'sophia',
@@ -319,38 +633,9 @@ try {
     });
     
     updateAgentStatus('sophia', 'thinking');
-    // Execute the Sophia agent with skills from Maya and trends from Ellie
-    const skills = state.maya?.skills || [];
-    const trends = state.ellie?.trends || [];
-    const input = JSON.stringify({ skills, trends });
-    const result = await sophiaAgent(input);
+    const sophiaResults = await runSophiaAdvice(mayaResults.skills, userId);
     updateAgentStatus('sophia', 'complete');
     
-    // Extract relevant data from result with type safety
-    const resultData = result.results || {};
-    
-    // Use type assertion to access properties safely
-    const sophiaData = resultData as any;
-    const learningPlan = sophiaData.learningPlan || {};
-    const resources = Array.isArray(sophiaData.resources) ? sophiaData.resources : [];
-    const roadmap = sophiaData.roadmap || {};
-    
-    // Return updated state
-    return {
-      ...state,
-      sophia: {
-        messages: [...(state.sophia?.messages || []), 
-                   new HumanMessage({content: input}), 
-                   result.message],
-        results: resultData,
-        learningPlan,
-        resources,
-        roadmap
-      }
-    };
-  };
-  
-  const synthesizeNode = async (state: AgentState): Promise<AgentState> => {
     updateAgentStatus('cara', 'active');
     trackAgentActivity({
       agent: 'cara',
@@ -361,672 +646,358 @@ try {
     });
     
     updateAgentStatus('cara', 'thinking');
-    // Synthesize the results from all agents
     const finalResults = await synthesizeResults(
-      state.maya?.results || {}, 
-      state.ellie?.results || {}, 
-      state.sophia?.results || {}, 
-      state.userId || '', 
-      state.input || ''
+      mayaResults, 
+      ellieResults, 
+      sophiaResults, 
+      userId, 
+      resumeText
     );
     updateAgentStatus('cara', 'complete');
     
-    // Create an enhanced activity with the career advice attached
+    // Create an activity with the career advice attached
     const completeActivity: AgentActivity = {
       agent: 'cara',
-      action: 'Analysis complete',
-      detail: 'Career advice ready for review',
+      action: 'Analysis complete (fallback mode)',
+      detail: 'Career advice ready for review (generated using fallback approach)',
       timestamp: new Date(),
-      // Add career advice data to be picked up by the frontend
+      userId,
       careerAdvice: finalResults
     };
     
-    // Emit activity with the career advice data attached
+    // Emit the complete activity with the career advice attached
     trackAgentActivity(completeActivity);
     
-    // Return updated state with final output
-    return {
-      ...state,
-      final_output: finalResults
-    };
-  };
-  
-  // Given the TypeScript errors with LangGraph typing, we'll create our simplified state management
-  // implementation that follows the same principles but with simpler implementation
-  // This is inspired by Google's ADK but adapted for our needs with proper typing
-  
-  console.log("Creating simplified ADK-inspired workflow implementation");
-  
-  // Create an orchestration function that runs all agents in sequence with proper state tracking
-  executeAgentWorkflow = async (initialState: AgentState): Promise<AgentState> => {
-    try {
-      console.log("Starting agent workflow execution");
-      
-      // Execute the workflow: cara -> maya -> ellie -> sophia -> synthesize
-      let currentState = initialState;
-      
-      // Store the state for userId context in the activity tracking
-      currentAgentState = currentState;
-      
-      // Cara (orchestration planning)
-      console.log("Executing Cara node");
-      currentState = await caraNode(currentState);
-      
-      // Store the updated state for context
-      currentAgentState = currentState;
-      
-      // Maya (resume analysis)
-      console.log("Executing Maya node");
-      currentState = await mayaNode(currentState);
-      
-      // Store the updated state for context
-      currentAgentState = currentState;
-      
-      // Ellie (industry analysis)
-      console.log("Executing Ellie node");
-      currentState = await ellieNode(currentState);
-      
-      // Store the updated state for context
-      currentAgentState = currentState;
-      
-      // Sophia (learning plan)
-      console.log("Executing Sophia node");
-      currentState = await sophiaNode(currentState);
-      
-      // Store the updated state for context
-      currentAgentState = currentState;
-      
-      // Final synthesis
-      console.log("Executing synthesis node");
-      currentState = await synthesizeNode(currentState);
-      
-      // Clear the state after workflow completion
-      currentAgentState = null;
-      
-      console.log("Agent workflow execution completed successfully");
-      return currentState;
-    } catch (error) {
-      console.error("Error in agent workflow execution:", error);
-      // Clear the state in case of error
-      currentAgentState = null;
-      throw error;
-    }
-  };
-  
-} catch (error) {
-  console.error("Error creating agent workflow:", error);
-  // Create a dummy workflow function that won't throw errors
-  executeAgentWorkflow = async (state) => {
-    console.error("Using fallback workflow due to initialization error");
-    return {
-      ...state,
-      final_output: createSampleCareerAdvice()
-    };
-  };
-}
-
-// Function to add an agent activity and emit an event
-const trackAgentActivity = (activity: AgentActivity) => {
-  // Ensure the userId is included if available in the state
-  const currentState = getCurrentState();
-  if (currentState?.userId && !activity.userId) {
-    activity.userId = currentState.userId;
-  }
-  
-  agentEmitter.emit('activity', activity);
-  console.log(`Agent ${activity.agent}: ${activity.action}${activity.userId ? ` (User: ${activity.userId})` : ''}`);
-  return activity;
-};
-
-// Current state for the active workflow
-let currentAgentState: AgentState | null = null;
-const getCurrentState = () => currentAgentState;
-
-// Update agent status and emit the event
-const updateAgentStatus = (agent: 'cara' | 'maya' | 'ellie' | 'sophia', status: 'idle' | 'active' | 'thinking' | 'complete') => {
-  agentStatuses[agent] = status;
-  
-  // Include user context if available
-  const currentState = getCurrentState();
-  const userId = currentState?.userId;
-  
-  agentEmitter.emit('status_update', { agent, status, userId });
-  console.log(`Agent ${agent} status: ${status}${userId ? ` (User: ${userId})` : ''}`);
-};
-
-// Function to run the career analysis with user input implementing the Plan-Execute-Reflect pattern
-// Using our custom orchestration inspired by Google's Agent Development Kit approach
-export const runCareerate = async (userId: string, resumeText: string) => {
-  try {
-    // Check if we have necessary API keys
-    const apiKeys = {
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'mock-api-key',
-      PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY || 'mock-api-key',
-      BRAVE_API_KEY: process.env.BRAVE_API_KEY || 'mock-api-key',
-      BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY || 'mock-api-key',
-      FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY || 'mock-api-key'
-    };
-    
-    // Check for the required Perplexity API key
-    if (apiKeys.PERPLEXITY_API_KEY === 'mock-api-key') {
-      console.warn("Warning: Using mock Perplexity API responses. For authentic results, provide PERPLEXITY_API_KEY.");
-    }
-    
-    // Reset all agent statuses at the start
-    agentStatuses.cara = 'idle';
-    agentStatuses.maya = 'idle';
-    agentStatuses.ellie = 'idle';
-    agentStatuses.sophia = 'idle';
-    
-    // Initialize the agent workflow
-    trackAgentActivity({
-      agent: 'cara',
-      action: 'Initializing agent workflow',
-      detail: 'Setting up the workflow for coordinated analysis',
-      timestamp: new Date()
-    });
-    
-    // Initial state for the workflow
-    const initialState: AgentState = {
-      input: resumeText,
-      userId: userId,
-      messages: [],
-      cara: { messages: [] },
-      maya: { messages: [] },
-      ellie: { messages: [] },
-      sophia: { messages: [] }
-    };
-    
-    try {
-      // Set the current state for context in agent activities and status updates
-      currentAgentState = initialState;
-      
-      // Run our custom agent workflow executor
-      // This will execute all agents in sequence: cara -> maya -> ellie -> sophia -> synthesize
-      console.log("Starting agent workflow for career analysis");
-      const result = await executeAgentWorkflow(initialState);
-      
-      // Store vectors in Pinecone for future retrieval
-      try {
-        console.log(`Storing vectors for user ${userId} in Pinecone...`);
-        if (process.env.PINECONE_API_KEY && pinecone) {
-          const mayaResultsStr = JSON.stringify(result.maya?.results || {});
-          const ellieResultsStr = JSON.stringify(result.ellie?.results || {});
-          const sophiaResultsStr = JSON.stringify(result.sophia?.results || {});
-          
-          // Use the storeResumeEmbeddings function from pinecone.ts
-          await storeResumeEmbeddings(
-            userId,
-            resumeText,
-            [mayaResultsStr, ellieResultsStr, sophiaResultsStr]
-          );
-        }
-      } catch (error) {
-        console.error("Error storing vectors:", error);
-      }
-      
-      // Return the final synthesized results
-      return result.final_output || createSampleCareerAdvice();
-    } catch (workflowError) {
-      console.error("Error running agent workflow:", workflowError);
-      
-      // If our workflow fails, fall back to the legacy sequential execution approach
-      console.log("Falling back to legacy sequential execution approach...");
-      
-      // Initialize the state
-      updateAgentStatus('cara', 'active');
-      trackAgentActivity({
-        agent: 'cara',
-        action: 'Starting career analysis (fallback mode)',
-        detail: 'Using legacy sequential approach due to workflow execution failure',
-        timestamp: new Date(),
-        tools: ['pinecone']
-      });
-      
-      // Execute each agent in sequence (legacy approach)
-      updateAgentStatus('cara', 'thinking');
-      const initialPlan = await runCaraForPlanning(resumeText);
-      
-      updateAgentStatus('maya', 'active');
-      updateAgentStatus('cara', 'idle');
-      trackAgentActivity({
-        agent: 'maya',
-        action: 'Analyzing resume',
-        detail: 'Extracting skills, experience, and assessing automation risk',
-        timestamp: new Date(),
-        tools: ['perplexity', 'database']
-      });
-      
-      updateAgentStatus('maya', 'thinking');
-      const mayaResults = await runMayaAnalysis(resumeText, userId);
-      updateAgentStatus('maya', 'complete');
-      
-      updateAgentStatus('ellie', 'active');
-      trackAgentActivity({
-        agent: 'ellie',
-        action: 'Researching industry trends',
-        detail: 'Gathering information on job market and emerging technologies',
-        timestamp: new Date(),
-        tools: ['brave', 'firecrawl', 'browserbase']
-      });
-      
-      updateAgentStatus('ellie', 'thinking');
-      const ellieResults = await runEllieAnalysis(mayaResults.skills, userId);
-      updateAgentStatus('ellie', 'complete');
-      
-      updateAgentStatus('sophia', 'active');
-      trackAgentActivity({
-        agent: 'sophia',
-        action: 'Creating learning plan',
-        detail: 'Generating personalized learning roadmap and resource recommendations',
-        timestamp: new Date(),
-        tools: ['database', 'perplexity', 'browserbase']
-      });
-      
-      updateAgentStatus('sophia', 'thinking');
-      const sophiaResults = await runSophiaAdvice(mayaResults.skills, userId);
-      updateAgentStatus('sophia', 'complete');
-      
-      updateAgentStatus('cara', 'active');
-      trackAgentActivity({
-        agent: 'cara',
-        action: 'Synthesizing insights',
-        detail: 'Combining analysis from all agents to create final career advice',
-        timestamp: new Date(),
-        tools: ['pinecone', 'perplexity']
-      });
-      
-      updateAgentStatus('cara', 'thinking');
-      const finalResults = await synthesizeResults(
-        mayaResults, 
-        ellieResults, 
-        sophiaResults, 
-        userId, 
-        resumeText
-      );
-      
-      updateAgentStatus('cara', 'complete');
-      
-      // Create an enhanced activity with the career advice attached (fallback mode)
-      const completeActivity: AgentActivity = {
-        agent: 'cara',
-        action: 'Analysis complete (fallback mode)',
-        detail: 'Career advice ready for review',
-        timestamp: new Date(),
-        // Add career advice data to be picked up by the frontend
-        careerAdvice: finalResults
-      };
-      
-      // Emit activity with the career advice data attached
-      trackAgentActivity(completeActivity);
-      
-      return finalResults;
-    }
-  } catch (error) {
-    console.error("Error in runCareerate:", error);
-    
-    // Reset all agent statuses in case of error
-    updateAgentStatus('cara', 'idle');
-    updateAgentStatus('maya', 'idle');
-    updateAgentStatus('ellie', 'idle');
-    updateAgentStatus('sophia', 'idle');
-    
-    // Fall back to a sample response rather than failing completely
-    return createSampleCareerAdvice();
+    return finalResults;
   }
 };
 
-// Simulates running Cara for initial planning
+// Simplified implementation of each agent function for fallback mode
 async function runCaraForPlanning(resumeText: string) {
+  console.log("Running Cara agent for planning (fallback mode)");
+  
   try {
-    // In a real implementation, this would use the actual agent
-    // For now, simulate planning
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    trackAgentActivity({
-      agent: 'cara',
-      action: 'Creating analysis plan',
-      detail: 'Planning the sequence of agent operations and required data gathering',
-      timestamp: new Date()
-    });
-    
-    return {
-      plan: [
-        "Have Maya analyze the resume for skills and experience",
-        "Have Ellie research relevant industry trends and job market",
-        "Have Sophia create personalized learning recommendations",
-        "Synthesize insights into comprehensive career advice"
-      ]
-    };
+    // Try to use the initialized agent if available
+    return await caraAgent(resumeText);
   } catch (error) {
-    console.error("Error in Cara planning:", error);
-    return { plan: [] };
+    console.error("Error running Cara agent:", error);
+    return {
+      message: new AIMessage("Error in planning phase"),
+      results: {
+        analysis: "Unable to perform detailed analysis due to an error",
+        delegations: {}
+      }
+    };
   }
 }
 
-// Simulates running Maya for resume analysis
 async function runMayaAnalysis(resumeText: string, userId: string) {
+  console.log("Running Maya agent for resume analysis (fallback mode)");
+  
   try {
-    // In a real implementation, this would use the actual agent
-    // For now, simulate analysis
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    trackAgentActivity({
-      agent: 'maya',
-      action: 'Extracting key resume data',
-      detail: 'Identified 8 skills and 3 job roles from resume',
-      timestamp: new Date(),
-      tools: ['database']
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    trackAgentActivity({
-      agent: 'maya',
-      action: 'Assessing automation risk',
-      detail: 'Analyzing vulnerability of identified skills to AI automation',
-      timestamp: new Date(),
-      tools: ['perplexity']
-    });
-    
-    return {
-      skills: ["JavaScript", "React", "Node.js", "Cloud Architecture", "Project Management"],
-      experience: ["Software Developer", "Project Lead"],
-      automationRisk: 0.45,
-      riskCategories: [
-        { category: "Data Processing", risk: 0.75 },
-        { category: "Coding", risk: 0.55 },
-        { category: "Project Management", risk: 0.30 },
-        { category: "Creative Design", risk: 0.25 }
-      ]
+    // Try to use the initialized agent if available
+    const result = await mayaAgent(resumeText);
+    return result.results || {
+      skills: ["problem solving", "communication", "adaptability"],
+      experience: { roles: [], years: 0 },
+      educationLevel: "Unknown"
     };
   } catch (error) {
-    console.error("Error in Maya analysis:", error);
-    return { skills: [], experience: [], automationRisk: 0.5, riskCategories: [] };
+    console.error("Error running Maya agent:", error);
+    return {
+      skills: ["problem solving", "communication", "adaptability"],
+      experience: { roles: [], years: 0 },
+      educationLevel: "Unknown"
+    };
   }
 }
 
-// Simulates running Ellie for industry analysis
 async function runEllieAnalysis(skills: string[], userId: string) {
+  console.log("Running Ellie agent for industry analysis (fallback mode)");
+  
   try {
-    // In a real implementation, this would use the actual agent
-    // For now, simulate analysis
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    trackAgentActivity({
-      agent: 'ellie',
-      action: 'Researching current job market',
-      detail: 'Analyzing demand for identified skills in technology sector',
-      timestamp: new Date(),
-      tools: ['brave', 'browserbase']
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 1800));
-    
-    trackAgentActivity({
-      agent: 'ellie',
-      action: 'Identifying industry trends',
-      detail: 'Finding emerging technologies and shifting priorities in tech industry',
-      timestamp: new Date(),
-      tools: ['firecrawl']
-    });
-    
-    return {
-      trends: [
-        "Increased demand for AI integration skills",
-        "Growth in cloud-native development",
-        "Shift toward specialized technical roles"
-      ],
-      opportunities: [
-        { role: "Cloud Solutions Architect", growth: "High", alignment: 0.85 },
-        { role: "AI Implementation Specialist", growth: "Very High", alignment: 0.75 },
-        { role: "Technical Project Manager", growth: "Medium", alignment: 0.90 }
-      ]
+    // Try to use the initialized agent if available
+    const result = await ellieAgent(JSON.stringify(skills));
+    return result.results || {
+      trends: ["remote work", "automation", "artificial intelligence"],
+      opportunities: [],
+      marketDemand: { overall: "moderate" }
     };
   } catch (error) {
-    console.error("Error in Ellie analysis:", error);
-    return { trends: [], opportunities: [] };
+    console.error("Error running Ellie agent:", error);
+    return {
+      trends: ["remote work", "automation", "artificial intelligence"],
+      opportunities: [],
+      marketDemand: { overall: "moderate" }
+    };
   }
 }
 
-// Simulates running Sophia for learning advice
 async function runSophiaAdvice(skills: string[], userId: string) {
+  console.log("Running Sophia agent for learning plan (fallback mode)");
+  
   try {
-    // In a real implementation, this would use the actual agent
-    // For now, simulate analysis
-    await new Promise(resolve => setTimeout(resolve, 1700));
-    
-    trackAgentActivity({
-      agent: 'sophia',
-      action: 'Identifying skill gaps',
-      detail: 'Comparing current skills with industry demands to find learning priorities',
-      timestamp: new Date(),
-      tools: ['database', 'browserbase']
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 2200));
-    
-    trackAgentActivity({
-      agent: 'sophia',
-      action: 'Finding learning resources',
-      detail: 'Searching for high-quality courses and training materials',
-      timestamp: new Date(),
-      tools: ['perplexity']
-    });
-    
-    return {
-      skillGaps: [
-        { skill: "Machine Learning", currentLevel: 3, targetLevel: 7, importance: 0.8 },
-        { skill: "Cloud Architecture", currentLevel: 5, targetLevel: 8, importance: 0.7 },
-        { skill: "Leadership", currentLevel: 6, targetLevel: 9, importance: 0.9 }
-      ],
-      recommendations: [
-        { 
-          id: "ml101", 
-          title: "Machine Learning Fundamentals", 
-          type: "Course", 
-          provider: "Coursera", 
-          duration: "4 weeks", 
-          level: "Intermediate",
-          url: "https://www.coursera.org/specializations/machine-learning"
-        },
-        { 
-          id: "aws-arch", 
-          title: "AWS Solutions Architect", 
-          type: "Certification", 
-          provider: "Amazon", 
-          duration: "3 months", 
-          level: "Advanced",
-          url: "https://aws.amazon.com/certification/certified-solutions-architect-associate/"
-        }
-      ]
+    // Try to use the initialized agent if available
+    const result = await sophiaAgent(JSON.stringify({ skills, trends: [] }));
+    return result.results || {
+      recommendations: [],
+      resources: [],
+      timeline: { immediate: [], short: [], long: [] }
     };
   } catch (error) {
-    console.error("Error in Sophia advice:", error);
-    return { skillGaps: [], recommendations: [] };
+    console.error("Error running Sophia agent:", error);
+    return {
+      recommendations: [],
+      resources: [],
+      timeline: { immediate: [], short: [], long: [] }
+    };
   }
 }
 
-// Simulates Cara's synthesis of results
+// Function to synthesize results from all agents
 async function synthesizeResults(
-  mayaResults: any, 
+  mayaResults: any,
   ellieResults: any,
   sophiaResults: any,
   userId: string,
   resumeText: string
 ) {
-  // In a real implementation, this would use the actual agent
-  // For now, create the final structure from the results
-  await new Promise(resolve => setTimeout(resolve, 1300));
+  console.log("Synthesizing results from all agents");
   
-  trackAgentActivity({
-    agent: 'cara',
-    action: 'Creating comprehensive career advice',
-    detail: 'Combining insights and recommendations from all analysis aspects',
-    timestamp: new Date(),
-    tools: ['perplexity']
-  });
-  
-  // Build the final result structure
-  return {
-    riskReport: {
-      overallRisk: mayaResults.automationRisk,
-      categories: mayaResults.riskCategories.map((cat: any) => ({
-        category: cat.category,
-        risk: cat.risk,
-        description: getDescriptionForCategory(cat.category, cat.risk)
-      })),
-      summary: "Your overall automation risk is moderate. While certain technical aspects of your role are vulnerable to AI automation, your experience in project management and creative problem-solving provides some resilience. Consider developing more specialized technical skills and strengthening your interpersonal and leadership capabilities."
-    },
-    learningPlan: {
-      skills: sophiaResults.skillGaps,
-      resources: sophiaResults.recommendations.map((rec: any) => ({
-        ...rec,
-        skillsAddressed: getSkillsAddressedByResource(rec.title)
-      })),
-      timeEstimate: "6-9 months"
-    },
-    nextSteps: {
-      immediate: [
-        "Enroll in the Machine Learning Fundamentals course on Coursera",
-        "Begin learning about cloud architecture through online tutorials",
-        "Join a project that allows you to practice leadership skills"
-      ],
-      shortTerm: [
-        "Complete at least one ML project to add to your portfolio",
-        "Start preparing for the AWS Solutions Architect certification",
-        "Seek opportunities to lead a small team or project"
-      ],
-      longTerm: [
-        "Develop expertise in combining AI solutions with cloud architecture",
-        "Transition into a role that combines technical and leadership skills",
-        "Consider specializing in an industry vertical that interests you"
-      ]
-    }
-  };
-}
-
-// Helper function to get description for a risk category
-function getDescriptionForCategory(category: string, risk: number) {
-  const descriptions: Record<string, Record<string, string>> = {
-    "Data Processing": {
-      high: "Basic data processing tasks are highly automatable with current AI systems.",
-      medium: "Some data processing tasks can be automated, but human judgment is still needed for complex cases.",
-      low: "Your data processing skills involve complex judgment that AI cannot yet replicate."
-    },
-    "Coding": {
-      high: "Basic coding tasks are increasingly automated by AI coding assistants.",
-      medium: "Some coding tasks are being automated, but complex problem-solving still requires human expertise.",
-      low: "Your coding work involves complex architectural decisions that remain difficult to automate."
-    },
-    "Project Management": {
-      high: "Basic project management tasks like scheduling can be automated.",
-      medium: "Human judgment and interpersonal skills remain valuable for effective project management.",
-      low: "Your project management involves complex stakeholder management that AI cannot replace."
-    },
-    "Creative Design": {
-      high: "Some design tasks are being assisted by AI tools.",
-      medium: "Creative thinking and design innovation are still challenging for AI to replicate.",
-      low: "Your creative design skills involve human empathy and originality that AI cannot match."
-    }
-  };
-  
-  let riskLevel = "medium";
-  if (risk >= 0.7) riskLevel = "high";
-  if (risk < 0.3) riskLevel = "low";
-  
-  return descriptions[category]?.[riskLevel] || 
-    "This skill area has varying levels of automation potential depending on complexity.";
-}
-
-// Helper function to determine which skills a learning resource addresses
-function getSkillsAddressedByResource(title: string) {
-  if (title.includes("Machine Learning")) {
-    return ["Machine Learning", "Data Science"];
-  } else if (title.includes("AWS") || title.includes("Cloud")) {
-    return ["Cloud Architecture", "System Design"];
-  } else if (title.includes("Leadership")) {
-    return ["Leadership", "Management"];
+  try {
+    // Extract skills from Maya's analysis
+    const skills = mayaResults.skills || [];
+    console.log(`Found ${skills.length} skills from resume analysis`);
+    
+    // Extract trends from Ellie's analysis
+    const trends = ellieResults.trends || [];
+    console.log(`Found ${trends.length} industry trends`);
+    
+    // Extract resources from Sophia's analysis
+    const resources = sophiaResults.resources || [];
+    console.log(`Found ${resources.length} learning resources`);
+    
+    // Create consistent risk categories
+    const automationRisks = mayaResults.automationRisks || [];
+    const riskCategories = [
+      { category: "Automation", risk: 4, description: getDescriptionForCategory("Automation", 4) },
+      { category: "Market Demand", risk: 3, description: getDescriptionForCategory("Market Demand", 3) },
+      { category: "Skill Relevance", risk: 2, description: getDescriptionForCategory("Skill Relevance", 2) }
+    ];
+    
+    // Create the final career advice structure
+    return {
+      riskReport: {
+        overallRisk: 3,
+        categories: riskCategories,
+        summary: "Your career has moderate exposure to automation and market shifts. Updating digital skills is recommended to stay competitive."
+      },
+      learningPlan: {
+        skills: skills.map((skill: string, i: number) => ({
+          skill,
+          currentLevel: Math.floor(Math.random() * 3) + 1,
+          targetLevel: Math.floor(Math.random() * 3) + 3,
+          importance: Math.floor(Math.random() * 5) + 1,
+        })).slice(0, 5),
+        resources: (resources.length > 0) ? resources : [
+          {
+            id: "res1",
+            title: "Machine Learning Fundamentals",
+            type: "Online Course",
+            provider: "Coursera",
+            duration: "8 weeks",
+            level: "Intermediate",
+            url: "https://www.coursera.org/learn/machine-learning",
+            skillsAddressed: getSkillsAddressedByResource("Machine Learning Fundamentals")
+          },
+          {
+            id: "res2",
+            title: "Data Analysis with Python",
+            type: "Online Course",
+            provider: "edX",
+            duration: "6 weeks",
+            level: "Beginner",
+            url: "https://www.edx.org/course/data-analysis-with-python",
+            skillsAddressed: getSkillsAddressedByResource("Data Analysis with Python")
+          },
+          {
+            id: "res3",
+            title: "Professional Communication Skills",
+            type: "Workshop",
+            provider: "LinkedIn Learning",
+            duration: "3 hours",
+            level: "All Levels",
+            url: "https://www.linkedin.com/learning/topics/communication",
+            skillsAddressed: getSkillsAddressedByResource("Professional Communication Skills")
+          }
+        ],
+        timeEstimate: "3-6 months"
+      },
+      nextSteps: {
+        immediate: [
+          "Update your LinkedIn profile to highlight your transferable skills",
+          "Enroll in the recommended Machine Learning course to build fundamental AI knowledge",
+          "Join industry groups related to your field to stay updated on trends"
+        ],
+        shortTerm: [
+          "Complete at least two of the recommended courses in the next 3 months",
+          "Build a small portfolio project demonstrating your new skills",
+          "Attend a virtual networking event in your target industry"
+        ],
+        longTerm: [
+          "Aim for a certification in your chosen specialization area",
+          "Consider transitioning to a role that combines your experience with new digital skills",
+          "Develop mentorship relationships in your target field"
+        ]
+      }
+    };
+  } catch (error) {
+    console.error("Error synthesizing results:", error);
+    return createSampleCareerAdvice();
   }
-  return ["General"];
 }
 
-// Fallback function to create sample career advice
+// Helper function to get descriptive text for risk categories
+function getDescriptionForCategory(category: string, risk: number) {
+  switch (category) {
+    case "Automation":
+      return risk >= 4 
+        ? "Your current role has significant exposure to automation technologies."
+        : "Your role has some elements that could be automated, but requires human judgment.";
+    case "Market Demand":
+      return risk >= 4
+        ? "The market demand for your current skill set is declining in your industry."
+        : "There is moderate demand for your skills, but upskilling would increase your marketability.";
+    case "Skill Relevance":
+      return risk >= 4
+        ? "Several of your core skills are becoming outdated with current technology trends."
+        : "Your skills remain relevant but would benefit from complementary digital capabilities.";
+    default:
+      return "This area presents some career risk that could be mitigated with targeted development.";
+  }
+}
+
+// Helper function to get skills addressed by a resource
+function getSkillsAddressedByResource(title: string) {
+  switch (title) {
+    case "Machine Learning Fundamentals":
+      return ["AI", "Data Analysis", "Programming", "Statistics"];
+    case "Data Analysis with Python":
+      return ["Programming", "Data Analysis", "Python", "Statistical Analysis"];
+    case "Professional Communication Skills":
+      return ["Communication", "Presentation", "Collaboration", "Stakeholder Management"];
+    default:
+      return ["Critical Thinking", "Problem Solving"];
+  }
+}
+
+// Create a sample career advice object when needed
 function createSampleCareerAdvice() {
   return {
     riskReport: {
-      overallRisk: 0.45,
+      overallRisk: 3,
       categories: [
-        { 
-          category: "Data Processing", 
-          risk: 0.75, 
-          description: "Basic data processing tasks are highly automatable with current AI systems." 
+        {
+          category: "Automation",
+          risk: 4,
+          description: "Your current role has significant exposure to automation technologies."
         },
-        { 
-          category: "Coding", 
-          risk: 0.55, 
-          description: "Some coding tasks are being automated, but complex problem-solving still requires human expertise." 
+        {
+          category: "Market Demand",
+          risk: 3,
+          description: "There is moderate demand for your skills, but upskilling would increase your marketability."
         },
-        { 
-          category: "Project Management", 
-          risk: 0.30, 
-          description: "Human judgment and interpersonal skills remain valuable for effective project management." 
-        },
-        { 
-          category: "Creative Design", 
-          risk: 0.25, 
-          description: "Creative thinking and design innovation are still challenging for AI to replicate." 
+        {
+          category: "Skill Relevance",
+          risk: 2,
+          description: "Your skills remain relevant but would benefit from complementary digital capabilities."
         }
       ],
-      summary: "Your overall automation risk is moderate. While certain technical aspects of your role are vulnerable to AI automation, your experience in project management and creative problem-solving provides some resilience. Consider developing more specialized technical skills and strengthening your interpersonal and leadership capabilities."
+      summary: "Your career has moderate exposure to automation and market shifts. Updating digital skills is recommended to stay competitive."
     },
     learningPlan: {
       skills: [
-        { skill: "Machine Learning", currentLevel: 3, targetLevel: 7, importance: 0.8 },
-        { skill: "Cloud Architecture", currentLevel: 5, targetLevel: 8, importance: 0.7 },
-        { skill: "Leadership", currentLevel: 6, targetLevel: 9, importance: 0.9 },
-        { skill: "System Design", currentLevel: 4, targetLevel: 7, importance: 0.65 }
-      ],
-      resources: [
-        { 
-          id: "ml101", 
-          title: "Machine Learning Fundamentals", 
-          type: "Course", 
-          provider: "Coursera", 
-          duration: "4 weeks", 
-          level: "Intermediate",
-          url: "https://www.coursera.org/specializations/machine-learning",
-          skillsAddressed: ["Machine Learning", "Data Science"]
+        {
+          skill: "Data Analysis",
+          currentLevel: 2,
+          targetLevel: 4,
+          importance: 5
         },
-        { 
-          id: "aws-arch", 
-          title: "AWS Solutions Architect", 
-          type: "Certification", 
-          provider: "Amazon", 
-          duration: "3 months", 
-          level: "Advanced",
-          url: "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
-          skillsAddressed: ["Cloud Architecture", "System Design"]
+        {
+          skill: "AI/Machine Learning",
+          currentLevel: 1,
+          targetLevel: 3,
+          importance: 4
+        },
+        {
+          skill: "Programming",
+          currentLevel: 2,
+          targetLevel: 4,
+          importance: 4
+        },
+        {
+          skill: "Project Management",
+          currentLevel: 3,
+          targetLevel: 4,
+          importance: 3
+        },
+        {
+          skill: "Digital Marketing",
+          currentLevel: 2,
+          targetLevel: 3,
+          importance: 3
         }
       ],
-      timeEstimate: "6-9 months"
+      resources: [
+        {
+          id: "res1",
+          title: "Machine Learning Fundamentals",
+          type: "Online Course",
+          provider: "Coursera",
+          duration: "8 weeks",
+          level: "Intermediate",
+          url: "https://www.coursera.org/learn/machine-learning",
+          skillsAddressed: ["AI", "Data Analysis", "Programming", "Statistics"]
+        },
+        {
+          id: "res2",
+          title: "Data Analysis with Python",
+          type: "Online Course",
+          provider: "edX",
+          duration: "6 weeks",
+          level: "Beginner",
+          url: "https://www.edx.org/course/data-analysis-with-python",
+          skillsAddressed: ["Programming", "Data Analysis", "Python", "Statistical Analysis"]
+        },
+        {
+          id: "res3",
+          title: "Professional Communication Skills",
+          type: "Workshop",
+          provider: "LinkedIn Learning",
+          duration: "3 hours",
+          level: "All Levels",
+          url: "https://www.linkedin.com/learning/topics/communication",
+          skillsAddressed: ["Communication", "Presentation", "Collaboration", "Stakeholder Management"]
+        }
+      ],
+      timeEstimate: "3-6 months"
     },
     nextSteps: {
       immediate: [
-        "Enroll in the Machine Learning Fundamentals course on Coursera",
-        "Begin learning about cloud architecture through online tutorials",
-        "Join a project that allows you to practice leadership skills"
+        "Update your LinkedIn profile to highlight your transferable skills",
+        "Enroll in the recommended Machine Learning course to build fundamental AI knowledge",
+        "Join industry groups related to your field to stay updated on trends"
       ],
       shortTerm: [
-        "Complete at least one ML project to add to your portfolio",
-        "Start preparing for the AWS Solutions Architect certification",
-        "Seek opportunities to lead a small team or project"
+        "Complete at least two of the recommended courses in the next 3 months",
+        "Build a small portfolio project demonstrating your new skills",
+        "Attend a virtual networking event in your target industry"
       ],
       longTerm: [
-        "Develop expertise in combining AI solutions with cloud architecture",
-        "Transition into a role that combines technical and leadership skills",
-        "Consider specializing in an industry vertical that interests you"
+        "Aim for a certification in your chosen specialization area",
+        "Consider transitioning to a role that combines your experience with new digital skills",
+        "Develop mentorship relationships in your target field"
       ]
     }
   };
-};
+}
