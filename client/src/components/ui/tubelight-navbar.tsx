@@ -154,14 +154,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
       {/* Mobile Navigation Button - Right aligned */}
       <div 
         ref={menuRef}
-        className="md:hidden flex justify-between items-center w-full px-4"
+        className="md:hidden flex justify-end w-full px-4"
       >
-        <div className="flex items-center space-x-2">
-          <WouterLink href="/">
-            <img src="/CareerateICON.png" alt="Careerate" className="h-8 w-8" />
-          </WouterLink>
-          <h1 className="text-lg font-semibold">Careerate</h1>
-        </div>
         <div className="relative">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
