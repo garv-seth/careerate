@@ -199,7 +199,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       <TubelightNavbar />
 
-      <main className="flex-grow container mx-auto px-4 pt-24 pb-32 min-h-screen bg-gradient-to-br from-blue-500 to-cyan-500">
+      <main className="flex-grow container mx-auto px-4 pt-24 pb-20">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <div className="w-full lg:w-1/4">
