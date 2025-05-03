@@ -1,0 +1,105 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+✅ PINECONE_API_KEY found! Initializing Pinecone client
+Testing Pinecone API connection...
+Initializing OpenAI embeddings...
+✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o
+Testing OpenAI API connection...
+Creating simplified ADK-inspired workflow implementation
+Auth configured for domain: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+12:40:22 AM [express] serving on port 5000
+✅ OpenAI embeddings test successful! Generated vector of length 1536
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✅ OpenAI API test successful! Response: It looks like you're trying to test a connection. ...
+Creating agents with initialized OpenAI client
+✅ All agents created successfully
+✅ Pinecone API test successful! Found 0 indexes
+No indexes found. Will create one if needed during operation.
+12:40:25 AM [express] GET /api/auth/user 304 in 147ms :: {"id":"33980514","username":"garvse","email"…
+12:40:29 AM [express] GET /api/auth/user 304 in 66ms :: {"id":"33980514","username":"garvse","email":…
+12:40:44 AM [express] GET /api/auth/user 304 in 146ms :: {"id":"33980514","username":"garvse","email"…
+12:40:52 AM [express] GET /api/auth/user 304 in 63ms :: {"id":"33980514","username":"garvse","email":…
+12:40:52 AM [express] GET /api/profile 304 in 65ms :: {"id":1,"userId":"33980514","resumeText":"Extra…
+User connected to socket: 33980514
+Analyzing resume text: Extracted text from 1746226979207-GarvSeth_Resume....
+Generating career advice for user: 33980514
+12:40:52 AM [express] GET /api/advise 304 in 80ms :: {"riskReport":{"overallRisk":0.45,"categories":[…
+User connected to socket: 33980514
+User disconnected: 33980514
+User disconnected: 33980514
+User connected to socket: 33980514
+User disconnected: 33980514
+User connected to socket: 33980514
+12:40:59 AM [vite] hmr update /src/components/ui/tubelight-navbar.tsx
+12:40:59 AM [vite] hmr update /src/components/ui/footer2.tsx
+12:40:59 AM [vite] Internal server error: /home/runner/workspace/client/src/components/ui/footer2.tsx: Identifier 'isVisible' has already been declared. (68:9)
+
+  66 |   const [lastScrollY, setLastScrollY] = useState(0);
+  67 |
+> 68 |   const [isVisible, setIsVisible] = useState(false);
+     |          ^
+  69 |
+  70 |   useEffect(() => {
+  71 |     const handleScroll = (e: Event) => {
+  Plugin: vite:react-babel
+  File: /home/runner/workspace/client/src/components/ui/footer2.tsx:68:9
+  66 |    const [lastScrollY, setLastScrollY] = useState(0);
+  67 |  
+  68 |    const [isVisible, setIsVisible] = useState(false);
+     |           ^
+  69 |  
+  70 |    useEffect(() => {
+      at toParseError (/home/runner/workspace/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at raise (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1503:19)
+      at checkRedeclarationInScope (/home/runner/workspace/node_modules/@babel/parser/src/util/scope.ts:155:19)
+      at declareName (/home/runner/workspace/node_modules/@babel/parser/src/util/scope.ts:109:12)
+      at declareName (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/scope.ts:89:11)
+      at declareNameFromIdentifier (/home/runner/workspace/node_modules/@babel/parser/src/parser/lval.ts:753:16)
+      at checkIdentifier (/home/runner/workspace/node_modules/@babel/parser/src/parser/lval.ts:748:12)
+      at checkLVal (/home/runner/workspace/node_modules/@babel/parser/src/parser/lval.ts:650:12)
+      at checkLVal (/home/runner/workspace/node_modules/@babel/parser/src/parser/lval.ts:701:16)
+      at parseVarId (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1600:10)
+      at parseVarId (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3617:13)
+      at parseVar (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1553:12)
+      at parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1222:10)
+      at parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3093:33)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:578:21)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3142:20)
+      at parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:449:17)
+      at parseStatementListItem (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:398:17)
+      at parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1415:16)
+      at parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1388:10)
+      at parseBlock (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1356:10)
+      at parseFunctionBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:2579:24)
+      at parseArrowExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:2520:10)
+      at parseParenAndDistinguishExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1807:12)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1146:21)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:723:23)
+      at parseUpdate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:702:21)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:664:23)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3809:20)
+      at parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:398:14)
+      at parseExprOps (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:410:23)
+      at parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:365:23)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:296:21)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3681:22)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:252:12)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3131:16)
+      at parseMaybeAssignAllowIn (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:251:17)
+      at parseVar (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1558:18)
+      at parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1222:10)
+      at parseVarStatement (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3093:33)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:578:21)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3142:20)
+      at parseStatementLike (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:449:17)
+      at parseModuleItem (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:386:17)
+      at parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1414:16)
+      at parseBlockBody (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1388:10)
+      at parseProgram (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:225:10)
+      at parseTopLevel (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at parse (/home/runner/workspace/node_modules/@babel/parser/src/parser/index.ts:93:10)

@@ -65,11 +65,25 @@ const Footer2 = ({
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLDivElement;
+      const isAtBottom = Math.abs(target.scrollHeight - target.scrollTop - target.clientHeight) < 50;
+      setIsVisible(isAtBottom);
+    };
+
+    const container = document.querySelector('.scroll-container');
+    container?.addEventListener('scroll', handleScroll);
+    return () => container?.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <footer className={cn(
-      "fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10 bg-background/95 backdrop-blur-sm",
-      "transition-all duration-300 transform translate-y-full",
-      "scroll-container.scroll-end:translate-y-0"
+      "fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10 bg-background/95 backdrop-blur-sm border-t border-border",
+      "transition-all duration-300 transform",
+      isVisible ? "translate-y-0" : "translate-y-full"
     )}>
       <div className="py-4 px-6 rounded-full">
         <div className="flex flex-wrap items-center justify-center gap-8">
