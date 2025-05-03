@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "wouter";
 import { useTheme } from "next-themes";
@@ -63,9 +64,6 @@ const Footer2 = ({
 }: Footer2Props) => {
   const { theme, setTheme } = useTheme();
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = (e: Event) => {
