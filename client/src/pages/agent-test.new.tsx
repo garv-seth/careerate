@@ -209,8 +209,6 @@ const AgentTestPage = () => {
     return null;
   }
   
-
-
   return (
     <PageBackground className="min-h-screen flex flex-col">
       <TubelightNavbar />
@@ -240,6 +238,10 @@ const AgentTestPage = () => {
                 </div>
               )}
             </div>
+          </div>
+          
+          <div className="mb-8">
+            <AgentStatusPanel agentStatuses={agentStatuses} />
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -320,6 +322,10 @@ const AgentTestPage = () => {
                   </div>
                 </CardContent>
               </Card>
+              
+              <div className="mt-6">
+                <AgentActivityPanel activities={agentActivities} />
+              </div>
             </TabsContent>
             
             <TabsContent value="results">
@@ -431,122 +437,131 @@ const AgentTestPage = () => {
                                   </span>
                                 </div>
                                 
-                                <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                <div className="mt-1 w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                  <div className="h-full bg-primary/30 rounded-full" style={{ 
+                                    width: `${(skill.targetLevel / 10) * 100}%` 
+                                  }}></div>
                                   <div 
-                                    className="absolute left-0 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"
-                                    style={{ width: `${(skill.currentLevel / 10) * 100}%` }}
-                                  ></div>
-                                  <div
-                                    className="absolute right-0 h-2 bg-primary/60 rounded-r-full"
-                                    style={{ width: `${((skill.targetLevel - skill.currentLevel) / 10) * 100}%`, 
-                                             left: `${(skill.currentLevel / 10) * 100}%` }}
+                                    className="relative h-4 w-4 -mt-3 rounded-full bg-primary border-2 border-white dark:border-gray-800" 
+                                    style={{ 
+                                      left: `${(skill.currentLevel / 10) * 100}%` 
+                                    }}
                                   ></div>
                                 </div>
-                                
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Current proficiency vs. recommended level
-                                </p>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-6 p-3 bg-primary/5 rounded-lg flex items-center">
+                            <BookOpen className="h-5 w-5 text-primary mr-2" />
+                            <p className="text-sm">Estimated learning time: <span className="font-semibold">{careerAdvice.learningPlan.timeEstimate}</span></p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Separator />
+                      
+                      {/* Learning Resources Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold flex items-center">
+                          <BookMarked className="h-5 w-5 mr-2 text-primary" />
+                          Recommended Learning Resources
+                        </h3>
+                        <div className="bg-background/50 p-2 rounded-lg border">
+                          <div className="grid gap-3">
+                            {careerAdvice.learningPlan.resources.map((resource, i) => (
+                              <div key={i} className="p-3 rounded-lg border">
+                                <h4 className="font-medium">{resource.title}</h4>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                  resource.type === 'Course' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                                  resource.type === 'Certification' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
+                                  'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300'
+                                }`}>
+                                  {resource.type}
+                                </span>
+                                <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground mt-2">
+                                  <span>{resource.provider}</span>
+                                  <span>•</span>
+                                  <span>{resource.level}</span>
+                                  <span>•</span>
+                                  <span>{resource.duration}</span>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                  {resource.skillsAddressed.map((skill, j) => (
+                                    <span key={j} className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className="mt-3">
+                                  <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    Visit Resource
+                                  </a>
+                                </div>
                               </div>
                             ))}
                           </div>
                         </div>
                       </div>
-
+                      
                       <Separator />
                       
-                      {/* Learning Plan Section */}
+                      {/* Action Plan Section */}
                       <div className="space-y-4">
                         <h3 className="text-xl font-semibold flex items-center">
-                          <BookOpen className="h-5 w-5 mr-2 text-primary" />
-                          Learning Plan
+                          <Clock className="h-5 w-5 mr-2 text-primary" />
+                          Action Plan
                         </h3>
-                        <div className="bg-background/50 p-4 rounded-lg border">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-medium">Recommended Resources</h4>
-                            <span className="text-sm text-muted-foreground px-2 py-1 bg-background/80 rounded">
-                              Est. time: {careerAdvice.learningPlan.timeEstimate}
-                            </span>
-                          </div>
-                          
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            {careerAdvice.learningPlan.resources.map((resource, i) => (
-                              <div key={i} className="p-3 rounded-lg border">
-                                <div className="flex justify-between">
-                                  <h4 className="font-medium">{resource.title}</h4>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                    resource.level === "Beginner" ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" :
-                                    resource.level === "Intermediate" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300" :
-                                    "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300"
-                                  }`}>
-                                    {resource.level}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                  <span>{resource.type}</span>
-                                  <span>•</span>
-                                  <span>{resource.provider}</span>
-                                  <span>•</span>
-                                  <span>{resource.duration}</span>
-                                </div>
-                                
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {resource.skillsAddressed.map((skill, j) => (
-                                    <span key={j} className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                                      {skill}
-                                    </span>
-                                  ))}
-                                </div>
-                                
-                                <a 
-                                  href={resource.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-sm text-primary hover:underline mt-2"
-                                >
-                                  View resource
-                                  <ChevronRight className="h-3 w-3" />
-                                </a>
+                        <div className="bg-background/50 rounded-lg border overflow-hidden">
+                          <div className="grid sm:grid-cols-3">
+                            <div className="p-4 border-b sm:border-b-0 sm:border-r">
+                              <div className="flex items-center mb-3">
+                                <span className="text-lg font-medium mr-2">Immediate Steps</span>
+                                <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full">
+                                  Now
+                                </span>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="bg-background/50 p-4 rounded-lg border mt-6">
-                          <h4 className="text-lg font-medium mb-4">Action Plan</h4>
-                          
-                          <div className="grid gap-6 md:grid-cols-3">
-                            <div>
-                              <h5 className="font-medium flex items-center gap-1.5 mb-2">
-                                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">1</span>
-                                Immediate Actions
-                              </h5>
-                              <ul className="space-y-1 text-sm pl-6 list-disc">
+                              <ul className="space-y-2">
                                 {careerAdvice.nextSteps.immediate.map((step, i) => (
-                                  <li key={i}>{step}</li>
+                                  <li key={i} className="flex items-baseline text-sm">
+                                    <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0 mr-1.5" />
+                                    <span>{step}</span>
+                                  </li>
                                 ))}
                               </ul>
                             </div>
                             
-                            <div>
-                              <h5 className="font-medium flex items-center gap-1.5 mb-2">
-                                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">2</span>
-                                Short-term Goals
-                              </h5>
-                              <ul className="space-y-1 text-sm pl-6 list-disc">
+                            <div className="p-4 border-b sm:border-b-0 sm:border-r">
+                              <div className="flex items-center mb-3">
+                                <span className="text-lg font-medium mr-2">Short-term</span>
+                                <span className="bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 text-xs px-2 py-0.5 rounded-full">
+                                  1-3 months
+                                </span>
+                              </div>
+                              <ul className="space-y-2">
                                 {careerAdvice.nextSteps.shortTerm.map((step, i) => (
-                                  <li key={i}>{step}</li>
+                                  <li key={i} className="flex items-baseline text-sm">
+                                    <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0 mr-1.5" />
+                                    <span>{step}</span>
+                                  </li>
                                 ))}
                               </ul>
                             </div>
                             
-                            <div>
-                              <h5 className="font-medium flex items-center gap-1.5 mb-2">
-                                <span className="bg-primary/20 text-primary w-5 h-5 rounded-full flex items-center justify-center text-xs">3</span>
-                                Long-term Strategy
-                              </h5>
-                              <ul className="space-y-1 text-sm pl-6 list-disc">
+                            <div className="p-4">
+                              <div className="flex items-center mb-3">
+                                <span className="text-lg font-medium mr-2">Long-term</span>
+                                <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300 text-xs px-2 py-0.5 rounded-full">
+                                  6-12 months
+                                </span>
+                              </div>
+                              <ul className="space-y-2">
                                 {careerAdvice.nextSteps.longTerm.map((step, i) => (
-                                  <li key={i}>{step}</li>
+                                  <li key={i} className="flex items-baseline text-sm">
+                                    <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0 mr-1.5" />
+                                    <span>{step}</span>
+                                  </li>
                                 ))}
                               </ul>
                             </div>
@@ -560,83 +575,7 @@ const AgentTestPage = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Agent Status Dashboard</CardTitle>
-                    <CardDescription>
-                      Live monitoring of all AI agent processes
-                    </CardDescription>
-                  </div>
-                  {/* Status indicator */}
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${
-                    analyzing 
-                      ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300' 
-                      : 'bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300'
-                  }`}>
-                    {analyzing ? (
-                      <>
-                        <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                        <span>Analysis in progress</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="h-2 w-2 rounded-full bg-slate-400" />
-                        <span>Ready</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <AgentStatusPanel 
-                  uploadState={analyzing ? 'processing' : 'idle'}
-                  agentStatuses={agentStatuses}
-                  recentActivities={agentActivities}
-                />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Real-time Agent Activities</CardTitle>
-                    <CardDescription>
-                      Watch AI agents working on your resume in real-time
-                    </CardDescription>
-                  </div>
-                  <div className="text-xs text-muted-foreground bg-background/80 rounded-md px-2 py-1">
-                    {agentActivities.length} activities logged
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <AgentActivityPanel 
-                  activities={agentActivities}
-                  agentStatuses={agentStatuses}
-                  className="max-h-[350px] overflow-y-auto px-1"
-                />
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Separator className="my-8" />
-          
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold flex items-center justify-center">
-              <Brain className="h-6 w-6 mr-2 text-primary" />
-              Meet Our AI Agent Team
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-              Our intelligent agents work together to analyze your career data and provide personalized insights,
-              each with their own specialized role in the process
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
             <AgentInfoCard agent="cara" />
             <AgentInfoCard agent="maya" />
             <AgentInfoCard agent="ellie" />
