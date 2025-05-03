@@ -71,11 +71,11 @@ function App() {
             className="min-h-screen flex flex-col scroll-container" 
             onScroll={(e) => {
               const target = e.target as HTMLDivElement;
-              const isAtBottom = target.scrollHeight - target.scrollTop === target.clientHeight;
+              const isAtBottom = Math.abs(target.scrollHeight - target.scrollTop - target.clientHeight) < 50;
               target.classList.toggle('scroll-end', isAtBottom);
             }}
           >
-            <div className="flex-grow pb-24"> {/* Navbar padding and footer spacing */}
+            <div className="flex-grow pt-24 pb-24"> {/* Top navbar and bottom footer spacing */}
               <Toaster />
               <Router />
             </div>
