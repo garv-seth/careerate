@@ -75,7 +75,7 @@ function App() {
               target.classList.toggle('scroll-end', isAtBottom);
             }}
           >
-            <div className="flex-grow pt-24 pb-24"> {/* Top navbar and bottom footer spacing */}
+            <div className="flex-grow flex flex-col">
               <Toaster />
               <Router />
             </div>
