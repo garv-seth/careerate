@@ -15,7 +15,7 @@ import { AgentActivityPanel, AgentInfoCard } from '@/components/dashboard/AgentA
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import Footer2 from '@/components/ui/footer2';
 import PageBackground from '@/components/ui/page-background';
-import { Wifi, WifiOff, Send, Info, Upload, FileText, AlertTriangle, Brain, CloudUpload, BarChart2, BookOpen, ChevronRight } from 'lucide-react';
+import { Wifi, WifiOff, Send, Info, Upload, FileText, AlertTriangle, Brain, CloudUpload, BarChart2, BookOpen, ChevronRight, ExternalLink, Clock, BookMarked } from 'lucide-react';
 
 // Career advice interface
 interface RiskCategory {
@@ -241,7 +241,11 @@ const AgentTestPage = () => {
           </div>
           
           <div className="mb-8">
-            <AgentStatusPanel agentStatuses={agentStatuses} />
+            <AgentStatusPanel 
+              agentStatuses={agentStatuses} 
+              uploadState={analyzing ? 'processing' : (uploading ? 'uploading' : 'idle')} 
+              recentActivities={agentActivities.slice(0, 4)} 
+            />
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -324,7 +328,10 @@ const AgentTestPage = () => {
               </Card>
               
               <div className="mt-6">
-                <AgentActivityPanel activities={agentActivities} />
+                <AgentActivityPanel 
+                  activities={agentActivities} 
+                  agentStatuses={agentStatuses} 
+                />
               </div>
             </TabsContent>
             

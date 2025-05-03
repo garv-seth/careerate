@@ -8,7 +8,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
-import AgentTestPage from "@/pages/agent-test";
+import AgentTestPage from "@/pages/agent-test.new";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import AuthTestPage from "@/pages/auth-test";
