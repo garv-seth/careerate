@@ -214,7 +214,7 @@ const AgentTestPage = () => {
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       <TubelightNavbar />
       
-      <main className="flex-grow container mx-auto px-4 pt-24 pb-32">
+      <main className="flex-grow container mx-auto px-4 pt-24 pb-20">
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
