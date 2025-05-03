@@ -215,7 +215,7 @@ const AgentTestPage = () => {
       <TubelightNavbar />
       
       {/* Fixed height spacer to prevent navbar overlap */}
-      <div className="h-20"></div>
+      <div className="h-28 bg-transparent"></div>
       
       <main className="flex-grow container mx-auto px-4 pb-20">
         <div className="space-y-6">
