@@ -198,11 +198,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       <TubelightNavbar />
-
-      {/* Fixed height spacer to prevent navbar overlap */}
-      <div className="h-28 bg-transparent"></div>
       
-      <main className="flex-grow container mx-auto px-4 pb-20">
+      <main className="flex-grow container mx-auto px-4 pb-20 mt-24">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <div className="w-full lg:w-1/4">
