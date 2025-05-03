@@ -66,7 +66,11 @@ const Footer2 = ({
   const [lastScrollY, setLastScrollY] = useState(0);
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10 bg-background/95 backdrop-blur-sm opacity-100 translate-y-0 scale-100">
+    <footer className={cn(
+      "fixed bottom-0 left-0 right-0 flex justify-center pb-4 z-10 bg-background/95 backdrop-blur-sm",
+      "transition-all duration-300 transform translate-y-full",
+      "scroll-container.scroll-end:translate-y-0"
+    )}>
       <div className="py-4 px-6 rounded-full">
         <div className="flex flex-wrap items-center justify-center gap-8">
           {menuItems.map((section, idx) => (
