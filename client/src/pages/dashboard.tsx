@@ -199,7 +199,10 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       <TubelightNavbar />
 
-      <main className="flex-grow container mx-auto px-4 pt-24 pb-20">
+      {/* Fixed height spacer to prevent navbar overlap */}
+      <div className="h-20"></div>
+      
+      <main className="flex-grow container mx-auto px-4 pb-20">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <div className="w-full lg:w-1/4">
