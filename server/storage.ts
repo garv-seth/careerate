@@ -142,7 +142,16 @@ export class DatabaseStorage implements IStorage {
     return profile;
   }
   
-  async createProfile(profileData: { userId: string, resumeText: string | null, lastScan: Date | null }): Promise<Profile> {
+  async createProfile(profileData: { 
+    userId: string, 
+    resumeText: string | null, 
+    lastScan: Date | null,
+    careerStage?: string,
+    industryFocus?: string[],
+    careerGoals?: string,
+    preferredLearningStyle?: string,
+    timeAvailability?: string
+  }): Promise<Profile> {
     const [profile] = await db
       .insert(profiles)
       .values(profileData)
