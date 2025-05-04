@@ -754,7 +754,8 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       ellieResults, 
       sophiaResults, 
       userId, 
-      resumeText
+      resumeText,
+      isPremium
     );
     updateAgentStatus('cara', 'complete');
     
@@ -895,7 +896,36 @@ async function synthesizeResults(
     ];
     
     // Create the final career advice structure
-    return {
+    // Define the type with optional premium property
+    type CareerAdvice = {
+      riskReport: {
+        overallRisk: number;
+        categories: Array<{
+          category: string;
+          risk: number;
+          description: string;
+        }>;
+        summary: string;
+      };
+      learningPlan: {
+        skills: Array<any>;
+        resources: Array<any>;
+        timeEstimate: string;
+      };
+      nextSteps: {
+        immediate: string[];
+        shortTerm: string[];
+        longTerm: string[];
+      };
+      premium?: {
+        careerTrajectory?: any;
+        executiveNetwork?: any;
+        skillsAccelerator?: any;
+      };
+    };
+    
+    // Create the advice result with the proper type
+    const adviceResult: CareerAdvice = {
       riskReport: {
         overallRisk: 3,
         categories: riskCategories,
@@ -960,6 +990,195 @@ async function synthesizeResults(
         ]
       }
     };
+    
+    // Add premium features if enabled
+    if (isPremium) {
+      console.log("Adding premium features to career advice");
+      
+      // Use provided premium data if available, otherwise generate placeholder data
+      adviceResult.premium = {
+        // Career Trajectory Mapping
+        careerTrajectory: premiumData?.careerTrajectory || {
+          targetRole: "Senior Data Scientist",
+          timeframe: 24, // in months
+          milestones: [
+            {
+              title: "Complete Advanced Machine Learning Certification",
+              description: "Finish a comprehensive certification in machine learning that covers advanced topics",
+              targetDate: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 6 months from now
+              priority: 2 // critical
+            },
+            {
+              title: "Contribute to Open Source ML Project",
+              description: "Make meaningful contributions to a well-known open source machine learning project",
+              targetDate: new Date(Date.now() + 12 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 12 months from now
+              priority: 1 // high
+            },
+            {
+              title: "Complete Portfolio of Three End-to-End ML Projects",
+              description: "Build three comprehensive machine learning projects that showcase different skills",
+              targetDate: new Date(Date.now() + 18 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 18 months from now
+              priority: 1 // high
+            }
+          ],
+          alternativePaths: [
+            {
+              name: "Machine Learning Engineer",
+              description: "Focus more on the engineering and deployment aspects of ML systems",
+              probabilityScore: 85,
+              potentialUpsides: "More stable job market, higher demand in many industries",
+              potentialDownsides: "Less focus on research and cutting-edge algorithms"
+            },
+            {
+              name: "AI Research Scientist",
+              description: "Focus on research and development of new ML algorithms",
+              probabilityScore: 65,
+              potentialUpsides: "Opportunity to work on cutting-edge technology and publish papers",
+              potentialDownsides: "More competitive field, may require PhD, fewer job openings"
+            }
+          ]
+        },
+        
+        // Executive Network Access
+        executiveNetwork: premiumData?.executiveNetwork || {
+          recommendedEvents: [
+            {
+              title: "AI & Big Data Expo",
+              description: "Global conference showcasing next-generation technologies in AI, Big Data and ML",
+              eventDate: new Date(Date.now() + 2 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 months from now
+              eventType: "Conference",
+              speakerInfo: {
+                keynotes: ["Dr. Andrew Ng", "Dr. Fei-Fei Li"],
+                companies: ["Google AI", "Microsoft Research", "OpenAI"]
+              },
+              relevanceScore: 92
+            },
+            {
+              title: "Women in Data Science Meetup",
+              description: "Monthly networking event for women in data science and related fields",
+              eventDate: new Date(Date.now() + 0.5 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
+              eventType: "Networking",
+              speakerInfo: {
+                organizers: ["Women in ML & Data Science"],
+                guests: ["Various industry professionals"]
+              },
+              relevanceScore: 85
+            }
+          ],
+          mentorshipOpportunities: [
+            {
+              mentorName: "Sarah Johnson",
+              mentorTitle: "Director of Data Science",
+              mentorCompany: "Tech Innovations Inc.",
+              expertise: ["Machine Learning", "Team Leadership", "Career Development"],
+              recommendationReason: "Sarah has extensive experience helping mid-career professionals transition into senior data science roles",
+              matchScore: 90
+            },
+            {
+              mentorName: "Michael Chen",
+              mentorTitle: "Principal ML Engineer",
+              mentorCompany: "AI Solutions",
+              expertise: ["Deep Learning", "Production ML Systems", "Technical Interviews"],
+              recommendationReason: "Michael specializes in the technologies identified as most relevant to your career path",
+              matchScore: 85
+            }
+          ],
+          networkingStrategy: "Focus on building relationships with senior professionals in your target industry through regular meetups and conferences. Schedule at least one informational interview per month with someone in your desired role."
+        },
+        
+        // Skills Gap Accelerator
+        skillsAccelerator: premiumData?.skillsAccelerator || {
+          assessedSkills: [
+            {
+              name: "Python Programming",
+              category: "Technical",
+              currentLevel: 4,
+              targetLevel: 8,
+              marketDemand: 95,
+              futureRelevance: 90,
+              salarImpact: 15000,
+              priority: 2 // critical
+            },
+            {
+              name: "Deep Learning",
+              category: "Technical",
+              currentLevel: 2,
+              targetLevel: 7,
+              marketDemand: 90,
+              futureRelevance: 95,
+              salarImpact: 25000,
+              priority: 2 // critical
+            },
+            {
+              name: "MLOps",
+              category: "Technical",
+              currentLevel: 1,
+              targetLevel: 6,
+              marketDemand: 85,
+              futureRelevance: 90,
+              salarImpact: 20000,
+              priority: 1 // high
+            },
+            {
+              name: "Data Visualization",
+              category: "Technical",
+              currentLevel: 5,
+              targetLevel: 8,
+              marketDemand: 80,
+              futureRelevance: 75,
+              salarImpact: 10000,
+              priority: 0 // normal
+            }
+          ],
+          personalizedLearningPath: {
+            name: "Advanced Data Science Career Path",
+            description: "A comprehensive learning path designed to transition you from your current role to a senior data science position",
+            estimatedCompletionTime: 720 * 60, // 720 hours in minutes
+            resources: [
+              {
+                title: "Deep Learning Specialization",
+                provider: "Coursera",
+                type: "Course Series",
+                url: "https://www.coursera.org/specializations/deep-learning",
+                cost: 4900, // $49.00
+                duration: 120 * 60, // 120 hours in minutes
+                difficulty: "Intermediate to Advanced",
+                skillsAddressed: ["Deep Learning", "Neural Networks", "Python Programming"],
+                relevanceScore: 95,
+                order: 1
+              },
+              {
+                title: "Deploying Machine Learning Models in Production",
+                provider: "Coursera",
+                type: "Course",
+                url: "https://www.coursera.org/learn/deploying-machine-learning-models-in-production",
+                cost: 4900, // $49.00
+                duration: 40 * 60, // 40 hours in minutes
+                difficulty: "Advanced",
+                skillsAddressed: ["MLOps", "Model Deployment", "Production Systems"],
+                relevanceScore: 90,
+                order: 2
+              },
+              {
+                title: "Advanced Data Visualization with Python",
+                provider: "DataCamp",
+                type: "Course",
+                url: "https://www.datacamp.com/courses/advanced-data-visualization-with-python",
+                cost: 2500, // $25.00
+                duration: 20 * 60, // 20 hours in minutes
+                difficulty: "Intermediate",
+                skillsAddressed: ["Data Visualization", "Python Programming"],
+                relevanceScore: 85,
+                order: 3
+              }
+            ]
+          },
+          progressTrackingStrategy: "Set aside 10 hours per week for your learning path. Complete weekly check-ins to assess progress, revise goals, and update your strategy. Use the 'Focus on the Fundamentals First' approach - master one skill completely before moving to the next."
+        }
+      };
+    }
+    
+    return adviceResult;
   } catch (error) {
     console.error("Error synthesizing results:", error);
     return createSampleCareerAdvice();
