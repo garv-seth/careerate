@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { useOnboarding } from '@/hooks/use-onboarding';
 import { WelcomeStep } from './steps/WelcomeStep';
 import { CareerGoalsStep } from './steps/CareerGoalsStep';
 import { SkillsAssessmentStep } from './steps/SkillsAssessmentStep';
 import { ResumeUploadStep } from './steps/ResumeUploadStep';
 import { FinalStep } from './steps/FinalStep';
-import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 
 export interface OnboardingData {
   careerStage: string;
@@ -64,6 +62,12 @@ export function OnboardingWizard() {
     }
   };
   
+  // Function to handle successful onboarding completion
+  const completeOnboarding = () => {
+    handleSubmit();
+    setShowOnboarding(false);
+  };
+  
   const steps = [
     { 
       name: 'Welcome', 
@@ -112,15 +116,9 @@ export function OnboardingWizard() {
   const totalSteps = steps.length;
   const progressPercentage = (currentStep / (totalSteps - 1)) * 100;
   
-  // Function to handle successful onboarding completion
-  const completeOnboarding = () => {
-    handleSubmit();
-    setShowOnboarding(false);
-  };
-  
   return (
     <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden">
+      <DialogContent className="max-w-4xl p-0 overflow-hidden">
         {/* Progress bar */}
         <div className="relative h-1 bg-muted w-full">
           <div
@@ -142,18 +140,19 @@ export function OnboardingWizard() {
         </div>
         
         {/* Step content */}
-        <div className="px-6 py-2 max-h-[70vh] overflow-y-auto">
+        <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
           {steps[currentStep].component}
         </div>
         
         {/* Progress indicator footer */}
         <div className="px-6 py-4 border-t flex items-center justify-center">
-          <div className="flex space-x-1">
+          <div className="flex space-x-2">
             {Array.from({ length: totalSteps }).map((_, index) => (
               <div
                 key={index}
-                className={`h-2 w-2 rounded-full ${
-                  index <= currentStep ? 'bg-primary' : 'bg-muted'
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  index === currentStep ? 'bg-primary scale-125' : 
+                  index < currentStep ? 'bg-primary/70' : 'bg-muted'
                 }`}
               />
             ))}
