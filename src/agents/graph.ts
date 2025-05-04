@@ -63,6 +63,78 @@ export type AgentActivity = {
       shortTerm: string[];
       longTerm: string[];
     };
+    // Premium Features
+    premium?: {
+      // Career Trajectory Mapping
+      careerTrajectory?: {
+        targetRole: string;
+        timeframe: number; // in months
+        milestones: Array<{
+          title: string;
+          description: string;
+          targetDate: string;
+          priority: number; // 0=normal, 1=high, 2=critical
+        }>;
+        alternativePaths: Array<{
+          name: string;
+          description: string;
+          probabilityScore: number; // 0-100
+          potentialUpsides: string;
+          potentialDownsides: string;
+        }>;
+      };
+      // Executive Network Access
+      executiveNetwork?: {
+        recommendedEvents: Array<{
+          title: string;
+          description: string;
+          eventDate: string;
+          eventType: string;
+          speakerInfo: any;
+          relevanceScore: number; // 0-100
+        }>;
+        mentorshipOpportunities: Array<{
+          mentorName: string;
+          mentorTitle: string;
+          mentorCompany: string;
+          expertise: string[];
+          recommendationReason: string;
+          matchScore: number; // 0-100
+        }>;
+        networkingStrategy: string;
+      };
+      // Skills Gap Accelerator
+      skillsAccelerator?: {
+        assessedSkills: Array<{
+          name: string;
+          category: string;
+          currentLevel: number; // 1-10
+          targetLevel: number; // 1-10
+          marketDemand: number; // 0-100
+          futureRelevance: number; // 0-100
+          salarImpact: number; // in dollars
+          priority: number; // 0=normal, 1=high, 2=critical
+        }>;
+        personalizedLearningPath: {
+          name: string;
+          description: string;
+          estimatedCompletionTime: number; // in minutes
+          resources: Array<{
+            title: string;
+            provider: string;
+            type: string;
+            url: string;
+            cost: number; // in cents
+            duration: number; // in minutes
+            difficulty: string;
+            skillsAddressed: string[];
+            relevanceScore: number; // 0-100
+            order: number;
+          }>;
+        };
+        progressTrackingStrategy: string;
+      };
+    };
   };
 };
 
@@ -104,9 +176,16 @@ interface AgentState {
   userId?: string;
   context?: any;
   messages: BaseMessage[];
+  isPremium?: boolean; // Flag to indicate premium features are enabled
   cara: {
     messages: BaseMessage[];
     results?: any;
+    careerTrajectory?: {
+      targetRole?: string;
+      timeframe?: number;
+      milestones?: any[];
+      alternativePaths?: any[];
+    };
   };
   maya: {
     messages: BaseMessage[];
@@ -121,6 +200,11 @@ interface AgentState {
     marketInsights?: any;
     trends?: string[];
     opportunities?: any[];
+    executiveNetwork?: {
+      recommendedEvents?: any[];
+      mentorshipOpportunities?: any[];
+      networkingStrategy?: string;
+    };
   };
   sophia: {
     messages: BaseMessage[];
@@ -128,8 +212,18 @@ interface AgentState {
     learningPlan?: any;
     resources?: any[];
     roadmap?: any;
+    skillsAccelerator?: {
+      assessedSkills?: any[];
+      personalizedLearningPath?: any;
+      progressTrackingStrategy?: string;
+    };
   };
   final_output?: any;
+  premium?: {
+    careerTrajectory?: any;
+    executiveNetwork?: any;
+    skillsAccelerator?: any;
+  };
 }
 
 // The LLM to use for all agents - initialize with mock first to avoid undefined errors
@@ -415,13 +509,19 @@ const synthesizeNode = async (state: AgentState): Promise<AgentState> => {
   
   updateAgentStatus('cara', 'thinking');
   // Synthesize the results from all agents
-  console.log("Synthesizing final results from all agents");
+  console.log(`Synthesizing final results from all agents${state.isPremium ? ' with premium features' : ''}`);
   const finalResults = await synthesizeResults(
     state.maya?.results || {}, 
     state.ellie?.results || {}, 
     state.sophia?.results || {}, 
     state.userId || '', 
-    state.input || ''
+    state.input || '',
+    state.isPremium || false,
+    {
+      careerTrajectory: state.cara?.careerTrajectory,
+      executiveNetwork: state.ellie?.executiveNetwork,
+      skillsAccelerator: state.sophia?.skillsAccelerator
+    }
   );
   console.log("Synthesis complete");
   updateAgentStatus('cara', 'complete');
@@ -518,8 +618,8 @@ const trackAgentActivity = (activity: AgentActivity) => {
 };
 
 // Main entry point for the agent workflow
-export const runCareerate = async (userId: string, resumeText: string) => {
-  console.log(`Starting Careerate analysis for user ${userId}`);
+export const runCareerate = async (userId: string, resumeText: string, isPremium: boolean = false) => {
+  console.log(`Starting Careerate analysis for user ${userId} (Premium: ${isPremium})`);
   
   // Reset agent statuses
   agentStatuses.cara = 'idle';
@@ -531,7 +631,7 @@ export const runCareerate = async (userId: string, resumeText: string) => {
   trackAgentActivity({
     agent: 'cara',
     action: 'Initializing agent workflow',
-    detail: 'Setting up the workflow for coordinated analysis',
+    detail: `Setting up the workflow for coordinated analysis${isPremium ? ' with premium features' : ''}`,
     timestamp: new Date()
   });
   
@@ -539,6 +639,7 @@ export const runCareerate = async (userId: string, resumeText: string) => {
   const initialState: AgentState = {
     input: resumeText,
     userId: userId,
+    isPremium: isPremium,
     messages: [],
     cara: { messages: [] },
     maya: { messages: [] },
@@ -762,7 +863,13 @@ async function synthesizeResults(
   ellieResults: any,
   sophiaResults: any,
   userId: string,
-  resumeText: string
+  resumeText: string,
+  isPremium: boolean = false,
+  premiumData?: {
+    careerTrajectory?: any;
+    executiveNetwork?: any;
+    skillsAccelerator?: any;
+  }
 ) {
   console.log("Synthesizing results from all agents");
   
