@@ -44,6 +44,11 @@ export const profiles = pgTable("profiles", {
   userId: varchar("user_id").notNull().references(() => users.id),
   resumeText: text("resume_text"),
   lastScan: timestamp("last_scan"),
+  careerStage: varchar("career_stage"),
+  industryFocus: text("industry_focus").array(),
+  careerGoals: text("career_goals"),
+  preferredLearningStyle: varchar("preferred_learning_style"),
+  timeAvailability: varchar("time_availability"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -64,6 +69,11 @@ export type User = typeof users.$inferSelect;
 export const insertProfileSchema = createInsertSchema(profiles).pick({
   userId: true,
   resumeText: true,
+  careerStage: true,
+  industryFocus: true,
+  careerGoals: true,
+  preferredLearningStyle: true,
+  timeAvailability: true,
 });
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
 export type Profile = typeof profiles.$inferSelect;
@@ -181,10 +191,11 @@ export const skillsLibrary = pgTable("skills_library", {
 export const userSkills = pgTable("user_skills", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  skillId: integer("skill_id").notNull().references(() => skillsLibrary.id),
+  name: varchar("name").notNull(),
   currentLevel: integer("current_level").notNull(), // 1-10
   targetLevel: integer("target_level").notNull(), // 1-10
   priority: integer("priority").default(0), // 0=normal, 1=high, 2=critical
+  skillId: integer("skill_id").references(() => skillsLibrary.id), // Optional reference to skill library
   startDate: date("start_date"),
   targetDate: date("target_date"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -286,10 +297,11 @@ export type EventRegistration = typeof eventRegistrations.$inferSelect;
 // Skills Gap Accelerator
 export const insertUserSkillSchema = createInsertSchema(userSkills).pick({
   userId: true,
-  skillId: true,
+  name: true,
   currentLevel: true,
   targetLevel: true,
   priority: true,
+  skillId: true,
   targetDate: true,
 });
 export type InsertUserSkill = z.infer<typeof insertUserSkillSchema>;
