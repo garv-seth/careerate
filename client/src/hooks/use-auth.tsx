@@ -42,6 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     },
+    // This prevents the type error by ensuring the query always returns User | null
+    select: (data) => data || null,
   });
 
   const loginMutation = useMutation({

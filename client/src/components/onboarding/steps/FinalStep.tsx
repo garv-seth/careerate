@@ -35,6 +35,12 @@ export function FinalStep({ data, onComplete, onBack }: FinalStepProps) {
     preferredLearningStyle: data.preferredLearningStyle,
     timeAvailability: data.timeAvailability
   });
+  
+  // Update parent data when local state changes
+  useEffect(() => {
+    data.preferredLearningStyle = localData.preferredLearningStyle;
+    data.timeAvailability = localData.timeAvailability;
+  }, [localData, data]);
 
   useEffect(() => {
     const isValid = Boolean(localData.preferredLearningStyle && localData.timeAvailability);
