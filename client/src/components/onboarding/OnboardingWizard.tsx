@@ -65,32 +65,57 @@ export function OnboardingWizard() {
   };
   
   const steps = [
-    { name: 'Welcome', component: <WelcomeStep data={data} updateData={updateData} nextStep={nextStep} /> },
-    { name: 'Career Profile', component: <CareerGoalsStep data={data} updateData={updateData} /> },
-    { name: 'Skills', component: <SkillsAssessmentStep data={data} updateData={updateData} /> },
-    { name: 'Resume', component: <ResumeUploadStep data={data} updateData={updateData} /> },
-    { name: 'Learning Style', component: <FinalStep data={data} updateData={updateData} /> }
+    { 
+      name: 'Welcome', 
+      component: <WelcomeStep 
+        data={data} 
+        onNext={nextStep} 
+      /> 
+    },
+    { 
+      name: 'Career Profile', 
+      component: <CareerGoalsStep 
+        data={data} 
+        updateData={updateData} 
+        onNext={nextStep} 
+        onBack={prevStep} 
+      /> 
+    },
+    { 
+      name: 'Skills', 
+      component: <SkillsAssessmentStep 
+        data={data} 
+        updateData={updateData} 
+        onNext={nextStep} 
+        onBack={prevStep} 
+      /> 
+    },
+    { 
+      name: 'Resume', 
+      component: <ResumeUploadStep 
+        data={data} 
+        updateData={updateData} 
+        onNext={nextStep} 
+        onBack={prevStep} 
+      /> 
+    },
+    { 
+      name: 'Final', 
+      component: <FinalStep 
+        data={data} 
+        onComplete={completeOnboarding} 
+        onBack={prevStep} 
+      /> 
+    }
   ];
   
   const totalSteps = steps.length;
   const progressPercentage = (currentStep / (totalSteps - 1)) * 100;
   
-  // Check if current step is valid to proceed
-  const canProceed = () => {
-    switch (currentStep) {
-      case 0: // Welcome
-        return true;
-      case 1: // Career Goals
-        return Boolean(data.careerStage) && data.industryFocus.length > 0;
-      case 2: // Skills
-        return data.skills.length > 0;
-      case 3: // Resume
-        return true; // Resume is optional
-      case 4: // Learning Style
-        return Boolean(data.preferredLearningStyle && data.timeAvailability);
-      default:
-        return false;
-    }
+  // Function to handle successful onboarding completion
+  const completeOnboarding = () => {
+    handleSubmit();
+    setShowOnboarding(false);
   };
   
   return (
@@ -121,46 +146,18 @@ export function OnboardingWizard() {
           {steps[currentStep].component}
         </div>
         
-        {/* Navigation buttons */}
-        <div className="px-6 py-4 border-t flex justify-between">
-          <Button
-            variant="outline"
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            className="gap-2"
-          >
-            <ChevronLeft size={16} />
-            Back
-          </Button>
-          
-          {currentStep < totalSteps - 1 ? (
-            <Button
-              onClick={nextStep}
-              disabled={!canProceed()}
-              className="gap-2"
-            >
-              Next
-              <ChevronRight size={16} />
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={!canProceed() || isSubmitting}
-              className="gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Check size={16} />
-                  Complete
-                </>
-              )}
-            </Button>
-          )}
+        {/* Progress indicator footer */}
+        <div className="px-6 py-4 border-t flex items-center justify-center">
+          <div className="flex space-x-1">
+            {Array.from({ length: totalSteps }).map((_, index) => (
+              <div
+                key={index}
+                className={`h-2 w-2 rounded-full ${
+                  index <= currentStep ? 'bg-primary' : 'bg-muted'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
