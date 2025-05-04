@@ -1,12 +1,11 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "next-themes";
-import { ProtectedRoute } from "@/components/auth/protected-route";
-import { AuthProvider } from "@/hooks/use-auth";
-import { OnboardingProvider } from "@/hooks/use-onboarding";
+import { ProtectedRoute } from "./components/auth/protected-route";
+import { AuthProvider } from "./hooks/use-auth";
+import { OnboardingProvider } from "./hooks/use-onboarding";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
@@ -71,13 +70,11 @@ function App() {
       <ThemeProvider attribute="class" defaultTheme="light">
         <AuthProvider>
           <OnboardingProvider>
-            <TooltipProvider>
-              <div className="min-h-screen flex flex-col">
-                <Toaster />
-                <Router />
-                <OnboardingWizard />
-              </div>
-            </TooltipProvider>
+            <div className="min-h-screen flex flex-col">
+              <Toaster />
+              <Router />
+              <OnboardingWizard />
+            </div>
           </OnboardingProvider>
         </AuthProvider>
       </ThemeProvider>

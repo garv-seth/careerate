@@ -1,164 +1,153 @@
-import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { useOnboarding } from '@/hooks/use-onboarding';
-import { WelcomeStep } from './steps/WelcomeStep';
-import { CareerGoalsStep } from './steps/CareerGoalsStep';
-import { SkillsAssessmentStep } from './steps/SkillsAssessmentStep';
-import { ResumeUploadStep } from './steps/ResumeUploadStep';
-import { FinalStep } from './steps/FinalStep';
+import { useState, useEffect } from "react";
+import { useOnboarding, OnboardingStep } from "../../hooks/use-onboarding";
+import { X } from "lucide-react";
 
-export interface OnboardingData {
-  careerStage: string;
-  industryFocus: string[];
-  careerGoals: string;
-  resumeFile: File | null;
-  skills: {
-    name: string;
-    level: number;
-    interest: number;
-  }[];
-  preferredLearningStyle: string;
-  timeAvailability: string;
-}
-
+// Placeholder onboarding wizard component
 export function OnboardingWizard() {
-  const { showOnboarding, setShowOnboarding, saveOnboardingData } = useOnboarding();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [data, setData] = useState<OnboardingData>({
-    careerStage: '',
-    industryFocus: [],
-    careerGoals: '',
-    resumeFile: null,
-    skills: [],
-    preferredLearningStyle: '',
-    timeAvailability: ''
-  });
-  
-  const updateData = (newData: Partial<OnboardingData>) => {
-    setData(prev => ({ ...prev, ...newData }));
-  };
-  
-  const nextStep = () => {
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
+  const {
+    currentStep,
+    isVisible,
+    profile,
+    closeOnboarding,
+    nextStep,
+    prevStep,
+    updateProfile,
+    uploadResume,
+  } = useOnboarding();
+
+  // Don't render if not visible
+  if (!isVisible) return null;
+
+  // Helper function to render the current step
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case OnboardingStep.WELCOME:
+        return (
+          <div className="flex flex-col space-y-4">
+            <h2 className="text-2xl font-bold">Welcome to Careerate!</h2>
+            <p>
+              Let's set up your profile to provide you with personalized career guidance.
+            </p>
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              onClick={nextStep}
+            >
+              Get Started
+            </button>
+          </div>
+        );
+
+      case OnboardingStep.RESUME_UPLOAD:
+        return (
+          <div className="flex flex-col space-y-4">
+            <h2 className="text-2xl font-bold">Upload Your Resume</h2>
+            <p>
+              Upload your resume to help us understand your skills and experience.
+            </p>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  uploadResume(e.target.files[0]);
+                }
+              }}
+              className="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100"
+            />
+            <div className="flex space-x-4">
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-md"
+                onClick={prevStep}
+              >
+                Back
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                onClick={nextStep}
+              >
+                Skip for Now
+              </button>
+            </div>
+          </div>
+        );
+
+      case OnboardingStep.COMPLETE:
+        return (
+          <div className="flex flex-col space-y-4 items-center">
+            <h2 className="text-2xl font-bold">All Done!</h2>
+            <p>
+              Your profile has been set up successfully. You're ready to start using Careerate!
+            </p>
+          </div>
+        );
+
+      // Placeholder for other steps 
+      default:
+        return (
+          <div className="flex flex-col space-y-4">
+            <h2 className="text-2xl font-bold">Step: {currentStep}</h2>
+            <p>
+              This step is under construction. Please check back later.
+            </p>
+            <div className="flex space-x-4">
+              <button
+                className="px-4 py-2 border border-gray-300 rounded-md"
+                onClick={prevStep}
+              >
+                Back
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                onClick={nextStep}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        );
     }
   };
-  
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-  
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
-      await saveOnboardingData(data);
-    } catch (error) {
-      console.error('Error saving onboarding data:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  // Function to handle successful onboarding completion
-  const completeOnboarding = () => {
-    handleSubmit();
-    setShowOnboarding(false);
-  };
-  
-  const steps = [
-    { 
-      name: 'Welcome', 
-      component: <WelcomeStep 
-        data={data} 
-        onNext={nextStep} 
-      /> 
-    },
-    { 
-      name: 'Career Profile', 
-      component: <CareerGoalsStep 
-        data={data} 
-        updateData={updateData} 
-        onNext={nextStep} 
-        onBack={prevStep} 
-      /> 
-    },
-    { 
-      name: 'Skills', 
-      component: <SkillsAssessmentStep 
-        data={data} 
-        updateData={updateData} 
-        onNext={nextStep} 
-        onBack={prevStep} 
-      /> 
-    },
-    { 
-      name: 'Resume', 
-      component: <ResumeUploadStep 
-        data={data} 
-        updateData={updateData} 
-        onNext={nextStep} 
-        onBack={prevStep} 
-      /> 
-    },
-    { 
-      name: 'Final', 
-      component: <FinalStep 
-        data={data} 
-        onComplete={completeOnboarding} 
-        onBack={prevStep} 
-      /> 
-    }
-  ];
-  
-  const totalSteps = steps.length;
-  const progressPercentage = (currentStep / (totalSteps - 1)) * 100;
-  
+
   return (
-    <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden">
-        {/* Progress bar */}
-        <div className="relative h-1 bg-muted w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+        <button
+          onClick={closeOnboarding}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <X size={20} />
+        </button>
+        
+        {/* Progress indicator */}
+        <div className="w-full h-2 bg-gray-200 rounded-full mb-6">
           <div
-            className="absolute top-0 left-0 h-full bg-primary transition-all duration-300"
-            style={{ width: `${progressPercentage}%` }}
+            className="h-full bg-blue-500 rounded-full"
+            style={{
+              width: `${getProgressPercentage()}%`,
+              transition: "width 0.3s ease-in-out",
+            }}
           />
         </div>
         
-        {/* Steps indicator */}
-        <div className="px-6 pt-4 flex justify-between border-b pb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
-              Step {currentStep + 1} of {totalSteps}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              - {steps[currentStep].name}
-            </span>
-          </div>
-        </div>
-        
-        {/* Step content */}
-        <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
-          {steps[currentStep].component}
-        </div>
-        
-        {/* Progress indicator footer */}
-        <div className="px-6 py-4 border-t flex items-center justify-center">
-          <div className="flex space-x-2">
-            {Array.from({ length: totalSteps }).map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 w-2 rounded-full transition-colors ${
-                  index === currentStep ? 'bg-primary scale-125' : 
-                  index < currentStep ? 'bg-primary/70' : 'bg-muted'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        {renderStepContent()}
+      </div>
+    </div>
   );
+
+  // Calculate progress percentage based on current step
+  function getProgressPercentage() {
+    const totalSteps = Object.keys(OnboardingStep).length / 2 - 2; // Exclude CLOSED and COMPLETE
+    const currentStepIndex = Object.values(OnboardingStep).indexOf(currentStep);
+    const adjustedIndex = currentStepIndex - 1; // Adjust for CLOSED
+    
+    if (currentStep === OnboardingStep.CLOSED) return 0;
+    if (currentStep === OnboardingStep.COMPLETE) return 100;
+    
+    return Math.max(5, Math.min(95, (adjustedIndex / totalSteps) * 100));
+  }
 }
