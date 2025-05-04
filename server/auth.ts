@@ -67,8 +67,9 @@ router.post("/api/auth/register", async (req, res, next) => {
       return res.status(400).json({ message: "Username already exists" });
     }
     
-    // Create new user
+    // Create new user - ensure we provide all required fields including a generated ID
     const newUser = await storage.createUser({
+      id: `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`, // Generate a unique ID
       username,
       password, // In a real app, hash this password
       name: name || username,
