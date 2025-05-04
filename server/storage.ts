@@ -43,8 +43,29 @@ export interface IStorage {
   
   // Profile operations
   getProfileByUserId(userId: string): Promise<Profile | undefined>;
-  createProfile(profile: { userId: string, resumeText: string | null, lastScan: Date | null }): Promise<Profile>;
+  createProfile(profile: { 
+    userId: string, 
+    resumeText: string | null, 
+    lastScan: Date | null,
+    careerStage?: string,
+    industryFocus?: string[],
+    careerGoals?: string,
+    preferredLearningStyle?: string,
+    timeAvailability?: string
+  }): Promise<Profile>;
   updateProfileResume(userId: string, resumeText: string): Promise<Profile>;
+  updateProfile(userId: string, updates: {
+    careerStage?: string,
+    industryFocus?: string[],
+    careerGoals?: string,
+    preferredLearningStyle?: string,
+    timeAvailability?: string
+  }): Promise<Profile>;
+  
+  // Skills operations
+  getUserSkills(userId: string): Promise<UserSkill[]>;
+  addUserSkill(userSkill: InsertUserSkill): Promise<UserSkill>;
+  deleteUserSkills(userId: string): Promise<void>;
   
   // Vector operations
   getVectorsByUserId(userId: string): Promise<Vector[]>;
@@ -140,6 +161,28 @@ export class DatabaseStorage implements IStorage {
       .where(eq(profiles.userId, userId))
       .returning();
     return profile;
+  }
+  
+  async updateProfile(userId: string, updates: {
+    careerStage?: string,
+    industryFocus?: string[],
+    careerGoals?: string,
+    preferredLearningStyle?: string,
+    timeAvailability?: string
+  }): Promise<Profile> {
+    const [profile] = await db
+      .update(profiles)
+      .set({ 
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(profiles.userId, userId))
+      .returning();
+    return profile;
+  }
+  
+  async deleteUserSkills(userId: string): Promise<void> {
+    await db.delete(userSkills).where(eq(userSkills.userId, userId));
   }
   
   // Vector operations
