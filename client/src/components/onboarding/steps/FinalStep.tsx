@@ -1,133 +1,139 @@
-import { motion } from 'framer-motion';
-import { OnboardingData } from '../OnboardingWizard';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Clock, GraduationCap, Sparkles } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { OnboardingData } from "../OnboardingWizard";
+import { motion } from "framer-motion";
+import { CheckCircle2, ArrowRight, Award } from "lucide-react";
 
 interface FinalStepProps {
   data: OnboardingData;
-  updateData: (data: Partial<OnboardingData>) => void;
+  onComplete: () => void;
+  onBack: () => void;
 }
 
-export function FinalStep({ data, updateData }: FinalStepProps) {
-  const handleLearningStyleChange = (value: string) => {
-    updateData({
-      preferredLearningStyle: value as OnboardingData['preferredLearningStyle']
-    });
-  };
-  
-  const handleTimeAvailabilityChange = (value: string) => {
-    updateData({
-      timeAvailability: value as OnboardingData['timeAvailability']
-    });
-  };
-
+export function FinalStep({ data, onComplete, onBack }: FinalStepProps) {
   return (
     <motion.div
-      className="py-4"
-      initial={{ opacity: 0, x: 50 }}
+      initial={{ opacity: 0, x: 100 }}
       animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
       transition={{ duration: 0.3 }}
+      className="w-full max-w-4xl mx-auto"
     >
-      <h2 className="text-2xl font-bold mb-6">Learning Preferences</h2>
-      
-      <div className="space-y-8">
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="bg-primary/10 p-2 rounded-full">
-              <GraduationCap size={20} className="text-primary" />
-            </div>
-            <Label className="text-lg font-medium">Preferred Learning Style</Label>
+      <Card className="border-2 border-primary/20 shadow-lg">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <CheckCircle2 className="h-10 w-10 text-primary" />
           </div>
-          
-          <Select 
-            value={data.preferredLearningStyle}
-            onValueChange={handleLearningStyleChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select your preferred learning style" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="visual">
-                Visual (charts, diagrams, videos)
-              </SelectItem>
-              <SelectItem value="auditory">
-                Auditory (podcasts, discussions, lectures)
-              </SelectItem>
-              <SelectItem value="reading">
-                Reading (articles, books, written material)
-              </SelectItem>
-              <SelectItem value="kinesthetic">
-                Kinesthetic (practice, hands-on projects)
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="bg-primary/10 p-2 rounded-full">
-              <Clock size={20} className="text-primary" />
-            </div>
-            <Label className="text-lg font-medium">Time Availability</Label>
-          </div>
-          
-          <RadioGroup 
-            value={data.timeAvailability}
-            onValueChange={handleTimeAvailabilityChange}
-            className="grid grid-cols-1 gap-4 md:grid-cols-3"
-          >
-            <div className="flex items-start space-x-2">
-              <RadioGroupItem value="minimal" id="minimal" className="mt-1" />
-              <div className="grid gap-1">
-                <label htmlFor="minimal" className="font-medium">Minimal</label>
-                <p className="text-sm text-muted-foreground">
-                  Less than 2 hours per week
-                </p>
+          <CardTitle className="text-3xl font-bold">All Set!</CardTitle>
+          <CardDescription className="text-lg mt-2">
+            You've completed the onboarding process
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="bg-muted rounded-lg p-4 space-y-3">
+              <h3 className="font-medium text-lg">Your Profile</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Career Stage:</span>
+                  <span className="font-medium">{displayCareerStage(data.careerStage)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Industry Focus:</span>
+                  <span className="font-medium">{data.industryFocus.join(', ')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Learning Style:</span>
+                  <span className="font-medium">{displayLearningStyle(data.preferredLearningStyle)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Time Available:</span>
+                  <span className="font-medium">{displayTimeAvailability(data.timeAvailability)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Skills Added:</span>
+                  <span className="font-medium">{data.skills.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Resume Uploaded:</span>
+                  <span className="font-medium">{data.resumeFile ? 'Yes' : 'No'}</span>
+                </div>
               </div>
             </div>
             
-            <div className="flex items-start space-x-2">
-              <RadioGroupItem value="moderate" id="moderate" className="mt-1" />
-              <div className="grid gap-1">
-                <label htmlFor="moderate" className="font-medium">Moderate</label>
-                <p className="text-sm text-muted-foreground">
-                  2-5 hours per week
-                </p>
-              </div>
+            <div className="bg-primary/5 rounded-lg p-4 space-y-3 border border-primary/20">
+              <h3 className="font-medium text-lg flex items-center">
+                <Award className="mr-2 h-5 w-5 text-primary" />
+                What's Next
+              </h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start">
+                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary" />
+                  <span>Our AI agents will analyze your profile and generate personalized career insights</span>
+                </li>
+                <li className="flex items-start">
+                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary" />
+                  <span>Explore your career path map with actionable milestones</span>
+                </li>
+                <li className="flex items-start">
+                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary" />
+                  <span>Discover networking opportunities with industry leaders</span>
+                </li>
+                <li className="flex items-start">
+                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary" />
+                  <span>Start your personalized skills development path</span>
+                </li>
+              </ul>
             </div>
-            
-            <div className="flex items-start space-x-2">
-              <RadioGroupItem value="significant" id="significant" className="mt-1" />
-              <div className="grid gap-1">
-                <label htmlFor="significant" className="font-medium">Significant</label>
-                <p className="text-sm text-muted-foreground">
-                  5+ hours per week
-                </p>
-              </div>
-            </div>
-          </RadioGroup>
-        </div>
-        
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mt-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={20} className="text-primary" />
-            <h3 className="font-semibold">You're almost there!</h3>
           </div>
-          <p className="text-sm text-muted-foreground">
-            After completing this step, our AI will analyze your profile and create a personalized
-            career acceleration plan with tailored learning resources, industry insights, and
-            skill development recommendations.
-          </p>
-        </div>
-      </div>
+          
+          <div className="bg-primary/10 rounded-lg p-4 text-center">
+            <p className="font-medium">
+              You can update your profile information at any time from your account settings
+            </p>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button onClick={onComplete} size="lg">
+            Start Using Careerate
+          </Button>
+        </CardFooter>
+      </Card>
     </motion.div>
   );
+}
+
+function displayCareerStage(stage: string): string {
+  const stageMap: Record<string, string> = {
+    'early': 'Early Career (0-2 years)',
+    'mid': 'Mid Career (3-7 years)',
+    'senior': 'Senior Level (8-15 years)',
+    'executive': 'Executive (15+ years)',
+    'transitioning': 'Career Transition'
+  };
+  return stageMap[stage] || stage;
+}
+
+function displayLearningStyle(style: string): string {
+  const styleMap: Record<string, string> = {
+    'visual': 'Visual',
+    'auditory': 'Auditory',
+    'reading': 'Reading',
+    'hands-on': 'Hands-on'
+  };
+  return styleMap[style] || style;
+}
+
+function displayTimeAvailability(time: string): string {
+  const timeMap: Record<string, string> = {
+    'minimal': 'Minimal (1-2 hrs/week)',
+    'moderate': 'Moderate (3-5 hrs/week)',
+    'substantial': 'Substantial (6-10 hrs/week)',
+    'dedicated': 'Dedicated (10+ hrs/week)'
+  };
+  return timeMap[time] || time;
 }
