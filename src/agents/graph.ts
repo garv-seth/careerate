@@ -163,10 +163,10 @@ export const updateAgentStatus = (
   status: 'idle' | 'active' | 'thinking' | 'complete'
 ) => {
   agentStatuses[agent] = status;
-  
+
   // Broadcast status update
   agentEmitter.emit('agent_status_update', { ...agentStatuses });
-  
+
   console.log(`Agent ${agent} status: ${status}`);
 };
 
@@ -277,7 +277,7 @@ const initializeOpenAI = async () => {
         temperature: 0.1,
         openAIApiKey: process.env.OPENAI_API_KEY
       });
-      
+
       // Test the API connection
       console.log("Testing OpenAI API connection...");
       try {
@@ -286,7 +286,7 @@ const initializeOpenAI = async () => {
           ? testMessage.content 
           : JSON.stringify(testMessage.content);
         console.log("✅ OpenAI API test successful! Response:", content.substring(0, 50) + "...");
-        
+
         // Initialize agents after successful OpenAI initialization
         initializeAgents();
       } catch (testError) {
@@ -322,7 +322,7 @@ const caraNode = async (state: AgentState): Promise<AgentState> => {
     timestamp: new Date(),
     tools: ['pinecone']
   });
-  
+
   updateAgentStatus('cara', 'thinking');
   console.log("Executing Cara agent...");
   // Execute the Cara agent
@@ -330,7 +330,7 @@ const caraNode = async (state: AgentState): Promise<AgentState> => {
   const result = await caraAgent(input);
   console.log("Cara agent execution complete");
   updateAgentStatus('cara', 'complete');
-  
+
   // Return updated state
   return {
     ...state,
@@ -353,33 +353,33 @@ const mayaNode = async (state: AgentState): Promise<AgentState> => {
     timestamp: new Date(),
     tools: ['perplexity', 'database']
   });
-  
+
   updateAgentStatus('maya', 'thinking');
   // Execute the Maya agent
   const input = state.input || '';
   console.log(`Executing Maya agent with input: ${input.substring(0, 50)}...`);
-  
+
   try {
     console.log("Calling Maya agent...");
     const result = await mayaAgent(input);
     console.log("Maya agent returned results successfully");
     updateAgentStatus('maya', 'complete');
-    
+
     // Extract relevant data from result with type safety
     const resultData = result.results || {};
     console.log("Maya resultData:", JSON.stringify(resultData).substring(0, 200) + "...");
-    
+
     // Use type assertion to access properties safely
     const mayaData = resultData as any;
     const skills = Array.isArray(mayaData.skills) ? mayaData.skills : [];
     console.log("Extracted skills:", skills);
-    
+
     const experience = mayaData.experience || {};
     console.log("Extracted experience:", JSON.stringify(experience).substring(0, 100) + "...");
-    
+
     const education = typeof mayaData.education === 'string' ? mayaData.education : '';
     console.log("Extracted education:", education);
-    
+
     // Return updated state
     return {
       ...state,
@@ -419,7 +419,7 @@ const ellieNode = async (state: AgentState): Promise<AgentState> => {
     timestamp: new Date(),
     tools: ['brave', 'firecrawl', 'browserbase']
   });
-  
+
   updateAgentStatus('ellie', 'thinking');
   // Execute the Ellie agent with skills from Maya
   const skills = state.maya?.skills || [];
@@ -428,16 +428,16 @@ const ellieNode = async (state: AgentState): Promise<AgentState> => {
   const result = await ellieAgent(skillsInput);
   console.log("Ellie agent execution complete");
   updateAgentStatus('ellie', 'complete');
-  
+
   // Extract relevant data from result with type safety
   const resultData = result.results || {};
-  
+
   // Use type assertion to access properties safely
   const ellieData = resultData as any;
   const marketInsights = ellieData.marketInsights || {};
   const trends = Array.isArray(ellieData.trends) ? ellieData.trends : [];
   const opportunities = Array.isArray(ellieData.opportunities) ? ellieData.opportunities : [];
-  
+
   // Return updated state
   return {
     ...state,
@@ -462,7 +462,7 @@ const sophiaNode = async (state: AgentState): Promise<AgentState> => {
     timestamp: new Date(),
     tools: ['database', 'perplexity', 'browserbase']
   });
-  
+
   updateAgentStatus('sophia', 'thinking');
   // Execute the Sophia agent with skills from Maya and trends from Ellie
   const skills = state.maya?.skills || [];
@@ -472,16 +472,16 @@ const sophiaNode = async (state: AgentState): Promise<AgentState> => {
   const result = await sophiaAgent(input);
   console.log("Sophia agent execution complete");
   updateAgentStatus('sophia', 'complete');
-  
+
   // Extract relevant data from result with type safety
   const resultData = result.results || {};
-  
+
   // Use type assertion to access properties safely
   const sophiaData = resultData as any;
   const learningPlan = sophiaData.learningPlan || {};
   const resources = Array.isArray(sophiaData.resources) ? sophiaData.resources : [];
   const roadmap = sophiaData.roadmap || {};
-  
+
   // Return updated state
   return {
     ...state,
@@ -506,7 +506,7 @@ const synthesizeNode = async (state: AgentState): Promise<AgentState> => {
     timestamp: new Date(),
     tools: ['pinecone', 'perplexity']
   });
-  
+
   updateAgentStatus('cara', 'thinking');
   // Synthesize the results from all agents
   console.log(`Synthesizing final results from all agents${state.isPremium ? ' with premium features' : ''}`);
@@ -525,7 +525,7 @@ const synthesizeNode = async (state: AgentState): Promise<AgentState> => {
   );
   console.log("Synthesis complete");
   updateAgentStatus('cara', 'complete');
-  
+
   // Create an enhanced activity with the career advice attached
   const completeActivity: AgentActivity = {
     agent: 'cara',
@@ -534,10 +534,10 @@ const synthesizeNode = async (state: AgentState): Promise<AgentState> => {
     timestamp: new Date(),
     careerAdvice: finalResults
   };
-  
+
   // Emit activity with the career advice data attached
   trackAgentActivity(completeActivity);
-  
+
   // Return updated state with final output
   return {
     ...state,
@@ -550,53 +550,53 @@ console.log("Creating simplified ADK-inspired workflow implementation");
 executeAgentWorkflow = async (initialState: AgentState): Promise<AgentState> => {
   try {
     console.log("Starting agent workflow execution");
-    
+
     // Execute the workflow: cara -> maya -> ellie -> sophia -> synthesize
     let currentState = initialState;
-    
+
     // Store the state for userId context in the activity tracking
     currentAgentState = currentState;
-    
+
     // Cara (orchestration planning)
     console.log("Executing Cara node");
     currentState = await caraNode(currentState);
-    
+
     // Store the updated state for context
     currentAgentState = currentState;
-    
+
     // Maya (resume analysis)
     console.log("Executing Maya node");
     currentState = await mayaNode(currentState);
-    
+
     // Store the updated state for context
     currentAgentState = currentState;
-    
+
     // Ellie (industry analysis)
     console.log("Executing Ellie node");
     currentState = await ellieNode(currentState);
-    
+
     // Store the updated state for context
     currentAgentState = currentState;
-    
+
     // Sophia (learning plan)
     console.log("Executing Sophia node");
     currentState = await sophiaNode(currentState);
-    
+
     // Store the updated state for context
     currentAgentState = currentState;
-    
+
     // Final synthesis
     console.log("Executing synthesis node");
     currentState = await synthesizeNode(currentState);
-    
+
     // Clear the state after workflow completion
     currentAgentState = null;
-    
+
     console.log("Agent workflow execution completed successfully");
     return currentState;
   } catch (error) {
     console.error("Error in agent workflow execution:", error);
-    
+
     // Return the partial state in case of error
     return currentAgentState || initialState;
   }
@@ -608,10 +608,10 @@ const trackAgentActivity = (activity: AgentActivity) => {
   if (currentAgentState?.userId && !activity.userId) {
     activity.userId = currentAgentState.userId;
   }
-  
+
   // Emit the activity to any listening clients
   agentEmitter.emit('activity', activity);
-  
+
   // Log the activity (without detailed results to avoid log spam)
   const { careerAdvice, ...loggableActivity } = activity;
   console.log(`Agent ${activity.agent}: ${activity.action}`, loggableActivity.detail || '');
@@ -620,13 +620,13 @@ const trackAgentActivity = (activity: AgentActivity) => {
 // Main entry point for the agent workflow
 export const runCareerate = async (userId: string, resumeText: string, isPremium: boolean = false) => {
   console.log(`Starting Careerate analysis for user ${userId} (Premium: ${isPremium})`);
-  
+
   // Reset agent statuses
   agentStatuses.cara = 'idle';
   agentStatuses.maya = 'idle';
   agentStatuses.ellie = 'idle';
   agentStatuses.sophia = 'idle';
-  
+
   // Initialize the agent workflow
   trackAgentActivity({
     agent: 'cara',
@@ -634,7 +634,7 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
     detail: `Setting up the workflow for coordinated analysis${isPremium ? ' with premium features' : ''}`,
     timestamp: new Date()
   });
-  
+
   // Initial state for the workflow
   const initialState: AgentState = {
     input: resumeText,
@@ -646,16 +646,16 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
     ellie: { messages: [] },
     sophia: { messages: [] }
   };
-  
+
   try {
     // Set the current state for context in agent activities and status updates
     currentAgentState = initialState;
-    
+
     // Run our custom agent workflow executor
     // This will execute all agents in sequence: cara -> maya -> ellie -> sophia -> synthesize
     console.log("Starting agent workflow for career analysis");
     const result = await executeAgentWorkflow(initialState);
-    
+
     // Store vectors in Pinecone for future retrieval
     try {
       console.log(`Storing vectors for user ${userId} in Pinecone...`);
@@ -663,7 +663,7 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
         const mayaResultsStr = JSON.stringify(result.maya?.results || {});
         const ellieResultsStr = JSON.stringify(result.ellie?.results || {});
         const sophiaResultsStr = JSON.stringify(result.sophia?.results || {});
-        
+
         // Use the storeResumeEmbeddings function from pinecone.ts
         await storeResumeEmbeddings(
           userId,
@@ -674,17 +674,17 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
     } catch (error) {
       console.error("Error storing vectors:", error);
     }
-    
+
     // Return the final synthesized results
     return result.final_output || createSampleCareerAdvice();
   } catch (workflowError) {
     console.error("Error running agent workflow:", workflowError);
-    
+
     // If our workflow fails, fall back to the legacy sequential execution approach
     console.log("❌❌❌ ERROR: Falling back to legacy sequential execution approach...");
     console.log("❌❌❌ Workflow error details:", workflowError);
     console.log("❌❌❌ This should NOT happen if the APIs are properly initialized!");
-    
+
     // Initialize the state
     updateAgentStatus('cara', 'active');
     trackAgentActivity({
@@ -694,11 +694,11 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       timestamp: new Date(),
       tools: ['pinecone']
     });
-    
+
     // Execute each agent in sequence (legacy approach)
     updateAgentStatus('cara', 'thinking');
     const initialPlan = await runCaraForPlanning(resumeText);
-    
+
     updateAgentStatus('maya', 'active');
     updateAgentStatus('cara', 'idle');
     trackAgentActivity({
@@ -708,11 +708,11 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       timestamp: new Date(),
       tools: ['perplexity', 'database']
     });
-    
+
     updateAgentStatus('maya', 'thinking');
     const mayaResults = await runMayaAnalysis(resumeText, userId);
     updateAgentStatus('maya', 'complete');
-    
+
     updateAgentStatus('ellie', 'active');
     trackAgentActivity({
       agent: 'ellie',
@@ -721,11 +721,11 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       timestamp: new Date(),
       tools: ['brave', 'firecrawl', 'browserbase']
     });
-    
+
     updateAgentStatus('ellie', 'thinking');
     const ellieResults = await runEllieAnalysis(mayaResults.skills, userId);
     updateAgentStatus('ellie', 'complete');
-    
+
     updateAgentStatus('sophia', 'active');
     trackAgentActivity({
       agent: 'sophia',
@@ -734,11 +734,11 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       timestamp: new Date(),
       tools: ['database', 'perplexity', 'browserbase']
     });
-    
+
     updateAgentStatus('sophia', 'thinking');
     const sophiaResults = await runSophiaAdvice(mayaResults.skills, userId);
     updateAgentStatus('sophia', 'complete');
-    
+
     updateAgentStatus('cara', 'active');
     trackAgentActivity({
       agent: 'cara',
@@ -747,7 +747,7 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       timestamp: new Date(),
       tools: ['pinecone', 'perplexity']
     });
-    
+
     updateAgentStatus('cara', 'thinking');
     const finalResults = await synthesizeResults(
       mayaResults, 
@@ -758,7 +758,7 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       isPremium
     );
     updateAgentStatus('cara', 'complete');
-    
+
     // Create an activity with the career advice attached
     const completeActivity: AgentActivity = {
       agent: 'cara',
@@ -768,10 +768,10 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
       userId,
       careerAdvice: finalResults
     };
-    
+
     // Emit the complete activity with the career advice attached
     trackAgentActivity(completeActivity);
-    
+
     return finalResults;
   }
 };
@@ -779,7 +779,7 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
 // Enhanced error handling and fallbacks
 async function runCaraForPlanning(resumeText: string) {
   console.log("Running Cara agent for planning");
-  
+
   try {
     return await caraAgent(resumeText);
   } catch (error) {
@@ -804,7 +804,7 @@ async function runCaraForPlanning(resumeText: string) {
 
 async function runMayaAnalysis(resumeText: string, userId: string) {
   console.log("Running Maya agent for resume analysis");
-  
+
   try {
     const result = await mayaAgent(resumeText);
     if (!result || !result.results) throw new Error("Invalid Maya agent response");
@@ -819,10 +819,8 @@ async function runMayaAnalysis(resumeText: string, userId: string) {
         summary: "Experience information unavailable"
       },
       strengths: ["adaptability", "continuous learning"],
-      educationLevel: "Professional",
       automationRisk: "low",
-      recommendations: ["Consider expanding your skill set", "Document your achievements"]
-    };
+      recommendations: ["Consider expanding your skill set", "Document your achievements"],
       educationLevel: "Unknown"
     };
   }
@@ -830,7 +828,7 @@ async function runMayaAnalysis(resumeText: string, userId: string) {
 
 async function runEllieAnalysis(skills: string[], userId: string) {
   console.log("Running Ellie agent for industry analysis (fallback mode)");
-  
+
   try {
     // Try to use the initialized agent if available
     const result = await ellieAgent(JSON.stringify(skills));
@@ -851,7 +849,7 @@ async function runEllieAnalysis(skills: string[], userId: string) {
 
 async function runSophiaAdvice(skills: string[], userId: string) {
   console.log("Running Sophia agent for learning plan (fallback mode)");
-  
+
   try {
     // Try to use the initialized agent if available
     const result = await sophiaAgent(JSON.stringify({ skills, trends: [] }));
@@ -885,20 +883,20 @@ async function synthesizeResults(
   }
 ) {
   console.log("Synthesizing results from all agents");
-  
+
   try {
     // Extract skills from Maya's analysis
     const skills = mayaResults.skills || [];
     console.log(`Found ${skills.length} skills from resume analysis`);
-    
+
     // Extract trends from Ellie's analysis
     const trends = ellieResults.trends || [];
     console.log(`Found ${trends.length} industry trends`);
-    
+
     // Extract resources from Sophia's analysis
     const resources = sophiaResults.resources || [];
     console.log(`Found ${resources.length} learning resources`);
-    
+
     // Create consistent risk categories
     const automationRisks = mayaResults.automationRisks || [];
     const riskCategories = [
@@ -906,7 +904,7 @@ async function synthesizeResults(
       { category: "Market Demand", risk: 3, description: getDescriptionForCategory("Market Demand", 3) },
       { category: "Skill Relevance", risk: 2, description: getDescriptionForCategory("Skill Relevance", 2) }
     ];
-    
+
     // Create the final career advice structure
     // Define the type with optional premium property
     type CareerAdvice = {
@@ -935,7 +933,7 @@ async function synthesizeResults(
         skillsAccelerator?: any;
       };
     };
-    
+
     // Create the advice result with the proper type
     const adviceResult: CareerAdvice = {
       riskReport: {
@@ -1002,11 +1000,11 @@ async function synthesizeResults(
         ]
       }
     };
-    
+
     // Add premium features if enabled
     if (isPremium) {
       console.log("Adding premium features to career advice");
-      
+
       // Use provided premium data if available, otherwise generate placeholder data
       adviceResult.premium = {
         // Career Trajectory Mapping
@@ -1050,7 +1048,7 @@ async function synthesizeResults(
             }
           ]
         },
-        
+
         // Executive Network Access
         executiveNetwork: premiumData?.executiveNetwork || {
           recommendedEvents: [
@@ -1097,7 +1095,7 @@ async function synthesizeResults(
           ],
           networkingStrategy: "Focus on building relationships with senior professionals in your target industry through regular meetups and conferences. Schedule at least one informational interview per month with someone in your desired role."
         },
-        
+
         // Skills Gap Accelerator
         skillsAccelerator: premiumData?.skillsAccelerator || {
           assessedSkills: [
@@ -1189,7 +1187,7 @@ async function synthesizeResults(
         }
       };
     }
-    
+
     return adviceResult;
   } catch (error) {
     console.error("Error synthesizing results:", error);
