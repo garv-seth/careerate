@@ -1,176 +1,196 @@
-import { Router, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import multer from 'multer';
 import { storage } from '../storage';
 import { isAuthenticated } from '../replitAuth';
-import { uploadResume } from '../object-storage';
+import { uploadResume, getResume } from '../object-storage';
 
-const router = Router();
-const upload = multer({ 
+const router = express.Router();
+
+// Configure multer for file uploads
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
-  fileFilter: (req, file, cb) => {
-    // Accept only PDF, DOC, and DOCX files
-    if (
-      file.mimetype === 'application/pdf' || 
-      file.mimetype === 'application/msword' || 
-      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ) {
+  fileFilter: (_req, file, cb) => {
+    // Check file types
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(null, false);
+      cb(new Error('Invalid file type. Only PDF, Word documents, and text files are allowed.'));
     }
   }
 });
 
-// Upload resume
+// Handle resume upload
 router.post('/upload-resume', isAuthenticated, upload.single('resume'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+      return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const userId = (req.user as any)?.claims?.sub as string;
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ error: 'User ID not found' });
+    }
+
+    const userId = req.user.claims.sub;
     
-    // Use the ResumeText extraction functionality
+    // Use the object storage helper to upload the resume
     await uploadResume(req, res, () => {});
     
-    res.status(200).json({ message: 'Resume uploaded successfully' });
+    return res.status(200).json({ message: 'Resume uploaded successfully' });
   } catch (error) {
     console.error('Error uploading resume:', error);
-    res.status(500).json({ message: 'Error uploading resume' });
+    return res.status(500).json({ error: 'Failed to upload resume' });
   }
 });
 
-// Create or update user profile
+// Save user profile data
 router.post('/user-profile', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = (req.user as any)?.claims?.sub as string;
-    const {
-      careerStage,
-      industryFocus,
-      careerGoals,
-      skills,
-      preferredLearningStyle,
-      timeAvailability
-    } = req.body;
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ error: 'User ID not found' });
+    }
 
-    // Get existing profile
+    const userId = req.user.claims.sub;
+    const profileData = req.body;
+
+    // Check if profile already exists
     const existingProfile = await storage.getProfileByUserId(userId);
-    
+
+    // Get resume text if it exists
+    const resumeText = await getResume(userId);
+
     if (existingProfile) {
-      // Update profile with preferences
-      const updatedProfile = await storage.updateProfile(
-        userId,
-        {
-          careerStage,
-          industryFocus,
-          careerGoals,
-          preferredLearningStyle,
-          timeAvailability
-        }
-      );
+      // Update existing profile
+      const updatedProfile = await storage.updateProfile(userId, {
+        careerStage: profileData.careerStage,
+        industryFocus: profileData.industryFocus,
+        careerGoals: profileData.careerGoals,
+        preferredLearningStyle: profileData.preferredLearningStyle,
+        timeAvailability: profileData.timeAvailability
+      });
+
+      // Delete existing skills and add new ones
+      await storage.deleteUserSkills(userId);
       
-      // Handle skills separately
-      if (skills && skills.length > 0) {
-        // First remove existing skills
-        await storage.deleteUserSkills(userId);
-        
-        // Then add new skills
-        for (const skill of skills) {
+      if (profileData.skills && profileData.skills.length > 0) {
+        for (const skill of profileData.skills) {
           await storage.addUserSkill({
             userId,
             name: skill.name,
             currentLevel: skill.level,
-            targetLevel: Math.min(skill.level + 2, 10), // Default target is 2 levels higher
-            priority: skill.interest >= 8 ? 2 : skill.interest >= 5 ? 1 : 0
+            targetLevel: Math.min(skill.level + 2, 5), // Target level is 2 higher than current (max 5)
+            priority: Math.floor(skill.interest / 2) // Convert 1-10 interest to 1-5 priority
           });
         }
       }
-      
-      res.status(200).json(updatedProfile);
+
+      return res.status(200).json(updatedProfile);
     } else {
-      // Create new profile with default values and overrides
+      // Create new profile
       const newProfile = await storage.createProfile({
         userId,
-        resumeText: null,
-        lastScan: null,
-        careerStage,
-        industryFocus,
-        careerGoals,
-        preferredLearningStyle,
-        timeAvailability
+        resumeText,
+        lastScan: resumeText ? new Date() : null,
+        careerStage: profileData.careerStage,
+        industryFocus: profileData.industryFocus,
+        careerGoals: profileData.careerGoals,
+        preferredLearningStyle: profileData.preferredLearningStyle,
+        timeAvailability: profileData.timeAvailability
       });
-      
+
       // Add skills
-      if (skills && skills.length > 0) {
-        for (const skill of skills) {
+      if (profileData.skills && profileData.skills.length > 0) {
+        for (const skill of profileData.skills) {
           await storage.addUserSkill({
             userId,
             name: skill.name,
             currentLevel: skill.level,
-            targetLevel: Math.min(skill.level + 2, 10), // Default target is 2 levels higher
-            priority: skill.interest >= 8 ? 2 : skill.interest >= 5 ? 1 : 0
+            targetLevel: Math.min(skill.level + 2, 5), // Target level is 2 higher than current (max 5)
+            priority: Math.floor(skill.interest / 2) // Convert 1-10 interest to 1-5 priority
           });
         }
       }
-      
-      res.status(201).json(newProfile);
+
+      return res.status(201).json(newProfile);
     }
   } catch (error) {
-    console.error('Error updating user profile:', error);
-    res.status(500).json({ message: 'Error updating user profile' });
+    console.error('Error saving user profile:', error);
+    return res.status(500).json({ error: 'Failed to save user profile' });
   }
 });
 
-// Get user profile
+// Get user profile data
 router.get('/user-profile', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = (req.user as any)?.claims?.sub as string;
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ error: 'User ID not found' });
+    }
+
+    const userId = req.user.claims.sub;
     
     // Get profile data
     const profile = await storage.getProfileByUserId(userId);
     
     if (!profile) {
-      return res.status(404).json({ message: 'Profile not found' });
+      return res.status(404).json({ error: 'Profile not found' });
     }
     
     // Get skills data
     const skills = await storage.getUserSkills(userId);
     
-    // Combine data
-    const result = {
+    // Format response
+    const responseData = {
       ...profile,
-      skills
+      skills: skills.map(skill => ({
+        name: skill.name,
+        currentLevel: skill.currentLevel,
+        targetLevel: skill.targetLevel,
+        interest: skill.priority ? skill.priority * 2 : 5 // Convert 1-5 priority to 1-10 interest scale
+      }))
     };
     
-    res.status(200).json(result);
+    return res.status(200).json(responseData);
   } catch (error) {
-    console.error('Error getting user profile:', error);
-    res.status(500).json({ message: 'Error getting user profile' });
+    console.error('Error fetching user profile:', error);
+    return res.status(500).json({ error: 'Failed to fetch user profile' });
   }
 });
 
 // Check if onboarding is complete
 router.get('/onboarding-status', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = (req.user as any)?.claims?.sub as string;
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ error: 'User ID not found' });
+    }
+
+    const userId = req.user.claims.sub;
     
-    // Get profile data
+    // Check if profile exists
     const profile = await storage.getProfileByUserId(userId);
     
-    // If profile exists and has basic fields filled out, onboarding is complete
+    // Onboarding is complete if profile exists and has required fields filled
     const isComplete = Boolean(
       profile && 
       profile.careerStage && 
-      profile.preferredLearningStyle
+      profile.industryFocus && 
+      profile.industryFocus.length > 0 &&
+      profile.preferredLearningStyle &&
+      profile.timeAvailability
     );
     
-    res.status(200).json({ isComplete });
+    return res.status(200).json({ isComplete });
   } catch (error) {
     console.error('Error checking onboarding status:', error);
-    res.status(500).json({ message: 'Error checking onboarding status' });
+    return res.status(500).json({ error: 'Failed to check onboarding status' });
   }
 });
 
