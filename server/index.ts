@@ -8,8 +8,9 @@ import { pool } from "./db";
 // Set up PostgreSQL session store
 const PostgresSessionStore = connectPg(session);
 const sessionStore = new PostgresSessionStore({ 
-  pool, 
-  createTableIfMissing: true 
+  pool,
+  tableName: 'session', // Use explicit table name
+  createTableIfMissing: false // Don't try to create the table if it already exists
 });
 
 const app = express();
@@ -60,7 +61,12 @@ app.use((req, res, next) => {
   next();
 });
 
+import { setupSessionTable } from './setup-sessions';
+
 (async () => {
+  // Ensure session table is properly set up
+  await setupSessionTable(pool);
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
