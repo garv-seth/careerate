@@ -8,7 +8,7 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "autoscale"
 build = ["sh", "-c", "apt-get update && apt-get install -y unzip && curl -fsSL https://bun.sh/install | bash && ~/.bun/bin/bun install --production && ~/.bun/bin/bun run build"]
-run = ["sh", "-c", "~/.bun/bin/bun run start"]
+run = ["sh", "-c", "node dist/index.js"]
 
 [[ports]]
 localPort = 5000
