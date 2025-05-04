@@ -54,8 +54,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const saveOnboardingData = async (data: OnboardingData) => {
     try {
       // Create a copy without the resumeFile for local storage
-      const dataForStorage = { ...data };
-      delete dataForStorage.resumeFile;
+      const { resumeFile, ...dataForStorage } = data;
       
       // Save to local storage
       localStorage.setItem('onboardingData', JSON.stringify(dataForStorage));
@@ -72,7 +71,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         formData.append('resume', data.resumeFile);
         
         // Upload the resume
-        await apiRequest('POST', '/api/upload-resume', formData, true);
+        // Use multipart form data for file upload
+        const formDataOptions = { headers: { 'Content-Type': 'multipart/form-data' } };
+        await apiRequest('POST', '/api/upload-resume', formData);
         
         // Invalidate any relevant queries
         queryClient.invalidateQueries({ queryKey: ['/api/user-profile'] });
