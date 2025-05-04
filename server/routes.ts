@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import authRouter from "./auth";
 import { uploadResume, getResume } from "./object-storage";
+import onboardingRouter from "./api/onboarding";
 // Use simplified agent implementation instead of complex LangChain agents
 import { analyzeResume, generateCareerAdvice, generateLearningPlan } from "../src/simplified/agent";
 import { Server as SocketIOServer } from "socket.io";
@@ -16,6 +17,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Apply auth middleware
   app.use(authRouter);
+  
+  // Apply onboarding routes
+  app.use('/api', onboardingRouter);
   
   // User profile routes
   app.get('/api/profile', isAuthenticated, async (req: any, res) => {

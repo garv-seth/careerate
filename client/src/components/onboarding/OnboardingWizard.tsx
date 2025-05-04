@@ -1,17 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { useOnboarding } from '@/hooks/use-onboarding';
 import { WelcomeStep } from './steps/WelcomeStep';
 import { CareerGoalsStep } from './steps/CareerGoalsStep';
 import { SkillsAssessmentStep } from './steps/SkillsAssessmentStep';
 import { ResumeUploadStep } from './steps/ResumeUploadStep';
 import { FinalStep } from './steps/FinalStep';
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
 
-export type OnboardingData = {
-  careerStage: 'early' | 'mid' | 'senior' | 'leadership' | '';
+export interface OnboardingData {
+  careerStage: string;
   industryFocus: string[];
   careerGoals: string;
   resumeFile: File | null;
@@ -20,26 +19,14 @@ export type OnboardingData = {
     level: number;
     interest: number;
   }[];
-  preferredLearningStyle: 'visual' | 'auditory' | 'reading' | 'kinesthetic' | '';
-  timeAvailability: 'minimal' | 'moderate' | 'significant' | '';
-};
-
-interface OnboardingWizardProps {
-  onComplete: (data: OnboardingData) => void;
-  onClose?: () => void;
-  isOpen: boolean;
-  contextual?: boolean;
+  preferredLearningStyle: string;
+  timeAvailability: string;
 }
 
-export function OnboardingWizard({
-  onComplete,
-  onClose,
-  isOpen,
-  contextual = false
-}: OnboardingWizardProps) {
-  const [step, setStep] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const { toast } = useToast();
+export function OnboardingWizard() {
+  const { showOnboarding, setShowOnboarding, saveOnboardingData } = useOnboarding();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     careerStage: '',
     industryFocus: [],
@@ -49,172 +36,133 @@ export function OnboardingWizard({
     preferredLearningStyle: '',
     timeAvailability: ''
   });
-
-  const totalSteps = 5;
-
-  useEffect(() => {
-    setProgress(((step + 1) / totalSteps) * 100);
-  }, [step]);
-
-  if (!isOpen) return null;
-
-  const updateData = (partialData: Partial<OnboardingData>) => {
-    setData((prev) => ({ ...prev, ...partialData }));
+  
+  const updateData = (newData: Partial<OnboardingData>) => {
+    setData(prev => ({ ...prev, ...newData }));
   };
-
-  const handleNext = () => {
-    // Validate current step
-    if (step === 0) {
-      // No validation needed for welcome step
-      setStep(step + 1);
-    } else if (step === 1) {
-      if (!data.careerStage || data.industryFocus.length === 0 || !data.careerGoals) {
-        toast({
-          title: "Please complete all fields",
-          description: "Career stage, industry focus, and goals are required",
-          variant: "destructive"
-        });
-        return;
-      }
-      setStep(step + 1);
-    } else if (step === 2) {
-      if (data.skills.length === 0) {
-        toast({
-          title: "Please add at least one skill",
-          description: "Add skills to help us personalize your experience",
-          variant: "destructive" 
-        });
-        return;
-      }
-      setStep(step + 1);
-    } else if (step === 3) {
-      // Resume is optional but encouraged
-      if (!data.resumeFile) {
-        toast({
-          title: "No resume uploaded",
-          description: "You can proceed without a resume, but we recommend uploading one for best results",
-          variant: "default"
-        });
-      }
-      setStep(step + 1);
-    } else if (step === 4) {
-      if (!data.preferredLearningStyle || !data.timeAvailability) {
-        toast({
-          title: "Please complete all fields",
-          description: "Learning style and time availability are required",
-          variant: "destructive"
-        });
-        return;
-      }
-      // Submit data
-      onComplete(data);
+  
+  const nextStep = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(currentStep + 1);
     }
   };
-
-  const handleBack = () => {
-    if (step > 0) {
-      setStep(step - 1);
+  
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
   };
-
-  const handleSkip = () => {
-    if (step === 3) {
-      // Skip resume upload
-      setStep(step + 1);
+  
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      await saveOnboardingData(data);
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
+  
+  const steps = [
+    { name: 'Welcome', component: <WelcomeStep data={data} updateData={updateData} nextStep={nextStep} /> },
+    { name: 'Career Profile', component: <CareerGoalsStep data={data} updateData={updateData} /> },
+    { name: 'Skills', component: <SkillsAssessmentStep data={data} updateData={updateData} /> },
+    { name: 'Resume', component: <ResumeUploadStep data={data} updateData={updateData} /> },
+    { name: 'Learning Style', component: <FinalStep data={data} updateData={updateData} /> }
+  ];
+  
+  const totalSteps = steps.length;
+  const progressPercentage = (currentStep / (totalSteps - 1)) * 100;
+  
+  // Check if current step is valid to proceed
+  const canProceed = () => {
+    switch (currentStep) {
+      case 0: // Welcome
+        return true;
+      case 1: // Career Goals
+        return Boolean(data.careerStage) && data.industryFocus.length > 0;
+      case 2: // Skills
+        return data.skills.length > 0;
+      case 3: // Resume
+        return true; // Resume is optional
+      case 4: // Learning Style
+        return Boolean(data.preferredLearningStyle && data.timeAvailability);
+      default:
+        return false;
+    }
+  };
+  
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl shadow-lg">
-        <CardContent className="p-6">
-          <div className="mb-4">
-            <Progress value={progress} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Step {step + 1} of {totalSteps}</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
+    <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
+      <DialogContent className="max-w-2xl p-0 overflow-hidden">
+        {/* Progress bar */}
+        <div className="relative h-1 bg-muted w-full">
+          <div
+            className="absolute top-0 left-0 h-full bg-primary transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+        
+        {/* Steps indicator */}
+        <div className="px-6 pt-4 flex justify-between border-b pb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              Step {currentStep + 1} of {totalSteps}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              - {steps[currentStep].name}
+            </span>
           </div>
-
-          {step === 0 && (
-            <WelcomeStep contextual={contextual} />
-          )}
-
-          {step === 1 && (
-            <CareerGoalsStep 
-              data={data} 
-              updateData={updateData} 
-            />
-          )}
-
-          {step === 2 && (
-            <SkillsAssessmentStep 
-              data={data} 
-              updateData={updateData} 
-            />
-          )}
-
-          {step === 3 && (
-            <ResumeUploadStep 
-              data={data} 
-              updateData={updateData} 
-            />
-          )}
-
-          {step === 4 && (
-            <FinalStep 
-              data={data} 
-              updateData={updateData} 
-            />
-          )}
-
-          <div className="flex justify-between mt-6">
-            {step > 0 ? (
-              <Button 
-                variant="outline" 
-                onClick={handleBack}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft size={16} /> Back
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                onClick={onClose}
-                className="flex items-center gap-2"
-              >
-                Cancel
-              </Button>
-            )}
-
-            <div className="flex gap-2">
-              {step === 3 && (
-                <Button 
-                  variant="ghost" 
-                  onClick={handleSkip}
-                >
-                  Skip
-                </Button>
+        </div>
+        
+        {/* Step content */}
+        <div className="px-6 py-2 max-h-[70vh] overflow-y-auto">
+          {steps[currentStep].component}
+        </div>
+        
+        {/* Navigation buttons */}
+        <div className="px-6 py-4 border-t flex justify-between">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            disabled={currentStep === 0}
+            className="gap-2"
+          >
+            <ChevronLeft size={16} />
+            Back
+          </Button>
+          
+          {currentStep < totalSteps - 1 ? (
+            <Button
+              onClick={nextStep}
+              disabled={!canProceed()}
+              className="gap-2"
+            >
+              Next
+              <ChevronRight size={16} />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!canProceed() || isSubmitting}
+              className="gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check size={16} />
+                  Complete
+                </>
               )}
-              
-              <Button 
-                onClick={handleNext}
-                className="flex items-center gap-2"
-              >
-                {step === totalSteps - 1 ? (
-                  <>
-                    Complete <Check size={16} />
-                  </>
-                ) : (
-                  <>
-                    Next <ChevronRight size={16} />
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
