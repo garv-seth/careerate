@@ -31,7 +31,7 @@ router.post('/upload-resume', isAuthenticated, upload.single('resume'), async (r
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const userId = req.user?.id as string;
+    const userId = (req.user as any)?.claims?.sub as string;
     
     // Use the ResumeText extraction functionality
     await uploadResume(req, res, () => {});
@@ -46,7 +46,7 @@ router.post('/upload-resume', isAuthenticated, upload.single('resume'), async (r
 // Create or update user profile
 router.post('/user-profile', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id as string;
+    const userId = (req.user as any)?.claims?.sub as string;
     const {
       careerStage,
       industryFocus,
@@ -91,7 +91,7 @@ router.post('/user-profile', isAuthenticated, async (req: Request, res: Response
       
       res.status(200).json(updatedProfile);
     } else {
-      // Create new profile
+      // Create new profile with default values and overrides
       const newProfile = await storage.createProfile({
         userId,
         resumeText: null,
@@ -127,7 +127,7 @@ router.post('/user-profile', isAuthenticated, async (req: Request, res: Response
 // Get user profile
 router.get('/user-profile', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id as string;
+    const userId = (req.user as any)?.claims?.sub as string;
     
     // Get profile data
     const profile = await storage.getProfileByUserId(userId);
@@ -155,7 +155,7 @@ router.get('/user-profile', isAuthenticated, async (req: Request, res: Response)
 // Check if onboarding is complete
 router.get('/onboarding-status', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id as string;
+    const userId = (req.user as any)?.claims?.sub as string;
     
     // Get profile data
     const profile = await storage.getProfileByUserId(userId);
