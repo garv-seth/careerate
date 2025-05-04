@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AuthProvider } from "@/hooks/use-auth";
+import { OnboardingProvider } from "@/hooks/use-onboarding";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
@@ -66,12 +69,17 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light">
-        <TooltipProvider>
-          <div className="min-h-screen flex flex-col">
-            <Toaster />
-            <Router />
-          </div>
-        </TooltipProvider>
+        <AuthProvider>
+          <OnboardingProvider>
+            <TooltipProvider>
+              <div className="min-h-screen flex flex-col">
+                <Toaster />
+                <Router />
+                <OnboardingWizard />
+              </div>
+            </TooltipProvider>
+          </OnboardingProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
