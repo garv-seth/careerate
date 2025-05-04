@@ -1,141 +1,113 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { OnboardingData } from '@/components/onboarding/OnboardingWizard';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 
 interface OnboardingContextType {
-  isOnboardingComplete: boolean;
   showOnboarding: boolean;
   setShowOnboarding: (show: boolean) => void;
-  onboardingData: OnboardingData | null;
+  isOnboardingComplete: boolean;
   saveOnboardingData: (data: OnboardingData) => Promise<void>;
-  contextualMode: boolean;
-  setContextualMode: (mode: boolean) => void;
-  resetOnboarding: () => void;
 }
 
-const defaultOnboardingData: OnboardingData = {
-  careerStage: '',
-  industryFocus: [],
-  careerGoals: '',
-  resumeFile: null,
-  skills: [],
-  preferredLearningStyle: '',
-  timeAvailability: ''
-};
+const OnboardingContext = createContext<OnboardingContextType | null>(null);
 
-const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
-
-export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(false);
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
-  const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
-  const [contextualMode, setContextualMode] = useState<boolean>(false);
+export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  // Check if onboarding is complete from local storage on initial load
+  // Fetch onboarding status
+  const { data: onboardingStatus, isLoading } = useQuery({
+    queryKey: ['/api/onboarding/onboarding-status'],
+    queryFn: async () => {
+      if (!user) return { isComplete: false };
+      const res = await apiRequest('GET', '/api/onboarding/onboarding-status');
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  // Determine if onboarding is complete
+  const isOnboardingComplete = onboardingStatus?.isComplete || false;
+
+  // Show onboarding wizard automatically for new users
   useEffect(() => {
-    const storedData = localStorage.getItem('onboardingData');
-    const completed = localStorage.getItem('onboardingComplete');
-    
-    if (storedData) {
-      setOnboardingData(JSON.parse(storedData));
+    if (user && !isLoading && onboardingStatus && !isOnboardingComplete) {
+      setShowOnboarding(true);
     }
-    
-    if (completed === 'true') {
-      setIsOnboardingComplete(true);
-    } else {
-      // If no record of completion, show onboarding on first load
-      // But don't show it in contextual mode initially
-      setShowOnboarding(!contextualMode);
-    }
-  }, [contextualMode]);
+  }, [user, isLoading, onboardingStatus, isOnboardingComplete]);
 
+  // Mutation to upload resume file
+  const uploadResumeMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('resume', file);
+      const res = await apiRequest('POST', '/api/onboarding/upload-resume', formData);
+      return res.json();
+    },
+  });
+
+  // Mutation to save profile data
+  const saveProfileMutation = useMutation({
+    mutationFn: async (profileData: Omit<OnboardingData, 'resumeFile'>) => {
+      const res = await apiRequest('POST', '/api/onboarding/user-profile', profileData);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/onboarding/onboarding-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/onboarding/user-profile'] });
+    },
+  });
+
+  // Function to save all onboarding data
   const saveOnboardingData = async (data: OnboardingData) => {
     try {
-      // Create a copy without the resumeFile for local storage
-      const { resumeFile, ...dataForStorage } = data;
-      
-      // Save to local storage
-      localStorage.setItem('onboardingData', JSON.stringify(dataForStorage));
-      localStorage.setItem('onboardingComplete', 'true');
-      
-      // Update state
-      setOnboardingData(data);
-      setIsOnboardingComplete(true);
-      setShowOnboarding(false);
-      
-      // If we have a resume file, upload it
+      // First, upload resume if provided
       if (data.resumeFile) {
-        const formData = new FormData();
-        formData.append('resume', data.resumeFile);
-        
-        // Upload the resume
-        // Use multipart form data for file upload
-        const formDataOptions = { headers: { 'Content-Type': 'multipart/form-data' } };
-        await apiRequest('POST', '/api/upload-resume', formData);
-        
-        // Invalidate any relevant queries
-        queryClient.invalidateQueries({ queryKey: ['/api/user-profile'] });
+        await uploadResumeMutation.mutateAsync(data.resumeFile);
       }
-      
-      // Create or update user profile with onboarding data
-      await apiRequest('POST', '/api/user-profile', {
-        careerStage: data.careerStage,
-        industryFocus: data.industryFocus,
-        careerGoals: data.careerGoals,
-        skills: data.skills,
-        preferredLearningStyle: data.preferredLearningStyle,
-        timeAvailability: data.timeAvailability
-      });
-      
+
+      // Then save the rest of the profile data
+      const { resumeFile, ...profileData } = data;
+      await saveProfileMutation.mutateAsync(profileData);
+
       toast({
-        title: "Onboarding complete!",
-        description: "Your personalized career acceleration plan is ready.",
+        title: 'Profile Created',
+        description: 'Your career profile has been successfully set up!',
       });
-      
     } catch (error) {
       console.error('Error saving onboarding data:', error);
       toast({
-        title: "Error saving your data",
-        description: "Please try again later.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'There was a problem saving your profile data. Please try again.',
+        variant: 'destructive',
       });
+      throw error;
     }
-  };
-
-  const resetOnboarding = () => {
-    localStorage.removeItem('onboardingComplete');
-    localStorage.removeItem('onboardingData');
-    setOnboardingData(null);
-    setIsOnboardingComplete(false);
-    setShowOnboarding(true);
   };
 
   return (
     <OnboardingContext.Provider
       value={{
-        isOnboardingComplete,
         showOnboarding,
         setShowOnboarding,
-        onboardingData,
+        isOnboardingComplete,
         saveOnboardingData,
-        contextualMode,
-        setContextualMode,
-        resetOnboarding
       }}
     >
       {children}
     </OnboardingContext.Provider>
   );
-}
+};
 
-export function useOnboarding() {
+export const useOnboarding = () => {
   const context = useContext(OnboardingContext);
-  
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useOnboarding must be used within an OnboardingProvider');
   }
-  
   return context;
-}
+};
