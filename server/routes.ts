@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth } from "./auth";
 import authRouter from "./auth";
+import { isAuthenticated } from "./middleware/auth";
 import { uploadResume, getResume } from "./object-storage";
 import onboardingRouter from "./api/onboarding";
 // Use simplified agent implementation instead of complex LangChain agents
@@ -12,8 +13,8 @@ import { agentEmitter } from "../src/agents/graph";
 import type { AgentActivity, AgentStatuses } from "../src/agents/graph";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up Replit Auth
-  await setupAuth(app);
+  // Set up authentication
+  setupAuth(app);
   
   // Apply auth middleware
   app.use(authRouter);

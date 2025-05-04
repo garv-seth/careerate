@@ -1,65 +1,65 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient } from "@tanstack/react-query";
 
-// Create a client
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     },
   },
 });
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-// Helper function for making API requests
 export async function apiRequest(
-  method: HttpMethod, 
-  endpoint: string, 
-  body?: any
-): Promise<Response> {
-  const options: RequestInit = {
-    method,
-    headers: {},
-    credentials: 'include',
+  method: ApiMethod,
+  url: string,
+  data?: any,
+  customHeaders?: Record<string, string>
+) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...customHeaders,
   };
 
-  if (body) {
-    if (body instanceof FormData) {
-      options.body = body;
-    } else {
-      options.headers = {
-        'Content-Type': 'application/json',
-      };
-      options.body = JSON.stringify(body);
-    }
+  const config: RequestInit = {
+    method,
+    headers,
+    credentials: "include",
+  };
+
+  if (data) {
+    config.body = JSON.stringify(data);
   }
 
-  const response = await fetch(endpoint, options);
-
-  if (!response.ok && response.status !== 401) {
-    // Allow 401 to be handled by the caller
-    const errorText = await response.text();
-    throw new Error(errorText || `API request failed with status ${response.status}`);
-  }
-
-  return response;
+  return fetch(url, config);
 }
 
-// Default query function that gets used in useQuery
-export const getQueryFn = (options?: { on401: 'throw' | 'returnNull' }) => {
-  return async ({ queryKey }: { queryKey: string[] }) => {
-    const [endpoint] = queryKey;
-    const response = await apiRequest('GET', endpoint);
-
-    if (response.status === 401) {
-      if (options?.on401 === 'returnNull') {
-        return null;
+export async function getQueryFn<T>({ 
+  on401 = "throw",
+}: { 
+  on401?: "throw" | "returnNull" 
+} = {}) {
+  return async ({ queryKey }: { queryKey: string[] }): Promise<T | null> => {
+    const [url] = queryKey;
+    try {
+      const res = await fetch(url, { credentials: "include" });
+      
+      if (res.status === 401) {
+        if (on401 === "returnNull") {
+          return null;
+        }
+        throw new Error("Unauthorized");
       }
-      throw new Error('Unauthorized');
+      
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
+      
+      return res.json();
+    } catch (err) {
+      throw err;
     }
-
-    return response.json();
   };
-};
+}
