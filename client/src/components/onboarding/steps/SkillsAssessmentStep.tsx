@@ -1,201 +1,165 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { OnboardingData } from "../OnboardingWizard";
-import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { OnboardingData } from '../OnboardingWizard';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { ArrowLeft, ArrowRight, Plus, X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
-interface SkillsAssessmentStepProps {
+type SkillsAssessmentStepProps = {
   data: OnboardingData;
   updateData: (data: Partial<OnboardingData>) => void;
   onNext: () => void;
   onBack: () => void;
-}
+};
+
+type Skill = {
+  name: string;
+  level: number;
+  interest: number;
+};
 
 export function SkillsAssessmentStep({ data, updateData, onNext, onBack }: SkillsAssessmentStepProps) {
-  const [skillName, setSkillName] = useState<string>("");
-  const [skillLevel, setSkillLevel] = useState<number>(5);
-  const [skillInterest, setSkillInterest] = useState<number>(5);
+  const [newSkill, setNewSkill] = useState('');
+  const [canProceed, setCanProceed] = useState(false);
+
+  useEffect(() => {
+    setCanProceed(data.skills.length > 0);
+  }, [data.skills]);
 
   const addSkill = () => {
-    if (skillName.trim()) {
-      // Check if the skill already exists
-      const existingSkillIndex = data.skills.findIndex(
-        skill => skill.name.toLowerCase() === skillName.toLowerCase()
-      );
-
-      if (existingSkillIndex >= 0) {
-        // Update existing skill
-        const updatedSkills = [...data.skills];
-        updatedSkills[existingSkillIndex] = {
-          name: skillName,
-          level: skillLevel,
-          interest: skillInterest
-        };
-        updateData({ skills: updatedSkills });
-      } else {
-        // Add new skill
-        updateData({
-          skills: [
-            ...data.skills,
-            {
-              name: skillName,
-              level: skillLevel,
-              interest: skillInterest
-            }
-          ]
-        });
-      }
-      
-      // Reset inputs
-      setSkillName("");
-      setSkillLevel(5);
-      setSkillInterest(5);
+    if (newSkill.trim() && !data.skills.some(skill => skill.name.toLowerCase() === newSkill.toLowerCase())) {
+      const updatedSkills = [...data.skills, { name: newSkill, level: 3, interest: 5 }];
+      updateData({ skills: updatedSkills });
+      setNewSkill('');
     }
   };
 
-  const removeSkill = (skillToRemove: string) => {
-    updateData({
-      skills: data.skills.filter(skill => skill.name !== skillToRemove)
-    });
+  const removeSkill = (skillName: string) => {
+    const updatedSkills = data.skills.filter(skill => skill.name !== skillName);
+    updateData({ skills: updatedSkills });
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && skillName) {
-      e.preventDefault();
-      addSkill();
-    }
+  const updateSkillLevel = (skillName: string, level: number) => {
+    const updatedSkills = data.skills.map(skill => 
+      skill.name === skillName ? { ...skill, level } : skill
+    );
+    updateData({ skills: updatedSkills });
+  };
+
+  const updateSkillInterest = (skillName: string, interest: number) => {
+    const updatedSkills = data.skills.map(skill => 
+      skill.name === skillName ? { ...skill, interest } : skill
+    );
+    updateData({ skills: updatedSkills });
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 100 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -100 }}
-      transition={{ duration: 0.3 }}
-      className="w-full max-w-4xl mx-auto"
-    >
-      <Card className="border-2 border-primary/20 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl">Skills Assessment</CardTitle>
-          <CardDescription>
-            Rate your current skills and interest levels
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="skillName">Skill Name</Label>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold tracking-tight">Skills Assessment</h2>
+        <p className="text-muted-foreground">
+          Add your skills and rate your current level and interest in developing them further.
+        </p>
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            <div className="flex gap-2">
               <Input
-                id="skillName"
-                value={skillName}
-                onChange={(e) => setSkillName(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Enter a skill (e.g. Project Management, JavaScript)"
+                placeholder="Add a skill (e.g., JavaScript, Project Management, Data Analysis)"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSkill();
+                  }
+                }}
               />
+              <Button variant="outline" onClick={addSkill}>
+                <Plus size={16} />
+              </Button>
             </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="skillLevel">Current Proficiency (1-10)</Label>
-                <span className="text-sm font-medium">{skillLevel}</span>
-              </div>
-              <Slider
-                id="skillLevel"
-                min={1}
-                max={10}
-                step={1}
-                value={[skillLevel]}
-                onValueChange={(values) => setSkillLevel(values[0])}
-                className="py-2"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Beginner</span>
-                <span>Intermediate</span>
-                <span>Expert</span>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="skillInterest">Interest Level (1-10)</Label>
-                <span className="text-sm font-medium">{skillInterest}</span>
-              </div>
-              <Slider
-                id="skillInterest"
-                min={1}
-                max={10}
-                step={1}
-                value={[skillInterest]}
-                onValueChange={(values) => setSkillInterest(values[0])}
-                className="py-2"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Low Interest</span>
-                <span>Moderate</span>
-                <span>High Interest</span>
-              </div>
-            </div>
-            
-            <Button 
-              type="button" 
-              onClick={addSkill} 
-              disabled={!skillName.trim()}
-              className="w-full"
-            >
-              Add Skill
-            </Button>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Your Skills</Label>
-            {data.skills.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No skills added yet. Add at least 3 skills to continue.</p>
-            ) : (
-              <div className="space-y-3 mt-2">
-                {data.skills.map((skill, index) => (
-                  <div key={index} className="flex items-center justify-between border rounded-md p-3">
-                    <div className="flex-1">
-                      <div className="font-medium">{skill.name}</div>
-                      <div className="grid grid-cols-2 gap-2 text-sm mt-1">
-                        <div>
-                          <span className="text-muted-foreground">Proficiency:</span> {skill.level}/10
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Interest:</span> {skill.interest}/10
-                        </div>
-                      </div>
+
+            <div className="space-y-4">
+              {data.skills.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No skills added yet. Add your skills to continue.
+                </div>
+              ) : (
+                data.skills.map((skill, index) => (
+                  <div key={index} className="bg-muted/50 rounded-md p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{skill.name}</h3>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeSkill(skill.name)}
+                      >
+                        <X size={16} />
+                      </Button>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => removeSkill(skill.name)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label>Current Skill Level</Label>
+                        <span className="text-sm font-medium">
+                          {skill.level}/5 - {
+                            skill.level === 1 ? 'Beginner' : 
+                            skill.level === 2 ? 'Basic' : 
+                            skill.level === 3 ? 'Intermediate' : 
+                            skill.level === 4 ? 'Advanced' : 'Expert'
+                          }
+                        </span>
+                      </div>
+                      <Slider
+                        min={1}
+                        max={5}
+                        step={1}
+                        value={[skill.level]}
+                        onValueChange={(value) => updateSkillLevel(skill.name, value[0])}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <Label>Interest in Developing</Label>
+                        <span className="text-sm font-medium">
+                          {skill.interest}/10 - {
+                            skill.interest <= 3 ? 'Low Interest' : 
+                            skill.interest <= 7 ? 'Moderate Interest' : 'High Interest'
+                          }
+                        </span>
+                      </div>
+                      <Slider
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={[skill.interest]}
+                        onValueChange={(value) => updateSkillInterest(skill.name, value[0])}
+                      />
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
         </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
-          <Button 
-            onClick={onNext}
-            disabled={data.skills.length < 3}
-          >
-            Continue
-          </Button>
-        </CardFooter>
       </Card>
-    </motion.div>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack} className="gap-2">
+          <ArrowLeft size={16} />
+          Back
+        </Button>
+        <Button onClick={onNext} disabled={!canProceed} className="gap-2">
+          Next
+          <ArrowRight size={16} />
+        </Button>
+      </div>
+    </div>
   );
 }
