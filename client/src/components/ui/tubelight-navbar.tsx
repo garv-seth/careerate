@@ -142,8 +142,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
           <Button
             onClick={() => window.location.href = "/api/login"}
             className={cn(
-              "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-              "text-foreground/80 hover:text-primary bg-primary/10"
+              "cursor-pointer text-sm font-semibold px-6 py-2 rounded-xl transition-colors",
+              "text-foreground/80 hover:text-white bg-primary/10 hover:bg-primary"
             )}
           >
             <LogIn className="w-4 h-4 mr-2" /> Login
