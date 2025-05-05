@@ -7,9 +7,9 @@ ENV=${1:-development}
 echo "Starting server in $ENV mode..."
 
 if [ "$ENV" = "production" ]; then
-  # Run in production mode
+  # Run in production mode - use the bootstrap file
   echo "Starting production server..."
-  NODE_ENV=production node dist/index.js
+  node production-start.js
 else
   # Run in development mode
   echo "Starting development server..."

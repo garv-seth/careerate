@@ -7,8 +7,8 @@ echo "==================== DEPLOYMENT BUILD PROCESS ===================="
 echo "Installing dependencies..."
 npm install
 
-# Build the application
-echo "Building application..."
-NODE_ENV=production npm run build
+# Build the server only - simpler approach
+echo "Building server application..."
+NODE_ENV=production node build-server.js
 
 echo "=============== BUILD COMPLETE ==============="
