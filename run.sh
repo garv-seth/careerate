@@ -1,17 +1,21 @@
 #!/bin/bash
-set -e
+echo "🚀 Preparing to run Careerate in production mode..."
 
-# Get environment or default to development
-ENV=${1:-development}
-
-echo "Starting server in $ENV mode..."
-
-if [ "$ENV" = "production" ]; then
-  # Run in production mode - use the build output
-  echo "Starting production server..."
-  cd dist && NODE_ENV=production node server-start.js
-else
-  # Run in development mode
-  echo "Starting development server..."
-  NODE_ENV=development tsx server/index.ts
+# Check if any server is running on port 5000
+if lsof -t -i:5000 > /dev/null; then
+  echo "⚠️ Port 5000 is already in use. Stopping existing processes..."
+  kill $(lsof -t -i:5000) || true
+  
+  # Wait a moment for the port to be released
+  sleep 2
+  
+  # Double-check port is free
+  if lsof -t -i:5000 > /dev/null; then
+    echo "❌ Error: Port 5000 is still in use. Could not start server."
+    exit 1
+  fi
 fi
+
+# Start the production server
+echo "🚀 Starting production server..."
+cd dist && NODE_ENV=production node server-start.js
