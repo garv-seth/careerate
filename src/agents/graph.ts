@@ -253,47 +253,17 @@ let sophiaAgent = async () => ({
 });
 
 // This function will be called after OpenAI is initialized
-const initializeAgents = async (tools: Tool[]) => {
+const initializeAgents = () => {
   try {
-    console.log("Creating agents with tools and specialized configurations");
-    
-    // Create base chain for tool usage
-    const baseChain = tools.length > 0 
-      ? new LLMChain({ llm: openai, prompt: new ChatPromptTemplate({ template: "{input}", inputVariables: ["input"] }) })
-      : null;
-
-    // Initialize each agent with appropriate tools and configurations
-    caraAgent = createCaraAgent(openai, caraInitialSystemPrompt, tools.filter(t => 
-      t.name === "database_lookup" || t.name === "perplexity_search"
-    ));
-    
-    mayaAgent = createMayaAgent(openai, mayaInitialSystemPrompt, tools.filter(t => 
-      t.name === "browserbase_scraper" || t.name === "database_lookup"
-    ));
-    
-    ellieAgent = createEllieAgent(openai, ellieInitialSystemPrompt, tools.filter(t => 
-      t.name === "brave_search" || t.name === "firecrawl"
-    ));
-    
-    sophiaAgent = createSophiaAgent(openai, sophiaInitialSystemPrompt, tools.filter(t => 
-      t.name === "database_lookup" || t.name === "perplexity_search"
-    ));
-
-    console.log(`✅ All agents created successfully with ${tools.length} tools`);
-    
-    // Register agent event handlers for activity tracking
-    [caraAgent, mayaAgent, ellieAgent, sophiaAgent].forEach(agent => {
-      if (agent.events) {
-        agent.events.on('activity', (activity: AgentActivity) => {
-          agentEmitter.emit('activity', activity);
-        });
-      }
-    });
-
+    console.log("Creating agents with initialized OpenAI client");
+    caraAgent = createCaraAgent(openai, caraInitialSystemPrompt);
+    mayaAgent = createMayaAgent(openai, mayaInitialSystemPrompt);
+    ellieAgent = createEllieAgent(openai, ellieInitialSystemPrompt);
+    sophiaAgent = createSophiaAgent(openai, sophiaInitialSystemPrompt);
+    console.log("✅ All agents created successfully");
   } catch (error) {
     console.error("❌ Error creating agents:", error);
-    console.log("Details:", error.message);
-    throw error;
+    // Keep existing mock implementations if error
   }
 };
 
@@ -301,53 +271,36 @@ const initializeAgents = async (tools: Tool[]) => {
 const initializeOpenAI = async () => {
   try {
     if (process.env.OPENAI_API_KEY) {
-      console.log("✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4");
-      
-      // Initialize with more capable models and configurations
+      console.log("✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o");
       openai = new ChatOpenAI({
-        modelName: "gpt-4",
-        temperature: 0.2,
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        maxTokens: 4096,
-        streaming: true
+        modelName: "gpt-4o",
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
       });
 
-      // Test the API connection with a more complex prompt
+      // Test the API connection
       console.log("Testing OpenAI API connection...");
       try {
-        const testMessage = await openai.invoke([
-          new SystemMessage("You are a career development AI assistant."),
-          new HumanMessage("Analyze the skills needed for a software engineer in 2024.")
-        ]);
-        
+        const testMessage = await openai.invoke("Test connection");
         const content = typeof testMessage.content === 'string' 
           ? testMessage.content 
           : JSON.stringify(testMessage.content);
-        console.log("✅ OpenAI API test successful! Response:", content.substring(0, 100) + "...");
+        console.log("✅ OpenAI API test successful! Response:", content.substring(0, 50) + "...");
 
-        // Initialize tools and agents with the proper configurations
-        const tools = createTools({
-          BRAVE_API_KEY: process.env.BRAVE_API_KEY,
-          PPLX_API_KEY: process.env.PPLX_API_KEY,
-          BROWSERBASE_API_KEY: process.env.BROWSERBASE_API_KEY,
-          FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY
-        });
-        
-        console.log("Initializing specialized agents with tools...");
-        await initializeAgents(tools);
-        
+        // Initialize agents after successful OpenAI initialization
+        initializeAgents();
       } catch (testError) {
         console.error("❌ Error testing OpenAI API:", testError);
         throw testError;
       }
     } else {
-      console.error("⚠️ OPENAI_API_KEY not provided - agents will have limited functionality");
-      initializeAgents([]); // Initialize with empty tools array
+      console.log("⚠️ OPENAI_API_KEY not provided, using mock implementation");
+      // Keep mock implementation
     }
   } catch (error) {
     console.error("❌ Error initializing OpenAI:", error);
-    console.log("⚠️ Falling back to basic implementation");
-    initializeAgents([]); // Initialize with empty tools array
+    console.log("⚠️ Falling back to mock implementation due to error");
+    // Keep mock implementation
   }
 };
 
@@ -695,60 +648,14 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
   };
 
   try {
-    // Set the current state and initialize tracking
+    // Set the current state for context in agent activities and status updates
     currentAgentState = initialState;
-    const startTime = Date.now();
-    
-    // Update agent status and emit activity
-    const updateAgentStatus = (agent: string, status: string) => {
-      agentEmitter.emit('status_update', { agent, status, userId: initialState.userId });
-      agentEmitter.emit('activity', {
-        agent,
-        action: `Status changed to ${status}`,
-        timestamp: new Date(),
-        userId: initialState.userId
-      });
-    };
 
-    // Execute parallel analysis where possible
-    console.log("Starting enhanced agent workflow with parallel execution");
-    
-    // Cara starts orchestration
-    updateAgentStatus('cara', 'active');
-    const caraResult = await caraAgent(currentAgentState);
-    
-    // Run Maya and Ellie in parallel for efficiency
-    updateAgentStatus('maya', 'active');
-    updateAgentStatus('ellie', 'active');
-    const [mayaResult, ellieResult] = await Promise.all([
-      mayaAgent({ ...currentAgentState, cara: caraResult }),
-      ellieAgent({ ...currentAgentState, cara: caraResult })
-    ]);
-    
-    // Sophia uses results from both Maya and Ellie
-    updateAgentStatus('sophia', 'active');
-    const sophiaResult = await sophiaAgent({
-      ...currentAgentState,
-      cara: caraResult,
-      maya: mayaResult,
-      ellie: ellieResult
-    });
-    
-    // Final synthesis by Cara
-    const result = await caraAgent({
-      ...currentAgentState,
-      maya: mayaResult,
-      ellie: ellieResult,
-      sophia: sophiaResult
-    });
-    
-    // Mark all agents as complete
-    ['cara', 'maya', 'ellie', 'sophia'].forEach(agent => {
-      updateAgentStatus(agent, 'complete');
-    });
-    
-    console.log(`Workflow completed in ${((Date.now() - startTime) / 1000).toFixed(2)}s`);
-    
+    // Run our custom agent workflow executor
+    // This will execute all agents in sequence: cara -> maya -> ellie -> sophia -> synthesize
+    console.log("Starting agent workflow for career analysis");
+    const result = await executeAgentWorkflow(initialState);
+
     // Store vectors in Pinecone for future retrieval
     try {
       console.log(`Storing vectors for user ${userId} in Pinecone...`);
