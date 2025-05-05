@@ -1,2 +1,2 @@
-run = "node direct-start.js"
-build = "npm install"
+run = "cd dist && node server-start.js"
+build = "./build.sh"

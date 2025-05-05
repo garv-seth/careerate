@@ -7,9 +7,9 @@ ENV=${1:-development}
 echo "Starting server in $ENV mode..."
 
 if [ "$ENV" = "production" ]; then
-  # Run in production mode - use the direct start file
+  # Run in production mode - use the build output
   echo "Starting production server..."
-  NODE_ENV=production node direct-start.js
+  cd dist && NODE_ENV=production node server-start.js
 else
   # Run in development mode
   echo "Starting development server..."
