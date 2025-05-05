@@ -325,11 +325,22 @@ const caraNode = async (state: AgentState): Promise<AgentState> => {
 
   updateAgentStatus('cara', 'thinking');
   console.log("Executing Cara agent...");
-  // Execute the Cara agent
-  const input = state.input || '';
-  const result = await caraAgent(input);
-  console.log("Cara agent execution complete");
-  updateAgentStatus('cara', 'complete');
+  // Execute Cara agent with memory and collaboration
+console.log("Starting Cara agent with collaboration");
+const input = state.input || '';
+updateAgentStatus('cara', 'active');
+
+// Initialize analysis
+const result = await caraAgent(input);
+
+// Process message queue and coordinate with other agents
+const messages = await memoryManager.getMessages('cara');
+for (const msg of messages) {
+  await caraAgent.receiveMessage(msg.from, msg.message);
+}
+
+console.log("Cara agent execution complete");
+updateAgentStatus('cara', 'complete');
 
   // Return updated state
   return {

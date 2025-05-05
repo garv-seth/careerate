@@ -20,16 +20,12 @@ if (process.env.REPLIT_DOMAINS) {
   allowedDomains = process.env.REPLIT_DOMAINS.split(",");
 }
 
-// Always add gocareerate.com and www.gocareerate.com for production
-allowedDomains.push('gocareerate.com', 'www.gocareerate.com');
-
-// Add other production domains if specified
+// Add production domains if specified
 if (process.env.PRODUCTION_DOMAINS) {
   const productionDomains = process.env.PRODUCTION_DOMAINS.split(',');
   allowedDomains.push(...productionDomains);
+  console.log(`Adding production domains: ${productionDomains.join(', ')}`);
 }
-
-console.log(`Configured auth for domains: ${allowedDomains.join(', ')}`);
 
 const getOidcConfig = memoize(
   async () => {
@@ -50,26 +46,17 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
-  
-  // Determine appropriate cookie settings based on hostname
-  const isDevelopment = process.env.NODE_ENV !== "production";
-  
-  // In production, make sure we have a real session secret
-  if (!isDevelopment && !process.env.SESSION_SECRET) {
-    console.warn("WARNING: SESSION_SECRET not set in production environment!");
-  }
-  
   return session({
-    secret: process.env.SESSION_SECRET || "developmentsecret", // Should be set in production
+    secret: process.env.SESSION_SECRET || "developmentsecret", // You should set SESSION_SECRET in production
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: !isDevelopment, // Secure in production only
+      secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
       sameSite: "lax",
-      // Domain is determined at runtime based on request hostname
+      domain: process.env.NODE_ENV === "production" ? ".gocareerate.com" : undefined,
     },
   });
 }
@@ -85,21 +72,14 @@ function updateUserSession(
 }
 
 async function upsertUser(claims: any) {
-  // Create a properly formatted user object that matches our schema
   return await storage.upsertUser({
     id: claims["sub"],
     username: claims["username"],
-    email: claims["email"] || null,
-    // Set both the separate and combined name fields
-    firstName: claims["first_name"] || null,
-    lastName: claims["last_name"] || null,
-    // Use full name if available, otherwise construct from parts or use username
-    name: claims["name"] || 
-          (claims["first_name"] && claims["last_name"] ? 
-           `${claims["first_name"]} ${claims["last_name"]}` : 
-           claims["username"]),
-    bio: claims["bio"] || null,
-    profileImageUrl: claims["profile_image_url"] || null,
+    email: claims["email"],
+    firstName: claims["first_name"],
+    lastName: claims["last_name"],
+    bio: claims["bio"],
+    profileImageUrl: claims["profile_image_url"],
   });
 }
 

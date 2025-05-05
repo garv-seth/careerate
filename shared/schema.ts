@@ -29,10 +29,8 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   username: varchar("username").unique().notNull(),
-  password: varchar("password"), // For local auth; in production should be hashed
+  password: varchar("password").notNull(), // For local auth; in production should be hashed
   email: varchar("email").unique(),
-  firstName: varchar("first_name"), // First name from Replit OAuth
-  lastName: varchar("last_name"), // Last name from Replit OAuth
   name: varchar("name"), // Combined name field
   bio: text("bio"),
   profileImageUrl: varchar("profile_image_url"),
@@ -65,19 +63,7 @@ export const vectors = pgTable("vectors", {
 });
 
 // Generate schemas for insert operations
-export type UpsertUser = {
-  id: string;
-  username: string;
-  password?: string;
-  email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  name?: string | null;
-  bio?: string | null;
-  profileImageUrl?: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
 export const insertProfileSchema = createInsertSchema(profiles).pick({
