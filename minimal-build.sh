@@ -1,46 +1,56 @@
 #!/bin/bash
 set -e
 
-echo "======== MINIMAL DEPLOYMENT BUILD ========"
+echo "======== SUPER MINIMAL DEPLOYMENT BUILD ========"
 
 # Create dist directory if it doesn't exist
 mkdir -p dist
 
-# Copy server files directly without compiling
-echo "Copying server files..."
+# Just copy the entire source directory for deployment
+echo "Copying source files..."
 cp -r server dist/
 cp -r shared dist/
-
-# Copy package files for dependencies
-echo "Copying package.json..."
+cp -r client dist/
 cp package.json dist/
 
-# Modify package.json for production compatibility
-echo "Updating package.json for production..."
-if [ -f dist/package.json ]; then
-  # Create a CommonJS compatible package.json
-  sed -i 's/"type": "module"/"type": "commonjs"/g' dist/package.json
-  echo "  - Changed module type to commonjs"
-fi
-
-# Create a minimal index.js entry point (now as CommonJS)
+# Create a simple starter script
 echo "Creating entry point..."
-cat > dist/index.js << 'EOL'
-// Minimal entry point for production (CommonJS)
-console.log("Starting server in production mode...");
+cat > dist/server-start.js << 'EOL'
+// Simple entry point for deployment
+console.log("Starting production server...");
 process.env.NODE_ENV = "production";
 
-// Use dynamic import for ESM modules
-(async () => {
-  try {
-    // Use file URL for importing ESM modules
-    const { default: serverModule } = await import('./server/index.js');
-    console.log("Server started successfully!");
-  } catch (error) {
+// Use dynamic import to start the server
+import('./server/index.js')
+  .then(() => console.log("Server started successfully!"))
+  .catch(error => {
     console.error("Failed to start server:", error);
     process.exit(1);
-  }
-})();
+  });
 EOL
 
-echo "Minimal build completed"
+# Create a minimal package.json specifically for running the production server
+cat > dist/package.json << 'EOL'
+{
+  "name": "careerate-server",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server-start.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "@neondatabase/serverless": "^0.10.4",
+    "drizzle-orm": "^0.39.1",
+    "openai": "^4.96.2",
+    "connect-pg-simple": "^10.0.0",
+    "express-session": "^1.18.1",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.2",
+    "zod": "^3.24.2"
+  }
+}
+EOL
+
+echo "Super minimal build completed!"
