@@ -167,6 +167,18 @@ await new Promise((resolve, reject) => {
   });
 });
 
+// Copy Vite config file
+console.log('📋 Copying Vite config file...');
+try {
+  await fs.copyFile(
+    path.join(__dirname, 'vite.config.ts'), 
+    path.join(__dirname, 'dist', 'vite.config.js')
+  );
+  console.log('✅ Vite config file copied successfully');
+} catch (err) {
+  console.error('❌ Error copying Vite config file:', err);
+}
+
 // Step 3: Create a minimal public directory with index.html
 console.log('📝 Creating minimal client files...');
 const indexHtml = `<!DOCTYPE html>
