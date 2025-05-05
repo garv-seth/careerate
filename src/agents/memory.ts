@@ -12,8 +12,7 @@ export class MemoryManager {
     this.memories = new Map();
     this.messageQueue = new Map();
     this.pinecone = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY || '',
-      environment: process.env.PINECONE_ENVIRONMENT || "us-east1-gcp"
+      apiKey: process.env.PINECONE_API_KEY || ''
     });
     this.embeddings = new OpenAIEmbeddings();
   }
