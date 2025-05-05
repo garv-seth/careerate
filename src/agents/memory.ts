@@ -1,28 +1,21 @@
 
-import { PineconeClient } from "@pinecone-database/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 import { OpenAIEmbeddings } from "@langchain/openai";
 
 export class MemoryManager {
   private memories: Map<string, Map<string, any>>;
-  private pinecone: PineconeClient;
+  private pinecone: Pinecone;
   private embeddings: OpenAIEmbeddings;
   private messageQueue: Map<string, Array<{from: string, message: string}>>;
 
   constructor() {
     this.memories = new Map();
     this.messageQueue = new Map();
-    this.pinecone = new PineconeClient();
+    this.pinecone = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY || '',
+      environment: process.env.PINECONE_ENVIRONMENT || "us-east1-gcp"
+    });
     this.embeddings = new OpenAIEmbeddings();
-    this.initialize();
-  }
-
-  private async initialize() {
-    if (process.env.PINECONE_API_KEY) {
-      await this.pinecone.init({
-        apiKey: process.env.PINECONE_API_KEY,
-        environment: process.env.PINECONE_ENVIRONMENT || "us-east1-gcp"
-      });
-    }
   }
 
   getAgentMemory(agentName: string) {
