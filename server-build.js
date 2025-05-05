@@ -227,7 +227,7 @@ await fs.writeFile(path.join(__dirname, 'dist', 'server-start.js'), serverStarte
 // Step 5: Fix ESM module imports to include .js extension
 console.log('🔄 Fixing ESM module imports...');
 
-// Function to add .js extensions to local imports
+// Function to add .js extensions to local imports and fix module aliases
 async function fixImports(directory) {
   const files = await fs.readdir(directory);
   
@@ -240,12 +240,24 @@ async function fixImports(directory) {
     } else if (file.endsWith('.js')) {
       let content = await fs.readFile(filePath, 'utf-8');
       
+      // Fix @shared/schema imports
+      content = content.replace(
+        /from\s+["']@shared\/schema["']/g,
+        'from "../shared/schema.js"'
+      );
+      
+      // Fix @shared/* imports
+      content = content.replace(
+        /from\s+["']@shared\/([^"']+)["']/g,
+        'from "../shared/$1.js"'
+      );
+      
       // Fix local imports by adding .js extension
       content = content.replace(
         /from\s+["']\.\.?(\/[^"']+)?["']/g, 
         (match) => {
-          // Don't add .js if it's already there or if it's a node_module import
-          if (match.includes('.js') || !match.includes('./') && !match.includes('../')) {
+          // Don't add .js if it's already there
+          if (match.includes('.js')) {
             return match;
           }
           
