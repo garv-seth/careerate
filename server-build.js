@@ -219,6 +219,11 @@ const serverStarterContent = `// Production server starter
 console.log("Starting Careerate production server...");
 process.env.NODE_ENV = "production";
 
+// Use port 8000 for production by default to avoid conflicts
+if (!process.env.PORT) {
+  process.env.PORT = "8000";
+}
+
 // Import and start the server
 import('./server/index.js')
   .then(() => console.log("✅ Server started successfully!"))
