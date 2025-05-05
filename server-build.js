@@ -23,6 +23,9 @@ try {
   await fs.mkdir(path.join(__dirname, 'dist', 'server'), { recursive: true });
   await fs.mkdir(path.join(__dirname, 'dist', 'shared'), { recursive: true });
   await fs.mkdir(path.join(__dirname, 'dist', 'public'), { recursive: true });
+  await fs.mkdir(path.join(__dirname, 'dist', 'src'), { recursive: true });
+  await fs.mkdir(path.join(__dirname, 'dist', 'src', 'agents'), { recursive: true });
+  await fs.mkdir(path.join(__dirname, 'dist', 'src', 'simplified'), { recursive: true });
 } catch (err) {
   console.error('Error cleaning dist directory:', err);
 }
@@ -117,6 +120,33 @@ await new Promise((resolve, reject) => {
   });
 });
 
+// Agent files
+console.log('🔄 Transpiling agent files...');
+await new Promise((resolve, reject) => {
+  const tscProcess = spawn('npx', [
+    'esbuild', 
+    'src/**/*.ts', 
+    '--outdir=dist/src', 
+    '--format=esm',
+    '--platform=node',
+    '--target=node20',
+    '--sourcemap'
+  ], {
+    stdio: 'inherit',
+    shell: true
+  });
+  
+  tscProcess.on('close', (code) => {
+    if (code === 0) {
+      console.log('✅ Agent files transpiled successfully');
+      resolve();
+    } else {
+      console.error(`❌ Agent files transpilation failed with code ${code}`);
+      reject(new Error(`Agent files transpilation failed with code ${code}`));
+    }
+  });
+});
+
 // Step 2: Copy JavaScript files that don't need transpilation
 console.log('📋 Copying JavaScript files...');
 await new Promise((resolve, reject) => {
@@ -182,7 +212,46 @@ import('./server/index.js')
 
 await fs.writeFile(path.join(__dirname, 'dist', 'server-start.js'), serverStarterContent);
 
-// Step 5: Copy package.json (with modifications for production)
+// Step 5: Fix ESM module imports to include .js extension
+console.log('🔄 Fixing ESM module imports...');
+
+// Function to add .js extensions to local imports
+async function fixImports(directory) {
+  const files = await fs.readdir(directory);
+  
+  for (const file of files) {
+    const filePath = path.join(directory, file);
+    const stats = await fs.stat(filePath);
+    
+    if (stats.isDirectory()) {
+      await fixImports(filePath);
+    } else if (file.endsWith('.js')) {
+      let content = await fs.readFile(filePath, 'utf-8');
+      
+      // Fix local imports by adding .js extension
+      content = content.replace(
+        /from\s+["']\.\.?(\/[^"']+)?["']/g, 
+        (match) => {
+          // Don't add .js if it's already there or if it's a node_module import
+          if (match.includes('.js') || !match.includes('./') && !match.includes('../')) {
+            return match;
+          }
+          
+          // Replace the closing quote with .js + quote
+          return match.replace(/["']$/, '.js$&');
+        }
+      );
+      
+      await fs.writeFile(filePath, content);
+    }
+  }
+}
+
+await fixImports(path.join(__dirname, 'dist', 'server'));
+await fixImports(path.join(__dirname, 'dist', 'shared'));
+await fixImports(path.join(__dirname, 'dist', 'src'));
+
+// Step 6: Copy package.json (with modifications for production)
 console.log('📋 Copying package.json for production...');
 const packageJson = JSON.parse(await fs.readFile(path.join(__dirname, 'package.json'), 'utf-8'));
 
