@@ -20,12 +20,16 @@ if (process.env.REPLIT_DOMAINS) {
   allowedDomains = process.env.REPLIT_DOMAINS.split(",");
 }
 
-// Add production domains if specified
+// Always add gocareerate.com and www.gocareerate.com for production
+allowedDomains.push('gocareerate.com', 'www.gocareerate.com');
+
+// Add other production domains if specified
 if (process.env.PRODUCTION_DOMAINS) {
   const productionDomains = process.env.PRODUCTION_DOMAINS.split(',');
   allowedDomains.push(...productionDomains);
-  console.log(`Adding production domains: ${productionDomains.join(', ')}`);
 }
+
+console.log(`Configured auth for domains: ${allowedDomains.join(', ')}`);
 
 const getOidcConfig = memoize(
   async () => {
@@ -46,6 +50,9 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  // Determine appropriate cookie settings based on hostname
+  const isDevelopment = process.env.NODE_ENV !== "production";
+  
   return session({
     secret: process.env.SESSION_SECRET || "developmentsecret", // You should set SESSION_SECRET in production
     store: sessionStore,
@@ -53,10 +60,10 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: !isDevelopment, // Secure in production only
       maxAge: sessionTtl,
       sameSite: "lax",
-      domain: process.env.NODE_ENV === "production" ? ".gocareerate.com" : undefined,
+      // We'll set domain at runtime based on request hostname
     },
   });
 }
@@ -72,14 +79,21 @@ function updateUserSession(
 }
 
 async function upsertUser(claims: any) {
+  // Create a properly formatted user object that matches our schema
   return await storage.upsertUser({
     id: claims["sub"],
     username: claims["username"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    bio: claims["bio"],
-    profileImageUrl: claims["profile_image_url"],
+    email: claims["email"] || null,
+    // Set both the separate and combined name fields
+    firstName: claims["first_name"] || null,
+    lastName: claims["last_name"] || null,
+    // Use full name if available, otherwise construct from parts or use username
+    name: claims["name"] || 
+          (claims["first_name"] && claims["last_name"] ? 
+           `${claims["first_name"]} ${claims["last_name"]}` : 
+           claims["username"]),
+    bio: claims["bio"] || null,
+    profileImageUrl: claims["profile_image_url"] || null,
   });
 }
 
