@@ -1,9 +1,10 @@
-modules = ["nodejs-20", "web", "postgresql-16", "dotnet-7.0", "angular-node-20", "bun-1.2", "nodejs-with-prybar-18", "python-with-prybar-3.10", "pyright-extended", "pyright", "vue-node-20", "typescript-language-server", "python-3.9", "python-base-3.13", "nodejs-23", "nodejs-22", "nix", "docker"]
+modules = ["nodejs-20", "web", "postgresql-16", "dotnet-7.0", "angular-node-20", "bun-1.2", "nodejs-with-prybar-18", "pyright-extended", "pyright", "vue-node-20", "typescript-language-server", "nodejs-23", "nodejs-22", "nix", "docker", "python-3.11"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["gnumake", "gcc", "postgresql", "python3"]
 
 [deployment]
 deploymentTarget = "autoscale"

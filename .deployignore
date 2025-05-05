@@ -13,3 +13,8 @@ tmp/
 *.temp
 *.tmp
 README.md
+custom-*.sh
+.env
+.env.*
+!.env.example
+!.env.production
