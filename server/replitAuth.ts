@@ -50,11 +50,17 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  
   // Determine appropriate cookie settings based on hostname
   const isDevelopment = process.env.NODE_ENV !== "production";
   
+  // In production, make sure we have a real session secret
+  if (!isDevelopment && !process.env.SESSION_SECRET) {
+    console.warn("WARNING: SESSION_SECRET not set in production environment!");
+  }
+  
   return session({
-    secret: process.env.SESSION_SECRET || "developmentsecret", // You should set SESSION_SECRET in production
+    secret: process.env.SESSION_SECRET || "developmentsecret", // Should be set in production
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -63,7 +69,7 @@ export function getSession() {
       secure: !isDevelopment, // Secure in production only
       maxAge: sessionTtl,
       sameSite: "lax",
-      // We'll set domain at runtime based on request hostname
+      // Domain is determined at runtime based on request hostname
     },
   });
 }
