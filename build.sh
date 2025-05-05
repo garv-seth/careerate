@@ -3,8 +3,15 @@ set -e
 
 echo "==================== DEPLOYMENT BUILD PROCESS ===================="
 
-# Installing dependencies and preparing deployment
-echo "Installing dependencies and preparing deployment..."
+# Make build script executable
+chmod +x build-script.js
+
+# Installing dependencies
+echo "Installing dependencies..."
 npm install
+
+# Run the build script
+echo "Running build script..."
+node build-script.js
 
 echo "=============== BUILD COMPLETE ==============="
