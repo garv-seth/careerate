@@ -203,7 +203,13 @@ const indexHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// Create index.html in both /dist/public and /dist/server/public
 await fs.writeFile(path.join(__dirname, 'dist', 'public', 'index.html'), indexHtml);
+
+// Create server/public directory and index.html
+// This is needed because vite.js looks for server/public in production mode
+await fs.mkdir(path.join(__dirname, 'dist', 'server', 'public'), { recursive: true });
+await fs.writeFile(path.join(__dirname, 'dist', 'server', 'public', 'index.html'), indexHtml);
 
 // Step 4: Create production server starter file
 console.log('📝 Creating production server starter...');
