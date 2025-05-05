@@ -43,11 +43,18 @@ passport.deserializeUser(async (id: string, done) => {
   }
 });
 
-// Register routes
+// Register routes (with both /api/auth/* and /api/* paths for compatibility)
+// Login route
 router.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
   res.json(req.user);
 });
 
+// Also add the /api/login route for the client
+router.post("/api/login", passport.authenticate("local"), (req, res) => {
+  res.json(req.user);
+});
+
+// Logout route
 router.post("/api/auth/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) {
@@ -57,6 +64,17 @@ router.post("/api/auth/logout", (req, res, next) => {
   });
 });
 
+// Also add the /api/logout route for the client
+router.post("/api/logout", (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.sendStatus(200);
+  });
+});
+
+// Register route
 router.post("/api/auth/register", async (req, res, next) => {
   try {
     const { username, password, name, email } = req.body;
@@ -88,7 +106,48 @@ router.post("/api/auth/register", async (req, res, next) => {
   }
 });
 
+// Also add the /api/register route for the client
+router.post("/api/register", async (req, res, next) => {
+  try {
+    const { username, password, name, email } = req.body;
+    
+    // Check if username already exists
+    const existingUser = await storage.getUserByUsername(username);
+    if (existingUser) {
+      return res.status(400).json({ message: "Username already exists" });
+    }
+    
+    // Create new user - ensure we provide all required fields including a generated ID
+    const newUser = await storage.createUser({
+      id: `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`, // Generate a unique ID
+      username,
+      password, // In a real app, hash this password
+      name: name || username,
+      email: email || null,
+    });
+    
+    // Log in the new user
+    req.login(newUser, (err) => {
+      if (err) {
+        return next(err);
+      }
+      return res.status(201).json(newUser);
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// User info route
 router.get("/api/auth/user", (req, res) => {
+  if (req.isAuthenticated()) {
+    return res.json(req.user);
+  }
+  return res.status(401).json({ message: "Unauthorized" });
+});
+
+// Also add the /api/user route for the client
+router.get("/api/user", (req, res) => {
   if (req.isAuthenticated()) {
     return res.json(req.user);
   }

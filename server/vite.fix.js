@@ -1,3 +1,4 @@
+
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -40,7 +41,11 @@ export async function setupVite(app, server) {
         process.exit(1);
       },
     },
-    server: serverOptions,
+    server: {
+      ...serverOptions,
+      host: '0.0.0.0',
+      port: process.env.PORT || 5000
+    },
     appType: "custom",
   });
 
@@ -56,7 +61,6 @@ export async function setupVite(app, server) {
         "index.html",
       );
 
-      // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
@@ -82,7 +86,6 @@ export function serveStatic(app) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
