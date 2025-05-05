@@ -129,7 +129,8 @@ export async function setupAuth(app: Express) {
       console.warn(`Login attempt from non-configured domain: ${domain}`);
       return res.status(400).json({ 
         error: "Domain not configured for authentication",
-        configuredDomains: allowedDomains
+        configuredDomains: allowedDomains,
+        currentDomain: domain
       });
     }
     
