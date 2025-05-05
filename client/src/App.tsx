@@ -13,7 +13,6 @@ import Dashboard from "@/pages/dashboard";
 import AgentTestPage from "@/pages/agent-test.new";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
-import AuthTestPage from "@/pages/auth-test";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 
@@ -21,9 +20,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      <Route path="/auth-test" component={AuthTestPage} />
       
-      {/* Protected Routes */}
+      {/* Protected Routes - Using Replit Auth */}
       <Route path="/dashboard">
         <ProtectedRoute>
           <Dashboard />
