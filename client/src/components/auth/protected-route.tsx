@@ -17,6 +17,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (!user) {
     // Redirect to homepage where the login button is displayed
+    // Redirect to home to show login button
     setLocation("/");
     return null;
   }
