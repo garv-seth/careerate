@@ -64,8 +64,26 @@ export async function setupReplitAuth(app: Express) {
 }
 
 export const isAuthenticated = (req: any, res: Response, next: NextFunction) => {
+  // First check Passport authentication
   if (req.isAuthenticated()) {
     return next();
   }
+  
+  // For development, also check our custom session authentication
+  if (process.env.NODE_ENV === "development" && req.session && (req.session as any).auth?.userId) {
+    // Set req.user for API consumption
+    req.user = {
+      id: (req.session as any).auth.userId,
+      ...(req.session as any).auth.user,
+      // Add claims for compatibility with the Replit Auth approach
+      claims: {
+        sub: (req.session as any).auth.userId,
+        name: (req.session as any).auth.user.name,
+        email: (req.session as any).auth.user.email,
+      }
+    };
+    return next();
+  }
+  
   return res.status(401).json({ message: "Unauthorized" });
 };

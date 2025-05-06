@@ -6,8 +6,9 @@ import { Loader2 } from "lucide-react";
 export default function AuthTestPage() {
   const { user, isLoading, login, logout } = useAuth();
   const { openOnboarding } = useOnboarding();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
-  const [authTestUser, setAuthTestUser] = useState({
+  const [authTestUser] = useState({
     id: "test_user_123",
     username: "testuser",
     name: "Test User",
@@ -36,10 +37,15 @@ export default function AuthTestPage() {
     if (!user && process.env.NODE_ENV === "development") {
       createTestUser();
     }
-  }, []);
+  }, [authTestUser, user]);
   
-  const handleLogin = () => {
-    login();
+  const handleLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      await login();
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
   
   const handleLogout = () => {
@@ -120,9 +126,17 @@ export default function AuthTestPage() {
           <div className="flex space-x-2">
             <button
               onClick={handleLogin}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={isLoggingIn}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center"
             >
-              Simulate Login with Test User
+              {isLoggingIn ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Simulate Login with Test User"
+              )}
             </button>
             
             <a 
