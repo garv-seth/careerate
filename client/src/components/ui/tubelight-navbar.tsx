@@ -225,12 +225,12 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     <a 
                       href="/api/login" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-4 py-2"
+                      className="px-4 py-2 w-full"
                     >
                       <div
                         className={cn(
-                          "flex items-center gap-3 px-3 py-1.5 text-sm font-medium transition-colors relative w-full rounded-md",
-                          "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-[2px]"
+                          "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors relative w-full rounded-md",
+                          "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-sm"
                         )}
                       >
                         <LogIn size={16} strokeWidth={2.5} />
