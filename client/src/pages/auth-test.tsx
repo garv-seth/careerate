@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { useOnboarding } from "../hooks/use-onboarding";
 import { Loader2 } from "lucide-react";
@@ -6,49 +6,15 @@ import { Loader2 } from "lucide-react";
 export default function AuthTestPage() {
   const { user, isLoading, login, logout } = useAuth();
   const { openOnboarding } = useOnboarding();
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   
-  const [authTestUser] = useState({
-    id: "test_user_123",
-    username: "testuser",
-    name: "Test User",
-    email: "test@example.com",
-    password: "password123"
-  });
-  
-  // Auto-create a test user for development purposes
-  useEffect(() => {
-    const createTestUser = async () => {
-      try {
-        const response = await fetch("/api/test/create-user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(authTestUser)
-        });
-        const data = await response.json();
-        console.log("Test user created:", data);
-      } catch (error) {
-        console.error("Failed to create test user:", error);
-      }
-    };
-    
-    if (!user && process.env.NODE_ENV === "development") {
-      createTestUser();
-    }
-  }, [authTestUser, user]);
-  
-  const handleLogin = async () => {
-    setIsLoggingIn(true);
-    try {
-      await login();
-    } finally {
-      setIsLoggingIn(false);
-    }
+  const handleLogin = () => {
+    setIsNavigating(true);
+    login();
   };
   
   const handleLogout = () => {
+    setIsNavigating(true);
     logout();
   };
   
@@ -116,34 +82,27 @@ export default function AuthTestPage() {
           
           <div className="mb-4">
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-              <h3 className="font-medium text-yellow-800">Test User Details</h3>
-              <pre className="bg-yellow-100 p-2 rounded mt-2 text-xs">
-                {JSON.stringify(authTestUser, null, 2)}
-              </pre>
+              <h3 className="font-medium text-yellow-800">Authentication Information</h3>
+              <p className="text-sm mt-2">
+                This application uses Replit's authentication system. You'll be redirected to Replit to sign in securely.
+              </p>
             </div>
           </div>
           
           <div className="flex space-x-2">
-            <button
-              onClick={handleLogin}
-              disabled={isLoggingIn}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center"
-            >
-              {isLoggingIn ? (
-                <>
-                  <Loader2 size={16} className="mr-2 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                "Simulate Login with Test User"
-              )}
-            </button>
-            
             <a 
               href="/api/login"
-              className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-center"
+              className={`flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ${isNavigating ? 'opacity-70' : ''} text-center flex items-center justify-center`}
+              onClick={() => setIsNavigating(true)}
             >
-              Replit Auth Login
+              {isNavigating ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Redirecting...
+                </>
+              ) : (
+                "Sign in with Replit"
+              )}
             </a>
           </div>
         </div>
