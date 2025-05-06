@@ -8,6 +8,13 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
+// Extend Express Session interface
+declare module 'express-session' {
+  interface SessionData {
+    returnTo?: string;
+  }
+}
+
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
 }
@@ -122,6 +129,11 @@ export async function setupReplitAuth(app: Express) {
     });
 
     app.get("/api/login", (req, res, next) => {
+      // Save returnTo URL in session if provided
+      if (req.query.returnTo) {
+        req.session.returnTo = req.query.returnTo as string;
+      }
+      
       passport.authenticate(`replitauth:${req.hostname}`, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
@@ -169,8 +181,18 @@ export async function setupReplitAuth(app: Express) {
     passport.deserializeUser((obj: any, cb) => cb(null, obj));
     
     app.get("/api/login", (req, res) => {
+      // Save returnTo URL in session if provided
+      if (req.query.returnTo) {
+        req.session.returnTo = req.query.returnTo as string;
+      }
+      
       if (req.isAuthenticated()) {
-        return res.redirect('/dashboard');
+        // Get any redirectUrl from returnTo or default to dashboard
+        const returnTo = req.session.returnTo || '/dashboard';
+        if (req.session.returnTo) {
+          delete req.session.returnTo;
+        }
+        return res.redirect(returnTo);
       }
       
       const demoUser = {
@@ -191,14 +213,22 @@ export async function setupReplitAuth(app: Express) {
           return res.status(500).json({ message: "Auth error" });
         }
         console.log("Demo user logged in successfully");
-        return res.redirect('/dashboard');
+        
+        // Get any redirectUrl from returnTo or default to dashboard
+        const returnTo = req.session.returnTo || '/dashboard';
+        if (req.session.returnTo) {
+          delete req.session.returnTo;
+        }
+        return res.redirect(returnTo);
       });
     });
     
     app.get("/api/callback", (req, res) => {
-      // Get any redirectUrl from returnTo or default to dashboard
+      // Get any redirectUrl from session or default to dashboard
       const returnTo = req.session.returnTo || '/dashboard';
-      delete req.session.returnTo;
+      if (req.session.returnTo) {
+        delete req.session.returnTo;
+      }
       res.redirect(returnTo);
     });
     
