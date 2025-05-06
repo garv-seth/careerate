@@ -7,6 +7,7 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
+  isAuthenticated: boolean;
   login: () => void;
   logout: () => void;
 };
@@ -49,12 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/api/logout";
   };
 
+  // Determine if user is authenticated based on user object
+  const isAuthenticated = !!user;
+
   return (
     <AuthContext.Provider
       value={{
         user: user || null,
         isLoading,
         error,
+        isAuthenticated,
         login,
         logout
       }}
