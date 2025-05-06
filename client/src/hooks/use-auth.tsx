@@ -39,50 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Login can be handled by redirecting to /api/login or by using a development method
-  const login = async () => {
-    if (process.env.NODE_ENV === "development") {
-      // For development, use the test login endpoint
-      try {
-        // Use the test endpoint for development with a fixed test user
-        const testUser = {
-          id: "test_user_123",
-          username: "testuser",
-          name: "Test User",
-          email: "test@example.com"
-        };
-        
-        const res = await fetch("/api/test/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(testUser)
-        });
-        
-        if (!res.ok) {
-          throw new Error("Test login failed");
-        }
-        
-        // Refetch user data after login
-        refetch();
-        
-        toast({
-          title: "Development login",
-          description: "You're now logged in with a test account.",
-        });
-      } catch (error) {
-        console.error("Development login error:", error);
-        toast({
-          title: "Login failed",
-          description: "Could not log in with test account. Try the Replit Auth link instead.",
-          variant: "destructive",
-        });
-      }
-    } else {
-      // In production, always use Replit Auth
-      window.location.href = "/api/login";
-    }
+  // Login is handled by redirecting to /api/login
+  const login = () => {
+    window.location.href = "/api/login";
   };
 
   // Logout is handled by redirecting to /api/logout
