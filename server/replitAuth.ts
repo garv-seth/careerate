@@ -150,16 +150,26 @@ export async function setupAuth(app: Express) {
   app.get("/api/callback", (req, res, next) => {
     const domain = req.hostname;
     const strategyName = `replitauth:${domain}`;
+    const protocol = process.env.NODE_ENV === "production" ? "https" : "https";
     
     if (!allowedDomains.includes(domain)) {
-      return res.status(400).json({ 
-        error: "Domain not configured for authentication"
-      });
+      allowedDomains.push(domain);
+      const strategy = new Strategy(
+        {
+          name: strategyName,
+          config,
+          scope: "openid email profile offline_access",
+          callbackURL: `${protocol}://${domain}/api/callback`,
+        },
+        verify,
+      );
+      passport.use(strategy);
     }
     
     passport.authenticate(strategyName, {
-      successReturnToOrRedirect: "/",
+      successRedirect: "/",
       failureRedirect: "/api/login",
+      failureMessage: true
     })(req, res, next);
   });
 
