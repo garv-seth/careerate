@@ -142,13 +142,12 @@ export function TubelightNavbar({ className }: { className?: string }) {
           // Only show login button when not authenticated
           <a href="/api/login">
             <Button
-              variant="outline"
               className={cn(
-                "cursor-pointer text-sm font-semibold px-6 py-2 rounded-md transition-colors",
-                "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-lg"
+                "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors relative rounded-md",
+                "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-sm"
               )}
             >
-              <LogIn className="w-4 h-4 mr-2" /> Login
+              <LogIn size={16} strokeWidth={2.5} /> Login
             </Button>
           </a>
         )}
@@ -230,8 +229,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     >
                       <div
                         className={cn(
-                          "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors relative w-full rounded-md",
-                          "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-sm"
+                          "flex items-center gap-3 px-3 py-1.5 text-sm font-medium transition-colors relative w-full rounded-md",
+                          "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-[2px]"
                         )}
                       >
                         <LogIn size={16} strokeWidth={2.5} />
