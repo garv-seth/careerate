@@ -140,15 +140,16 @@ export function TubelightNavbar({ className }: { className?: string }) {
           </>
         ) : (
           // Only show login button when not authenticated
-          <Button
-            onClick={() => window.location.href = "/api/login"}
-            className={cn(
-              "cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
-              "text-foreground/80 hover:text-foreground bg-transparent hover:bg-white/20 border border-white/20"
-            )}
-          >
-            <LogIn className="w-4 h-4 mr-2" /> Login
-          </Button>
+          <a href="/api/login">
+            <Button
+              className={cn(
+                "cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
+                "text-foreground/80 hover:text-foreground bg-transparent hover:bg-white/20 border border-white/20"
+              )}
+            >
+              <LogIn className="w-4 h-4 mr-2" /> Login
+            </Button>
+          </a>
         )}
       </div>
 
@@ -221,19 +222,21 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     </>
                   ) : (
                     // Only show login when not authenticated
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        window.location.href = "/api/login";
-                      }}
-                      className={cn(
-                        "flex items-center gap-3 mx-4 my-2 px-4 py-2 text-sm font-medium transition-colors relative w-[calc(100%-2rem)] text-center justify-center rounded-lg",
-                        "text-foreground/80 hover:text-foreground bg-transparent hover:bg-white/20 border border-white/20"
-                      )}
+                    <a 
+                      href="/api/login" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-[calc(100%-2rem)] mx-4 my-2"
                     >
-                      <LogIn size={16} strokeWidth={2.5} />
-                      <span>Login</span>
-                    </button>
+                      <button
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors relative w-full text-center justify-center rounded-lg",
+                          "text-foreground/80 hover:text-foreground bg-transparent hover:bg-white/20 border border-white/20"
+                        )}
+                      >
+                        <LogIn size={16} strokeWidth={2.5} />
+                        <span>Login</span>
+                      </button>
+                    </a>
                   )}
                 </div>
               </motion.div>
