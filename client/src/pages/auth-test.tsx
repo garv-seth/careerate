@@ -8,12 +8,12 @@ export default function AuthTestPage() {
   const { openOnboarding } = useOnboarding();
   const [isNavigating, setIsNavigating] = useState(false);
   
-  const handleLogin = () => {
+  const handleLoginClick = () => {
     setIsNavigating(true);
     login();
   };
   
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
     setIsNavigating(true);
     logout();
   };
@@ -66,7 +66,7 @@ export default function AuthTestPage() {
           
           <div className="mt-6 pt-4 border-t">
             <button 
-              onClick={handleLogout} 
+              onClick={handleLogoutClick} 
               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             >
               Logout
