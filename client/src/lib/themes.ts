@@ -5,8 +5,19 @@
  * It provides consistent colors for all components and elements across the app.
  */
 
+export type AgentType = 'cara' | 'maya' | 'ellie' | 'sophia';
+
 // Agent colors for consistent branding
-export const agentColors = {
+export const agentColors: Record<AgentType, {
+  primary: string;  // Primary button/accent color
+  hover: string;    // Hover state color
+  text: string;     // Text color
+  border: string;   // Border color
+  bg: string;       // Background color
+  bgLight: string;  // Light background color
+  gradient: string; // Gradient effect
+  base: string;     // Raw color (without prefixes)
+}> = {
   cara: {
     primary: 'bg-blue-500',
     hover: 'hover:bg-blue-600',
@@ -15,6 +26,7 @@ export const agentColors = {
     bg: 'bg-blue-600',
     bgLight: 'bg-blue-50',
     gradient: 'from-blue-400 to-blue-600',
+    base: '#3b82f6', // blue-500
   },
   maya: {
     primary: 'bg-purple-600',
@@ -24,6 +36,7 @@ export const agentColors = {
     bg: 'bg-purple-600',
     bgLight: 'bg-purple-50',
     gradient: 'from-purple-500 to-purple-700',
+    base: '#9333ea', // purple-600
   },
   ellie: {
     primary: 'bg-pink-500',
@@ -33,6 +46,7 @@ export const agentColors = {
     bg: 'bg-pink-500',
     bgLight: 'bg-pink-50',
     gradient: 'from-pink-400 to-pink-600',
+    base: '#ec4899', // pink-500
   },
   sophia: {
     primary: 'bg-green-600',
@@ -42,6 +56,7 @@ export const agentColors = {
     bg: 'bg-green-600',
     bgLight: 'bg-green-50',
     gradient: 'from-green-500 to-green-700',
+    base: '#16a34a', // green-600
   },
 };
 

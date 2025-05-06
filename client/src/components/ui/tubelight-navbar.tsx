@@ -11,12 +11,13 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { AgentAvatar } from "@/components/avatars/AgentAvatars";
-import { agentColors } from "@/lib/themes";
+import { agentColors, AgentType } from "@/lib/themes";
 
 interface NavItem {
   name: string;
   url: string;
   icon: React.ElementType;
+  agent: AgentType | null;
 }
 
 export function TubelightNavbar({ className }: { className?: string }) {
@@ -98,22 +99,36 @@ export function TubelightNavbar({ className }: { className?: string }) {
               const Icon = item.icon;
               const isActive = location === item.url;
 
+              // Get agent-specific colors and styles if this item has an agent
+              const agentColor = item.agent ? agentColors[item.agent as AgentType].base : null;
+              const agentBgColor = item.agent ? agentColors[item.agent as AgentType].bg : null;
+              const agentHoverColor = item.agent ? agentColors[item.agent as AgentType].hover : null;
+
               return (
                 <WouterLink
                   key={item.name}
                   href={item.url}
                   onClick={() => setActiveTab(item.name)}
                   className={cn(
-                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-                    "text-foreground/80 hover:text-primary",
-                    isActive && "bg-muted text-primary"
+                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors flex items-center gap-2",
+                    item.agent 
+                      ? `hover:text-[${agentColor}]`
+                      : "text-foreground/80 hover:text-primary",
+                    isActive && (item.agent 
+                      ? `bg-[${agentBgColor}] text-[${agentColor}]` 
+                      : "bg-muted text-primary")
                   )}
                 >
+                  {item.agent && <AgentAvatar agent={item.agent as AgentType} size="sm" status={isActive ? "active" : "idle"} />}
+                  <Icon className={cn("w-4 h-4", !item.agent && "mr-1")} />
                   <span>{item.name}</span>
                   {isActive && (
                     <motion.div
                       layoutId="lamp-desktop"
-                      className="absolute inset-0 w-full bg-primary/5 rounded-full -z-10"
+                      className={cn(
+                        "absolute inset-0 w-full rounded-full -z-10",
+                        item.agent ? `bg-[${agentBgColor}]/5` : "bg-primary/5"
+                      )}
                       initial={false}
                       transition={{
                         type: "spring",
@@ -121,10 +136,22 @@ export function TubelightNavbar({ className }: { className?: string }) {
                         damping: 30,
                       }}
                     >
-                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full">
-                        <div className="absolute w-12 h-6 bg-primary/20 rounded-full blur-md -top-2 -left-2" />
-                        <div className="absolute w-8 h-6 bg-primary/20 rounded-full blur-md -top-1" />
-                        <div className="absolute w-4 h-4 bg-primary/20 rounded-full blur-sm top-0 left-2" />
+                      <div className={cn(
+                        "absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-t-full",
+                        item.agent ? `bg-[${agentColor}]` : "bg-primary"
+                      )}>
+                        <div className={cn(
+                          "absolute w-12 h-6 rounded-full blur-md -top-2 -left-2",
+                          item.agent ? `bg-[${agentColor}]/20` : "bg-primary/20"
+                        )} />
+                        <div className={cn(
+                          "absolute w-8 h-6 rounded-full blur-md -top-1",
+                          item.agent ? `bg-[${agentColor}]/20` : "bg-primary/20"
+                        )} />
+                        <div className={cn(
+                          "absolute w-4 h-4 rounded-full blur-sm top-0 left-2",
+                          item.agent ? `bg-[${agentColor}]/20` : "bg-primary/20"
+                        )} />
                       </div>
                     </motion.div>
                   )}
@@ -189,6 +216,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
                         const Icon = item.icon;
                         const isActive = location === item.url;
                         
+                        // Get agent-specific colors for mobile menu
+                        const agentColor = item.agent ? agentColors[item.agent as AgentType].base : null;
+                        const agentBgColor = item.agent ? agentColors[item.agent as AgentType].bg : null;
+                        
                         return (
                           <WouterLink
                             key={item.name}
@@ -196,14 +227,27 @@ export function TubelightNavbar({ className }: { className?: string }) {
                             onClick={() => handleMobileNavClick(item.name)}
                             className={cn(
                               "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative",
-                              "text-foreground/80 hover:bg-muted hover:text-primary",
-                              isActive && "bg-muted text-primary"
+                              item.agent 
+                                ? `hover:text-[${agentColor}]` 
+                                : "text-foreground/80 hover:bg-muted hover:text-primary",
+                              isActive && (item.agent 
+                                ? `bg-[${agentBgColor}]/10 text-[${agentColor}]` 
+                                : "bg-muted text-primary")
                             )}
                           >
-                            <Icon size={16} strokeWidth={2.5} />
+                            {item.agent ? (
+                              <AgentAvatar agent={item.agent as AgentType} size="sm" status={isActive ? "active" : "idle"} />
+                            ) : (
+                              <Icon size={16} strokeWidth={2.5} />
+                            )}
                             <span>{item.name}</span>
                             {isActive && (
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                              <div 
+                                className={cn(
+                                  "absolute left-0 top-0 bottom-0 w-1",
+                                  item.agent ? `bg-[${agentColor}]` : "bg-primary"
+                                )} 
+                              />
                             )}
                           </WouterLink>
                         );
