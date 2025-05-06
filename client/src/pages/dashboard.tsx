@@ -195,7 +195,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
       <TubelightNavbar />
-      
+
       <main className="flex-grow container mx-auto px-4 pb-20 mt-24">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
@@ -220,10 +220,14 @@ const Dashboard = () => {
               <AnalyzingCard />
             ) : (
               <Tabs defaultValue="risk" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="risk">Automation Risk</TabsTrigger>
                   <TabsTrigger value="skills">Skill Gaps</TabsTrigger>
                   <TabsTrigger value="roadmap">Career Roadmap</TabsTrigger>
+                  <TabsTrigger value="simulator" className="relative">
+                    Career Simulator
+                    <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-primary text-[10px] font-bold text-white rounded-full">PRO</span>
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="risk" className="mt-6">
@@ -236,6 +240,10 @@ const Dashboard = () => {
 
                 <TabsContent value="roadmap" className="mt-6">
                   <RoadmapTab careerAdvice={careerAdvice} />
+                </TabsContent>
+                <TabsContent value="simulator" className="mt-6">
+                  {/* Career Simulator content will go here */}
+                  <p>This is the career simulator.  This is a premium feature.</p>
                 </TabsContent>
               </Tabs>
             )}
