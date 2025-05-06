@@ -7,15 +7,45 @@ export default function AuthTestPage() {
   const { user, isLoading, login, logout } = useAuth();
   const { openOnboarding } = useOnboarding();
   const [isNavigating, setIsNavigating] = useState(false);
-  
-  const handleLoginClick = () => {
-    setIsNavigating(true);
-    login();
-  };
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "testuser",
+    email: "test@example.com"
+  });
   
   const handleLogoutClick = () => {
     setIsNavigating(true);
     logout();
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    
+    try {
+      const response = await fetch("/api/development/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        throw new Error("Login failed");
+      }
+      
+      // Refresh the page to get updated auth state
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Login error:", error);
+      setIsLoggingIn(false);
+    }
   };
   
   if (isLoading) {
@@ -82,29 +112,55 @@ export default function AuthTestPage() {
           
           <div className="mb-4">
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-              <h3 className="font-medium text-yellow-800">Authentication Information</h3>
+              <h3 className="font-medium text-yellow-800">Development Authentication</h3>
               <p className="text-sm mt-2">
-                This application uses Replit's authentication system. You'll be redirected to Replit to sign in securely.
+                This is a simplified login form for development. In production, Replit Authentication would be used.
               </p>
             </div>
           </div>
           
-          <div className="flex space-x-2">
-            <a 
-              href="/api/login"
-              className={`flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ${isNavigating ? 'opacity-70' : ''} text-center flex items-center justify-center`}
-              onClick={() => setIsNavigating(true)}
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <button 
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center"
             >
-              {isNavigating ? (
+              {isLoggingIn ? (
                 <>
                   <Loader2 size={16} className="mr-2 animate-spin" />
-                  Redirecting...
+                  Logging in...
                 </>
               ) : (
-                "Sign in with Replit"
+                "Sign in for Development"
               )}
-            </a>
-          </div>
+            </button>
+          </form>
         </div>
       )}
     </div>
