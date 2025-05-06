@@ -1,14 +1,26 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location] = useLocation();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    // Only redirect once to prevent infinite loops
+    if (!isLoading && !isAuthenticated && !hasRedirected) {
+      setHasRedirected(true);
+      // Store the current location to redirect back after login
+      sessionStorage.setItem('redirectAfterLogin', location);
+      // Use direct window location for API endpoint redirect
+      window.location.href = "/api/login";
+    }
+  }, [isLoading, isAuthenticated, hasRedirected, location]);
+
+  if (isLoading || (!isAuthenticated && !hasRedirected)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -16,10 +28,13 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     );
   }
 
+  // If not authenticated but already redirected, keep showing loading
   if (!isAuthenticated) {
-    // Redirect to login api endpoint, which will handle authentication
-    window.location.href = "/api/login";
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return <>{children}</>;

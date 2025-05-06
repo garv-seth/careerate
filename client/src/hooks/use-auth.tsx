@@ -19,8 +19,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   const { data: user, error, isLoading } = useQuery<User | null>({
-    queryKey: ["/api/user"],
-    retry: false
+    queryKey: ["/api/auth/user"],
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchInterval: false
   });
 
   const loginMutation = useMutation({
@@ -30,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["/api/user"], data);
+      queryClient.setQueryData(["/api/auth/user"], data);
       toast({
         title: "Login successful",
         description: `Welcome back, ${data.name || data.username}!`,
@@ -51,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error("Logout failed");
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      queryClient.setQueryData(["/api/auth/user"], null);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
