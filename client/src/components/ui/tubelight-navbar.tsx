@@ -84,7 +84,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
       className
     )}>
       {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
+      <div className="hidden md:flex items-center gap-2 bg-background/5 border border-border backdrop-blur-lg py-1 px-2 rounded-full shadow-lg">
         {isAuthenticated ? (
           // Only show nav items when authenticated
           <>
@@ -98,9 +98,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
                   href={item.url}
                   onClick={() => setActiveTab(item.name)}
                   className={cn(
-                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
+                    "relative cursor-pointer text-sm font-semibold px-5 py-2 transition-colors",
                     "text-foreground/80 hover:bg-background/20 hover:text-foreground/90",
-                    isActive && "bg-muted text-primary"
+                    isActive && "bg-muted text-primary",
+                    index === 0 ? "rounded-l-full rounded-r-lg" : "rounded-lg"
                   )}
                 >
                   <span>{item.name}</span>
