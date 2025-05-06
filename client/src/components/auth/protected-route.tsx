@@ -16,8 +16,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    // Redirect to auth page
-    setLocation("/auth-test");
+    // Redirect to homepage where the login button is displayed
+    setLocation("/");
     return null;
   }
 
