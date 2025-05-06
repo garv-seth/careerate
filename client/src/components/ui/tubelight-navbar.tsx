@@ -230,7 +230,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                       <div
                         className={cn(
                           "flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-colors relative w-full rounded-md",
-                          "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-[2px]"
+                          "text-foreground hover:text-foreground/90 bg-primary/10 backdrop-blur-sm"
                         )}
                       >
                         <LogIn size={14} strokeWidth={2.5} />
