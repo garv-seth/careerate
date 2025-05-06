@@ -19,8 +19,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Development routes - only available in development
   if (process.env.NODE_ENV === "development") {
-    // Auth-related development routes have been moved to replitAuth.ts
-    console.log("Development routes will be available at /auth-test");
+    // Add a proper redirect route instead of /auth-test
+    app.get('/auth-test', (req, res) => {
+      // Redirect to dashboard instead
+      res.redirect('/dashboard');
+    });
   }
   
   // User profile routes
