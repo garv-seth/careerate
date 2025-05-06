@@ -30,44 +30,81 @@ const upload = multer({
 });
 
 // Handle resume upload
-router.post('/upload-resume', isAuthenticated, upload.single('resume'), async (req: Request, res: Response) => {
+router.post('/upload-resume', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
     if (!req.user?.claims?.sub) {
       return res.status(401).json({ error: 'User ID not found' });
     }
 
     const userId = req.user.claims.sub;
     
-    // Upload resume to storage
-    const uploadResult = await uploadResume(req, res, () => {});
-    
-    // Extract text from resume using our AI agent
-    const { agents } = require('../src/agents/agents');
-    const resumeText = await agents.cara.extractResumeText(req.file.buffer);
-    
-    // Analyze resume to extract skills and experience
-    const analysis = await agents.cara.analyzeResume(resumeText);
-    
-    // Store extracted text and analysis
-    await storage.updateProfile(userId, {
-      resumeText,
-      lastScan: new Date(),
-      extractedSkills: analysis.skills,
-      yearsOfExperience: analysis.yearsOfExperience,
-      currentRole: analysis.currentRole,
-      educationLevel: analysis.educationLevel
-    });
-
-    return res.status(200).json({
-      message: 'Resume uploaded and analyzed successfully',
-      analysis
+    // Use our middleware to handle the upload - need to call next middleware after completion
+    uploadResume(req, res, async () => {
+      try {
+        // After middleware processes the file and extracts text
+        if (!req.resumeText) {
+          return res.status(400).json({ error: 'Failed to extract text from resume' });
+        }
+        
+        const resumeText = req.resumeText;
+        
+        // Connect to AI agent system for resume analysis
+        const { agentEmitter } = await import('../../src/agents/graph');
+        const { runAgentWorkflow } = await import('../../src/agents/graph');
+        
+        // Notify client of analysis start
+        agentEmitter.emit('status_update', { 
+          agent: 'maya', 
+          status: 'active',
+          userId 
+        });
+        
+        // Extract skills from the resume using Maya agent
+        const analysis = await runAgentWorkflow(resumeText, userId);
+        
+        // Extract skills from analysis result
+        const extractedSkills = analysis.skills || [];
+        
+        // Store extracted text and analysis in profile
+        const existingProfile = await storage.getProfileByUserId(userId);
+        
+        if (existingProfile) {
+          await storage.updateProfileResume(userId, resumeText);
+          
+          // Update profile with extracted data
+          await storage.updateProfile(userId, {
+            lastScan: new Date(),
+          });
+        } else {
+          // Create new profile if it doesn't exist
+          await storage.createProfile({
+            userId,
+            resumeText,
+            lastScan: new Date(),
+          });
+        }
+        
+        // Set status to complete
+        agentEmitter.emit('status_update', { 
+          agent: 'maya', 
+          status: 'complete',
+          userId 
+        });
+        
+        return res.status(200).json({
+          message: 'Resume uploaded and analyzed successfully',
+          analysis: {
+            skills: extractedSkills,
+            source: 'resume'
+          }
+        });
+      } catch (processingError) {
+        console.error('Error processing resume:', processingError);
+        return res.status(500).json({ error: 'Failed to process resume' });
+      }
     });
   } catch (error) {
-    console.error('Error uploading resume:', error);
+    console.error('Error handling resume upload:', error);
     return res.status(500).json({ error: 'Failed to upload resume' });
   }
 });

@@ -7,7 +7,7 @@ import path from "path";
 
 // Initialize Object Storage client
 const objectStorage = new Client({
-  bucketId: "careerate-assets",
+  bucketId: process.env.REPLIT_OBJECT_BUCKET_ID || "",
 });
 
 // Configure multer for file upload
