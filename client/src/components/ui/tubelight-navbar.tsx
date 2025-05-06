@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState, useRef } from "react";
@@ -51,7 +50,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
     handleResize();
     window.addEventListener("resize", handleResize);
     document.addEventListener("mousedown", handleClickOutside);
-    
+
     return () => {
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -85,11 +84,11 @@ export function TubelightNavbar({ className }: { className?: string }) {
       className
     )}>
       {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
+      <div className="hidden md:flex items-center gap-2 bg-background/5 border border-border backdrop-blur-lg py-1 px-2 rounded-full shadow-lg">
         {isAuthenticated ? (
           // Only show nav items when authenticated
           <>
-            {navItems.map((item) => {
+            {navItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = location === item.url;
 
@@ -99,9 +98,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
                   href={item.url}
                   onClick={() => setActiveTab(item.name)}
                   className={cn(
-                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
+                    "relative cursor-pointer text-sm font-semibold px-5 py-2 transition-colors",
                     "text-foreground/80 hover:bg-background/20 hover:text-foreground/90",
-                    isActive && "bg-muted text-primary"
+                    isActive && "bg-muted text-primary",
+                    index === 0 ? "rounded-l-full rounded-r-lg" : "rounded-lg"
                   )}
                 >
                   <span>{item.name}</span>
@@ -126,7 +126,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                 </WouterLink>
               );
             })}
-            
+
             {/* Logout Button when authenticated */}
             <Button
               onClick={logout}
@@ -143,8 +143,9 @@ export function TubelightNavbar({ className }: { className?: string }) {
           <a href="/api/login">
             <Button
               className={cn(
-                "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors relative rounded-md",
-                "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-sm"
+                "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-all duration-300 relative rounded-md",
+                "text-white bg-transparent backdrop-blur-sm",
+                "shadow-[0_0_10px_rgba(255,255,255,0.2)] text-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
               )}
             >
               <LogIn size={16} strokeWidth={2.5} /> Login
@@ -184,7 +185,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                       {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location === item.url;
-                        
+
                         return (
                           <WouterLink
                             key={item.name}
@@ -204,7 +205,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                           </WouterLink>
                         );
                       })}
-                      
+
                       {/* Logout button when authenticated */}
                       <button
                         onClick={() => {
@@ -225,17 +226,14 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     <a 
                       href="/api/login" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-4 py-1.5 w-full"
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-all duration-300 relative w-full rounded-md mx-4",
+                        "text-white bg-transparent backdrop-blur-sm border border-foreground/20",
+                        "shadow-[0_0_10px_rgba(255,255,255,0.2)] text-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                      )}
                     >
-                      <div
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-colors relative w-full rounded-md",
-                          "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-[2px]"
-                        )}
-                      >
-                        <LogIn size={14} strokeWidth={2.5} />
-                        <span>Login</span>
-                      </div>
+                      <LogIn size={14} strokeWidth={2.5} />
+                      <span>Login</span>
                     </a>
                   )}
                 </div>
