@@ -15,7 +15,7 @@ if (!process.env.REPLIT_DOMAINS) {
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/~"),
+      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
       process.env.REPL_ID!
     );
   },
@@ -31,15 +31,18 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  
+  // Set to match existing session cookies
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || "developmentsecret",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
+      sameSite: "lax"
     },
   });
 }
@@ -107,8 +110,16 @@ export async function setupReplitAuth(app: Express) {
       passport.use(strategy);
     }
 
-    passport.serializeUser((user: Express.User, cb) => cb(null, user));
-    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+    // Update serialization/deserialization to match what we see in the database
+    passport.serializeUser((user: any, cb) => {
+      // Store the minimal necessary user data
+      cb(null, user);
+    });
+    
+    passport.deserializeUser((obj: any, cb) => {
+      // Restore the user object
+      cb(null, obj);
+    });
 
     app.get("/api/login", (req, res, next) => {
       passport.authenticate(`replitauth:${req.hostname}`, {
@@ -153,20 +164,33 @@ export async function setupReplitAuth(app: Express) {
     // Setup fallback for local development
     console.log("Setting up development auth...");
     
+    // Override passport serialization/deserialization
+    passport.serializeUser((user: any, cb) => cb(null, user));
+    passport.deserializeUser((obj: any, cb) => cb(null, obj));
+    
     app.get("/api/login", (req, res) => {
-      req.login({
-        id: "local_dev_user",
-        username: "dev_user",
-        name: "Development User",
-        email: "dev@example.com",
+      if (req.isAuthenticated()) {
+        return res.redirect('/dashboard');
+      }
+      
+      const demoUser = {
+        id: "demo_user_123",
+        username: "demouser",
+        name: "Demo User",
+        email: "demo@example.com",
         claims: {
-          sub: "local_dev_user",
+          sub: "demo_user_123",
+          email: "demo@example.com",
+          username: "demouser"
         }
-      }, (err) => {
+      };
+      
+      req.login(demoUser, (err) => {
         if (err) {
           console.error("Error logging in:", err);
           return res.status(500).json({ message: "Auth error" });
         }
+        console.log("Demo user logged in successfully");
         return res.redirect('/dashboard');
       });
     });
@@ -188,10 +212,20 @@ export async function setupReplitAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user?.claims?.exp) {
+  if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  const user = req.user as any;
+  
+  // For demo users, no token check is needed
+  if (user.id === "demo_user_123") {
+    return next();
+  }
+  
+  // For Replit Auth users, check token expiration
+  if (!user?.claims?.exp) {
+    return res.status(401).json({ message: "Invalid user session" });
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -210,6 +244,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     updateUserSession(user, tokenResponse);
     return next();
   } catch (error) {
+    console.error("Token refresh error:", error);
     return res.redirect("/api/login");
   }
 };
