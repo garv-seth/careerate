@@ -226,7 +226,6 @@ export function TubelightNavbar({ className }: { className?: string }) {
                     <a 
                       href="/api/login" 
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-[calc(100%-2rem)] mx-4 my-2"
                     >
                       <button
                         className={cn(
