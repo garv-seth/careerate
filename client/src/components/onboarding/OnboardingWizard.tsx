@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useOnboarding, OnboardingStep } from "../../hooks/use-onboarding";
 import { X } from "lucide-react";
@@ -24,12 +25,12 @@ export function OnboardingWizard() {
       case OnboardingStep.WELCOME:
         return (
           <div className="flex flex-col space-y-4">
-            <h2 className="text-2xl font-bold">Welcome to Careerate!</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-foreground">Welcome to Careerate!</h2>
+            <p className="text-muted-foreground">
               Let's set up your profile to provide you with personalized career guidance.
             </p>
             <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
               onClick={nextStep}
             >
               Get Started
@@ -40,8 +41,8 @@ export function OnboardingWizard() {
       case OnboardingStep.RESUME_UPLOAD:
         return (
           <div className="flex flex-col space-y-4">
-            <h2 className="text-2xl font-bold">Upload Your Resume</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-foreground">Upload Your Resume</h2>
+            <p className="text-muted-foreground">
               Upload your resume to help us understand your skills and experience.
             </p>
             <input
@@ -52,22 +53,22 @@ export function OnboardingWizard() {
                   uploadResume(e.target.files[0]);
                 }
               }}
-              className="block w-full text-sm text-gray-500
+              className="block w-full text-sm text-muted-foreground
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-md file:border-0
                 file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100"
+                file:bg-primary/10 file:text-primary
+                hover:file:bg-primary/20"
             />
             <div className="flex space-x-4">
               <button
-                className="px-4 py-2 border border-gray-300 rounded-md"
+                className="px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md"
                 onClick={prevStep}
               >
                 Back
               </button>
               <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                 onClick={nextStep}
               >
                 Skip for Now
@@ -79,8 +80,8 @@ export function OnboardingWizard() {
       case OnboardingStep.COMPLETE:
         return (
           <div className="flex flex-col space-y-4 items-center">
-            <h2 className="text-2xl font-bold">All Done!</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-foreground">All Done!</h2>
+            <p className="text-muted-foreground">
               Your profile has been set up successfully. You're ready to start using Careerate!
             </p>
           </div>
@@ -90,19 +91,19 @@ export function OnboardingWizard() {
       default:
         return (
           <div className="flex flex-col space-y-4">
-            <h2 className="text-2xl font-bold">Step: {currentStep}</h2>
-            <p>
+            <h2 className="text-2xl font-bold text-foreground">Step: {currentStep}</h2>
+            <p className="text-muted-foreground">
               This step is under construction. Please check back later.
             </p>
             <div className="flex space-x-4">
               <button
-                className="px-4 py-2 border border-gray-300 rounded-md"
+                className="px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md"
                 onClick={prevStep}
               >
                 Back
               </button>
               <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                 onClick={nextStep}
               >
                 Continue
@@ -114,22 +115,21 @@ export function OnboardingWizard() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-card text-card-foreground rounded-lg shadow-lg p-6 w-full max-w-md relative border">
         <button
           onClick={closeOnboarding}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
         >
           <X size={20} />
         </button>
         
         {/* Progress indicator */}
-        <div className="w-full h-2 bg-gray-200 rounded-full mb-6">
+        <div className="w-full h-2 bg-secondary rounded-full mb-6">
           <div
-            className="h-full bg-blue-500 rounded-full"
+            className="h-full bg-primary rounded-full transition-all duration-300 ease-in-out"
             style={{
               width: `${getProgressPercentage()}%`,
-              transition: "width 0.3s ease-in-out",
             }}
           />
         </div>
