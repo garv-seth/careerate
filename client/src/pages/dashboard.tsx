@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { CloudUpload, Upload, BookOpen, BarChart2, AlertCircle, ChevronRight, Download, Wifi, WifiOff } from "lucide-react";
+import { CloudUpload, Upload, BookOpen, BarChart2, AlertCircle, ChevronRight, Download, Wifi, WifiOff, Sparkles, ArrowUpRight, LightbulbIcon, Zap, Star } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import AgentStatusPanel from "@/components/dashboard/AgentStatusPanel";

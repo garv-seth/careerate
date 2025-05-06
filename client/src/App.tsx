@@ -9,7 +9,7 @@ import { OnboardingProvider } from "./hooks/use-onboarding";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/dashboard.new";
 import AgentTestPage from "@/pages/agent-test.new";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
