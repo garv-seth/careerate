@@ -18,6 +18,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply onboarding routes
   app.use('/api', onboardingRouter);
   
+  // Development test routes - only available in development
+  if (process.env.NODE_ENV === "development") {
+    app.post("/api/test/create-user", async (req, res) => {
+      try {
+        const { id, username, name, email, password } = req.body;
+        
+        // Check if user already exists
+        let user = await storage.getUser(id);
+        
+        if (!user) {
+          // Create user if they don't exist
+          user = await storage.createUser({
+            id,
+            username,
+            name,
+            email,
+            password
+          });
+          res.status(201).json({ message: "Test user created", userId: user.id });
+        } else {
+          res.status(200).json({ message: "Test user already exists", userId: user.id });
+        }
+      } catch (error) {
+        console.error("Error creating test user:", error);
+        res.status(500).json({ message: "Failed to create test user" });
+      }
+    });
+    
+    app.post("/api/test/login", (req, res) => {
+      const { id, username, name, email } = req.body;
+      
+      // Create a simple session for the test user
+      if (req.session) {
+        req.session.userId = id;
+        req.session.user = { id, username, name, email };
+        req.login({ id, username, name, email }, (err) => {
+          if (err) {
+            return res.status(500).json({ message: "Session error" });
+          }
+          return res.status(200).json({ message: "Test login successful" });
+        });
+      } else {
+        res.status(500).json({ message: "No session available" });
+      }
+    });
+  }
+  
   // User profile routes
   app.get('/api/profile', isAuthenticated, async (req: any, res) => {
     try {
