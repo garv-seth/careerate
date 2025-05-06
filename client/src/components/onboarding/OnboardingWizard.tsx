@@ -41,18 +41,18 @@ export function OnboardingWizard() {
   } = useOnboarding();
 
   // Agent status management
-  const [caraStatus, setCaraStatus] = useState<'idle' | 'active' | 'complete' | 'error'>('idle');
-  const [mayaStatus, setMayaStatus] = useState<'idle' | 'active' | 'complete' | 'error'>('idle');
-  const [ellieStatus, setEllieStatus] = useState<'idle' | 'active' | 'complete' | 'error'>('idle');
-  const [sophiaStatus, setSophiaStatus] = useState<'idle' | 'active' | 'complete' | 'error'>('idle');
+  const [caraStatus, setCaraStatus] = useState<'idle' | 'active' | 'thinking' | 'complete'>('idle');
+  const [mayaStatus, setMayaStatus] = useState<'idle' | 'active' | 'thinking' | 'complete'>('idle');
+  const [ellieStatus, setEllieStatus] = useState<'idle' | 'active' | 'thinking' | 'complete'>('idle');
+  const [sophiaStatus, setSophiaStatus] = useState<'idle' | 'active' | 'thinking' | 'complete'>('idle');
 
   // Set agent statuses based on current step
   useEffect(() => {
     // Reset all to idle
-    let newCaraStatus: 'idle' | 'active' | 'complete' | 'error' = 'idle';
-    let newMayaStatus: 'idle' | 'active' | 'complete' | 'error' = 'idle';
-    let newEllieStatus: 'idle' | 'active' | 'complete' | 'error' = 'idle';
-    let newSophiaStatus: 'idle' | 'active' | 'complete' | 'error' = 'idle';
+    let newCaraStatus: 'idle' | 'active' | 'thinking' | 'complete' = 'idle';
+    let newMayaStatus: 'idle' | 'active' | 'thinking' | 'complete' = 'idle';
+    let newEllieStatus: 'idle' | 'active' | 'thinking' | 'complete' = 'idle';
+    let newSophiaStatus: 'idle' | 'active' | 'thinking' | 'complete' = 'idle';
     
     // Set active based on step
     if (data.currentStep === 1) {
