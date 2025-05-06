@@ -1,245 +1,241 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { OnboardingData } from '../OnboardingWizard';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, Upload, FileText, X, AlertCircle } from 'lucide-react';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { 
+  Upload,
+  FileUp,
+  FileText,
+  Check,
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  ArrowRight,
+  Trash
+} from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AgentAvatar } from '@/components/avatars/AgentAvatars';
+import { Badge } from '@/components/ui/badge';
 
-type ResumeUploadStepProps = {
-  data: OnboardingData;
-  updateData: (data: Partial<OnboardingData>) => void;
+interface ResumeUploadStepProps {
+  onFileSelect: (file: File | null) => void;
+  onFileUpload: () => Promise<void>;
+  uploadedFile: File | null;
+  isUploading: boolean;
+  uploadError: string | null;
+  uploadSuccess: boolean;
   onNext: () => void;
   onBack: () => void;
-};
+  extractedSkills?: string[];
+}
 
-export function ResumeUploadStep({ data, updateData, onNext, onBack }: ResumeUploadStepProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function ResumeUploadStep({
+  onFileSelect,
+  onFileUpload,
+  uploadedFile,
+  isUploading,
+  uploadError,
+  uploadSuccess,
+  onNext,
+  onBack,
+  extractedSkills = []
+}: ResumeUploadStepProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    validateAndSetFile(file);
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
+  // Handle drag events
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    const file = event.dataTransfer.files?.[0];
-    validateAndSetFile(file);
-  };
-
-  const validateAndSetFile = (file?: File) => {
-    setError(null);
-    
-    if (!file) {
-      return;
-    }
-    
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size exceeds 5MB limit');
-      return;
-    }
-    
-    // Check file type
-    const fileType = file.type.toLowerCase();
-    const allowedTypes = [
-      'application/pdf', 
-      'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
-    ];
-    
-    if (!allowedTypes.includes(fileType)) {
-      setError('Only PDF, Word documents, and text files are allowed');
-      return;
-    }
-    
-    // Show loading state
-    setIsLoading(true);
-    
-    try {
-      const formData = new FormData();
-      formData.append('resume', file);
-      
-      const response = await fetch('/api/onboarding/upload-resume', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to upload resume');
-      }
-      
-      const result = await response.json();
-      
-      // Update data with analysis results
-      updateData({ 
-        resumeFile: file,
-        extractedSkills: result.analysis.skills,
-        yearsOfExperience: result.analysis.yearsOfExperience,
-        currentRole: result.analysis.currentRole,
-        educationLevel: result.analysis.educationLevel
-      });
-      
-      // Show success message
-      toast({
-        title: "Resume analyzed successfully",
-        description: "We've extracted your skills and experience."
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to analyze resume');
-      toast({
-        title: "Analysis failed",
-        description: "There was an error analyzing your resume.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
     }
   };
 
-  const removeFile = () => {
-    updateData({ resumeFile: null });
+  // Handle drop event
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      onFileSelect(e.dataTransfer.files[0]);
+    }
   };
 
-  const promptFileSelection = () => {
+  // Handle file input change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      onFileSelect(e.target.files[0]);
+    }
+  };
+
+  // Handle button click to open file dialog
+  const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Format file size for display
-  const formatFileSize = (sizeInBytes: number): string => {
-    if (sizeInBytes < 1024) {
-      return `${sizeInBytes} bytes`;
-    } else if (sizeInBytes < 1024 * 1024) {
-      return `${(sizeInBytes / 1024).toFixed(1)} KB`;
-    } else {
-      return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+  // Handle file clear
+  const handleClearFile = () => {
+    onFileSelect(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">Resume Upload</h2>
-        <p className="text-muted-foreground">
-          Upload your resume for AI-powered analysis of your career history and potential.
-        </p>
+      <div className="flex items-center gap-3">
+        <AgentAvatar agent="maya" size="md" status={isUploading ? 'active' : (uploadSuccess ? 'complete' : 'idle')} />
+        <div>
+          <h2 className="text-xl font-semibold">Upload Your Resume</h2>
+          <p className="text-muted-foreground">
+            Let Maya analyze your resume to provide personalized career insights
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-6">
-            <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors 
-                ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'} 
-                ${data.resumeFile ? 'bg-muted/50' : 'hover:bg-muted/30'}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={data.resumeFile ? undefined : promptFileSelection}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept=".pdf,.doc,.docx,.txt"
-                onChange={handleFileChange}
-              />
-
-              {data.resumeFile ? (
-                <div className="flex flex-col items-center">
-                  <FileText size={40} className="text-primary mb-2" />
-                  <div className="space-y-1">
-                    <p className="font-medium">{data.resumeFile.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatFileSize(data.resumeFile.size)}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    className="mt-4"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile();
-                    }}
-                  >
-                    <X size={16} className="mr-2" />
-                    Remove File
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <Upload size={40} className="text-muted-foreground mb-2" />
-                  <Label className="text-lg font-medium">Drag & Drop your resume</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    or click to browse (PDF, DOC, DOCX, TXT)
-                  </p>
-                  <Button variant="default" size="sm" className="mt-4">
-                    Select File
-                  </Button>
-                </div>
-              )}
+      {/* Drag and drop area */}
+      <div 
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+          dragActive 
+            ? 'border-primary bg-primary/5' 
+            : 'border-muted-foreground/20'
+        }`}
+        onDragEnter={handleDrag}
+        onDragOver={handleDrag}
+        onDragLeave={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        
+        {!uploadedFile ? (
+          <div className="space-y-4">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Upload className="h-6 w-6 text-primary" />
             </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {error}
-                </AlertDescription>
-              </Alert>
+            <div>
+              <p>Drag and drop your resume file, or</p>
+              <Button 
+                variant="outline" 
+                onClick={handleButtonClick}
+                className="mt-2"
+              >
+                <FileUp className="h-4 w-4 mr-2" />
+                Select File
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Supported formats: PDF, DOC, DOCX
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-2">
+              <FileText className="h-6 w-6 text-primary" />
+              <span className="font-medium">{uploadedFile.name}</span>
+              <span className="text-xs text-muted-foreground">
+                ({Math.round(uploadedFile.size / 1024)} KB)
+              </span>
+              
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleClearFile}
+                disabled={isUploading}
+              >
+                <Trash className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+            
+            {!uploadSuccess && (
+              <Button 
+                onClick={onFileUpload}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <FileUp className="h-4 w-4 mr-2" />
+                    Upload & Analyze
+                  </>
+                )}
+              </Button>
             )}
+          </div>
+        )}
+      </div>
 
-            <div className="bg-muted/50 rounded-md p-4">
-              <h3 className="font-medium mb-2">Why upload your resume?</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Get AI-powered analysis of your career history and potential</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Identify skill gaps and growth opportunities based on your experience</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Receive personalized learning paths aligned with your career goals</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Unlock insights about industry trends relevant to your experience</span>
-                </li>
-              </ul>
-              <p className="text-sm mt-4 italic">
-                Note: Resume upload is optional but recommended for best results.
+      {/* Error message */}
+      {uploadError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{uploadError}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Success message and detected skills */}
+      {uploadSuccess && (
+        <div className="space-y-4">
+          <Alert className="bg-green-50 border-green-200">
+            <Check className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-600">
+              Resume analysis complete! Maya has identified the following skills:
+            </AlertDescription>
+          </Alert>
+          
+          {extractedSkills && extractedSkills.length > 0 ? (
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <h3 className="font-medium mb-2">Identified Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {extractedSkills.map((skill, index) => (
+                  <Badge 
+                    key={index}
+                    variant="secondary" 
+                    className="bg-primary/10 hover:bg-primary/20"
+                  >
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground mt-3">
+                You'll be able to refine these skills in the final step of the onboarding process.
               </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No specific skills were identified. You'll have a chance to add your skills manually later.
+            </p>
+          )}
+        </div>
+      )}
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft size={16} />
+      {/* Skip message */}
+      <div className="text-center text-sm text-muted-foreground mt-6">
+        <p>Resume upload is optional. You can still get personalized career guidance without it.</p>
+      </div>
+
+      {/* Navigation buttons */}
+      <div className="flex justify-between pt-4">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <Button onClick={onNext} className="gap-2">
-          Next
-          <ArrowRight size={16} />
+        <Button onClick={onNext}>
+          {uploadSuccess ? 'Continue' : 'Skip for now'}
+          <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
     </div>

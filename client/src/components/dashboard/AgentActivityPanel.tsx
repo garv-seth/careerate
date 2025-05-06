@@ -62,10 +62,9 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
             return (
               <div key={index} className="flex items-start space-x-3 pb-3 border-b last:border-b-0 dark:border-gray-800">
                 <AgentAvatar 
-                  name={activity.agent} 
+                  agent={activity.agent} 
                   size="sm" 
                   status={agentStatuses[activity.agent]}
-                  className="mt-1"
                 />
                 
                 <div className="flex-1 min-w-0">

@@ -1,195 +1,172 @@
-import React from 'react';
+import { Brain, FileText, BarChart2, Lightbulb } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, AlertCircle, RefreshCcw } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { agentDescriptions } from './types';
 
 // Agent color scheme
 export const agentColors = {
   cara: {
     bg: 'bg-blue-500',
     bgLight: 'bg-blue-50',
-    border: 'border-blue-500',
-    ring: 'ring-blue-500',
     text: 'text-blue-500',
-    gradient: 'from-blue-500 to-cyan-500'
+    border: 'border-blue-200',
+    gradientFrom: 'from-blue-500',
+    gradientTo: 'to-blue-700',
   },
   maya: {
     bg: 'bg-purple-500',
     bgLight: 'bg-purple-50',
-    border: 'border-purple-500',
-    ring: 'ring-purple-500',
     text: 'text-purple-500',
-    gradient: 'from-purple-500 to-pink-500'
+    border: 'border-purple-200',
+    gradientFrom: 'from-purple-500',
+    gradientTo: 'to-purple-700',
   },
   ellie: {
     bg: 'bg-pink-500',
     bgLight: 'bg-pink-50',
-    border: 'border-pink-500',
-    ring: 'ring-pink-500',
     text: 'text-pink-500',
-    gradient: 'from-pink-500 to-rose-500'
+    border: 'border-pink-200',
+    gradientFrom: 'from-pink-500',
+    gradientTo: 'to-pink-700',
   },
   sophia: {
     bg: 'bg-green-500',
     bgLight: 'bg-green-50',
-    border: 'border-green-500',
-    ring: 'ring-green-500',
     text: 'text-green-500',
-    gradient: 'from-green-500 to-emerald-500'
+    border: 'border-green-200',
+    gradientFrom: 'from-green-500',
+    gradientTo: 'to-green-700',
   }
 };
 
-// Agent avatar size configuration
-const sizeClasses = {
-  sm: 'h-8 w-8',
-  md: 'h-12 w-12',
-  lg: 'h-16 w-16',
-  xl: 'h-24 w-24'
-};
+type AgentType = 'cara' | 'maya' | 'ellie' | 'sophia';
 
-// Status indicator styles
-const statusClasses = {
-  idle: 'bg-gray-300',
-  active: 'bg-blue-500 animate-pulse',
-  thinking: 'bg-yellow-500 animate-pulse',
-  complete: 'bg-green-500'
-};
+export interface AgentAvatarProps {
+  agent: AgentType;
+  size?: 'sm' | 'md' | 'lg';
+  status?: 'idle' | 'active' | 'complete' | 'error';
+}
 
-// Agent avatar component that shows agent status
-type AgentAvatarProps = {
-  name: 'cara' | 'maya' | 'ellie' | 'sophia';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  status?: 'idle' | 'active' | 'thinking' | 'complete';
-  className?: string;
-};
-
-export const AgentAvatar: React.FC<AgentAvatarProps> = ({ 
-  name, 
-  size = 'md', 
-  status = 'idle',
-  className = ''
-}) => {
-  const colors = agentColors[name];
+export function AgentAvatar({ agent, size = 'md', status = 'idle' }: AgentAvatarProps) {
+  const colors = agentColors[agent];
   
+  // Size classes
+  const sizeClasses = {
+    sm: 'h-8 w-8',
+    md: 'h-10 w-10',
+    lg: 'h-12 w-12'
+  };
+
+  // Status classes
+  const statusClasses = {
+    idle: '',
+    active: 'animate-pulse ring-2 ring-offset-2',
+    complete: 'ring-2 ring-offset-2 ring-green-500',
+    error: 'ring-2 ring-offset-2 ring-red-500'
+  };
+
+  // Agent icons
+  const agentIcons = {
+    cara: <Brain className="h-4 w-4" />,
+    maya: <FileText className="h-4 w-4" />,
+    ellie: <BarChart2 className="h-4 w-4" />,
+    sophia: <Lightbulb className="h-4 w-4" />
+  };
+
+  // Agent display names
+  const agentNames = {
+    cara: 'Cara',
+    maya: 'Maya',
+    ellie: 'Ellie',
+    sophia: 'Sophia'
+  };
+
   return (
-    <div className={`relative ${className}`}>
-      <Avatar className={cn(
-        sizeClasses[size],
-        `rounded-full border-2 ${colors.border} ${colors.bgLight}`,
-        status === 'active' && 'ring-2 ring-offset-2 ring-offset-background',
-        status === 'active' && colors.ring
-      )}>
-        <AvatarImage src={`/agent-${name}.png`} alt={`Agent ${name}`} />
-        <AvatarFallback className={`bg-gradient-to-br ${colors.gradient} text-white font-bold`}>
-          {name[0].toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      
-      {/* Status indicator */}
-      <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${statusClasses[status]}`} />
-    </div>
+    <Avatar 
+      className={`${sizeClasses[size]} ${statusClasses[status]} ${colors.border}`}
+    >
+      <AvatarImage src="" alt={`${agentNames[agent]} AI Agent`} />
+      <AvatarFallback className={`${colors.bg} text-white`}>
+        {agentIcons[agent]}
+      </AvatarFallback>
+    </Avatar>
   );
-};
+}
 
-// Agent avatar with label
-export const AgentAvatarWithLabel: React.FC<AgentAvatarProps & { 
-  showRole?: boolean 
-}> = ({ name, size = 'md', status = 'idle', showRole = false, className = '' }) => {
-  const nameCapitalized = name.charAt(0).toUpperCase() + name.slice(1);
-  const colors = agentColors[name];
+export interface AgentStatusProps {
+  agent: AgentType;
+  status: 'idle' | 'active' | 'complete' | 'error';
+  message?: string;
+}
+
+export function AgentStatus({ agent, status, message }: AgentStatusProps) {
+  const colors = agentColors[agent];
   
+  // Status text and colors
+  const statusConfig = {
+    idle: {
+      label: 'Idle',
+      textColor: 'text-muted-foreground',
+      bgColor: 'bg-muted'
+    },
+    active: {
+      label: 'Working',
+      textColor: colors.text,
+      bgColor: colors.bgLight
+    },
+    complete: {
+      label: 'Complete',
+      textColor: 'text-green-600',
+      bgColor: 'bg-green-50'
+    },
+    error: {
+      label: 'Error',
+      textColor: 'text-red-600',
+      bgColor: 'bg-red-50'
+    }
+  };
+
+  const config = statusConfig[status];
+
   return (
-    <div className={`flex items-center ${className}`}>
-      <AgentAvatar name={name} size={size} status={status} />
-      <div className="ml-3">
-        <div className="font-medium">{nameCapitalized}</div>
-        {showRole && (
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {agentDescriptions[name].role}
-          </div>
+    <div className="flex items-center space-x-2">
+      <AgentAvatar agent={agent} size="sm" status={status} />
+      <div>
+        <div className="flex items-center space-x-1">
+          <span className="font-medium text-sm">
+            {agent.charAt(0).toUpperCase() + agent.slice(1)}
+          </span>
+          <span className={`text-xs px-1.5 py-0.5 rounded-full ${config.bgColor} ${config.textColor}`}>
+            {config.label}
+          </span>
+        </div>
+        {message && (
+          <p className="text-xs text-muted-foreground">
+            {message}
+          </p>
         )}
       </div>
     </div>
   );
-};
+}
 
-// Agent avatar group to show multiple agents
-export const AgentAvatarGroup: React.FC<{
+export interface AgentStatusGroupProps {
   statuses: {
-    cara: 'idle' | 'active' | 'thinking' | 'complete';
-    maya: 'idle' | 'active' | 'thinking' | 'complete';
-    ellie: 'idle' | 'active' | 'thinking' | 'complete';
-    sophia: 'idle' | 'active' | 'thinking' | 'complete';
-  };
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-}> = ({ statuses, size = 'md', className = '' }) => {
+    agent: AgentType;
+    status: 'idle' | 'active' | 'complete' | 'error';
+    message?: string;
+  }[];
+}
+
+export function AgentStatusGroup({ statuses }: AgentStatusGroupProps) {
   return (
-    <div className={`flex -space-x-2 ${className}`}>
-      {(['cara', 'maya', 'ellie', 'sophia'] as const).map(agent => (
-        <TooltipProvider key={agent} delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <AgentAvatar 
-                  name={agent} 
-                  size={size} 
-                  status={statuses[agent]}
-                  className="border-2 border-background"
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <div className="text-sm font-medium mb-1">
-                {agent.charAt(0).toUpperCase() + agent.slice(1)}
-              </div>
-              <div className="text-xs mb-1">{agentDescriptions[agent].role}</div>
-              <div className="flex items-center text-xs">
-                <span className="w-2 h-2 rounded-full mr-1.5 inline-block" style={{ 
-                  backgroundColor: statusClasses[statuses[agent]].replace('animate-pulse', '').trim()
-                }} />
-                <span className="capitalize">{statuses[agent]}</span>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+    <div className="space-y-2">
+      {statuses.map((status, index) => (
+        <AgentStatus
+          key={index}
+          agent={status.agent}
+          status={status.status}
+          message={status.message}
+        />
       ))}
     </div>
   );
-};
-
-// Agent status badge
-export const AgentStatusBadge: React.FC<{
-  status: 'idle' | 'active' | 'thinking' | 'complete';
-  className?: string;
-}> = ({ status, className = '' }) => {
-  let icon = null;
-  let variant = 'outline';
-  
-  switch (status) {
-    case 'active':
-      icon = <AlertCircle className="h-3.5 w-3.5 mr-1" />;
-      variant = 'default';
-      break;
-    case 'thinking':
-      icon = <RefreshCcw className="h-3.5 w-3.5 mr-1 animate-spin" />;
-      variant = 'secondary';
-      break;
-    case 'complete':
-      icon = <CheckCircle className="h-3.5 w-3.5 mr-1" />;
-      variant = 'success';
-      break;
-    default:
-      break;
-  }
-  
-  return (
-    <Badge variant={variant as any} className={`capitalize ${className}`}>
-      {icon}
-      {status}
-    </Badge>
-  );
-};
+}

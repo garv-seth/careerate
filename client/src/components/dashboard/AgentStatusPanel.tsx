@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { AgentAvatar, AgentAvatarWithLabel, AgentStatusBadge, agentColors } from '@/components/avatars/AgentAvatars';
+import { AgentAvatar, AgentStatus, agentColors } from '@/components/avatars/AgentAvatars';
 import { AgentActivity, AgentStatuses, agentDescriptions } from '@/components/avatars/types';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
@@ -107,12 +107,18 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
             <Card key={agent} className={`overflow-hidden border-l-4 ${colors.border}`}>
               <CardContent className="p-4">
                 <div className="flex space-x-4">
-                  <AgentAvatar name={agent} status={status} />
+                  <AgentAvatar agent={agent} status={status} />
                   <div className="flex flex-col justify-between py-1 flex-grow">
                     <div className="space-y-1">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">{agent.charAt(0).toUpperCase() + agent.slice(1)}</span>
-                        <AgentStatusBadge status={status} />
+                        <div className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {status === 'idle' ? 'Idle' : (
+                            status === 'active' ? 'Working' : (
+                              status === 'complete' ? 'Complete' : 'Error'
+                            )
+                          )}
+                        </div>
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         {agentDescriptions[agent].role}
