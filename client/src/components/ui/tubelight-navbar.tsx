@@ -98,8 +98,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
                   href={item.url}
                   onClick={() => setActiveTab(item.name)}
                   className={cn(
-                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-                    "text-foreground/80 hover:text-primary",
+                    "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
+                    "text-foreground/80 hover:bg-background/20 hover:text-foreground/90",
                     isActive && "bg-muted text-primary"
                   )}
                 >
@@ -130,8 +130,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
             <Button
               onClick={logout}
               className={cn(
-                "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
-                "text-foreground/80 hover:text-primary bg-primary/10"
+                "cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
+                "text-foreground/80 hover:bg-background/20 hover:text-foreground/90 bg-primary/10"
               )}
             >
               <LogOut className="w-4 h-4 mr-2" /> Logout
@@ -142,8 +142,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
           <Button
             onClick={() => window.location.href = "/api/login"}
             className={cn(
-              "cursor-pointer text-sm font-semibold px-6 py-2 rounded-xl transition-colors",
-              "text-foreground/80 hover:text-white bg-primary/10 hover:bg-primary"
+              "cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
+              "text-foreground/80 hover:text-white bg-primary hover:bg-primary/90"
             )}
           >
             <LogIn className="w-4 h-4 mr-2" /> Login
@@ -159,9 +159,9 @@ export function TubelightNavbar({ className }: { className?: string }) {
         <div className="relative">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex items-center justify-center w-12 h-12 bg-background/5 border border-border backdrop-blur-lg rounded-full shadow-lg p-3 text-foreground hover:text-primary transition-colors"
+            className="flex items-center justify-center w-12 h-10 bg-background/5 border border-border backdrop-blur-lg rounded-lg shadow-lg p-2 text-foreground hover:bg-background/20 hover:text-foreground/90 transition-colors"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
           {/* Mobile Dropdown Menu - Now right-aligned */}
@@ -226,8 +226,8 @@ export function TubelightNavbar({ className }: { className?: string }) {
                         window.location.href = "/api/login";
                       }}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative w-full text-left",
-                        "text-foreground/80 hover:bg-muted hover:text-primary"
+                        "flex items-center gap-3 mx-4 my-2 px-4 py-2 text-sm font-medium transition-colors relative w-[calc(100%-2rem)] text-center justify-center rounded-lg",
+                        "text-foreground bg-primary hover:bg-primary/90"
                       )}
                     >
                       <LogIn size={16} strokeWidth={2.5} />
