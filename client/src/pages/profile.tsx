@@ -27,8 +27,8 @@ const ProfilePage = () => {
             <CardContent className="pt-6">
               <div className="flex items-start gap-6">
                 <Avatar className="w-24 h-24">
-                  <AvatarImage src={user?.profileImage} />
-                  <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={user?.profileImageUrl || undefined} />
+                  <AvatarFallback>{user?.name?.charAt(0) || user?.username?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="flex-grow">
                   <div className="flex items-center justify-between">
