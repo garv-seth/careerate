@@ -130,7 +130,7 @@ export async function setupReplitAuth(app: Express) {
 
     app.get("/api/callback", (req, res, next) => {
       passport.authenticate(`replitauth:${req.hostname}`, {
-        successRedirect: "/dashboard",
+        successReturnToOrRedirect: "/dashboard",
         failureRedirect: "/",
       })(req, res, next);
     });
@@ -196,7 +196,10 @@ export async function setupReplitAuth(app: Express) {
     });
     
     app.get("/api/callback", (req, res) => {
-      res.redirect('/dashboard');
+      // Get any redirectUrl from returnTo or default to dashboard
+      const returnTo = req.session.returnTo || '/dashboard';
+      delete req.session.returnTo;
+      res.redirect(returnTo);
     });
     
     app.get("/api/logout", (req: any, res) => {
