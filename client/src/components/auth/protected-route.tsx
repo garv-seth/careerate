@@ -13,10 +13,12 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     // Only redirect once to prevent infinite loops
     if (!isLoading && !isAuthenticated && !hasRedirected) {
       setHasRedirected(true);
-      // Store the current location to redirect back after login
-      sessionStorage.setItem('redirectAfterLogin', location);
+      
+      // Include the redirect URL in the login URL to handle in the server
+      const loginUrl = `/api/login?returnTo=${encodeURIComponent(location)}`;
+      
       // Use direct window location for API endpoint redirect
-      window.location.href = "/api/login";
+      window.location.href = loginUrl;
     }
   }, [isLoading, isAuthenticated, hasRedirected, location]);
 

@@ -69,8 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await logoutMutation.mutateAsync();
   };
 
-  const value = {
-    user,
+  const value: AuthContextType = {
+    user: user || null,
     isAuthenticated: !!user,
     isLoading,
     error: error as Error | null,
