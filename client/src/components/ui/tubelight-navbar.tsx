@@ -88,7 +88,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
         {isAuthenticated ? (
           // Only show nav items when authenticated
           <>
-            {navItems.map((item) => {
+            {navItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = location === item.url;
 
