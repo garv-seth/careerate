@@ -204,10 +204,7 @@ const AgentTestPage = () => {
     );
   }
   
-  if (!isAuthenticated) {
-    window.location.href = "/api/login";
-    return null;
-  }
+  // No direct redirect needed here, the ProtectedRoute component will handle it
   
 
 
