@@ -226,13 +226,11 @@ export function TubelightNavbar({ className }: { className?: string }) {
                       href="/api/login" 
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-all duration-300 relative w-full rounded-md mx-4",
-                        "text-foreground/80 hover:text-white bg-transparent backdrop-blur-sm border border-foreground/20",
-                        "hover:bg-primary/5 hover:border-white/40 hover:shadow-[0_0_15px_rgba(255,255,255,0.3)]",
-                        "hover:scale-[1.02]"
+                        "flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-colors relative w-full rounded-md mx-4",
+                        "text-foreground hover:text-foreground/90 bg-primary/10 backdrop-blur-sm"
                       )}
                     >
-                      <LogIn size={14} strokeWidth={2.5} className="transition-transform group-hover:scale-110" />
+                      <LogIn size={14} strokeWidth={2.5} />
                       <span>Login</span>
                     </a>
                   )}
