@@ -142,8 +142,9 @@ export function TubelightNavbar({ className }: { className?: string }) {
           <a href="/api/login">
             <Button
               className={cn(
-                "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors relative rounded-md",
-                "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-sm"
+                "flex items-center gap-3 px-4 py-2 text-sm font-medium transition-all duration-300 relative rounded-md",
+                "text-white bg-transparent backdrop-blur-sm",
+                "shadow-[0_0_10px_rgba(255,255,255,0.2)] text-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
               )}
             >
               <LogIn size={16} strokeWidth={2.5} /> Login
