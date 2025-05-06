@@ -7,16 +7,16 @@ import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Clock, AlertCircle, RefreshCcw, FileText, Database } from 'lucide-react';
 
 interface AgentStatusPanelProps {
-  uploadState: 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
+  uploadState?: 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
   agentStatuses: AgentStatuses;
-  recentActivities: AgentActivity[];
+  recentActivities?: AgentActivity[];
   className?: string;
 }
 
 const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
-  uploadState,
+  uploadState = 'idle',
   agentStatuses,
-  recentActivities,
+  recentActivities = [],
   className = ''
 }) => {
   // Calculate overall progress percentage based on agent statuses

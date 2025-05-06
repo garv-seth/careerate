@@ -27,18 +27,18 @@ const toolNames = {
 
 interface AgentActivityPanelProps {
   activities: AgentActivity[];
-  agentStatuses: {
-    cara: 'idle' | 'active' | 'thinking' | 'complete';
-    maya: 'idle' | 'active' | 'thinking' | 'complete';
-    ellie: 'idle' | 'active' | 'thinking' | 'complete';
-    sophia: 'idle' | 'active' | 'thinking' | 'complete';
-  };
+  agentStatuses?: AgentStatuses;
   className?: string;
 }
 
 export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
   activities,
-  agentStatuses,
+  agentStatuses = {
+    cara: 'idle',
+    maya: 'idle',
+    ellie: 'idle',
+    sophia: 'idle'
+  },
   className = ''
 }) => {
   // Format timestamp
