@@ -55,6 +55,18 @@ export function OnboardingWizard() {
                 setError(null);
                 if (e.target.files && e.target.files[0]) {
                   try {
+                    const formData = new FormData();
+                    formData.append('resume', e.target.files[0]);
+                    
+                    const response = await fetch('/api/onboarding/upload-resume', {
+                      method: 'POST',
+                      body: formData,
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to upload resume');
+                    }
+                    
                     await uploadResume(e.target.files[0]);
                     nextStep();
                   } catch (err) {

@@ -42,10 +42,30 @@ router.post('/upload-resume', isAuthenticated, upload.single('resume'), async (r
 
     const userId = req.user.claims.sub;
     
-    // Use the object storage helper to upload the resume
-    await uploadResume(req, res, () => {});
+    // Upload resume to storage
+    const uploadResult = await uploadResume(req, res, () => {});
     
-    return res.status(200).json({ message: 'Resume uploaded successfully' });
+    // Extract text from resume using our AI agent
+    const { agents } = require('../src/agents/agents');
+    const resumeText = await agents.cara.extractResumeText(req.file.buffer);
+    
+    // Analyze resume to extract skills and experience
+    const analysis = await agents.cara.analyzeResume(resumeText);
+    
+    // Store extracted text and analysis
+    await storage.updateProfile(userId, {
+      resumeText,
+      lastScan: new Date(),
+      extractedSkills: analysis.skills,
+      yearsOfExperience: analysis.yearsOfExperience,
+      currentRole: analysis.currentRole,
+      educationLevel: analysis.educationLevel
+    });
+
+    return res.status(200).json({
+      message: 'Resume uploaded and analyzed successfully',
+      analysis
+    });
   } catch (error) {
     console.error('Error uploading resume:', error);
     return res.status(500).json({ error: 'Failed to upload resume' });

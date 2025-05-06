@@ -67,8 +67,48 @@ export function ResumeUploadStep({ data, updateData, onNext, onBack }: ResumeUpl
       return;
     }
     
-    // Update data
-    updateData({ resumeFile: file });
+    // Show loading state
+    setIsLoading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+      
+      const response = await fetch('/api/onboarding/upload-resume', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload resume');
+      }
+      
+      const result = await response.json();
+      
+      // Update data with analysis results
+      updateData({ 
+        resumeFile: file,
+        extractedSkills: result.analysis.skills,
+        yearsOfExperience: result.analysis.yearsOfExperience,
+        currentRole: result.analysis.currentRole,
+        educationLevel: result.analysis.educationLevel
+      });
+      
+      // Show success message
+      toast({
+        title: "Resume analyzed successfully",
+        description: "We've extracted your skills and experience."
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to analyze resume');
+      toast({
+        title: "Analysis failed",
+        description: "There was an error analyzing your resume.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const removeFile = () => {
