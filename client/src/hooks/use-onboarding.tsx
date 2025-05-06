@@ -1,405 +1,291 @@
-import { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "../lib/queryClient";
-import { useAuth } from "./use-auth";
-import { useToast } from "./use-toast";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from './useAuth';
 
-// Onboarding steps
-export enum OnboardingStep {
-  CLOSED = "closed",
-  WELCOME = "welcome",
-  RESUME_UPLOAD = "resume-upload",
-  CAREER_STAGE = "career-stage",
-  INDUSTRY_FOCUS = "industry-focus",
-  CAREER_GOALS = "career-goals",
-  LEARNING_PREFERENCES = "learning-preferences",
-  TIME_AVAILABILITY = "time-availability",
-  SKILLS_ASSESSMENT = "skills-assessment",
-  COMPLETE = "complete",
-}
-
-// Career stage options
+// Enums for typed options
 export enum CareerStage {
-  STUDENT = "student",
-  ENTRY_LEVEL = "entry-level",
-  MID_LEVEL = "mid-level",
-  SENIOR_LEVEL = "senior-level",
-  EXECUTIVE = "executive",
-  CAREER_CHANGER = "career-changer",
+  STUDENT = 'student',
+  ENTRY_LEVEL = 'entry_level',
+  MID_LEVEL = 'mid_level',
+  SENIOR_LEVEL = 'senior_level',
+  EXECUTIVE = 'executive',
+  CAREER_CHANGER = 'career_changer'
 }
 
-// Learning style options
 export enum LearningStyle {
-  VISUAL = "visual",
-  INTERACTIVE = "interactive",
-  READING = "reading",
-  AUDIO = "audio",
-  PRACTICAL = "practical",
+  VISUAL = 'visual',
+  AUDIO = 'audio',
+  READING = 'reading',
+  PRACTICAL = 'practical',
+  INTERACTIVE = 'interactive'
 }
 
-// Time availability options
 export enum TimeAvailability {
-  MINIMAL = "minimal", // < 2 hours/week
-  LIMITED = "limited", // 2-5 hours/week
-  MODERATE = "moderate", // 5-10 hours/week
-  SUBSTANTIAL = "substantial", // 10-15 hours/week
-  EXTENSIVE = "extensive", // 15+ hours/week
+  MINIMAL = 'minimal',
+  LIMITED = 'limited',
+  MODERATE = 'moderate',
+  SUBSTANTIAL = 'substantial',
+  EXTENSIVE = 'extensive'
 }
 
-// Industry options
-export const INDUSTRY_OPTIONS = [
-  "Technology",
-  "Healthcare",
-  "Finance",
-  "Education",
-  "Marketing",
-  "Sales",
-  "Design",
-  "Engineering",
-  "Consulting",
-  "Media",
-  "Entertainment",
-  "Manufacturing",
-  "Retail",
-  "Hospitality",
-  "Government",
-  "Non-profit",
-  "Legal",
-  "Real Estate",
-  "Construction",
-  "Agriculture",
-  "Energy",
-  "Transportation",
-];
+// Types for onboarding data
+export type Skill = {
+  name: string;
+  level: number; // 1-10
+  interest: number; // 1-10
+};
 
-// Onboarding profile data
-export interface OnboardingProfile {
-  userId?: string;
-  resumeText?: string | null;
-  lastScan?: Date | null;
+export type OnboardingData = {
   careerStage?: CareerStage;
   industryFocus?: string[];
   careerGoals?: string;
   preferredLearningStyle?: LearningStyle;
   timeAvailability?: TimeAvailability;
-}
+  skills: Skill[];
+  extractedSkills?: string[];
+  resumeFile?: File | null;
+  resumeAnalysisComplete?: boolean;
+  currentStep: number;
+};
 
 // Context type
-interface OnboardingContextType {
-  // State
-  currentStep: OnboardingStep;
-  profile: OnboardingProfile;
-  isVisible: boolean;
-  isLoading: boolean;
-  activeSkillMap: Record<string, { current: number; target: number }>;
-  
-  // Methods
+type OnboardingContextType = {
+  data: OnboardingData;
+  updateData: (data: Partial<OnboardingData>) => void;
   nextStep: () => void;
   prevStep: () => void;
-  openOnboarding: () => void;
-  closeOnboarding: () => void;
-  goToStep: (step: OnboardingStep) => void;
-  updateProfile: (data: Partial<OnboardingProfile>) => void;
-  submitProfile: () => Promise<void>;
-  uploadResume: (file: File) => Promise<void>;
-  resetOnboarding: () => void;
-  updateSkill: (skillName: string, current: number, target: number) => void;
-}
+  goToStep: (step: number) => void;
+  totalSteps: number;
+  isLoading: boolean;
+  isComplete: boolean;
+  uploadResume: () => Promise<void>;
+  isUploading: boolean;
+  uploadError: string | null;
+  uploadSuccess: boolean;
+  resumeFile: File | null;
+  setResumeFile: (file: File | null) => void;
+  submitOnboarding: () => Promise<void>;
+  isSubmitting: boolean;
+};
 
-export const OnboardingContext = createContext<OnboardingContextType | null>(null);
+// Default values
+const defaultOnboardingData: OnboardingData = {
+  skills: [],
+  currentStep: 0,
+};
 
+// Create context
+const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
+
+// Provider component
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  // Get auth context for user ID
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   
   // State
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(OnboardingStep.CLOSED);
-  const [profile, setProfile] = useState<OnboardingProfile>({});
-  const [isVisible, setIsVisible] = useState(false);
-  const [activeSkillMap, setActiveSkillMap] = useState<Record<string, { current: number; target: number }>>({});
+  const [data, setData] = useState<OnboardingData>(defaultOnboardingData);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [totalSteps] = useState(7); // Welcome, Resume, Career Stage, Industry, Goals, Learning, Time, Skills
   
-  // Fetch onboarding status when user changes
-  const { data: onboardingStatus, isLoading } = useQuery({
-    queryKey: ["/api/onboarding/onboarding-status"],
-    queryFn: async () => {
-      if (!user) return { completed: false, profile: null };
-      const res = await fetch("/api/onboarding/onboarding-status");
-      if (!res.ok) {
-        if (res.status === 404) {
-          return { completed: false, profile: null };
-        }
-        throw new Error("Failed to fetch onboarding status");
-      }
-      return res.json();
-    },
-    enabled: !!user,
+  // Fetch onboarding status
+  const { 
+    data: statusData, 
+    isLoading: isStatusLoading 
+  } = useQuery({
+    queryKey: ['/api/onboarding/onboarding-status'],
+    enabled: isAuthenticated,
   });
   
-  // Get profile data
-  const { data: profileData } = useQuery({
-    queryKey: ["/api/onboarding/user-profile"],
-    queryFn: async () => {
-      if (!user) return null;
-      const res = await fetch("/api/onboarding/user-profile");
-      if (!res.ok) {
-        if (res.status === 404) return null;
-        throw new Error("Failed to fetch user profile");
-      }
-      return res.json();
-    },
-    enabled: !!user,
+  // Fetch profile data if onboarding is complete
+  const { 
+    data: profileData, 
+    isLoading: isProfileLoading 
+  } = useQuery({
+    queryKey: ['/api/onboarding/user-profile'],
+    enabled: isAuthenticated && statusData?.isComplete === true,
   });
   
-  // Upload resume mutation
-  const uploadResumeMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("resume", file);
-      
-      const res = await fetch("/api/onboarding/upload-resume", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
+  // Submit onboarding data
+  const { 
+    mutateAsync: submitOnboardingData,
+    isPending: isSubmitting
+  } = useMutation({
+    mutationFn: async (data: Omit<OnboardingData, 'currentStep' | 'resumeFile' | 'resumeAnalysisComplete'>) => {
+      const response = await fetch('/api/onboarding/user-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
       
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Failed to upload resume");
+      if (!response.ok) {
+        throw new Error('Failed to save onboarding data');
       }
       
-      return res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Resume uploaded",
-        description: "Your resume has been successfully uploaded and analyzed.",
-      });
-      
-      setProfile((prev) => ({
-        ...prev,
-        resumeText: data.resumeText,
-      }));
-      
-      // Extract skills from the response
-      if (data.skills && Array.isArray(data.skills)) {
-        const skillMap: Record<string, { current: number; target: number }> = {};
-        data.skills.forEach((skill: string) => {
-          skillMap[skill] = { current: 1, target: 3 };
-        });
-        setActiveSkillMap(skillMap);
-      }
-      
-      nextStep();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Upload failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Submit profile mutation
-  const submitProfileMutation = useMutation({
-    mutationFn: async (profileData: OnboardingProfile) => {
-      const res = await apiRequest(
-        "POST", 
-        "/api/onboarding/user-profile", 
-        profileData
-      );
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Failed to save profile");
-      }
-      
-      return res.json();
+      return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Profile saved",
-        description: "Your profile has been successfully saved.",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/onboarding/user-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/onboarding/onboarding-status"] });
-      
-      setCurrentStep(OnboardingStep.COMPLETE);
-      
-      // After a short delay, close the onboarding
-      setTimeout(() => {
-        setIsVisible(false);
-        setCurrentStep(OnboardingStep.CLOSED);
-      }, 2000);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Save failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      queryClient.invalidateQueries({ queryKey: ['/api/onboarding/onboarding-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/onboarding/user-profile'] });
     },
   });
-
-  // Initialize with profile data when it loads
+  
+  // Initialize data from profile if available
   useEffect(() => {
     if (profileData) {
-      setProfile(profileData);
+      const {
+        careerStage,
+        industryFocus,
+        careerGoals,
+        preferredLearningStyle,
+        timeAvailability,
+        skills,
+        resumeText,
+      } = profileData;
+      
+      setData(prevData => ({
+        ...prevData,
+        careerStage,
+        industryFocus,
+        careerGoals,
+        preferredLearningStyle,
+        timeAvailability,
+        skills: skills || [],
+        resumeAnalysisComplete: !!resumeText,
+      }));
     }
   }, [profileData]);
   
-  // Open onboarding for new users
-  useEffect(() => {
-    if (user && onboardingStatus && !onboardingStatus.completed && currentStep === OnboardingStep.CLOSED) {
-      openOnboarding();
-    }
-  }, [user, onboardingStatus, currentStep]);
-
+  // Update data function
+  const updateData = (newData: Partial<OnboardingData>) => {
+    setData(prevData => ({ ...prevData, ...newData }));
+  };
+  
   // Navigation functions
   const nextStep = () => {
-    switch (currentStep) {
-      case OnboardingStep.WELCOME:
-        setCurrentStep(OnboardingStep.RESUME_UPLOAD);
-        break;
-      case OnboardingStep.RESUME_UPLOAD:
-        setCurrentStep(OnboardingStep.CAREER_STAGE);
-        break;
-      case OnboardingStep.CAREER_STAGE:
-        setCurrentStep(OnboardingStep.INDUSTRY_FOCUS);
-        break;
-      case OnboardingStep.INDUSTRY_FOCUS:
-        setCurrentStep(OnboardingStep.CAREER_GOALS);
-        break;
-      case OnboardingStep.CAREER_GOALS:
-        setCurrentStep(OnboardingStep.LEARNING_PREFERENCES);
-        break;
-      case OnboardingStep.LEARNING_PREFERENCES:
-        setCurrentStep(OnboardingStep.TIME_AVAILABILITY);
-        break;
-      case OnboardingStep.TIME_AVAILABILITY:
-        setCurrentStep(OnboardingStep.SKILLS_ASSESSMENT);
-        break;
-      case OnboardingStep.SKILLS_ASSESSMENT:
-        submitProfile();
-        break;
-      default:
-        break;
+    if (data.currentStep < totalSteps - 1) {
+      updateData({ currentStep: data.currentStep + 1 });
     }
   };
   
   const prevStep = () => {
-    switch (currentStep) {
-      case OnboardingStep.RESUME_UPLOAD:
-        setCurrentStep(OnboardingStep.WELCOME);
-        break;
-      case OnboardingStep.CAREER_STAGE:
-        setCurrentStep(OnboardingStep.RESUME_UPLOAD);
-        break;
-      case OnboardingStep.INDUSTRY_FOCUS:
-        setCurrentStep(OnboardingStep.CAREER_STAGE);
-        break;
-      case OnboardingStep.CAREER_GOALS:
-        setCurrentStep(OnboardingStep.INDUSTRY_FOCUS);
-        break;
-      case OnboardingStep.LEARNING_PREFERENCES:
-        setCurrentStep(OnboardingStep.CAREER_GOALS);
-        break;
-      case OnboardingStep.TIME_AVAILABILITY:
-        setCurrentStep(OnboardingStep.LEARNING_PREFERENCES);
-        break;
-      case OnboardingStep.SKILLS_ASSESSMENT:
-        setCurrentStep(OnboardingStep.TIME_AVAILABILITY);
-        break;
-      default:
-        break;
+    if (data.currentStep > 0) {
+      updateData({ currentStep: data.currentStep - 1 });
     }
   };
   
-  const openOnboarding = () => {
-    setIsVisible(true);
-    setCurrentStep(OnboardingStep.WELCOME);
+  const goToStep = (step: number) => {
+    if (step >= 0 && step < totalSteps) {
+      updateData({ currentStep: step });
+    }
   };
   
-  const closeOnboarding = () => {
-    setIsVisible(false);
-    setCurrentStep(OnboardingStep.CLOSED);
-  };
-  
-  const goToStep = (step: OnboardingStep) => {
-    setCurrentStep(step);
-  };
-  
-  const updateProfile = (data: Partial<OnboardingProfile>) => {
-    setProfile((prev) => ({
-      ...prev,
-      ...data,
-    }));
-  };
-  
-  const submitProfile = async () => {
-    if (!user) return;
+  // Resume upload function
+  const uploadResume = async () => {
+    if (!resumeFile) {
+      setUploadError('No file selected');
+      return;
+    }
     
-    // Combine profile data with skills
-    const finalProfile = {
-      ...profile,
-      skills: Object.entries(activeSkillMap).map(([name, levels]) => ({
-        name,
-        currentLevel: levels.current,
-        targetLevel: levels.target,
-      })),
+    setIsUploading(true);
+    setUploadError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('resume', resumeFile);
+      
+      const response = await fetch('/api/onboarding/upload-resume', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload resume');
+      }
+      
+      const data = await response.json();
+      
+      setUploadSuccess(true);
+      updateData({ 
+        extractedSkills: data.analysis?.skills || [],
+        resumeAnalysisComplete: true 
+      });
+      
+      // Refresh profile data
+      queryClient.invalidateQueries({ queryKey: ['/api/onboarding/user-profile'] });
+      
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'An unknown error occurred');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // Final submission
+  const submitOnboarding = async () => {
+    const submissionData = {
+      careerStage: data.careerStage,
+      industryFocus: data.industryFocus,
+      careerGoals: data.careerGoals,
+      preferredLearningStyle: data.preferredLearningStyle,
+      timeAvailability: data.timeAvailability,
+      skills: data.skills
     };
     
-    await submitProfileMutation.mutateAsync(finalProfile);
+    await submitOnboardingData(submissionData);
   };
   
-  const uploadResume = async (file: File) => {
-    await uploadResumeMutation.mutateAsync(file);
-  };
+  // Check if onboarding is complete
+  const isComplete = !!(
+    data.careerStage &&
+    data.industryFocus?.length &&
+    data.careerGoals &&
+    data.preferredLearningStyle &&
+    data.timeAvailability &&
+    data.skills.length
+  );
   
-  const resetOnboarding = () => {
-    setProfile({});
-    setActiveSkillMap({});
-    setCurrentStep(OnboardingStep.WELCOME);
-  };
+  const isLoading = isStatusLoading || isProfileLoading;
   
-  const updateSkill = (skillName: string, current: number, target: number) => {
-    setActiveSkillMap((prev) => ({
-      ...prev,
-      [skillName]: { current, target },
-    }));
+  // Context value
+  const value: OnboardingContextType = {
+    data,
+    updateData,
+    nextStep,
+    prevStep,
+    goToStep,
+    totalSteps,
+    isLoading,
+    isComplete,
+    uploadResume,
+    isUploading,
+    uploadError,
+    uploadSuccess,
+    resumeFile,
+    setResumeFile,
+    submitOnboarding,
+    isSubmitting,
   };
   
   return (
-    <OnboardingContext.Provider
-      value={{
-        currentStep,
-        profile,
-        isVisible,
-        isLoading,
-        activeSkillMap,
-        nextStep,
-        prevStep,
-        openOnboarding,
-        closeOnboarding,
-        goToStep,
-        updateProfile,
-        submitProfile,
-        uploadResume,
-        resetOnboarding,
-        updateSkill,
-      }}
-    >
+    <OnboardingContext.Provider value={value}>
       {children}
     </OnboardingContext.Provider>
   );
 }
 
+// Hook for using the onboarding context
 export function useOnboarding() {
   const context = useContext(OnboardingContext);
-  if (!context) {
-    throw new Error("useOnboarding must be used within an OnboardingProvider");
+  
+  if (context === undefined) {
+    throw new Error('useOnboarding must be used within an OnboardingProvider');
   }
+  
   return context;
 }

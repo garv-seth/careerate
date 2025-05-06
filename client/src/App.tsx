@@ -29,6 +29,12 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
+      <Route path="/onboarding">
+        <ProtectedRoute>
+          <OnboardingWizard />
+        </ProtectedRoute>
+      </Route>
+      
       <Route path="/agents">
         <ProtectedRoute>
           <AgentTestPage />
@@ -72,7 +78,6 @@ function App() {
             <div className="min-h-screen flex flex-col">
               <Toaster />
               <Router />
-              <OnboardingWizard />
             </div>
           </OnboardingProvider>
         </AuthProvider>

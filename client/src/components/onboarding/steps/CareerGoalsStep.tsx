@@ -1,137 +1,118 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { OnboardingData } from '../OnboardingWizard';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { ArrowLeft, ArrowRight, Target, Brain } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { agentColors } from '@/components/avatars/AgentAvatars';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type CareerGoalsStepProps = {
-  data: OnboardingData;
-  updateData: (data: Partial<OnboardingData>) => void;
+  data: {
+    careerGoals?: string;
+  };
+  updateData: (data: Partial<{ careerGoals: string }>) => void;
   onNext: () => void;
   onBack: () => void;
 };
 
-const CAREER_STAGES = [
-  { id: 'early', label: 'Early Career (0-3 years)' },
-  { id: 'mid', label: 'Mid Career (4-10 years)' },
-  { id: 'senior', label: 'Senior (10+ years)' },
-  { id: 'executive', label: 'Executive/Leadership' },
-  { id: 'career-change', label: 'Career Transition' },
-];
-
-const INDUSTRIES = [
-  { id: 'technology', label: 'Technology' },
-  { id: 'healthcare', label: 'Healthcare' },
-  { id: 'finance', label: 'Finance/Banking' },
-  { id: 'education', label: 'Education' },
-  { id: 'manufacturing', label: 'Manufacturing' },
-  { id: 'retail', label: 'Retail/E-commerce' },
-  { id: 'media', label: 'Media/Entertainment' },
-  { id: 'government', label: 'Government/Public Sector' },
-  { id: 'nonprofit', label: 'Nonprofit' },
-  { id: 'consulting', label: 'Consulting' },
+// Example prompts to help users articulate their goals
+const GOAL_PROMPTS = [
+  "I want to transition from development to leadership in the next 2 years.",
+  "My goal is to become an expert in cloud architecture and lead major infrastructure projects.",
+  "I aim to pivot from marketing to product management while leveraging my existing skills.",
+  "I want to develop AI expertise to complement my current role in data analysis.",
+  "My objective is to prepare for a C-level position in the next 5 years."
 ];
 
 export function CareerGoalsStep({ data, updateData, onNext, onBack }: CareerGoalsStepProps) {
-  const [canProceed, setCanProceed] = useState(false);
+  const [goals, setGoals] = useState(data.careerGoals || '');
+  const caraColors = agentColors.cara;
 
-  useEffect(() => {
-    // Validate required fields
-    const isValid = Boolean(data.careerStage) && data.industryFocus.length > 0;
-    setCanProceed(isValid);
-  }, [data.careerStage, data.industryFocus]);
-
-  const handleCareerStageChange = (value: string) => {
-    updateData({ careerStage: value });
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setGoals(e.target.value);
+    updateData({ careerGoals: e.target.value });
   };
 
-  const handleIndustryChange = (industryId: string, checked: boolean) => {
-    if (checked) {
-      updateData({ industryFocus: [...data.industryFocus, industryId] });
-    } else {
-      updateData({
-        industryFocus: data.industryFocus.filter(industry => industry !== industryId),
-      });
-    }
+  const usePrompt = (prompt: string) => {
+    setGoals(prompt);
+    updateData({ careerGoals: prompt });
   };
+
+  const isValid = goals.trim().length >= 10; // Require at least 10 characters
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">Your Career Profile</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold tracking-tight">Career Goals</h2>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge 
+                  variant="outline" 
+                  className={`${caraColors.border} ${caraColors.text} hover:${caraColors.bg} hover:text-white transition-colors cursor-help`}
+                >
+                  <Brain className="w-3 h-3 mr-1" />
+                  Cara
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="w-80">
+                  Cara, our Career Coach AI, uses your career goals to create personalized development plans.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <p className="text-muted-foreground">
-          Help us understand where you are in your career journey.
+          Describe your career aspirations and objectives. This will help us tailor recommendations to your specific goals.
         </p>
       </div>
 
       <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Career Stage</h3>
-              <RadioGroup
-                value={data.careerStage}
-                onValueChange={handleCareerStageChange}
-                className="grid grid-cols-1 gap-3 md:grid-cols-2"
-              >
-                {CAREER_STAGES.map(stage => (
-                  <div key={stage.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={stage.id} id={`stage-${stage.id}`} />
-                    <Label htmlFor={`stage-${stage.id}`}>{stage.label}</Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
+        <CardContent className="p-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="career-goals" className="text-base font-medium flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              Your career goals and aspirations
+            </Label>
+            <Textarea
+              id="career-goals"
+              placeholder="Describe what you hope to achieve in your career journey..."
+              value={goals}
+              onChange={handleChange}
+              className="min-h-[150px] resize-y"
+            />
+          </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Industry Focus</h3>
-              <p className="text-sm text-muted-foreground">
-                Select all industries you're interested in.
-              </p>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {INDUSTRIES.map(industry => (
-                  <div key={industry.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`industry-${industry.id}`}
-                      checked={data.industryFocus.includes(industry.id)}
-                      onCheckedChange={(checked) => 
-                        handleIndustryChange(industry.id, checked === true)
-                      }
-                    />
-                    <Label htmlFor={`industry-${industry.id}`}>{industry.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Career Goals</h3>
-              <p className="text-sm text-muted-foreground">
-                Describe your short and long-term career goals.
-              </p>
-              <Textarea
-                placeholder="E.g., I want to advance to a senior role in the next 2 years, ultimately becoming a technical lead..."
-                className="min-h-[120px]"
-                value={data.careerGoals}
-                onChange={e => updateData({ careerGoals: e.target.value })}
-              />
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Need inspiration? Click an example below:</p>
+            <div className="flex flex-wrap gap-2">
+              {GOAL_PROMPTS.map((prompt, index) => (
+                <Badge 
+                  key={index} 
+                  variant="outline" 
+                  className="cursor-pointer hover:bg-primary/10"
+                  onClick={() => usePrompt(prompt)}
+                >
+                  {prompt.length > 40 ? prompt.substring(0, 40) + '...' : prompt}
+                </Badge>
+              ))}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} className="gap-2">
-          <ArrowLeft size={16} />
+      <div className="flex justify-between pt-4">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <Button onClick={onNext} disabled={!canProceed} className="gap-2">
-          Next
-          <ArrowRight size={16} />
+        <Button onClick={onNext} disabled={!isValid}>
+          Continue
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>
