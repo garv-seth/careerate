@@ -120,7 +120,10 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     const domain = req.hostname;
-    // Add localhost and development domains for testing
+    const protocol = process.env.NODE_ENV === "production" ? "https" : "https";
+    const callbackUrl = `${protocol}://${domain}/api/callback`;
+    
+    // Ensure strategy exists for this domain
     if (!allowedDomains.includes(domain)) {
       allowedDomains.push(domain);
       const strategy = new Strategy(
@@ -128,7 +131,7 @@ export async function setupAuth(app: Express) {
           name: `replitauth:${domain}`,
           config,
           scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
+          callbackURL: callbackUrl,
         },
         verify,
       );
@@ -139,6 +142,8 @@ export async function setupAuth(app: Express) {
     passport.authenticate(strategyName, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
+      returnTo: req.query.returnTo || "/",
+      successReturnToOrRedirect: "/",
     })(req, res, next);
   });
 
