@@ -144,7 +144,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
             onClick={() => window.location.href = "/api/login"}
             className={cn(
               "cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
-              "text-foreground/80 hover:text-white bg-primary hover:bg-primary/90"
+              "text-foreground/80 hover:text-foreground bg-transparent hover:bg-white/20 border border-white/20"
             )}
           >
             <LogIn className="w-4 h-4 mr-2" /> Login
@@ -228,7 +228,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                       }}
                       className={cn(
                         "flex items-center gap-3 mx-4 my-2 px-4 py-2 text-sm font-medium transition-colors relative w-[calc(100%-2rem)] text-center justify-center rounded-lg",
-                        "text-foreground bg-primary hover:bg-primary/90"
+                        "text-foreground/80 hover:text-foreground bg-transparent hover:bg-white/20 border border-white/20"
                       )}
                     >
                       <LogIn size={16} strokeWidth={2.5} />

@@ -60,7 +60,8 @@ export async function setupReplitAuth(app: Express) {
             console.error("Error logging in dummy user:", err);
             return res.redirect('/');
           }
-          return res.redirect('/');
+          // Redirect to dashboard after successful login
+          return res.redirect('/dashboard');
         });
       });
 
