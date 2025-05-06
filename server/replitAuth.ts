@@ -84,8 +84,8 @@ export async function setupReplitAuth(app: Express) {
   // Setup auth routes
   app.get("/api/login", (req, res) => {
     // In a real system, this would redirect to Replit Auth
-    // For now, redirect to development auth page
-    res.redirect("/auth-test");
+    // For now, go to the homepage and show the login modal
+    res.redirect("/");
   });
   
   // Common logout route
