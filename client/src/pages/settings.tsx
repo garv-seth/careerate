@@ -18,10 +18,7 @@ const SettingsPage = () => {
     return <div>Loading...</div>;
   }
 
-  if (!isAuthenticated) {
-    window.location.href = "/api/login";
-    return null;
-  }
+  // No direct redirect needed here, the ProtectedRoute component will handle it
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
