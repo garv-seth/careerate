@@ -29,9 +29,11 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   username: varchar("username").unique().notNull(),
-  password: varchar("password").notNull(), // For local auth; in production should be hashed
+  password: varchar("password"), // Optional with Replit Auth
   email: varchar("email").unique(),
   name: varchar("name"), // Combined name field
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
   bio: text("bio"),
   profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),

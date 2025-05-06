@@ -141,18 +141,61 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+    // First clean up userData to ensure no undefined values
+    const cleanUserData: any = {};
+    for (const [key, value] of Object.entries(userData)) {
+      if (value !== undefined) {
+        cleanUserData[key] = value;
+      }
+    }
+    
+    try {
+      // Try to find user to check if they exist
+      const existingUser = await this.getUser(cleanUserData.id);
+      
+      if (existingUser) {
+        // Update existing user
+        const [user] = await db
+          .update(users)
+          .set({
+            ...cleanUserData,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, cleanUserData.id))
+          .returning();
+        return user;
+      } else {
+        // Insert new user
+        const [user] = await db
+          .insert(users)
+          .values({
+            ...cleanUserData,
+            // If not coming from Replit Auth, ensure a password
+            password: cleanUserData.password || "replit-auth-user",
+          })
+          .returning();
+        return user;
+      }
+    } catch (error) {
+      console.error("Error in upsertUser:", error);
+      
+      // Try a simple insert with onConflict as fallback
+      const [user] = await db
+        .insert(users)
+        .values({
+          ...cleanUserData,
+          password: cleanUserData.password || "replit-auth-user",
+        })
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            ...cleanUserData,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    }
   }
   
   // Profile operations
