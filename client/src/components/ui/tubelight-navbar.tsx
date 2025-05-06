@@ -4,12 +4,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link as WouterLink, useLocation } from "wouter";
-import { LayoutDashboard, Settings, User2, Brain, Menu, X, LogIn, LogOut, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, Settings, User2, Brain, FileText, BarChart2, Lightbulb, Menu, X, LogIn, LogOut, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { AgentAvatar } from "@/components/avatars/AgentAvatars";
+import { agentColors } from "@/lib/themes";
 
 interface NavItem {
   name: string;
@@ -26,11 +28,15 @@ export function TubelightNavbar({ className }: { className?: string }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Extend to include agent connections
   const navItems = [
-    { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-    { name: 'Agents', url: '/agents', icon: Brain },
-    { name: 'Settings', url: '/settings', icon: Settings },
-    { name: 'Profile', url: '/profile', icon: User2 }
+    { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, agent: null },
+    { name: 'Resume', url: '/resume', icon: FileText, agent: 'maya' },
+    { name: 'Insights', url: '/insights', icon: BarChart2, agent: 'ellie' },
+    { name: 'Learning', url: '/learning', icon: Lightbulb, agent: 'sophia' },
+    { name: 'Strategy', url: '/strategy', icon: Brain, agent: 'cara' },
+    { name: 'Profile', url: '/profile', icon: User2, agent: null },
+    { name: 'Settings', url: '/settings', icon: Settings, agent: null }
   ];
 
   useEffect(() => {
