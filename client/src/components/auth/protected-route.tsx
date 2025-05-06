@@ -17,7 +17,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    setLocation("/auth-test");
+    // Redirect to login api endpoint, which will handle authentication
+    window.location.href = "/api/login";
     return null;
   }
 
