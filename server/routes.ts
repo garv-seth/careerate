@@ -1,8 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
-import authRouter from "./auth";
+import { setupReplitAuth } from "./replitAuth";
 import { isAuthenticated } from "./middleware/auth";
 import { uploadResume, getResume } from "./object-storage";
 import onboardingRouter from "./api/onboarding";
@@ -13,11 +12,8 @@ import { agentEmitter } from "../src/agents/graph";
 import type { AgentActivity, AgentStatuses } from "../src/agents/graph";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up authentication
-  setupAuth(app);
-  
-  // Apply auth middleware
-  app.use(authRouter);
+  // Set up Replit authentication
+  await setupReplitAuth(app);
   
   // Apply onboarding routes
   app.use('/api', onboardingRouter);
