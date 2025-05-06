@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useEffect, useState, useRef } from "react";
@@ -51,7 +50,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
     handleResize();
     window.addEventListener("resize", handleResize);
     document.addEventListener("mousedown", handleClickOutside);
-    
+
     return () => {
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -126,7 +125,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                 </WouterLink>
               );
             })}
-            
+
             {/* Logout Button when authenticated */}
             <Button
               onClick={logout}
@@ -184,7 +183,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                       {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = location === item.url;
-                        
+
                         return (
                           <WouterLink
                             key={item.name}
@@ -204,7 +203,7 @@ export function TubelightNavbar({ className }: { className?: string }) {
                           </WouterLink>
                         );
                       })}
-                      
+
                       {/* Logout button when authenticated */}
                       <button
                         onClick={() => {
@@ -226,8 +225,9 @@ export function TubelightNavbar({ className }: { className?: string }) {
                       href="/api/login" 
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-colors relative w-full rounded-md mx-4",
-                        "text-foreground hover:text-foreground/90 bg-primary/10 backdrop-blur-sm"
+                        "flex items-center gap-2 px-3 py-1.5 text-sm font-medium transition-all duration-300 relative w-full rounded-md mx-4",
+                        "text-white bg-transparent backdrop-blur-sm border border-foreground/20",
+                        "shadow-[0_0_10px_rgba(255,255,255,0.2)] text-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
                       )}
                     >
                       <LogIn size={14} strokeWidth={2.5} />
