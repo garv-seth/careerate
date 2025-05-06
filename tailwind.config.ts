@@ -95,6 +95,9 @@ export default {
           "0%, 100%": { opacity: "0.4" },
           "50%": { opacity: "0.7" },
         },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -102,6 +105,7 @@ export default {
         "slow-pulse": "slow-pulse 8s ease-in-out infinite",
         "slow-pulse-delay-2": "slow-pulse 8s ease-in-out 2s infinite",
         "slow-pulse-delay-4": "slow-pulse 8s ease-in-out 4s infinite",
+        "shimmer": "shimmer 1.5s ease-in-out infinite",
       },
       backgroundImage: {
         'noise-pattern': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",

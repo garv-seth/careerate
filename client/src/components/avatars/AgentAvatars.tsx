@@ -1,41 +1,10 @@
 import { Brain, FileText, BarChart2, Lightbulb } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { agentColors } from '@/lib/themes';
 
-// Agent color scheme
-export const agentColors = {
-  cara: {
-    bg: 'bg-blue-500',
-    bgLight: 'bg-blue-50',
-    text: 'text-blue-500',
-    border: 'border-blue-200',
-    gradientFrom: 'from-blue-500',
-    gradientTo: 'to-blue-700',
-  },
-  maya: {
-    bg: 'bg-purple-500',
-    bgLight: 'bg-purple-50',
-    text: 'text-purple-500',
-    border: 'border-purple-200',
-    gradientFrom: 'from-purple-500',
-    gradientTo: 'to-purple-700',
-  },
-  ellie: {
-    bg: 'bg-pink-500',
-    bgLight: 'bg-pink-50',
-    text: 'text-pink-500',
-    border: 'border-pink-200',
-    gradientFrom: 'from-pink-500',
-    gradientTo: 'to-pink-700',
-  },
-  sophia: {
-    bg: 'bg-green-500',
-    bgLight: 'bg-green-50',
-    text: 'text-green-500',
-    border: 'border-green-200',
-    gradientFrom: 'from-green-500',
-    gradientTo: 'to-green-700',
-  }
-};
+// Re-export the agent colors for other components
+export { agentColors };
 
 type AgentType = 'cara' | 'maya' | 'ellie' | 'sophia';
 
@@ -81,10 +50,15 @@ export function AgentAvatar({ agent, size = 'md', status = 'idle' }: AgentAvatar
 
   return (
     <Avatar 
-      className={`${sizeClasses[size]} ${statusClasses[status]} ${colors.border}`}
+      className={cn(
+        sizeClasses[size], 
+        statusClasses[status], 
+        colors.border,
+        "transition-all duration-300"
+      )}
     >
       <AvatarImage src="" alt={`${agentNames[agent]} AI Agent`} />
-      <AvatarFallback className={`${colors.bg} text-white`}>
+      <AvatarFallback className={cn(colors.bg, "text-white")}>
         {agentIcons[agent]}
       </AvatarFallback>
     </Avatar>
@@ -134,7 +108,11 @@ export function AgentStatus({ agent, status, message }: AgentStatusProps) {
           <span className="font-medium text-sm">
             {agent.charAt(0).toUpperCase() + agent.slice(1)}
           </span>
-          <span className={`text-xs px-1.5 py-0.5 rounded-full ${config.bgColor} ${config.textColor}`}>
+          <span className={cn(
+            "text-xs px-1.5 py-0.5 rounded-full transition-colors",
+            config.bgColor,
+            config.textColor
+          )}>
             {config.label}
           </span>
         </div>
