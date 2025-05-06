@@ -142,10 +142,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
           // Only show login button when not authenticated
           <a href="/api/login">
             <Button
-              variant="ghost"
+              variant="outline"
               className={cn(
-                "cursor-pointer text-sm font-semibold px-6 py-2 rounded-lg transition-colors",
-                "text-foreground/70 hover:text-foreground/90 bg-transparent hover:bg-transparent border border-white/20"
+                "cursor-pointer text-sm font-semibold px-6 py-2 rounded-md transition-colors",
+                "text-foreground/70 hover:text-foreground/90 bg-background/5 backdrop-blur-lg"
               )}
             >
               <LogIn className="w-4 h-4 mr-2" /> Login
