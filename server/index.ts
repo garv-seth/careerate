@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import { setupReplitAuth } from "./replitAuth"; // Updated import
 
 // Set up PostgreSQL session store
 const PostgresSessionStore = connectPg(session);
@@ -66,7 +67,8 @@ import { setupSessionTable } from './setup-sessions';
 (async () => {
   // Ensure session table is properly set up
   await setupSessionTable(pool);
-  
+
+  // Auth setup is now handled inside registerRoutes
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
