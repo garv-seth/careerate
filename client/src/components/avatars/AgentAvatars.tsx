@@ -42,7 +42,7 @@ type AgentType = 'cara' | 'maya' | 'ellie' | 'sophia';
 export interface AgentAvatarProps {
   agent: AgentType;
   size?: 'sm' | 'md' | 'lg';
-  status?: 'idle' | 'active' | 'complete' | 'error';
+  status?: 'idle' | 'active' | 'thinking' | 'complete';
 }
 
 export function AgentAvatar({ agent, size = 'md', status = 'idle' }: AgentAvatarProps) {
@@ -59,8 +59,8 @@ export function AgentAvatar({ agent, size = 'md', status = 'idle' }: AgentAvatar
   const statusClasses = {
     idle: '',
     active: 'animate-pulse ring-2 ring-offset-2',
-    complete: 'ring-2 ring-offset-2 ring-green-500',
-    error: 'ring-2 ring-offset-2 ring-red-500'
+    thinking: 'ring-2 ring-offset-2 ring-amber-500',
+    complete: 'ring-2 ring-offset-2 ring-green-500'
   };
 
   // Agent icons
@@ -93,7 +93,7 @@ export function AgentAvatar({ agent, size = 'md', status = 'idle' }: AgentAvatar
 
 export interface AgentStatusProps {
   agent: AgentType;
-  status: 'idle' | 'active' | 'complete' | 'error';
+  status: 'idle' | 'active' | 'thinking' | 'complete';
   message?: string;
 }
 
@@ -112,15 +112,15 @@ export function AgentStatus({ agent, status, message }: AgentStatusProps) {
       textColor: colors.text,
       bgColor: colors.bgLight
     },
+    thinking: {
+      label: 'Thinking',
+      textColor: 'text-amber-600',
+      bgColor: 'bg-amber-50'
+    },
     complete: {
       label: 'Complete',
       textColor: 'text-green-600',
       bgColor: 'bg-green-50'
-    },
-    error: {
-      label: 'Error',
-      textColor: 'text-red-600',
-      bgColor: 'bg-red-50'
     }
   };
 
@@ -151,7 +151,7 @@ export function AgentStatus({ agent, status, message }: AgentStatusProps) {
 export interface AgentStatusGroupProps {
   statuses: {
     agent: AgentType;
-    status: 'idle' | 'active' | 'complete' | 'error';
+    status: 'idle' | 'active' | 'thinking' | 'complete';
     message?: string;
   }[];
 }
