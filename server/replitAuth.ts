@@ -30,61 +30,53 @@ export function getSession() {
 
 // Main auth setup function
 export async function setupReplitAuth(app: Express) {
-  console.log("Setting up Replit Auth...");
+  console.log("Setting up Auth...");
 
+  // Configure passport
+  app.use(passport.initialize());
+  app.use(passport.session());
+  
   // Configure passport serialization
   passport.serializeUser((user: any, done) => done(null, user));
   passport.deserializeUser((user: any, done) => done(null, user));
 
-  // Initialize passport
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  try {
-    // Import most reliable method of handling authentication for Replit environment
-    console.log("Setting up simplified authentication for Replit...");
-
-    // Setup dummy auth for development until we can get the more complex OAuth working
-    const setupDummyAuth = () => {
-      // Create a simple prompt for username based auth
-      app.get("/api/login", (req, res) => {
-        // In a real system, this would redirect to Replit Auth
-        // For now, just set a dummy authenticated user session
-        req.login({
-          id: "demo_user",
-          username: "demouser",
-          name: "Demo User",
-          email: "demo@example.com",
-        }, (err) => {
-          if (err) {
-            console.error("Error logging in dummy user:", err);
-            return res.redirect('/');
-          }
-          // Redirect to dashboard after successful login
-          return res.redirect('/dashboard');
-        });
-      });
-
-      app.get("/api/callback", (req, res) => {
-        res.redirect('/');
-      });
+  // Setup reliable development auth that doesn't depend on external services
+  console.log("Setting up reliable development auth...");
+  
+  // Login endpoint - automatically logs in with demo account
+  app.get("/api/login", (req, res) => {
+    // Create a demo user account
+    const demoUser = {
+      id: "demo_user_123",
+      username: "demouser",
+      name: "Demo User",
+      email: "demo@example.com",
+      claims: {
+        sub: "demo_user_123",
+        username: "demouser",
+        email: "demo@example.com",
+      }
     };
-
-    // Setup basic strategy - we'll replace this with more robust authentication later
-    setupDummyAuth();
-
-    console.log("Replit Auth setup complete!");
-  } catch (error) {
-    console.error("Failed to set up Replit Auth:", error);
-    console.log("Falling back to basic auth...");
     
-    // Setup a basic auth endpoint in case Replit Auth fails
-    app.get("/api/login", (req, res) => {
-      res.redirect('/');
+    // Log in the demo user
+    req.login(demoUser, (err) => {
+      if (err) {
+        console.error("Error logging in:", err);
+        return res.redirect('/');
+      }
+      
+      // In production, this would properly authenticate with Replit
+      // For now, redirect to dashboard after successful login
+      console.log("Demo user logged in successfully");
+      return res.redirect('/dashboard');
     });
-  }
+  });
 
-  // Common routes that work regardless of authentication method
+  // Mock callback endpoint that would normally receive the OAuth code
+  app.get("/api/callback", (req, res) => {
+    // In a real implementation, this would exchange the code for tokens
+    res.redirect('/dashboard');
+  });
 
   // Logout route
   app.get("/api/logout", (req: any, res) => {
@@ -101,19 +93,16 @@ export async function setupReplitAuth(app: Express) {
 
   // User data endpoint
   app.get("/api/auth/user", isAuthenticated, async (req: any, res: Response) => {
-    const userId = req.user?.id || req.user?.claims?.sub;
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
     try {
-      const user = await storage.getUser(userId);
-      res.json(user);
+      // Return the user from the session
+      res.json(req.user);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      console.error("Error in /api/auth/user:", error);
+      res.status(500).json({ message: "Server error" });
     }
   });
+  
+  console.log("Auth setup complete!");
 }
 
 // Authentication middleware
