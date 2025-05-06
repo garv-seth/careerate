@@ -1,64 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/use-auth";
 import { useOnboarding } from "../hooks/use-onboarding";
 import { Loader2 } from "lucide-react";
 
 export default function AuthTestPage() {
-  const { user, isLoading, loginMutation, logoutMutation, registerMutation } = useAuth();
+  const { user, isLoading, login, logout } = useAuth();
   const { openOnboarding } = useOnboarding();
   
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  
-  const [registerForm, setRegisterForm] = useState({
-    username: "",
-    password: "",
-    name: "",
-    email: "",
+  const [authTestUser, setAuthTestUser] = useState({
+    id: "test_user_123",
+    username: "testuser",
+    name: "Test User",
+    email: "test@example.com",
+    password: "password123"
   });
   
-  const [loginForm, setLoginForm] = useState({
-    username: "",
-    password: "",
-  });
-  
-  const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRegisterForm({
-      ...registerForm,
-      [e.target.name]: e.target.value,
-    });
-  };
-  
-  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLoginForm({
-      ...loginForm,
-      [e.target.name]: e.target.value,
-    });
-  };
-  
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await registerMutation.mutateAsync(registerForm);
-    } catch (error) {
-      console.error("Registration error:", error);
+  // Auto-create a test user for development purposes
+  useEffect(() => {
+    const createTestUser = async () => {
+      try {
+        const response = await fetch("/api/test/create-user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(authTestUser)
+        });
+        const data = await response.json();
+        console.log("Test user created:", data);
+      } catch (error) {
+        console.error("Failed to create test user:", error);
+      }
+    };
+    
+    if (!user && process.env.NODE_ENV === "development") {
+      createTestUser();
     }
+  }, []);
+  
+  const handleLogin = () => {
+    login();
   };
   
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await loginMutation.mutateAsync(loginForm);
-    } catch (error) {
-      console.error("Login error:", error);
-    }
-  };
-  
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+  const handleLogout = () => {
+    logout();
   };
   
   if (isLoading) {
@@ -111,151 +96,42 @@ export default function AuthTestPage() {
             <button 
               onClick={handleLogout} 
               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              disabled={logoutMutation.isPending}
             >
-              {logoutMutation.isPending ? (
-                <>
-                  <Loader2 size={16} className="inline mr-2 animate-spin" />
-                  Logging out...
-                </>
-              ) : (
-                "Logout"
-              )}
+              Logout
             </button>
           </div>
         </div>
       ) : (
         <div className="bg-white border rounded-lg shadow-sm p-6">
           <div className="mb-4">
-            <h2 className="text-xl font-bold">Auth Test</h2>
-            <p className="text-gray-500">Please login or register to continue.</p>
+            <h2 className="text-xl font-bold">Development Auth Test</h2>
+            <p className="text-gray-500">This is a simplified authentication test page for development purposes.</p>
           </div>
           
-          <div className="border-b mb-4">
-            <div className="flex mb-4">
-              <button 
-                className={`px-4 py-2 ${activeTab === 'login' ? 'border-b-2 border-blue-500 font-medium' : ''}`}
-                onClick={() => setActiveTab('login')}
-              >
-                Login
-              </button>
-              <button
-                className={`px-4 py-2 ${activeTab === 'register' ? 'border-b-2 border-blue-500 font-medium' : ''}`}
-                onClick={() => setActiveTab('register')}
-              >
-                Register
-              </button>
+          <div className="mb-4">
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+              <h3 className="font-medium text-yellow-800">Test User Details</h3>
+              <pre className="bg-yellow-100 p-2 rounded mt-2 text-xs">
+                {JSON.stringify(authTestUser, null, 2)}
+              </pre>
             </div>
           </div>
           
-          {activeTab === 'login' ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="login-username" className="block text-sm font-medium">Username</label>
-                <input
-                  id="login-username"
-                  name="username"
-                  className="w-full p-2 border rounded"
-                  value={loginForm.username}
-                  onChange={handleLoginChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="login-password" className="block text-sm font-medium">Password</label>
-                <input
-                  id="login-password"
-                  name="password"
-                  type="password"
-                  className="w-full p-2 border rounded"
-                  value={loginForm.password}
-                  onChange={handleLoginChange}
-                  required
-                />
-              </div>
-              
-              <button
-                type="submit"
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending ? (
-                  <>
-                    <Loader2 size={16} className="inline mr-2 animate-spin" />
-                    Logging in...
-                  </>
-                ) : (
-                  "Login"
-                )}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="register-username" className="block text-sm font-medium">Username (required)</label>
-                <input
-                  id="register-username"
-                  name="username"
-                  className="w-full p-2 border rounded"
-                  value={registerForm.username}
-                  onChange={handleRegisterChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="register-password" className="block text-sm font-medium">Password (required)</label>
-                <input
-                  id="register-password"
-                  name="password"
-                  type="password"
-                  className="w-full p-2 border rounded"
-                  value={registerForm.password}
-                  onChange={handleRegisterChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="register-name" className="block text-sm font-medium">Name (optional)</label>
-                <input
-                  id="register-name"
-                  name="name"
-                  className="w-full p-2 border rounded"
-                  value={registerForm.name}
-                  onChange={handleRegisterChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="register-email" className="block text-sm font-medium">Email (optional)</label>
-                <input
-                  id="register-email"
-                  name="email"
-                  type="email"
-                  className="w-full p-2 border rounded"
-                  value={registerForm.email}
-                  onChange={handleRegisterChange}
-                />
-              </div>
-              
-              <button
-                type="submit"
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                disabled={registerMutation.isPending}
-              >
-                {registerMutation.isPending ? (
-                  <>
-                    <Loader2 size={16} className="inline mr-2 animate-spin" />
-                    Registering...
-                  </>
-                ) : (
-                  "Register"
-                )}
-              </button>
-            </form>
-          )}
+          <div className="flex space-x-2">
+            <button
+              onClick={handleLogin}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Simulate Login with Test User
+            </button>
+            
+            <a 
+              href="/api/login"
+              className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-center"
+            >
+              Replit Auth Login
+            </a>
+          </div>
         </div>
       )}
     </div>
