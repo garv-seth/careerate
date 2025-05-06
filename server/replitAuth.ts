@@ -43,8 +43,13 @@ export async function setupReplitAuth(app: Express) {
   // Setup reliable development auth that doesn't depend on external services
   console.log("Setting up reliable development auth...");
   
-  // Login endpoint - automatically logs in with demo account
+  // Login endpoint - checks if already logged in to prevent redirection loops
   app.get("/api/login", (req, res) => {
+    // If already authenticated, redirect to dashboard
+    if (req.isAuthenticated()) {
+      return res.redirect('/dashboard');
+    }
+    
     // Create a demo user account
     const demoUser = {
       id: "demo_user_123",
