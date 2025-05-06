@@ -86,10 +86,36 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
         </div>
       </div>
 
-      <div className="flex justify-center pt-4">
-        <Button size="lg" onClick={onNext}>
-          Let's Get Started
-        </Button>
+      <div className="space-y-6 pt-6">
+        <div className="flex justify-center">
+          <Button 
+            variant="cara" 
+            size="lg" 
+            onClick={onNext} 
+            animation="shimmer"
+            elevation="lg"
+            className="w-full sm:w-auto"
+          >
+            Let's Get Started
+          </Button>
+        </div>
+        
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button variant="maya-soft" size="sm">
+            <AgentAvatar agent="maya" size="sm" />
+            Resume Analysis
+          </Button>
+          
+          <Button variant="ellie-soft" size="sm">
+            <AgentAvatar agent="ellie" size="sm" />
+            Industry Insights
+          </Button>
+          
+          <Button variant="sophia-soft" size="sm">
+            <AgentAvatar agent="sophia" size="sm" />
+            Learning Paths
+          </Button>
+        </div>
       </div>
     </div>
   );
