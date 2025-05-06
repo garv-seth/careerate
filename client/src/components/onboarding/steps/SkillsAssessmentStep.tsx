@@ -25,8 +25,18 @@ export function SkillsAssessmentStep({ data, updateData, onNext, onBack }: Skill
   const [canProceed, setCanProceed] = useState(false);
 
   useEffect(() => {
+    // Pre-populate skills from resume if available
+    if (data.extractedSkills && data.skills.length === 0) {
+      const initialSkills = data.extractedSkills.map(skill => ({
+        name: skill,
+        level: 3, // Default to intermediate
+        interest: 5 // Default to moderate interest
+      }));
+      updateData({ skills: initialSkills });
+    }
+    
     setCanProceed(data.skills.length > 0);
-  }, [data.skills]);
+  }, [data.skills, data.extractedSkills]);
 
   const addSkill = () => {
     if (newSkill.trim() && !data.skills.some(skill => skill.name.toLowerCase() === newSkill.toLowerCase())) {
