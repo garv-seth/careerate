@@ -20,7 +20,7 @@ const PRODUCTION_DOMAIN = 'gocareerate.com';
 const getOidcConfig = memoize(
   async () => {
     console.log("Discovering Replit OIDC configuration...");
-    return await client.discovery("https://replit.com/oidc");
+    return await client.discovery(new URL("https://replit.com/oidc"));
   },
   { maxAge: 3600 * 1000 }
 );
@@ -136,8 +136,10 @@ export async function setupAuth(app: Express) {
     const strategy = new Strategy(
       {
         client: new client.Client({
-          id: 'client_id', //This needs to be replaced with a real client ID.  This is a placeholder.
+          client_id: 'client_id', // This needs to be replaced with a real client ID
           token_endpoint_auth_method: 'none',
+          redirect_uris: [`https://${currentDomain}/api/callback`],
+          response_types: ['code'],
           ...config
         }),
         params: {
