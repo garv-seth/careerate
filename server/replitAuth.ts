@@ -103,8 +103,16 @@ export async function setupReplitAuth(app: Express) {
       verified(null, user);
     };
 
-    for (const domain of process.env
-      .REPLIT_DOMAINS!.split(",")) {
+    // Support both Replit and custom domains
+    const domains = [
+      process.env.REPLIT_URL, 
+      'gocareerate.com',
+      ...((process.env.REPLIT_DOMAINS || '').split(',').filter(Boolean))
+    ];
+
+    for (const domain of domains) {
+      if (!domain) continue;
+      
       const strategy = new Strategy(
         {
           name: `replitauth:${domain}`,
