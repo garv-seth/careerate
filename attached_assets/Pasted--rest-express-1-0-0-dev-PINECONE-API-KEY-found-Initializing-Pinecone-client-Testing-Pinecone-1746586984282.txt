@@ -1,0 +1,51 @@
+
+> rest-express@1.0.0 dev
+✅ PINECONE_API_KEY found! Initializing Pinecone client
+Testing Pinecone API connection...
+Initializing OpenAI embeddings...
+✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o
+Testing OpenAI API connection...
+Creating simplified ADK-inspired workflow implementation
+✅ Pinecone API test successful! Found 0 indexes
+No indexes found. Will create one if needed during operation.
+✅ OpenAI embeddings test successful! Generated vector of length 1536
+✅ OpenAI API test successful! Response: It seems like you're trying to test a connection. ...
+Creating agents with initialized OpenAI client
+✅ All agents created successfully
+3:01:57 AM [express] Session table already exists.
+Setting up authentication...
+Setting up Replit Auth...
+Using domain for auth: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+Discovering Replit OIDC configuration...
+Failed to set up Replit Auth: TypeError: "server" must be an instance of URL
+    at CodedTypeError (/home/runner/workspace/node_modules/openid-client/src/index.ts:837:15)
+    at performDiscovery (/home/runner/workspace/node_modules/openid-client/src/index.ts:1341:11)
+    at Module.discovery (/home/runner/workspace/node_modules/openid-client/src/index.ts:1272:20)
+    at memoize.maxAge (/home/runner/workspace/server/replitAuth.ts:23:25)
+    at memoized (/home/runner/workspace/node_modules/memoizee/lib/configure-map.js:81:23)
+    at setupAuth (/home/runner/workspace/server/replitAuth.ts:117:26)
+    at registerRoutes (/home/runner/workspace/server/routes.ts:15:9)
+    at <anonymous> (/home/runner/workspace/server/index.ts:54:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ERR_INVALID_ARG_TYPE',
+  [cause]: undefined
+}
+node:internal/process/promises:391
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+TypeError: "server" must be an instance of URL
+    at CodedTypeError (/home/runner/workspace/node_modules/openid-client/src/index.ts:837:15)
+    at performDiscovery (/home/runner/workspace/node_modules/openid-client/src/index.ts:1341:11)
+    at Module.discovery (/home/runner/workspace/node_modules/openid-client/src/index.ts:1272:20)
+    at memoize.maxAge (/home/runner/workspace/server/replitAuth.ts:23:25)
+    at memoized (/home/runner/workspace/node_modules/memoizee/lib/configure-map.js:81:23)
+    at setupAuth (/home/runner/workspace/server/replitAuth.ts:117:26)
+    at registerRoutes (/home/runner/workspace/server/routes.ts:15:9)
+    at <anonymous> (/home/runner/workspace/server/index.ts:54:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ERR_INVALID_ARG_TYPE',
+  [cause]: undefined
+}
+
+Node.js v20.18.1
