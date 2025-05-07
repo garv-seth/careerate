@@ -67,7 +67,7 @@ const HomePage = () => {
                   <Button 
                     size="lg" 
                     className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 bg-primary-600 text-gray hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:shadow-primary-600/40 transition-all duration-200"
-                    onClick={() => isAuthenticated ? window.location.href = "/dashboard" : window.location.href = "/auth"}
+                    onClick={() => isAuthenticated ? window.location.href = "/dashboard" : window.location.href = "/api/login"}
                   >
                     {isAuthenticated ? "Your Dashboard" : "Get Early Access"}
                   </Button>
