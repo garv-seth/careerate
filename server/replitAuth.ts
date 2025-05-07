@@ -1,4 +1,5 @@
-import { Issuer, Client, Strategy, type VerifyFunction } from "openid-client";
+import { Issuer, Strategy, type VerifyFunction } from "openid-client";
+import type { Client } from "openid-client";
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
@@ -151,7 +152,7 @@ export async function setupAuth(app: Express) {
 
     const strategy = new Strategy(
       {
-        client: new Client({
+        client: new issuer.Client({
           ...REPLIT_CLIENT_CONFIG,
           ...config
         }),
