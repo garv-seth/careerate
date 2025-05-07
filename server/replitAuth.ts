@@ -1,5 +1,5 @@
-import * as client from "openid-client";
-import { Strategy, type VerifyFunction } from "openid-client/passport";
+import { Issuer, Strategy, type VerifyFunction } from "openid-client";
+import { Client } from "openid-client";
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
@@ -31,10 +31,12 @@ const REPLIT_CLIENT_CONFIG = {
 const getOidcConfig = memoize(
   async () => {
     console.log("Discovering Replit OIDC configuration...");
-    const issuer = await client.Issuer.discover('https://replit.com/~');
+    const issuer = await Issuer.discover('https://replit.com/.well-known/openid-configuration');
     return {
       ...issuer.metadata,
-      token_endpoint_auth_method: 'none'
+      token_endpoint_auth_method: 'none',
+      authorization_endpoint: 'https://replit.com/auth_with_repl_site',
+      token_endpoint: 'https://replit.com/auth_with_repl_site/token'
     };
   },
   { maxAge: 3600 * 1000 }
@@ -150,7 +152,7 @@ export async function setupAuth(app: Express) {
 
     const strategy = new Strategy(
       {
-        client: new client.Client({
+        client: new Client({
           ...REPLIT_CLIENT_CONFIG,
           ...config
         }),
