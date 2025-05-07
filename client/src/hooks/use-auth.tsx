@@ -1,16 +1,15 @@
-import { createContext, ReactNode, useContext } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { createContext, ReactNode, useContext, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
-import { apiRequest, queryClient } from "../lib/queryClient";
+import { queryClient } from "../lib/queryClient";
 import { useToast } from "./use-toast";
 
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  error: Error | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  login: (returnTo?: string) => void;
+  logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,62 +17,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  const { data: user, error, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading, refetch } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     retry: false,
-    refetchOnWindowFocus: false,
-    refetchInterval: false
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
+    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) throw new Error("Login failed");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["/api/auth/user"], data);
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${data.name || data.username}!`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // Direct browser to login endpoint
+  const login = useCallback((returnTo?: string) => {
+    const loginUrl = new URL("/api/login", window.location.origin);
+    
+    if (returnTo) {
+      loginUrl.searchParams.append("returnTo", returnTo);
+    }
+    
+    window.location.href = loginUrl.toString();
+  }, []);
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/logout");
-      if (!res.ok) throw new Error("Logout failed");
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["/api/auth/user"], null);
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
-      });
-    },
-  });
-
-  const login = async (username: string, password: string) => {
-    await loginMutation.mutateAsync({ username, password });
-  };
-
-  const logout = async () => {
-    await logoutMutation.mutateAsync();
-  };
+  // Direct browser to logout endpoint
+  const logout = useCallback(() => {
+    window.location.href = "/api/logout";
+  }, []);
 
   const value: AuthContextType = {
     user: user || null,
     isAuthenticated: !!user,
     isLoading,
-    error: error as Error | null,
     login,
     logout,
   };
