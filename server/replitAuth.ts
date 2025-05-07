@@ -1,4 +1,5 @@
-import { Issuer, Strategy, Client } from "openid-client";
+import OpenIDClient from "openid-client";
+const { Issuer, Strategy, Client } = OpenIDClient;
 import type { VerifyFunction } from "openid-client";
 import passport from "passport";
 import session from "express-session";
