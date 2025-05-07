@@ -17,10 +17,25 @@ declare module 'express-session' {
 const REPLIT_DOMAIN = 'bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev';
 const PRODUCTION_DOMAIN = 'gocareerate.com';
 
+// Basic Replit Auth configuration
+const REPLIT_CLIENT_CONFIG = {
+  client_id: 'replit',
+  redirect_uris: [
+    `https://${REPLIT_DOMAIN}/api/callback`,
+    `https://${PRODUCTION_DOMAIN}/api/callback`
+  ],
+  response_types: ['code'],
+  token_endpoint_auth_method: 'none'
+};
+
 const getOidcConfig = memoize(
   async () => {
     console.log("Discovering Replit OIDC configuration...");
-    return await client.discovery(new URL("https://replit.com/oidc"));
+    const issuer = await client.Issuer.discover('https://replit.com/~');
+    return {
+      ...issuer.metadata,
+      token_endpoint_auth_method: 'none'
+    };
   },
   { maxAge: 3600 * 1000 }
 );
@@ -136,10 +151,7 @@ export async function setupAuth(app: Express) {
     const strategy = new Strategy(
       {
         client: new client.Client({
-          client_id: process.env.REPLIT_CLIENT_ID || '', // Get client ID from environment
-          token_endpoint_auth_method: 'none',
-          redirect_uris: [`https://${currentDomain}/api/callback`],
-          response_types: ['code'],
+          ...REPLIT_CLIENT_CONFIG,
           ...config
         }),
         params: {
