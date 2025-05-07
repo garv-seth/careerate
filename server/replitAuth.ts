@@ -15,15 +15,14 @@ declare module 'express-session' {
   }
 }
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
-}
+const REPLIT_URI = "https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev";
+const PRODUCTION_URI = "gocareerate.com";
 
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      new URL("https://replit.com/oidc"),
+      "bfd824a8-80f1-45b8-9c48-fc95b77a9105"
     );
   },
   { maxAge: 3600 * 1000 }
@@ -103,15 +102,10 @@ export async function setupReplitAuth(app: Express) {
       verified(null, user);
     };
 
-    // Support both Replit and custom domains
-    const domains = [
-      process.env.REPLIT_URL, 
-      'gocareerate.com',
-      ...((process.env.REPLIT_DOMAINS || '').split(',').filter(Boolean))
-    ];
+    // Hardcoded domains for both development and production
+    const domains = [REPLIT_URI, PRODUCTION_URI];
 
     for (const domain of domains) {
-      if (!domain) continue;
       
       const strategy = new Strategy(
         {
