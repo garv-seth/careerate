@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupReplitAuth, isAuthenticated } from "./replitAuth";
+import { setupReplitAuth, isAuthenticated } from "./replitAuth.simplified";
 import { uploadResume, getResume } from "./object-storage";
 import onboardingRouter from "./api/onboarding";
 // Use simplified agent implementation instead of complex LangChain agents
