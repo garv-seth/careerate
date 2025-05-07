@@ -8,6 +8,19 @@ import { storage } from "./storage";
 declare module 'express-session' {
   interface SessionData {
     returnTo?: string;
+    // Track if we've already logged in to prevent loops
+    authenticated?: boolean;
+    // Track visit count to prevent infinite loops
+    visitCount?: number;
+    // Store user data directly in session
+    userData?: {
+      id: string;
+      username: string;
+      email: string;
+      name: string;
+      profileImageUrl: string;
+      [key: string]: any;
+    };
   }
 }
 
@@ -37,83 +50,99 @@ export function getSession() {
 }
 
 export async function setupAuth(app: Express): Promise<void> {
-  console.log("Setting up simplified auth...");
+  console.log("Setting up ultra-simplified auth (no passport)...");
   
-  // Configure basic middleware
+  // Configure basic session middleware
   app.set("trust proxy", true);
   app.use(getSession());
-  app.use(passport.initialize());
-  app.use(passport.session());
 
-  // Simple serialization/deserialization
-  passport.serializeUser((user: any, cb) => {
-    console.log("Serializing user");
-    cb(null, user.id);
-  });
-  
-  passport.deserializeUser((id: string, cb) => {
-    console.log("Deserializing user with ID:", id);
-    // Just pass the ID to avoid loops
-    cb(null, { id });
-  });
-
-  // Login route - use direct login without strategy
+  // LOGIN WITHOUT PASSPORT - Just use Express session directly
   app.get("/api/login", (req, res) => {
     console.log("Login route accessed");
-    // Store return path
+    
+    // ANTI-LOOP PROTECTION - Check visit count to bail out if looping
+    if (!req.session.visitCount) {
+      req.session.visitCount = 1;
+    } else {
+      req.session.visitCount++;
+      
+      // If we've redirected to login more than 3 times, break the loop
+      if (req.session.visitCount > 3) {
+        console.log("LOOP DETECTED - Breaking out");
+        return res.status(500).send(`
+          <html>
+            <head><title>Authentication Error</title></head>
+            <body>
+              <h1>Authentication Error</h1>
+              <p>A redirect loop has been detected. Please clear your cookies and try again.</p>
+              <a href="/">Return to Home Page</a>
+            </body>
+          </html>
+        `);
+      }
+    }
+    
+    // Store destination
     if (req.query.returnTo) {
       req.session.returnTo = req.query.returnTo as string;
     }
     
-    // Create a stable user ID for consistency
-    const userId = "user_1234";
+    // Set a simple session flag to indicate authentication
+    req.session.authenticated = true;
     
-    // Log the user in directly without passport strategy
-    req.login({ 
-      id: userId,
+    // Store user data directly in session
+    const userData = {
+      id: "fixed_user_id", // Use a completely static ID to prevent serialization issues
       username: "careerate_user",
-      name: "Careerate User"
-    }, (err) => {
-      if (err) {
-        console.error("Login error:", err);
-        return res.redirect("/?error=login_failed");
-      }
-      
-      // Redirect to return URL or dashboard
-      const returnTo = req.session.returnTo || "/dashboard";
-      delete req.session.returnTo;
-      console.log("Redirecting to:", returnTo);
-      res.redirect(returnTo);
-    });
+      email: "user@careerate.app",
+      name: "Careerate User",
+      profileImageUrl: "https://ui-avatars.com/api/?name=Careerate+User&background=0D8ABC&color=fff",
+    };
+    
+    // Store userData directly in session
+    req.session.userData = userData;
+    
+    // Now redirect to the destination
+    const returnTo = req.session.returnTo || "/dashboard";
+    delete req.session.returnTo;
+    console.log("Login successful, redirecting to:", returnTo);
+    return res.redirect(returnTo);
   });
 
   // Just a placeholder callback route
   app.get("/api/callback", (req, res) => {
     console.log("Callback route accessed");
-    const returnTo = req.session.returnTo || "/dashboard";
-    delete req.session.returnTo;
-    res.redirect(returnTo);
+    res.redirect("/dashboard");
   });
 
-  // Simple logout
-  app.get("/api/logout", (req: any, res) => {
+  // Simple logout without passport
+  app.get("/api/logout", (req, res) => {
     console.log("Logout route accessed");
-    req.logout(() => {
+    
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+      }
       res.redirect("/");
     });
   });
 
-  // User endpoint
-  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
+  // User endpoint - return data from session
+  app.get("/api/auth/user", (req: any, res) => {
     try {
-      console.log("User info endpoint accessed");
-      // Return a meaningful user object
-      res.json({
-        id: req.user.id,
+      // Check if authenticated
+      if (!req.session.authenticated) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      // Return user data from session
+      res.json(req.session.userData || {
+        id: "fixed_user_id",
         username: "careerate_user",
         email: "user@careerate.app",
         name: "Careerate User",
-        profileImageUrl: "https://ui-avatars.com/api/?name=Careerate+User&background=0D8ABC&color=fff",
+        profileImageUrl: "https://ui-avatars.com/api/?name=Careerate+User&background=0D8ABC&color=fff"
       });
     } catch (error) {
       console.error("Error in user endpoint:", error);
@@ -121,16 +150,15 @@ export async function setupAuth(app: Express): Promise<void> {
     }
   });
 
-  console.log("Auth setup complete");
+  console.log("Auth setup complete - using pure Express session (no passport)");
 }
 
-// Auth middleware
-export const isAuthenticated: RequestHandler = (req, res, next) => {
-  console.log("Checking auth, authenticated:", req.isAuthenticated());
-  
-  if (!req.isAuthenticated()) {
+// Auth middleware - no passport, just check session
+export const isAuthenticated: RequestHandler = (req: any, res, next) => {
+  if (!req.session.authenticated) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   
+  // Always continue if authenticated
   next();
 };

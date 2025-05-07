@@ -17,31 +17,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  const { data: user, isLoading, refetch } = useQuery<User | null>({
+  // Fetch user data from the API
+  const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
-    retry: false,
-    refetchOnWindowFocus: true,
+    retry: 1, // Only retry once
+    refetchOnWindowFocus: false,
     refetchInterval: false,
     refetchOnMount: true,
-    staleTime: 5 * 60 * 1000 // 5 minutes
+    // Handle errors silently
+    onError: () => {
+      queryClient.setQueryData(["/api/auth/user"], null);
+    }
   });
 
-  // Direct browser to login endpoint
+  // Direct login by redirecting to the API endpoint
   const login = useCallback((returnTo?: string) => {
     const loginUrl = new URL("/api/login", window.location.origin);
     
+    // Add return URL if provided
     if (returnTo) {
       loginUrl.searchParams.append("returnTo", returnTo);
     }
     
+    // Redirect to login endpoint
     window.location.href = loginUrl.toString();
   }, []);
 
-  // Direct browser to logout endpoint
+  // Direct logout by redirecting to the API endpoint
   const logout = useCallback(() => {
-    window.location.href = "/api/logout";
+    const logoutUrl = new URL("/api/logout", window.location.origin);
+    window.location.href = logoutUrl.toString();
   }, []);
 
+  // Authentication context value
   const value: AuthContextType = {
     user: user || null,
     isAuthenticated: !!user,
@@ -53,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// Hook for using the authentication context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
