@@ -136,7 +136,7 @@ export async function setupAuth(app: Express) {
     const strategy = new Strategy(
       {
         client: new client.Client({
-          client_id: 'client_id', // This needs to be replaced with a real client ID
+          client_id: process.env.REPLIT_CLIENT_ID || '', // Get client ID from environment
           token_endpoint_auth_method: 'none',
           redirect_uris: [`https://${currentDomain}/api/callback`],
           response_types: ['code'],
