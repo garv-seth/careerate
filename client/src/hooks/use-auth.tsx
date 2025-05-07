@@ -2,54 +2,62 @@ import { createContext, ReactNode, useContext, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { queryClient } from "../lib/queryClient";
-import { useToast } from "./use-toast";
 
+// Define user type for our context
+// This needs to match what's coming from the API
+type AuthUser = {
+  id: string;
+  username: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  bio: string | null;
+  profileImageUrl: string | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
+
+// Define authentication context type
 type AuthContextType = {
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (returnTo?: string) => void;
   logout: () => void;
 };
 
+// Create context with undefined default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Authentication provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
-
-  // Fetch user data from the API
-  const { data: user, isLoading } = useQuery<User | null>({
+  // Fetch user data from the server
+  const { data: user, isLoading } = useQuery<AuthUser | null>({
     queryKey: ["/api/auth/user"],
-    retry: 1, // Only retry once
+    retry: false, // Don't retry on failure
     refetchOnWindowFocus: false,
     refetchInterval: false,
-    refetchOnMount: true,
-    // Handle errors silently
-    onError: () => {
-      queryClient.setQueryData(["/api/auth/user"], null);
-    }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Direct login by redirecting to the API endpoint
+  // Login function - redirect to API login endpoint
   const login = useCallback((returnTo?: string) => {
-    const loginUrl = new URL("/api/login", window.location.origin);
+    // Create login URL with optional return path
+    const loginUrl = returnTo
+      ? `/api/login?returnTo=${encodeURIComponent(returnTo)}`
+      : "/api/login";
     
-    // Add return URL if provided
-    if (returnTo) {
-      loginUrl.searchParams.append("returnTo", returnTo);
-    }
-    
-    // Redirect to login endpoint
-    window.location.href = loginUrl.toString();
+    // Use window.location for direct navigation to API endpoint
+    window.location.href = loginUrl;
   }, []);
 
-  // Direct logout by redirecting to the API endpoint
+  // Logout function - redirect to API logout endpoint
   const logout = useCallback(() => {
-    const logoutUrl = new URL("/api/logout", window.location.origin);
-    window.location.href = logoutUrl.toString();
+    window.location.href = "/api/logout";
   }, []);
 
-  // Authentication context value
+  // Context value
   const value: AuthContextType = {
     user: user || null,
     isAuthenticated: !!user,

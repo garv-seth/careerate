@@ -2,15 +2,16 @@ import {
   pgTable,
   text,
   varchar,
-  serial,
-  integer,
   timestamp,
   jsonb,
   index,
+  serial,
+  integer,
   boolean,
-  primaryKey,
   date,
+  primaryKey,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -25,13 +26,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Users table for authentication
+// User table for Replit Auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   username: varchar("username").unique().notNull(),
-  password: varchar("password"), // Optional with Replit Auth
   email: varchar("email").unique(),
-  name: varchar("name"), // Combined name field
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   bio: text("bio"),
@@ -40,10 +39,10 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User profiles for career data
+// User profiles with additional data
 export const profiles = pgTable("profiles", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   resumeText: text("resume_text"),
   lastScan: timestamp("last_scan"),
   careerStage: varchar("career_stage"),
@@ -55,22 +54,27 @@ export const profiles = pgTable("profiles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Vector storage for embeddings
+// Vector storage for AI embeddings
 export const vectors = pgTable("vectors", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  pineconeId: varchar("pinecone_id").notNull(),
-  vectorType: varchar("vector_type").notNull(), // 'resume', 'skill', etc.
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sourceType: varchar("source_type").notNull(), // resume, skill, experience, etc.
+  sourceId: varchar("source_id"), // ID of the source (e.g., skill ID)
+  content: text("content").notNull(), // Original text
+  embedding: text("embedding"), // Vector embedding as JSON string
+  metadata: jsonb("metadata"), // Additional metadata
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Generate schemas for insert operations
+// Define schemas and types
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
 export const insertProfileSchema = createInsertSchema(profiles).pick({
   userId: true,
   resumeText: true,
+  lastScan: true,
   careerStage: true,
   industryFocus: true,
   careerGoals: true,
@@ -82,124 +86,109 @@ export type Profile = typeof profiles.$inferSelect;
 
 export const insertVectorSchema = createInsertSchema(vectors).pick({
   userId: true,
-  pineconeId: true,
-  vectorType: true,
+  sourceType: true,
+  sourceId: true,
+  content: true,
+  embedding: true,
+  metadata: true,
 });
 export type InsertVector = z.infer<typeof insertVectorSchema>;
 export type Vector = typeof vectors.$inferSelect;
 
-// ----- PREMIUM FEATURES MODELS -----
-
-// FEATURE 1: Career Trajectory Mapping
+// Premium feature 1: Career Trajectory Mapping
 export const careerPaths = pgTable("career_paths", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  name: varchar("name").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title").notNull(),
   description: text("description"),
   targetRole: varchar("target_role").notNull(),
-  targetTimeframe: integer("target_timeframe").notNull(), // in months
+  timeframe: varchar("timeframe"), // e.g., "3 years", "5 years"
+  confidenceScore: integer("confidence_score"), // AI-generated confidence 0-100
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const careerMilestones = pgTable("career_milestones", {
   id: serial("id").primaryKey(),
-  careerPathId: integer("career_path_id").notNull().references(() => careerPaths.id),
+  careerPathId: integer("career_path_id").notNull().references(() => careerPaths.id, { onDelete: "cascade" }),
   title: varchar("title").notNull(),
   description: text("description"),
-  targetDate: date("target_date"),
+  timeframe: varchar("timeframe"), // e.g., "6 months", "1 year"
   isCompleted: boolean("is_completed").default(false),
-  completedDate: date("completed_date"),
-  milestonePriority: integer("milestone_priority").default(0), // 0=normal, 1=high, 2=critical
+  order: integer("order").notNull(), // For ordering in UI
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const alternativePaths = pgTable("alternative_paths", {
   id: serial("id").primaryKey(),
-  careerPathId: integer("career_path_id").notNull().references(() => careerPaths.id),
-  name: varchar("name").notNull(),
+  careerPathId: integer("career_path_id").notNull().references(() => careerPaths.id, { onDelete: "cascade" }),
+  title: varchar("title").notNull(),
   description: text("description"),
-  probabilityScore: integer("probability_score").default(50), // 0-100
-  potentialUpsides: text("potential_upsides"),
-  potentialDownsides: text("potential_downsides"),
+  probabilityScore: integer("probability_score"), // 0-100
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// FEATURE 2: Executive Network Access
+// Premium feature 2: Executive Network Access
 export const networkEvents = pgTable("network_events", {
   id: serial("id").primaryKey(),
   title: varchar("title").notNull(),
-  description: text("description").notNull(),
+  description: text("description"),
   eventDate: timestamp("event_date").notNull(),
-  eventType: varchar("event_type").notNull(), // webinar, roundtable, AMA, etc.
-  speakerInfo: jsonb("speaker_info").notNull(),
-  maxAttendees: integer("max_attendees").notNull(),
-  registrationOpenDate: timestamp("registration_open_date"),
-  registrationCloseDate: timestamp("registration_close_date"),
-  eventLink: varchar("event_link"),
-  isActive: boolean("is_active").default(true),
+  location: varchar("location"),
+  virtualLink: varchar("virtual_link"),
+  industry: varchar("industry").notNull(),
+  isFeatured: boolean("is_featured").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const eventRegistrations = pgTable("event_registrations", {
   id: serial("id").primaryKey(),
-  eventId: integer("event_id").notNull().references(() => networkEvents.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  eventId: integer("event_id").notNull().references(() => networkEvents.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   registrationDate: timestamp("registration_date").defaultNow(),
-  attended: boolean("attended").default(false),
-  feedback: text("feedback"),
-  notes: text("notes"),
+  status: varchar("status").notNull().default("confirmed"), // confirmed, canceled, waitlisted
 });
 
 export const mentorships = pgTable("mentorships", {
   id: serial("id").primaryKey(),
   mentorName: varchar("mentor_name").notNull(),
   mentorTitle: varchar("mentor_title").notNull(),
-  mentorCompany: varchar("mentor_company").notNull(),
-  mentorBio: text("mentor_bio").notNull(),
-  expertise: jsonb("expertise").notNull(), // array of expertise areas
-  availableSlots: integer("available_slots").default(3),
-  isActive: boolean("is_active").default(true),
+  companyName: varchar("company_name"),
+  industry: varchar("industry").notNull(),
+  expertise: text("expertise").array(),
+  availabilityStart: date("availability_start"),
+  availabilityEnd: date("availability_end"),
+  description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const mentorshipApplications = pgTable("mentorship_applications", {
   id: serial("id").primaryKey(),
-  mentorshipId: integer("mentorship_id").notNull().references(() => mentorships.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  mentorshipId: integer("mentorship_id").notNull().references(() => mentorships.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   applicationDate: timestamp("application_date").defaultNow(),
+  goalsDescription: text("goals_description"),
   status: varchar("status").notNull().default("pending"), // pending, approved, rejected
-  goalsDescription: text("goals_description").notNull(),
-  approvedDate: timestamp("approved_date"),
-  rejectionReason: text("rejection_reason"),
 });
 
-// FEATURE 3: Skills Gap Accelerator
+// Premium feature 3: Skills Gap Accelerator
 export const skillsLibrary = pgTable("skills_library", {
   id: serial("id").primaryKey(),
-  name: varchar("name").notNull().unique(),
-  category: varchar("category").notNull(),
+  name: varchar("name").notNull(),
+  category: varchar("category").notNull(), // technical, soft, domain
   description: text("description"),
-  marketDemand: integer("market_demand").default(50), // 0-100
-  futureRelevance: integer("future_relevance").default(50), // 0-100
-  averageSalaryImpact: integer("avg_salary_impact"), // in dollars
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  automationRisk: integer("automation_risk"), // 0-100
+  growthRate: integer("growth_rate"), // -100 to 100 (percentage)
+  averageSalaryImpact: integer("average_salary_impact"), // 0-100
 });
 
 export const userSkills = pgTable("user_skills", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  name: varchar("name").notNull(),
-  currentLevel: integer("current_level").notNull(), // 1-10
-  targetLevel: integer("target_level").notNull(), // 1-10
-  priority: integer("priority").default(0), // 0=normal, 1=high, 2=critical
-  skillId: integer("skill_id").references(() => skillsLibrary.id), // Optional reference to skill library
-  startDate: date("start_date"),
-  targetDate: date("target_date"),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  skillId: integer("skill_id").notNull().references(() => skillsLibrary.id, { onDelete: "cascade" }),
+  currentLevel: integer("current_level").notNull(), // 1-5
+  targetLevel: integer("target_level"), // 1-5
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -208,57 +197,51 @@ export const learningResources = pgTable("learning_resources", {
   id: serial("id").primaryKey(),
   title: varchar("title").notNull(),
   description: text("description"),
-  provider: varchar("provider").notNull(),
-  resourceType: varchar("resource_type").notNull(), // course, book, certification, etc.
-  url: varchar("url").notNull(),
-  cost: integer("cost"), // in cents
-  duration: integer("duration"), // in minutes
-  difficulty: varchar("difficulty").notNull(), // beginner, intermediate, advanced
-  rating: integer("rating"), // 1-5
+  resourceType: varchar("resource_type").notNull(), // course, book, video, article
+  provider: varchar("provider"),
+  url: varchar("url"),
+  duration: varchar("duration"), // e.g., "2 hours", "4 weeks"
+  difficulty: varchar("difficulty"), // beginner, intermediate, advanced
+  costType: varchar("cost_type").notNull(), // free, paid, subscription
+  cost: integer("cost"), // cost in cents if paid
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const resourceSkills = pgTable("resource_skills", {
-  resourceId: integer("resource_id").notNull().references(() => learningResources.id),
-  skillId: integer("skill_id").notNull().references(() => skillsLibrary.id),
-  relevanceScore: integer("relevance_score").default(50), // 0-100
-  createdAt: timestamp("created_at").defaultNow(),
-}, (t) => ({
-  pk: primaryKey(t.resourceId, t.skillId),
-}));
+  id: serial("id").primaryKey(),
+  resourceId: integer("resource_id").notNull().references(() => learningResources.id, { onDelete: "cascade" }),
+  skillId: integer("skill_id").notNull().references(() => skillsLibrary.id, { onDelete: "cascade" }),
+  relevanceScore: integer("relevance_score"), // 0-100
+});
 
 export const userLearningPaths = pgTable("user_learning_paths", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  name: varchar("name").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title").notNull(),
   description: text("description"),
-  estimatedCompletionTime: integer("estimated_completion_time"), // in minutes
-  progress: integer("progress").default(0), // 0-100
-  isActive: boolean("is_active").default(true),
+  targetCompletionDate: date("target_completion_date"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const learningPathResources = pgTable("learning_path_resources", {
   id: serial("id").primaryKey(),
-  learningPathId: integer("learning_path_id").notNull().references(() => userLearningPaths.id),
-  resourceId: integer("resource_id").notNull().references(() => learningResources.id),
+  learningPathId: integer("learning_path_id").notNull().references(() => userLearningPaths.id, { onDelete: "cascade" }),
+  resourceId: integer("resource_id").notNull().references(() => learningResources.id, { onDelete: "cascade" }),
   order: integer("order").notNull(),
   isCompleted: boolean("is_completed").default(false),
   completedDate: timestamp("completed_date"),
-  userNotes: text("user_notes"),
 });
 
-// Generate schemas for insert operations
+// Insert schemas for DB operations
 
-// Career Trajectory Mapping
 export const insertCareerPathSchema = createInsertSchema(careerPaths).pick({
   userId: true,
-  name: true,
+  title: true,
   description: true,
   targetRole: true,
-  targetTimeframe: true,
+  timeframe: true,
+  confidenceScore: true,
 });
 export type InsertCareerPath = z.infer<typeof insertCareerPathSchema>;
 export type CareerPath = typeof careerPaths.$inferSelect;
@@ -267,23 +250,21 @@ export const insertCareerMilestoneSchema = createInsertSchema(careerMilestones).
   careerPathId: true,
   title: true,
   description: true,
-  targetDate: true,
-  milestonePriority: true,
+  timeframe: true,
+  isCompleted: true,
+  order: true,
 });
 export type InsertCareerMilestone = z.infer<typeof insertCareerMilestoneSchema>;
 export type CareerMilestone = typeof careerMilestones.$inferSelect;
 
-// Executive Network Access
 export const insertNetworkEventSchema = createInsertSchema(networkEvents).pick({
   title: true,
   description: true,
   eventDate: true,
-  eventType: true,
-  speakerInfo: true,
-  maxAttendees: true,
-  registrationOpenDate: true,
-  registrationCloseDate: true,
-  eventLink: true,
+  location: true,
+  virtualLink: true,
+  industry: true,
+  isFeatured: true,
 });
 export type InsertNetworkEvent = z.infer<typeof insertNetworkEventSchema>;
 export type NetworkEvent = typeof networkEvents.$inferSelect;
@@ -291,28 +272,25 @@ export type NetworkEvent = typeof networkEvents.$inferSelect;
 export const insertEventRegistrationSchema = createInsertSchema(eventRegistrations).pick({
   eventId: true,
   userId: true,
-  notes: true,
+  status: true,
 });
 export type InsertEventRegistration = z.infer<typeof insertEventRegistrationSchema>;
 export type EventRegistration = typeof eventRegistrations.$inferSelect;
 
-// Skills Gap Accelerator
 export const insertUserSkillSchema = createInsertSchema(userSkills).pick({
   userId: true,
-  name: true,
+  skillId: true,
   currentLevel: true,
   targetLevel: true,
-  priority: true,
-  skillId: true,
-  targetDate: true,
 });
 export type InsertUserSkill = z.infer<typeof insertUserSkillSchema>;
 export type UserSkill = typeof userSkills.$inferSelect;
 
 export const insertLearningPathSchema = createInsertSchema(userLearningPaths).pick({
   userId: true,
-  name: true,
+  title: true,
   description: true,
+  targetCompletionDate: true,
 });
 export type InsertLearningPath = z.infer<typeof insertLearningPathSchema>;
 export type LearningPath = typeof userLearningPaths.$inferSelect;

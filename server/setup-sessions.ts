@@ -1,44 +1,33 @@
 import { Pool } from '@neondatabase/serverless';
-import { log } from './vite';
 
 export async function setupSessionTable(pool: Pool): Promise<void> {
   try {
-    // Check if the session table exists
-    const tableCheckQuery = `
+    // Check if the sessions table exists
+    const result = await pool.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' AND table_name = 'session'
+        WHERE table_name = 'sessions'
       );
-    `;
+    `);
     
-    const tableExists = await pool.query(tableCheckQuery);
+    const tableExists = result.rows[0].exists;
     
-    if (!tableExists.rows[0].exists) {
-      // If the table doesn't exist, create it with the proper structure
-      log('Creating session table as it does not exist...');
-      
-      const createTableQuery = `
-        CREATE TABLE "session" (
-          "sid" varchar NOT NULL COLLATE "default",
-          "sess" json NOT NULL,
-          "expire" timestamp(6) NOT NULL,
-          CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+    if (!tableExists) {
+      // Create the sessions table if it doesn't exist
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS sessions (
+          sid VARCHAR NOT NULL PRIMARY KEY,
+          sess JSON NOT NULL,
+          expire TIMESTAMP(6) NOT NULL
         );
-      `;
-      
-      const createIndexQuery = `
-        CREATE INDEX "IDX_session_expire" ON "session" ("expire");
-      `;
-      
-      await pool.query(createTableQuery);
-      await pool.query(createIndexQuery);
-      
-      log('Session table and index created successfully.');
+        CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions(expire);
+      `);
+      console.log("Sessions table created successfully.");
     } else {
-      log('Session table already exists.');
+      console.log("Session table already exists.");
     }
   } catch (error) {
-    console.error('Error setting up session table:', error);
-    // Don't throw, just log the error so the app can still start
+    console.error("Error setting up session table:", error);
+    throw error;
   }
 }
