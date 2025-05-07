@@ -15,14 +15,15 @@ declare module 'express-session' {
   }
 }
 
-const REPLIT_URI = "https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev";
-const PRODUCTION_URI = "gocareerate.com";
+if (!process.env.REPLIT_DOMAINS) {
+  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+}
 
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL("https://replit.com/oidc"),
-      "bfd824a8-80f1-45b8-9c48-fc95b77a9105"
+      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
+      process.env.REPL_ID!
     );
   },
   { maxAge: 3600 * 1000 }
@@ -37,7 +38,7 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
-  
+
   // Set to match existing session cookies
   return session({
     secret: process.env.SESSION_SECRET || "developmentsecret",
@@ -70,7 +71,7 @@ async function upsertUser(
   const firstName = claims["first_name"] || "";
   const lastName = claims["last_name"] || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
-  
+
   await storage.upsertUser({
     id: claims["sub"],
     username: claims["username"],
@@ -102,11 +103,7 @@ export async function setupReplitAuth(app: Express) {
       verified(null, user);
     };
 
-    // Hardcoded domains for both development and production
-    const domains = [REPLIT_URI, PRODUCTION_URI];
-
-    for (const domain of domains) {
-      
+    for (const domain of process.env.REPLIT_DOMAINS!.split(",")) {
       const strategy = new Strategy(
         {
           name: `replitauth:${domain}`,
@@ -124,7 +121,7 @@ export async function setupReplitAuth(app: Express) {
       // Store the minimal necessary user data
       cb(null, user);
     });
-    
+
     passport.deserializeUser((obj: any, cb) => {
       // Restore the user object
       cb(null, obj);
@@ -135,7 +132,7 @@ export async function setupReplitAuth(app: Express) {
       if (req.query.returnTo) {
         req.session.returnTo = req.query.returnTo as string;
       }
-      
+
       passport.authenticate(`replitauth:${req.hostname}`, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
@@ -174,20 +171,20 @@ export async function setupReplitAuth(app: Express) {
     console.log("Replit Auth setup complete!");
   } catch (error) {
     console.error("Failed to set up Replit Auth:", error);
-    
+
     // Setup fallback for local development
     console.log("Setting up development auth...");
-    
+
     // Override passport serialization/deserialization
     passport.serializeUser((user: any, cb) => cb(null, user));
     passport.deserializeUser((obj: any, cb) => cb(null, obj));
-    
+
     app.get("/api/login", (req, res) => {
       // Save returnTo URL in session if provided
       if (req.query.returnTo) {
         req.session.returnTo = req.query.returnTo as string;
       }
-      
+
       if (req.isAuthenticated()) {
         // Get any redirectUrl from returnTo or default to dashboard
         const returnTo = req.session.returnTo || '/dashboard';
@@ -196,7 +193,7 @@ export async function setupReplitAuth(app: Express) {
         }
         return res.redirect(returnTo);
       }
-      
+
       const demoUser = {
         id: "demo_user_123",
         username: "demouser",
@@ -208,14 +205,14 @@ export async function setupReplitAuth(app: Express) {
           username: "demouser"
         }
       };
-      
+
       req.login(demoUser, (err) => {
         if (err) {
           console.error("Error logging in:", err);
           return res.status(500).json({ message: "Auth error" });
         }
         console.log("Demo user logged in successfully");
-        
+
         // Get any redirectUrl from returnTo or default to dashboard
         const returnTo = req.session.returnTo || '/dashboard';
         if (req.session.returnTo) {
@@ -224,7 +221,7 @@ export async function setupReplitAuth(app: Express) {
         return res.redirect(returnTo);
       });
     });
-    
+
     app.get("/api/callback", (req, res) => {
       // Get any redirectUrl from session or default to dashboard
       const returnTo = req.session.returnTo || '/dashboard';
@@ -233,13 +230,13 @@ export async function setupReplitAuth(app: Express) {
       }
       res.redirect(returnTo);
     });
-    
+
     app.get("/api/logout", (req: any, res) => {
       req.logout(() => {
         res.redirect('/');
       });
     });
-    
+
     app.get("/api/auth/user", isAuthenticated, (req: any, res) => {
       res.json(req.user);
     });
@@ -250,14 +247,14 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  
+
   const user = req.user as any;
-  
+
   // For demo users, no token check is needed
   if (user.id === "demo_user_123") {
     return next();
   }
-  
+
   // For Replit Auth users, check token expiration
   if (!user?.claims?.exp) {
     return res.status(401).json({ message: "Invalid user session" });
