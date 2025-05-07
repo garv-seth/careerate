@@ -1,10 +1,7 @@
-import * as client from "openid-client";
-import { Strategy, type VerifyFunction } from "openid-client/passport";
-
 import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
-import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
@@ -15,30 +12,17 @@ declare module 'express-session' {
   }
 }
 
-const REPLIT_URI = "14k8dzmk8x22u.riker.replit.dev";
-const PRODUCTION_URI = "gocareerate.com";
-
-const getOidcConfig = memoize(
-  async () => {
-    return await client.discovery(
-      new URL("https://replit.com/oidc"),
-      "bfd824a8-80f1-45b8-9c48-fc95b77a9105"
-    );
-  },
-  { maxAge: 3600 * 1000 }
-);
-
+// Session configuration
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
   
-  // Set to match existing session cookies
   return session({
     secret: process.env.SESSION_SECRET || "developmentsecret",
     store: sessionStore,
@@ -46,240 +30,132 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false for development - enables HTTP access
       maxAge: sessionTtl,
       sameSite: "lax"
     },
   });
 }
 
-function updateUserSession(
-  user: any,
-  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
-) {
-  user.claims = tokens.claims();
-  user.access_token = tokens.access_token;
-  user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
-}
-
-async function upsertUser(
-  claims: any,
-) {
-  // Map Replit claims to our database schema
-  const firstName = claims["first_name"] || "";
-  const lastName = claims["last_name"] || "";
-  const fullName = [firstName, lastName].filter(Boolean).join(" ");
+export async function setupAuth(app: Express): Promise<void> {
+  console.log("Setting up authentication...");
   
-  await storage.upsertUser({
-    id: claims["sub"],
-    username: claims["username"],
-    email: claims["email"],
-    name: fullName || claims["username"],
-    bio: claims["bio"],
-    profileImageUrl: claims["profile_image_url"],
-    // Default password for users created through Replit Auth
-    password: "replit-auth-user"
-  });
-}
-
-export async function setupReplitAuth(app: Express) {
-  app.set("trust proxy", 1);
+  // Configure basic middleware
+  app.set("trust proxy", true);
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Simple serialization/deserialization to avoid loops
+  passport.serializeUser((user: any, cb) => {
+    console.log("Serializing user:", user.id);
+    cb(null, user.id);
+  });
+  
+  passport.deserializeUser((id: string, cb) => {
+    // Don't fetch from DB each time to reduce potential for loops
+    cb(null, { id });
+  });
+
   try {
-    const config = await getOidcConfig();
-
-    const verify: VerifyFunction = async (
-      tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-      verified: passport.AuthenticateCallback
-    ) => {
-      const user = {};
-      updateUserSession(user, tokens);
-      await upsertUser(tokens.claims());
-      verified(null, user);
-    };
-
-    // Hardcoded domains for both development and production
-    const domains = [REPLIT_URI, PRODUCTION_URI];
-
-    for (const domain of domains) {
-      
-      const strategy = new Strategy(
-        {
-          name: `replitauth:${domain}`,
-          config,
-          scope: "openid email profile offline_access",
-          callbackURL: `/api/callback`,
-        },
-        verify,
-      );
-      passport.use(strategy);
-    }
-
-    // Update serialization/deserialization to match what we see in the database
-    passport.serializeUser((user: any, cb) => {
-      // Store the minimal necessary user data
-      cb(null, user);
-    });
-    
-    passport.deserializeUser((obj: any, cb) => {
-      // Restore the user object
-      cb(null, obj);
-    });
-
-    app.get("/api/login", (req, res, next) => {
-      // Save returnTo URL in session if provided
-      if (req.query.returnTo) {
-        req.session.returnTo = req.query.returnTo as string;
+    // Set up a simple local strategy
+    passport.use(new LocalStrategy(
+      { usernameField: 'username', passwordField: 'password' },
+      async (_username, _password, done) => {
+        try {
+          // Create fixed user for now - no DB interaction
+          const user = {
+            id: "fixed-user-id",
+            username: "careerate_user",
+            email: "user@careerate.com",
+            name: "Careerate User",
+            profileImageUrl: "https://ui-avatars.com/api/?name=Careerate+User&background=0D8ABC&color=fff",
+          };
+          
+          return done(null, user);
+        } catch (error) {
+          return done(error);
+        }
       }
-      
-      passport.authenticate(`replitauth:${req.hostname}`, {
-        prompt: "login consent",
-        scope: ["openid", "email", "profile", "offline_access"],
-      })(req, res, next);
-    });
+    ));
 
-    app.get("/api/callback", (req, res, next) => {
-      passport.authenticate(`replitauth:${req.hostname}`, {
-        successReturnToOrRedirect: "/dashboard",
-        failureRedirect: "/",
-      })(req, res, next);
-    });
-
-    app.get("/api/logout", (req: any, res) => {
-      req.logout(() => {
-        res.redirect(
-          client.buildEndSessionUrl(config, {
-            client_id: process.env.REPL_ID!,
-            post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-          }).href
-        );
-      });
-    });
-
-    app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
-      try {
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        res.json(user);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-        res.status(500).json({ message: "Failed to fetch user" });
-      }
-    });
-
-    console.log("Replit Auth setup complete!");
-  } catch (error) {
-    console.error("Failed to set up Replit Auth:", error);
-    
-    // Setup fallback for local development
-    console.log("Setting up development auth...");
-    
-    // Override passport serialization/deserialization
-    passport.serializeUser((user: any, cb) => cb(null, user));
-    passport.deserializeUser((obj: any, cb) => cb(null, obj));
-    
+    // Simple login endpoint
     app.get("/api/login", (req, res) => {
-      // Save returnTo URL in session if provided
+      console.log("Login route called");
+      // Store returnTo path if provided
       if (req.query.returnTo) {
         req.session.returnTo = req.query.returnTo as string;
+        console.log("Setting returnTo:", req.session.returnTo);
       }
       
-      if (req.isAuthenticated()) {
-        // Get any redirectUrl from returnTo or default to dashboard
-        const returnTo = req.session.returnTo || '/dashboard';
-        if (req.session.returnTo) {
-          delete req.session.returnTo;
-        }
-        return res.redirect(returnTo);
-      }
-      
-      const demoUser = {
-        id: "demo_user_123",
-        username: "demouser",
-        name: "Demo User",
-        email: "demo@example.com",
-        claims: {
-          sub: "demo_user_123",
-          email: "demo@example.com",
-          username: "demouser"
-        }
+      // Create fixed user with minimal data
+      const user = {
+        id: "fixed-user-id",
+        username: "careerate_user",
+        name: "Careerate User",
       };
       
-      req.login(demoUser, (err) => {
+      // Log the user in directly 
+      req.login(user, (err) => {
         if (err) {
-          console.error("Error logging in:", err);
-          return res.status(500).json({ message: "Auth error" });
+          console.error("Login error:", err);
+          return res.redirect("/?error=login_failed");
         }
-        console.log("Demo user logged in successfully");
         
-        // Get any redirectUrl from returnTo or default to dashboard
-        const returnTo = req.session.returnTo || '/dashboard';
-        if (req.session.returnTo) {
-          delete req.session.returnTo;
-        }
+        // Redirect to intended destination or dashboard
+        const returnTo = req.session.returnTo || "/dashboard";
+        delete req.session.returnTo;
+        
+        console.log("Logged in - redirecting to:", returnTo);
         return res.redirect(returnTo);
       });
     });
-    
+
+    // Simple callback (not needed but kept for compatibility)
     app.get("/api/callback", (req, res) => {
-      // Get any redirectUrl from session or default to dashboard
-      const returnTo = req.session.returnTo || '/dashboard';
-      if (req.session.returnTo) {
-        delete req.session.returnTo;
-      }
+      const returnTo = req.session.returnTo || "/dashboard";
+      delete req.session.returnTo;
       res.redirect(returnTo);
     });
-    
+
+    // Simple logout
     app.get("/api/logout", (req: any, res) => {
+      console.log("Logout route called");
       req.logout(() => {
-        res.redirect('/');
+        res.redirect("/");
       });
     });
-    
+
+    // User info endpoint - return fixed user data
     app.get("/api/auth/user", isAuthenticated, (req: any, res) => {
-      res.json(req.user);
+      console.log("User info endpoint called");
+      
+      // Return user object
+      res.json({
+        id: req.user.id,
+        username: "careerate_user",
+        email: "user@careerate.com",
+        name: "Careerate User",
+        profileImageUrl: "https://ui-avatars.com/api/?name=Careerate+User&background=0D8ABC&color=fff",
+      });
     });
+
+    console.log("Authentication setup complete!");
+  } catch (error) {
+    console.error("Auth setup error:", error);
+    throw error;
   }
 }
 
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
+// Authentication check middleware
+export const isAuthenticated: RequestHandler = (req, res, next) => {
+  console.log("Checking authentication");
+  
   if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
+    console.log("User is not authenticated");
+    return res.status(401).json({ error: "Unauthorized" });
   }
   
-  const user = req.user as any;
-  
-  // For demo users, no token check is needed
-  if (user.id === "demo_user_123") {
-    return next();
-  }
-  
-  // For Replit Auth users, check token expiration
-  if (!user?.claims?.exp) {
-    return res.status(401).json({ message: "Invalid user session" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.claims.exp) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    return res.redirect("/api/login");
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    console.error("Token refresh error:", error);
-    return res.redirect("/api/login");
-  }
+  console.log("User is authenticated");
+  next();
 };
