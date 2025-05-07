@@ -14,11 +14,9 @@ declare module 'express-session' {
   }
 }
 
-// Allow both development and production domains
-const ADDITIONAL_DOMAINS = ["gocareerate.com"];
-
 const getOidcConfig = memoize(
   async () => {
+    console.log("Discovering Replit OIDC configuration...");
     return await client.discovery(
       new URL("https://replit.com/oidc"),
       process.env.REPL_ID!
@@ -55,143 +53,188 @@ function updateUserSession(
   user: any,
   tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
 ) {
-  user.claims = tokens.claims();
-  user.access_token = tokens.access_token;
-  user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
-}
-
-async function upsertUser(
-  claims: any,
-) {
-  // Map Replit claims to our database schema
-  const firstName = claims["first_name"] || "";
-  const lastName = claims["last_name"] || "";
-  const fullName = [firstName, lastName].filter(Boolean).join(" ");
-  
-  await storage.upsertUser({
-    id: claims["sub"],
-    username: claims["username"],
-    email: claims["email"],
-    name: fullName || claims["username"],
-    bio: claims["bio"],
-    profileImageUrl: claims["profile_image_url"],
-    password: "replit-auth-user"
-  });
-}
-
-function getAllowedDomains(): string[] {
-  // Start with the replit domain(s)
-  const domains: string[] = [];
-  
-  if (process.env.REPLIT_DOMAINS) {
-    domains.push(...process.env.REPLIT_DOMAINS.split(','));
-  } else {
-    console.log("REPLIT_DOMAINS not found, using fallback");
-    // Use known Replit domain pattern as fallback
-    if (process.env.REPL_ID) {
-      domains.push(`${process.env.REPL_ID}-00-14k8dzmk8x22u.riker.replit.dev`);
-    }
+  try {
+    user.claims = tokens.claims();
+    user.access_token = tokens.access_token;
+    user.refresh_token = tokens.refresh_token;
+    user.expires_at = user.claims?.exp;
+    console.log("User session updated with claims for:", user.claims?.username || 'unknown user');
+  } catch (error) {
+    console.error("Error updating user session:", error);
   }
-  
-  // Add production domains
-  domains.push(...ADDITIONAL_DOMAINS);
-  
-  return domains;
+}
+
+async function upsertUser(claims: any) {
+  try {
+    const firstName = claims["first_name"] || "";
+    const lastName = claims["last_name"] || "";
+    const fullName = [firstName, lastName].filter(Boolean).join(" ");
+    
+    console.log(`Upserting user: ${claims["username"]} (ID: ${claims["sub"]})`);
+    
+    const user = await storage.upsertUser({
+      id: claims["sub"],
+      username: claims["username"],
+      email: claims["email"],
+      name: fullName || claims["username"],
+      bio: claims["bio"],
+      profileImageUrl: claims["profile_image_url"],
+      password: "replit-auth-user"
+    });
+    
+    console.log(`User upserted successfully: ${user.username}`);
+    return user;
+  } catch (error) {
+    console.error("Error upserting user:", error);
+    throw error;
+  }
 }
 
 export async function setupAuth(app: Express) {
-  app.set("trust proxy", 1);
+  console.log("Setting up authentication...");
+  
+  // Basic middleware setup
+  app.set("trust proxy", true);
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
-
-  // Default serialization
-  passport.serializeUser((user: any, cb) => cb(null, user));
-  passport.deserializeUser((obj: any, cb) => cb(null, obj));
+  
+  // Simple user serialization
+  passport.serializeUser((user: any, cb) => {
+    console.log(`Serializing user: ${user.claims?.username || 'unknown'}`);
+    cb(null, user);
+  });
+  
+  passport.deserializeUser((obj: any, cb) => {
+    console.log(`Deserializing user: ${obj.claims?.username || 'unknown'}`);
+    cb(null, obj);
+  });
 
   try {
+    // Setup Replit Auth with simple error handling
     console.log("Setting up Replit Auth...");
+    
+    // Check for required environment variables
+    if (!process.env.REPLIT_DOMAINS) {
+      throw new Error("REPLIT_DOMAINS environment variable is missing");
+    }
+    
+    if (!process.env.REPL_ID) {
+      throw new Error("REPL_ID environment variable is missing");
+    }
+    
+    // Get domain from environment
+    const domain = process.env.REPLIT_DOMAINS.split(',')[0];
+    console.log(`Using domain for auth: ${domain}`);
+    
+    // Discover OIDC config
     const config = await getOidcConfig();
-
+    console.log("OIDC configuration discovered successfully");
+    
+    // Create verify callback
     const verify: VerifyFunction = async (
       tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
       verified: passport.AuthenticateCallback
     ) => {
       try {
+        console.log("Received token from Replit Auth");
         const user: any = {};
         updateUserSession(user, tokens);
-        await upsertUser(tokens.claims());
+        await upsertUser(user.claims);
         verified(null, user);
       } catch (error) {
         console.error("Error in verify function:", error);
         verified(error as Error);
       }
     };
-
-    // Register strategies for all domains
-    const domains = getAllowedDomains();
-    for (const domain of domains) {
-      console.log(`Registering auth strategy for domain: ${domain}`);
-      const strategy = new Strategy(
-        {
-          name: `replit-${domain}`,
-          config,
-          scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
-        },
-        verify,
-      );
-      passport.use(strategy);
-    }
-
-    // Login route - direct to right auth provider
+    
+    // Create passport strategy
+    const strategy = new Strategy(
+      {
+        name: "replit",
+        config,
+        scope: "openid email profile offline_access",
+        callbackURL: `https://${domain}/api/callback`,
+      },
+      verify
+    );
+    
+    passport.use(strategy);
+    console.log("Passport strategy registered");
+    
+    // Login endpoint
     app.get("/api/login", (req, res, next) => {
-      // Save returnTo URL in session if provided
+      // Store returnTo URL if provided
       if (req.query.returnTo) {
         req.session.returnTo = req.query.returnTo as string;
+        console.log(`Storing returnTo URL: ${req.session.returnTo}`);
       }
       
-      const hostname = req.hostname;
-      const strategyName = `replit-${hostname}`;
-      
-      console.log(`Login request from host: ${hostname}, using strategy: ${strategyName}`);
-      
-      passport.authenticate(strategyName, {
+      console.log("Processing login request");
+      passport.authenticate("replit", {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
       })(req, res, next);
     });
-
-    // Callback handler
+    
+    // Callback endpoint with detailed logging
     app.get("/api/callback", (req, res, next) => {
-      const hostname = req.hostname;
-      const strategyName = `replit-${hostname}`;
+      console.log("Processing callback from Replit Auth");
+      console.log("Request URL:", req.url);
+      console.log("Request query:", req.query);
       
-      console.log(`Callback request from host: ${hostname}, using strategy: ${strategyName}`);
-      
-      passport.authenticate(strategyName, {
-        successReturnToOrRedirect: "/dashboard",
-        failureRedirect: "/",
-      })(req, res, next);
+      try {
+        // Use a custom callback to handle auth errors
+        passport.authenticate("replit", (err: any, user: any, info: any) => {
+          if (err) {
+            console.error("Authentication error:", err);
+            return res.redirect("/?error=auth_error");
+          }
+          
+          if (!user) {
+            console.error("No user returned from authentication, info:", info);
+            return res.redirect("/?error=no_user");
+          }
+          
+          // Log in the user
+          req.login(user, (loginErr) => {
+            if (loginErr) {
+              console.error("Login error:", loginErr);
+              return res.redirect("/?error=login_error");
+            }
+            
+            // Get return URL from session or use default
+            const returnTo = req.session.returnTo || "/dashboard";
+            delete req.session.returnTo;
+            
+            console.log(`Authentication successful, redirecting to: ${returnTo}`);
+            return res.redirect(returnTo);
+          });
+        })(req, res, next);
+      } catch (error) {
+        console.error("Unexpected error in callback:", error);
+        return res.redirect("/?error=unexpected");
+      }
     });
-
-    // Logout route
+    
+    // Logout endpoint
     app.get("/api/logout", (req: any, res) => {
+      console.log("Processing logout request");
+      
+      const returnTo = req.query.returnTo || "/";
+      
       req.logout(() => {
-        res.redirect(
-          client.buildEndSessionUrl(config, {
-            client_id: process.env.REPL_ID!,
-            post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-          }).href
-        );
+        console.log(`Logged out, redirecting to: ${returnTo}`);
+        res.redirect(returnTo as string);
       });
     });
-
-    // Get user info endpoint
+    
+    // User info endpoint
     app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
       try {
         const userId = req.user.claims.sub;
+        console.log(`Fetching user info for: ${userId}`);
+        
         const user = await storage.getUser(userId);
         res.json(user);
       } catch (error) {
@@ -199,109 +242,121 @@ export async function setupAuth(app: Express) {
         res.status(500).json({ message: "Failed to fetch user" });
       }
     });
-
+    
     console.log("Replit Auth setup complete!");
   } catch (error) {
     console.error("Failed to set up Replit Auth:", error);
-    // Set up a fallback auth method for development
-    fallbackAuthSetup(app);
-  }
-}
-
-function fallbackAuthSetup(app: Express) {
-  console.log("Setting up fallback auth for development...");
-  
-  app.get("/api/login", (req, res) => {
-    // Save returnTo URL in session if provided
-    if (req.query.returnTo) {
-      req.session.returnTo = req.query.returnTo as string;
-    }
-
-    if (req.isAuthenticated()) {
-      const returnTo = req.session.returnTo || '/dashboard';
-      if (req.session.returnTo) {
-        delete req.session.returnTo;
-      }
-      return res.redirect(returnTo);
-    }
-
-    const demoUser = {
-      id: "demo_user_123",
-      username: "demouser",
-      name: "Demo User",
-      email: "demo@example.com",
-      claims: {
-        sub: "demo_user_123",
-        email: "demo@example.com",
-        username: "demouser"
-      }
-    };
-
-    req.login(demoUser, (err) => {
-      if (err) {
-        console.error("Error logging in:", err);
-        return res.status(500).json({ message: "Auth error" });
-      }
-      console.log("Demo user logged in successfully");
+    
+    // Setup fallback for development
+    console.log("Setting up fallback development auth");
+    
+    // Login endpoint
+    app.get("/api/login", (req, res) => {
+      console.log("Using fallback auth login");
       
-      const returnTo = req.session.returnTo || '/dashboard';
-      if (req.session.returnTo) {
-        delete req.session.returnTo;
+      if (req.query.returnTo) {
+        req.session.returnTo = req.query.returnTo as string;
       }
-      return res.redirect(returnTo);
+      
+      // Create demo user
+      const demoUser = {
+        id: "demo_user_123",
+        username: "demouser",
+        name: "Demo User",
+        email: "demo@example.com",
+        claims: {
+          sub: "demo_user_123",
+          email: "demo@example.com",
+          username: "demouser"
+        }
+      };
+      
+      req.login(demoUser, (err) => {
+        if (err) {
+          console.error("Error in demo login:", err);
+          return res.status(500).json({ message: "Auth error" });
+        }
+        
+        console.log("Demo user logged in successfully");
+        const returnTo = req.session.returnTo || '/dashboard';
+        delete req.session.returnTo;
+        return res.redirect(returnTo);
+      });
     });
-  });
-
-  app.get("/api/callback", (req, res) => {
-    const returnTo = req.session.returnTo || '/dashboard';
-    if (req.session.returnTo) {
+    
+    // Callback endpoint (for fallback)
+    app.get("/api/callback", (req, res) => {
+      console.log("Using fallback auth callback");
+      const returnTo = req.session.returnTo || '/dashboard';
       delete req.session.returnTo;
-    }
-    res.redirect(returnTo);
-  });
-
-  app.get("/api/logout", (req: any, res) => {
-    req.logout(() => {
-      res.redirect('/');
+      res.redirect(returnTo);
     });
-  });
-
-  app.get("/api/auth/user", isAuthenticated, (req: any, res) => {
-    res.json(req.user);
-  });
+    
+    // Logout endpoint (for fallback)
+    app.get("/api/logout", (req: any, res) => {
+      console.log("Using fallback auth logout");
+      req.logout(() => {
+        res.redirect('/');
+      });
+    });
+    
+    // User info endpoint (for fallback)
+    app.get("/api/auth/user", isAuthenticated, (req: any, res) => {
+      console.log("Using fallback auth user info");
+      res.json(req.user);
+    });
+  }
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   if (!req.isAuthenticated()) {
+    console.log("Unauthorized request - user not authenticated");
     return res.status(401).json({ message: "Unauthorized" });
   }
-
+  
   const user = req.user as any;
-
-  // For demo users, no token check is needed
+  
+  // For demo users, no token check needed
   if (user.id === "demo_user_123") {
+    console.log("Demo user authenticated");
     return next();
   }
-
+  
   // For Replit Auth users, check token expiration
   if (!user?.claims?.exp) {
+    console.log("Invalid user session - no expiration claim");
     return res.status(401).json({ message: "Invalid user session" });
   }
-
+  
   const now = Math.floor(Date.now() / 1000);
+  
   if (now <= user.claims.exp) {
+    // Token still valid
+    console.log(`Token valid until ${new Date(user.claims.exp * 1000).toISOString()}`);
     return next();
   }
-
+  
+  console.log("Token expired, attempting refresh");
+  
+  // Token expired, try refresh
   const refreshToken = user.refresh_token;
   if (!refreshToken) {
+    console.log("No refresh token available, redirecting to login");
     return res.redirect("/api/login");
   }
-
+  
   try {
+    // Get config for token refresh
     const config = await getOidcConfig();
+    
+    // Refresh token
+    console.log("Refreshing token...");
     const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+    
+    // Update session
     updateUserSession(user, tokenResponse);
+    console.log("Token refreshed successfully");
+    
     return next();
   } catch (error) {
     console.error("Token refresh error:", error);
