@@ -44,8 +44,12 @@ passport.deserializeUser(async (id: string, done) => {
 });
 
 // Register routes
-router.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
-  res.json(req.user);
+router.post("/api/auth/login", (req, res, next) => {
+  const domain = req.hostname;
+  passport.authenticate(`replitauth:${domain}`, {
+    successRedirect: '/dashboard',
+    failureRedirect: '/'
+  })(req, res, next);
 });
 
 router.post("/api/auth/logout", (req, res, next) => {
