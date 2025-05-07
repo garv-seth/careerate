@@ -1,39 +1,33 @@
-import { 
-  users, 
-  profiles, 
-  vectors,
-  careerPaths,
-  careerMilestones,
-  alternativePaths,
-  networkEvents,
-  eventRegistrations,
-  mentorships,
-  mentorshipApplications,
-  skillsLibrary,
-  userSkills,
-  learningResources,
-  resourceSkills,
-  userLearningPaths,
-  learningPathResources,
-  type User, 
+import {
+  users,
+  profiles,
+  type User,
   type UpsertUser,
   type Profile,
+  type InsertProfile,
+  vectors,
   type Vector,
   type InsertVector,
-  type InsertCareerPath,
+  careerPaths,
   type CareerPath,
-  type InsertCareerMilestone,
+  type InsertCareerPath,
+  careerMilestones,
   type CareerMilestone,
+  type InsertCareerMilestone,
+  networkEvents,
   type NetworkEvent,
-  type InsertEventRegistration,
+  eventRegistrations,
   type EventRegistration,
-  type InsertUserSkill,
+  type InsertEventRegistration,
+  userSkills,
   type UserSkill,
+  type InsertUserSkill,
+  userLearningPaths,
+  type LearningPath,
   type InsertLearningPath,
-  type LearningPath
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, isNull, sql, asc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -129,81 +123,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values({
-        ...userData,
-        createdAt: new Date(),
-        updatedAt: new Date()
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
       })
       .returning();
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    // First clean up userData to ensure no undefined values
-    const cleanUserData: any = {};
-    for (const [key, value] of Object.entries(userData)) {
-      if (value !== undefined) {
-        cleanUserData[key] = value;
-      }
-    }
-    
-    try {
-      // Try to find user to check if they exist
-      const existingUser = await this.getUser(cleanUserData.id);
-      
-      if (existingUser) {
-        // Update existing user
-        const [user] = await db
-          .update(users)
-          .set({
-            ...cleanUserData,
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, cleanUserData.id))
-          .returning();
-        return user;
-      } else {
-        // Insert new user
-        const [user] = await db
-          .insert(users)
-          .values({
-            ...cleanUserData,
-            // If not coming from Replit Auth, ensure a password
-            password: cleanUserData.password || "replit-auth-user",
-          })
-          .returning();
-        return user;
-      }
-    } catch (error) {
-      console.error("Error in upsertUser:", error);
-      
-      // Try a simple insert with onConflict as fallback
-      const [user] = await db
-        .insert(users)
-        .values({
-          ...cleanUserData,
-          password: cleanUserData.password || "replit-auth-user",
-        })
-        .onConflictDoUpdate({
-          target: users.id,
-          set: {
-            ...cleanUserData,
-            updatedAt: new Date(),
-          },
-        })
-        .returning();
-      return user;
-    }
-  }
-  
   // Profile operations
   async getProfileByUserId(userId: string): Promise<Profile | undefined> {
     const [profile] = await db.select().from(profiles).where(eq(profiles.userId, userId));
     return profile;
   }
-  
+
   async createProfile(profileData: { 
     userId: string, 
     resumeText: string | null, 
@@ -214,26 +158,33 @@ export class DatabaseStorage implements IStorage {
     preferredLearningStyle?: string,
     timeAvailability?: string
   }): Promise<Profile> {
-    const [profile] = await db
-      .insert(profiles)
-      .values(profileData)
-      .returning();
+    const [profile] = await db.insert(profiles).values(profileData).returning();
     return profile;
   }
-  
+
   async updateProfileResume(userId: string, resumeText: string): Promise<Profile> {
     const [profile] = await db
       .update(profiles)
       .set({ 
-        resumeText, 
+        resumeText,
         lastScan: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(profiles.userId, userId))
       .returning();
+    
+    if (!profile) {
+      // If no profile exists, create one
+      return this.createProfile({ 
+        userId, 
+        resumeText,
+        lastScan: new Date(),
+      });
+    }
+    
     return profile;
   }
-  
+
   async updateProfile(userId: string, updates: {
     careerStage?: string,
     industryFocus?: string[],
@@ -241,41 +192,63 @@ export class DatabaseStorage implements IStorage {
     preferredLearningStyle?: string,
     timeAvailability?: string
   }): Promise<Profile> {
+    // Check if profile exists
+    const existingProfile = await this.getProfileByUserId(userId);
+    
+    if (!existingProfile) {
+      // Create new profile if it doesn't exist
+      return this.createProfile({
+        userId,
+        resumeText: null,
+        lastScan: null,
+        ...updates
+      });
+    }
+    
+    // Update existing profile
     const [profile] = await db
       .update(profiles)
       .set({ 
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(profiles.userId, userId))
       .returning();
+    
     return profile;
   }
-  
+
+  // Skills operations
+  async getUserSkills(userId: string): Promise<UserSkill[]> {
+    return db.select().from(userSkills).where(eq(userSkills.userId, userId));
+  }
+
+  async addUserSkill(userSkillData: InsertUserSkill): Promise<UserSkill> {
+    const [skill] = await db.insert(userSkills).values(userSkillData).returning();
+    return skill;
+  }
+
   async deleteUserSkills(userId: string): Promise<void> {
     await db.delete(userSkills).where(eq(userSkills.userId, userId));
   }
-  
+
   // Vector operations
   async getVectorsByUserId(userId: string): Promise<Vector[]> {
-    return await db.select().from(vectors).where(eq(vectors.userId, userId));
+    return db.select().from(vectors).where(eq(vectors.userId, userId));
   }
-  
+
   async createVector(vectorData: InsertVector): Promise<Vector> {
-    const [vector] = await db
-      .insert(vectors)
-      .values(vectorData)
-      .returning();
+    const [vector] = await db.insert(vectors).values(vectorData).returning();
     return vector;
   }
-  
+
   async deleteVectorsByUserId(userId: string): Promise<void> {
     await db.delete(vectors).where(eq(vectors.userId, userId));
   }
 
   // PREMIUM FEATURE 1: Career Trajectory Mapping
   async getCareerPathsByUserId(userId: string): Promise<CareerPath[]> {
-    return await db.select().from(careerPaths).where(eq(careerPaths.userId, userId));
+    return db.select().from(careerPaths).where(eq(careerPaths.userId, userId));
   }
 
   async getCareerPathById(id: number): Promise<CareerPath | undefined> {
@@ -284,10 +257,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCareerPath(careerPathData: InsertCareerPath): Promise<CareerPath> {
-    const [careerPath] = await db
-      .insert(careerPaths)
-      .values(careerPathData)
-      .returning();
+    const [careerPath] = await db.insert(careerPaths).values(careerPathData).returning();
     return careerPath;
   }
 
@@ -296,70 +266,56 @@ export class DatabaseStorage implements IStorage {
       .update(careerPaths)
       .set({ 
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(careerPaths.id, id))
       .returning();
+    
     return careerPath;
   }
 
   async deleteCareerPath(id: number): Promise<void> {
-    // First delete all milestones and alternative paths associated with this career path
-    await db.delete(careerMilestones).where(eq(careerMilestones.careerPathId, id));
-    await db.delete(alternativePaths).where(eq(alternativePaths.careerPathId, id));
-    
-    // Then delete the career path itself
     await db.delete(careerPaths).where(eq(careerPaths.id, id));
   }
 
   async getMilestonesByCareerPathId(careerPathId: number): Promise<CareerMilestone[]> {
-    return await db
+    return db
       .select()
       .from(careerMilestones)
       .where(eq(careerMilestones.careerPathId, careerPathId))
-      .orderBy(asc(careerMilestones.targetDate));
+      .orderBy(careerMilestones.order);
   }
 
   async createCareerMilestone(milestoneData: InsertCareerMilestone): Promise<CareerMilestone> {
-    const [milestone] = await db
-      .insert(careerMilestones)
-      .values(milestoneData)
-      .returning();
+    const [milestone] = await db.insert(careerMilestones).values(milestoneData).returning();
     return milestone;
   }
 
   async updateCareerMilestoneStatus(id: number, isCompleted: boolean): Promise<CareerMilestone> {
-    const completedDate = isCompleted ? new Date() : null;
     const [milestone] = await db
       .update(careerMilestones)
       .set({ 
         isCompleted,
-        completedDate: completedDate as any, // Type casting to avoid date conversion issue
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(careerMilestones.id, id))
       .returning();
+    
     return milestone;
   }
 
   async getAlternativePathsByCareerPathId(careerPathId: number): Promise<any[]> {
-    return await db
-      .select()
-      .from(alternativePaths)
-      .where(eq(alternativePaths.careerPathId, careerPathId));
+    // Implementation pending
+    return [];
   }
 
   // PREMIUM FEATURE 2: Executive Network Access
   async getUpcomingNetworkEvents(limit: number = 10): Promise<NetworkEvent[]> {
-    const currentDate = new Date();
-    return await db
+    return db
       .select()
       .from(networkEvents)
-      .where(and(
-        eq(networkEvents.isActive, true),
-        sql`${networkEvents.eventDate} > ${currentDate}`
-      ))
-      .orderBy(asc(networkEvents.eventDate))
+      .where(sql`${networkEvents.eventDate} >= NOW()`)
+      .orderBy(networkEvents.eventDate)
       .limit(limit);
   }
 
@@ -369,229 +325,97 @@ export class DatabaseStorage implements IStorage {
   }
 
   async registerForEvent(registrationData: InsertEventRegistration): Promise<EventRegistration> {
-    const [registration] = await db
-      .insert(eventRegistrations)
-      .values(registrationData)
-      .returning();
+    const [registration] = await db.insert(eventRegistrations).values(registrationData).returning();
     return registration;
   }
 
   async getUserEventRegistrations(userId: string): Promise<any[]> {
-    return await db
+    return db
       .select({
         registration: eventRegistrations,
-        event: networkEvents
+        event: networkEvents,
       })
       .from(eventRegistrations)
-      .innerJoin(networkEvents, eq(eventRegistrations.eventId, networkEvents.id))
-      .where(eq(eventRegistrations.userId, userId))
-      .orderBy(desc(eventRegistrations.registrationDate));
+      .innerJoin(
+        networkEvents,
+        eq(eventRegistrations.eventId, networkEvents.id)
+      )
+      .where(eq(eventRegistrations.userId, userId));
   }
 
   async getAvailableMentorships(limit: number = 10): Promise<any[]> {
-    return await db
-      .select()
-      .from(mentorships)
-      .where(and(
-        eq(mentorships.isActive, true),
-        sql`${mentorships.availableSlots} > 0`
-      ))
-      .limit(limit);
+    // Implementation pending
+    return [];
   }
 
   async getMentorshipById(id: number): Promise<any | undefined> {
-    const [mentorship] = await db.select().from(mentorships).where(eq(mentorships.id, id));
-    return mentorship;
+    // Implementation pending
+    return undefined;
   }
 
   async applyForMentorship(application: { mentorshipId: number; userId: string; goalsDescription: string; }): Promise<any> {
-    const [mentorshipApplication] = await db
-      .insert(mentorshipApplications)
-      .values({
-        mentorshipId: application.mentorshipId,
-        userId: application.userId,
-        goalsDescription: application.goalsDescription,
-        status: "pending"
-      })
-      .returning();
-    return mentorshipApplication;
+    // Implementation pending
+    return {};
   }
 
   async getUserMentorshipApplications(userId: string): Promise<any[]> {
-    return await db
-      .select({
-        application: mentorshipApplications,
-        mentorship: mentorships
-      })
-      .from(mentorshipApplications)
-      .innerJoin(mentorships, eq(mentorshipApplications.mentorshipId, mentorships.id))
-      .where(eq(mentorshipApplications.userId, userId))
-      .orderBy(desc(mentorshipApplications.applicationDate));
+    // Implementation pending
+    return [];
   }
 
   // PREMIUM FEATURE 3: Skills Gap Accelerator
   async getAllSkills(category?: string): Promise<any[]> {
-    if (category) {
-      return await db
-        .select()
-        .from(skillsLibrary)
-        .where(eq(skillsLibrary.category, category))
-        .orderBy(desc(skillsLibrary.marketDemand));
-    } else {
-      return await db
-        .select()
-        .from(skillsLibrary)
-        .orderBy(desc(skillsLibrary.marketDemand));
-    }
+    // Implementation pending
+    return [];
   }
 
   async getSkillById(id: number): Promise<any | undefined> {
-    const [skill] = await db.select().from(skillsLibrary).where(eq(skillsLibrary.id, id));
-    return skill;
-  }
-
-  async getUserSkills(userId: string): Promise<UserSkill[]> {
-    const results = await db
-      .select()
-      .from(userSkills)
-      .where(eq(userSkills.userId, userId))
-      .orderBy(desc(userSkills.priority));
-    
-    return results as UserSkill[];
-  }
-
-  async addUserSkill(userSkillData: InsertUserSkill): Promise<UserSkill> {
-    const [userSkill] = await db
-      .insert(userSkills)
-      .values(userSkillData)
-      .returning();
-    return userSkill;
+    // Implementation pending
+    return undefined;
   }
 
   async updateUserSkillLevel(id: number, currentLevel: number, targetLevel: number): Promise<UserSkill> {
-    const [userSkill] = await db
-      .update(userSkills)
-      .set({ 
-        currentLevel,
-        targetLevel,
-        updatedAt: new Date()
-      })
-      .where(eq(userSkills.id, id))
-      .returning();
-    return userSkill;
+    // Implementation pending
+    return {} as UserSkill;
   }
 
   async getLearningResourcesBySkillIds(skillIds: number[]): Promise<any[]> {
-    return await db
-      .select({
-        resource: learningResources,
-        skill: skillsLibrary,
-        relevance: resourceSkills.relevanceScore
-      })
-      .from(resourceSkills)
-      .innerJoin(learningResources, eq(resourceSkills.resourceId, learningResources.id))
-      .innerJoin(skillsLibrary, eq(resourceSkills.skillId, skillsLibrary.id))
-      .where(sql`${resourceSkills.skillId} = ANY(ARRAY[${skillIds}])`)
-      .orderBy(desc(resourceSkills.relevanceScore));
+    // Implementation pending
+    return [];
   }
 
   async getLearningResourceById(id: number): Promise<any | undefined> {
-    const [resource] = await db.select().from(learningResources).where(eq(learningResources.id, id));
-    return resource;
+    // Implementation pending
+    return undefined;
   }
 
   async getUserLearningPaths(userId: string): Promise<LearningPath[]> {
-    return await db
-      .select()
-      .from(userLearningPaths)
-      .where(eq(userLearningPaths.userId, userId))
-      .orderBy(desc(userLearningPaths.updatedAt));
+    return db.select().from(userLearningPaths).where(eq(userLearningPaths.userId, userId));
   }
 
   async getLearningPathById(id: number): Promise<any | undefined> {
-    const [learningPath] = await db.select().from(userLearningPaths).where(eq(userLearningPaths.id, id));
-    return learningPath;
+    // Implementation pending
+    return undefined;
   }
 
   async createLearningPath(learningPathData: InsertLearningPath): Promise<LearningPath> {
-    const [learningPath] = await db
-      .insert(userLearningPaths)
-      .values(learningPathData)
-      .returning();
+    const [learningPath] = await db.insert(userLearningPaths).values(learningPathData).returning();
     return learningPath;
   }
 
   async addResourceToLearningPath(learningPathId: number, resourceId: number, order: number): Promise<any> {
-    const [pathResource] = await db
-      .insert(learningPathResources)
-      .values({
-        learningPathId,
-        resourceId,
-        order
-      })
-      .returning();
-    return pathResource;
+    // Implementation pending
+    return {};
   }
 
   async markResourceAsCompleted(learningPathId: number, resourceId: number): Promise<any> {
-    const [pathResource] = await db
-      .update(learningPathResources)
-      .set({ 
-        isCompleted: true,
-        completedDate: new Date()
-      })
-      .where(and(
-        eq(learningPathResources.learningPathId, learningPathId),
-        eq(learningPathResources.resourceId, resourceId)
-      ))
-      .returning();
-    
-    // Update the learning path progress
-    const totalResources = await db
-      .select({ count: sql`count(*)` })
-      .from(learningPathResources)
-      .where(eq(learningPathResources.learningPathId, learningPathId));
-    
-    const completedResources = await db
-      .select({ count: sql`count(*)` })
-      .from(learningPathResources)
-      .where(and(
-        eq(learningPathResources.learningPathId, learningPathId),
-        eq(learningPathResources.isCompleted, true)
-      ));
-    
-    const total = Number(totalResources[0].count);
-    const completed = Number(completedResources[0].count);
-    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
-    await db
-      .update(userLearningPaths)
-      .set({ 
-        progress,
-        updatedAt: new Date()
-      })
-      .where(eq(userLearningPaths.id, learningPathId));
-    
-    return pathResource;
+    // Implementation pending
+    return {};
   }
 
   async getLearningPathProgress(learningPathId: number): Promise<number> {
-    const totalResources = await db
-      .select({ count: sql`count(*)` })
-      .from(learningPathResources)
-      .where(eq(learningPathResources.learningPathId, learningPathId));
-    
-    const completedResources = await db
-      .select({ count: sql`count(*)` })
-      .from(learningPathResources)
-      .where(and(
-        eq(learningPathResources.learningPathId, learningPathId),
-        eq(learningPathResources.isCompleted, true)
-      ));
-    
-    const total = Number(totalResources[0].count);
-    const completed = Number(completedResources[0].count);
-    return total > 0 ? Math.round((completed / total) * 100) : 0;
+    // Implementation pending
+    return 0;
   }
 }
 
