@@ -1,5 +1,4 @@
-import { Issuer, Strategy, type VerifyFunction } from "openid-client";
-import { Client } from "openid-client";
+import { Issuer, Client, Strategy, type VerifyFunction } from "openid-client";
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
