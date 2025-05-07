@@ -1,6 +1,5 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
-
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
@@ -15,14 +14,13 @@ declare module 'express-session' {
   }
 }
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
-}
+// Allow both development and production domains
+const ADDITIONAL_DOMAINS = ["gocareerate.com"];
 
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
+      new URL("https://replit.com/oidc"),
       process.env.REPL_ID!
     );
   },
@@ -34,12 +32,11 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
-
-  // Set to match existing session cookies
+  
   return session({
     secret: process.env.SESSION_SECRET || "developmentsecret",
     store: sessionStore,
@@ -47,7 +44,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false to work with HTTP in development
       maxAge: sessionTtl,
       sameSite: "lax"
     },
@@ -71,7 +68,7 @@ async function upsertUser(
   const firstName = claims["first_name"] || "";
   const lastName = claims["last_name"] || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
-
+  
   await storage.upsertUser({
     id: claims["sub"],
     username: claims["username"],
@@ -79,34 +76,66 @@ async function upsertUser(
     name: fullName || claims["username"],
     bio: claims["bio"],
     profileImageUrl: claims["profile_image_url"],
-    // Default password for users created through Replit Auth
     password: "replit-auth-user"
   });
 }
 
-export async function setupReplitAuth(app: Express) {
+function getAllowedDomains(): string[] {
+  // Start with the replit domain(s)
+  const domains: string[] = [];
+  
+  if (process.env.REPLIT_DOMAINS) {
+    domains.push(...process.env.REPLIT_DOMAINS.split(','));
+  } else {
+    console.log("REPLIT_DOMAINS not found, using fallback");
+    // Use known Replit domain pattern as fallback
+    if (process.env.REPL_ID) {
+      domains.push(`${process.env.REPL_ID}-00-14k8dzmk8x22u.riker.replit.dev`);
+    }
+  }
+  
+  // Add production domains
+  domains.push(...ADDITIONAL_DOMAINS);
+  
+  return domains;
+}
+
+export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Default serialization
+  passport.serializeUser((user: any, cb) => cb(null, user));
+  passport.deserializeUser((obj: any, cb) => cb(null, obj));
+
   try {
+    console.log("Setting up Replit Auth...");
     const config = await getOidcConfig();
 
     const verify: VerifyFunction = async (
       tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
       verified: passport.AuthenticateCallback
     ) => {
-      const user = {};
-      updateUserSession(user, tokens);
-      await upsertUser(tokens.claims());
-      verified(null, user);
+      try {
+        const user: any = {};
+        updateUserSession(user, tokens);
+        await upsertUser(tokens.claims());
+        verified(null, user);
+      } catch (error) {
+        console.error("Error in verify function:", error);
+        verified(error as Error);
+      }
     };
 
-    for (const domain of process.env.REPLIT_DOMAINS!.split(",")) {
+    // Register strategies for all domains
+    const domains = getAllowedDomains();
+    for (const domain of domains) {
+      console.log(`Registering auth strategy for domain: ${domain}`);
       const strategy = new Strategy(
         {
-          name: `replitauth:${domain}`,
+          name: `replit-${domain}`,
           config,
           scope: "openid email profile offline_access",
           callbackURL: `https://${domain}/api/callback`,
@@ -116,36 +145,38 @@ export async function setupReplitAuth(app: Express) {
       passport.use(strategy);
     }
 
-    // Update serialization/deserialization to match what we see in the database
-    passport.serializeUser((user: any, cb) => {
-      // Store the minimal necessary user data
-      cb(null, user);
-    });
-
-    passport.deserializeUser((obj: any, cb) => {
-      // Restore the user object
-      cb(null, obj);
-    });
-
+    // Login route - direct to right auth provider
     app.get("/api/login", (req, res, next) => {
       // Save returnTo URL in session if provided
       if (req.query.returnTo) {
         req.session.returnTo = req.query.returnTo as string;
       }
-
-      passport.authenticate(`replitauth:${req.hostname}`, {
+      
+      const hostname = req.hostname;
+      const strategyName = `replit-${hostname}`;
+      
+      console.log(`Login request from host: ${hostname}, using strategy: ${strategyName}`);
+      
+      passport.authenticate(strategyName, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
       })(req, res, next);
     });
 
+    // Callback handler
     app.get("/api/callback", (req, res, next) => {
-      passport.authenticate(`replitauth:${req.hostname}`, {
+      const hostname = req.hostname;
+      const strategyName = `replit-${hostname}`;
+      
+      console.log(`Callback request from host: ${hostname}, using strategy: ${strategyName}`);
+      
+      passport.authenticate(strategyName, {
         successReturnToOrRedirect: "/dashboard",
         failureRedirect: "/",
       })(req, res, next);
     });
 
+    // Logout route
     app.get("/api/logout", (req: any, res) => {
       req.logout(() => {
         res.redirect(
@@ -157,6 +188,7 @@ export async function setupReplitAuth(app: Express) {
       });
     });
 
+    // Get user info endpoint
     app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
       try {
         const userId = req.user.claims.sub;
@@ -171,76 +203,72 @@ export async function setupReplitAuth(app: Express) {
     console.log("Replit Auth setup complete!");
   } catch (error) {
     console.error("Failed to set up Replit Auth:", error);
+    // Set up a fallback auth method for development
+    fallbackAuthSetup(app);
+  }
+}
 
-    // Setup fallback for local development
-    console.log("Setting up development auth...");
+function fallbackAuthSetup(app: Express) {
+  console.log("Setting up fallback auth for development...");
+  
+  app.get("/api/login", (req, res) => {
+    // Save returnTo URL in session if provided
+    if (req.query.returnTo) {
+      req.session.returnTo = req.query.returnTo as string;
+    }
 
-    // Override passport serialization/deserialization
-    passport.serializeUser((user: any, cb) => cb(null, user));
-    passport.deserializeUser((obj: any, cb) => cb(null, obj));
-
-    app.get("/api/login", (req, res) => {
-      // Save returnTo URL in session if provided
-      if (req.query.returnTo) {
-        req.session.returnTo = req.query.returnTo as string;
-      }
-
-      if (req.isAuthenticated()) {
-        // Get any redirectUrl from returnTo or default to dashboard
-        const returnTo = req.session.returnTo || '/dashboard';
-        if (req.session.returnTo) {
-          delete req.session.returnTo;
-        }
-        return res.redirect(returnTo);
-      }
-
-      const demoUser = {
-        id: "demo_user_123",
-        username: "demouser",
-        name: "Demo User",
-        email: "demo@example.com",
-        claims: {
-          sub: "demo_user_123",
-          email: "demo@example.com",
-          username: "demouser"
-        }
-      };
-
-      req.login(demoUser, (err) => {
-        if (err) {
-          console.error("Error logging in:", err);
-          return res.status(500).json({ message: "Auth error" });
-        }
-        console.log("Demo user logged in successfully");
-
-        // Get any redirectUrl from returnTo or default to dashboard
-        const returnTo = req.session.returnTo || '/dashboard';
-        if (req.session.returnTo) {
-          delete req.session.returnTo;
-        }
-        return res.redirect(returnTo);
-      });
-    });
-
-    app.get("/api/callback", (req, res) => {
-      // Get any redirectUrl from session or default to dashboard
+    if (req.isAuthenticated()) {
       const returnTo = req.session.returnTo || '/dashboard';
       if (req.session.returnTo) {
         delete req.session.returnTo;
       }
-      res.redirect(returnTo);
-    });
+      return res.redirect(returnTo);
+    }
 
-    app.get("/api/logout", (req: any, res) => {
-      req.logout(() => {
-        res.redirect('/');
-      });
-    });
+    const demoUser = {
+      id: "demo_user_123",
+      username: "demouser",
+      name: "Demo User",
+      email: "demo@example.com",
+      claims: {
+        sub: "demo_user_123",
+        email: "demo@example.com",
+        username: "demouser"
+      }
+    };
 
-    app.get("/api/auth/user", isAuthenticated, (req: any, res) => {
-      res.json(req.user);
+    req.login(demoUser, (err) => {
+      if (err) {
+        console.error("Error logging in:", err);
+        return res.status(500).json({ message: "Auth error" });
+      }
+      console.log("Demo user logged in successfully");
+      
+      const returnTo = req.session.returnTo || '/dashboard';
+      if (req.session.returnTo) {
+        delete req.session.returnTo;
+      }
+      return res.redirect(returnTo);
     });
-  }
+  });
+
+  app.get("/api/callback", (req, res) => {
+    const returnTo = req.session.returnTo || '/dashboard';
+    if (req.session.returnTo) {
+      delete req.session.returnTo;
+    }
+    res.redirect(returnTo);
+  });
+
+  app.get("/api/logout", (req: any, res) => {
+    req.logout(() => {
+      res.redirect('/');
+    });
+  });
+
+  app.get("/api/auth/user", isAuthenticated, (req: any, res) => {
+    res.json(req.user);
+  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
