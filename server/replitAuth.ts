@@ -15,14 +15,15 @@ declare module 'express-session' {
   }
 }
 
-const REPLIT_URI = "https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev";
-const PRODUCTION_URI = "gocareerate.com";
+if (!process.env.REPLIT_DOMAINS) {
+  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+}
 
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL("https://replit.com/oidc"),
-      "bfd824a8-80f1-45b8-9c48-fc95b77a9105"
+      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
+      process.env.REPL_ID!
     );
   },
   { maxAge: 3600 * 1000 }
@@ -102,11 +103,7 @@ export async function setupReplitAuth(app: Express) {
       verified(null, user);
     };
 
-    // Hardcoded domains for both development and production
-    const domains = [REPLIT_URI, PRODUCTION_URI];
-
-    for (const domain of domains) {
-
+    for (const domain of process.env.REPLIT_DOMAINS!.split(",")) {
       const strategy = new Strategy(
         {
           name: `replitauth:${domain}`,
@@ -136,14 +133,14 @@ export async function setupReplitAuth(app: Express) {
         req.session.returnTo = req.query.returnTo as string;
       }
 
-      passport.authenticate("replit", {
+      passport.authenticate(`replitauth:${req.hostname}`, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
       })(req, res, next);
     });
 
     app.get("/api/callback", (req, res, next) => {
-      passport.authenticate("replit", {
+      passport.authenticate(`replitauth:${req.hostname}`, {
         successReturnToOrRedirect: "/dashboard",
         failureRedirect: "/",
       })(req, res, next);
