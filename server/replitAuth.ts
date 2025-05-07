@@ -1,6 +1,5 @@
-const { Issuer } = require('openid-client');
-const { Strategy } = require('openid-client');
-import type { VerifyFunction, Client } from "openid-client";
+import { Issuer, Strategy, Client } from "openid-client";
+import type { VerifyFunction } from "openid-client";
 import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
