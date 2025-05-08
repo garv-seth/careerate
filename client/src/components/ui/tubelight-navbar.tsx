@@ -1,198 +1,142 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useLocation } from 'wouter';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from "@/lib/utils";
 import { 
   Home, 
   User, 
   Settings, 
-  LogOut, 
-  Menu,
   LayoutDashboard,
-  Cpu
+  Cpu, 
+  type LucideIcon
 } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+
+interface NavItem {
+  name: string;
+  url: string;
+  icon: LucideIcon;
+}
+
+interface NavBarProps {
+  items?: NavItem[];
+  className?: string;
+}
+
+export function NavBar({ items, className }: NavBarProps) {
+  const [activeTab, setActiveTab] = useState<string>("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [, setLocation] = useLocation();
+  const [location] = useLocation();
+
+  useEffect(() => {
+    // Set active tab based on current location
+    const currentPath = location;
+    const activeItem = items?.find(item => item.url === currentPath);
+    if (activeItem) {
+      setActiveTab(activeItem.name);
+    } else if (items && items.length > 0) {
+      setActiveTab(items[0].name);
+    }
+  }, [location, items]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const navigate = (path: string) => {
+    setLocation(path);
+  };
+
+  return (
+    <div
+      className={cn(
+        "fixed top-0 left-1/2 -translate-x-1/2 z-50 pt-6",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
+        {items?.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.name;
+
+          return (
+            <a
+              key={item.name}
+              href={item.url}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab(item.name);
+                navigate(item.url);
+              }}
+              className={cn(
+                "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
+                "text-foreground/80 hover:text-primary",
+                isActive && "bg-muted text-primary",
+              )}
+            >
+              <span className="hidden md:inline">{item.name}</span>
+              <span className="md:hidden">
+                <Icon size={18} strokeWidth={2.5} />
+              </span>
+              {isActive && (
+                <motion.div
+                  layoutId="lamp"
+                  className="absolute inset-0 w-full bg-primary/5 rounded-full -z-10"
+                  initial={false}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30,
+                  }}
+                >
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full">
+                    <div className="absolute w-12 h-6 bg-primary/20 rounded-full blur-md -top-2 -left-2" />
+                    <div className="absolute w-8 h-6 bg-primary/20 rounded-full blur-md -top-1" />
+                    <div className="absolute w-4 h-4 bg-primary/20 rounded-full blur-sm top-0 left-2" />
+                  </div>
+                </motion.div>
+              )}
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const TubelightNavbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     setLocation('/');
   };
-  
-  const navigate = (path: string) => {
-    setLocation(path);
-  };
 
-  const getInitials = () => {
-    if (user?.name) {
-      return user.name.split(' ').map(n => n[0]).join('').toUpperCase();
-    } else if (user?.username) {
-      return user.username[0].toUpperCase();
-    }
-    return 'U';
-  };
+  const navItems: NavItem[] = [
+    { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+    { name: 'Agents', url: '/agents', icon: Cpu },
+    { name: 'Profile', url: '/profile', icon: User },
+    { name: 'Settings', url: '/settings', icon: Settings }
+  ];
+
+  if (!isAuthenticated) {
+    return null; // Don't show navbar for unauthenticated users
+  }
 
   return (
-    <nav className="bg-background border-b border-border">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex justify-between items-center">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex items-center font-medium text-lg">
-              <span className="text-primary">Careerate</span>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
-            {isAuthenticated ? (
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/dashboard">
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
-                    Dashboard
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/agents">
-                    <Cpu className="h-4 w-4 mr-2" />
-                    Agents
-                  </Link>
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="ml-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.profileImageUrl} />
-                        <AvatarFallback>{getInitials()}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/agents')}>
-                      <Cpu className="mr-2 h-4 w-4" />
-                      Agents
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/">Home</Link>
-                </Button>
-                <Button variant="default" size="sm" asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Mobile Navigation */}
-          <div className="md:hidden">
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[250px] sm:w-[300px]">
-                <div className="flex flex-col gap-6 mt-6">
-                  {isAuthenticated ? (
-                    <>
-                      <div className="flex items-center space-x-3 px-1">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={user?.profileImageUrl} />
-                          <AvatarFallback>{getInitials()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{user?.name || user?.username}</p>
-                          <p className="text-sm text-muted-foreground">{user?.email}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                            Dashboard
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/agents" onClick={() => setIsMobileMenuOpen(false)}>
-                            <Cpu className="mr-2 h-4 w-4" />
-                            Agents
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                            <User className="mr-2 h-4 w-4" />
-                            Profile
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            Settings
-                          </Link>
-                        </Button>
-                      </div>
-                      <Button variant="outline" size="sm" className="mt-4" onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Logout
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button variant="ghost" size="sm" className="justify-start" asChild>
-                        <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                          <Home className="mr-2 h-4 w-4" />
-                          Home
-                        </Link>
-                      </Button>
-                      <Button size="sm" className="mt-2" asChild>
-                        <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                          Login
-                        </Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <>
+      <div className="h-20"></div> {/* Spacer for fixed navbar */}
+      <NavBar items={navItems} />
+    </>
   );
 };
 
