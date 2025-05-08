@@ -32,13 +32,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Authentication provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user data from the server
-  const { data: user, isLoading } = useQuery<AuthUser | null>({
+  const { data: user, isLoading, refetch } = useQuery<AuthUser | null>({
     queryKey: ["/api/auth/user"],
-    retry: false, // Don't retry on failure
-    refetchOnWindowFocus: false,
-    refetchInterval: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1, // Try once more on failure
+    refetchOnWindowFocus: true, // Refresh when window gets focus
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    // Add credentials to ensure cookies are sent
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/auth/user', {
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            // Unauthorized - return null instead of throwing
+            return null;
+          }
+          throw new Error(`Failed to fetch user: ${res.status}`);
+        }
+        return res.json();
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
+      }
+    }
   });
 
   // Login function - redirect to API login endpoint
