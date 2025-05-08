@@ -29,13 +29,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Extend to include agent connections
+  // Updated navigation items as requested
   const navItems = [
     { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, agent: null },
-    { name: 'Resume', url: '/resume', icon: FileText, agent: 'maya' },
-    { name: 'Insights', url: '/insights', icon: BarChart2, agent: 'ellie' },
-    { name: 'Learning', url: '/learning', icon: Lightbulb, agent: 'sophia' },
-    { name: 'Strategy', url: '/strategy', icon: Brain, agent: 'cara' },
+    { name: 'Agents', url: '/agents', icon: Brain, agent: 'cara' },
     { name: 'Profile', url: '/profile', icon: User2, agent: null },
     { name: 'Settings', url: '/settings', icon: Settings, agent: null }
   ];

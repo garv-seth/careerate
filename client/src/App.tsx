@@ -41,13 +41,6 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      {/* Keep the old route temporarily for backward compatibility */}
-      <Route path="/agent-test">
-        <ProtectedRoute>
-          <AgentTestPage />
-        </ProtectedRoute>
-      </Route>
-      
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
