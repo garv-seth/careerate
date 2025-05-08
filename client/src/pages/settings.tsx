@@ -95,7 +95,8 @@ const modelOptions: Record<string, ModelOption[]> = {
   ]
 };
 
-const SettingsPage = () => {
+// Main SettingsPage component function
+function SettingsPage() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
@@ -310,6 +311,6 @@ const SettingsPage = () => {
       <Footer2 />
     </div>
   );
-};
+}
 
 export default SettingsPage;
