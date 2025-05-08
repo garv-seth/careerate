@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import WarpBackground from "@/components/ui/warp-background";
@@ -29,6 +29,28 @@ const staggerContainer = {
 
 const HomePage = () => {
   const { isAuthenticated, login, logout } = useAuth();
+  
+  // Smooth scroll function
+  const smoothScrollTo = useCallback((elementId: string, e?: React.MouseEvent) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    // Prevent default behavior if event is provided
+    if (e) {
+      e.preventDefault();
+    }
+    
+    // Calculate navbar height to offset scroll position
+    const navbarHeight = 80; // Adjust based on your navbar height
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+    
+    // Smooth scroll to element
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth"
+    });
+  }, []);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -73,15 +95,14 @@ const HomePage = () => {
                   </Button>
                 </div>
                 <div className="mt-3 rounded-md sm:mt-0 sm:ml-3">
-                  <a href="#features">
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 border-2 border-primary-600 bg-gray/90 text-primary-700 hover:bg-primary-50 dark:bg-transparent dark:border-gray dark:text-gray dark:hover:bg-primary-900/20 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                    >
-                      Learn More
-                    </Button>
-                  </a>
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={(e) => smoothScrollTo('features', e)}
+                    className="w-full px-8 py-3 md:py-4 md:text-lg md:px-10 border-2 border-primary-600 bg-gray/90 text-primary-700 hover:bg-primary-50 dark:bg-transparent dark:border-gray dark:text-gray dark:hover:bg-primary-900/20 font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    Learn More
+                  </Button>
                 </div>
               </motion.div>
             </motion.div>
@@ -272,11 +293,14 @@ const HomePage = () => {
             >
               {isAuthenticated ? "View Dashboard" : "Get Early Access"}
             </Button>
-            <a href="#features">
-              <Button variant="outline" size="lg" className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-gray hover:bg-primary-700/90 hover:border-white font-semibold shadow-lg">
-                Learn More
-              </Button>
-            </a>
+            <Button 
+              onClick={(e) => smoothScrollTo('features')}
+              variant="outline" 
+              size="lg" 
+              className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-gray hover:bg-primary-700/90 hover:border-white font-semibold shadow-lg"
+            >
+              Learn More
+            </Button>
           </div>
         </div>
       </section>
