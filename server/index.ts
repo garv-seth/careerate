@@ -97,12 +97,36 @@ import { setupSessionTable } from './setup-sessions';
 
   // Use PORT environment variable if available, otherwise default to 5000
   // port 5000 is standard for Replit
+  const startServer = (port: number, maxRetries = 3, currentRetry = 0) => {
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    })
+    .on('listening', () => {
+      log(`Server started successfully on port ${port}`);
+    })
+    .on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        if (currentRetry < maxRetries) {
+          log(`Port ${port} is in use, trying to kill the process...`);
+          
+          // Try next port if current is in use
+          const nextPort = port + 1;
+          log(`Attempting to use port ${nextPort} instead (attempt ${currentRetry + 1}/${maxRetries})...`);
+          startServer(nextPort, maxRetries, currentRetry + 1);
+        } else {
+          log(`Failed to find an available port after ${maxRetries} attempts.`);
+          log(`Try manually terminating the process using port ${port}.`);
+          process.exit(1);
+        }
+      } else {
+        log(`Server error: ${err.message}`);
+        throw err;
+      }
+    });
+  };
+  
   const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  startServer(port);
 })();
