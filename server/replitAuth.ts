@@ -40,8 +40,8 @@ if (!process.env.REPLIT_DOMAINS) {
   // Add a fallback domain to catch any deployments
   possibleDomains.push('gocareerate.com');
   
-  // Join all domains and remove duplicates
-  process.env.REPLIT_DOMAINS = [...new Set(possibleDomains)].join(',');
+  // Filter out duplicates and join domains
+  process.env.REPLIT_DOMAINS = Array.from(new Set(possibleDomains)).join(',');
   console.log(`Using domains: ${process.env.REPLIT_DOMAINS}`);
 }
 

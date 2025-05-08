@@ -161,7 +161,11 @@ export function TubelightNavbar({ className }: { className?: string }) {
             
             {/* Logout Button when authenticated */}
             <Button
-              onClick={logout}
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("Logging out user");
+                logout();
+              }}
               className={cn(
                 "cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
                 "text-foreground/80 hover:text-primary bg-primary/10"
@@ -255,8 +259,10 @@ export function TubelightNavbar({ className }: { className?: string }) {
                       
                       {/* Logout button when authenticated */}
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
                           setMobileMenuOpen(false);
+                          console.log("Logging out user from mobile menu");
                           logout();
                         }}
                         className={cn(
