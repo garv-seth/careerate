@@ -97,7 +97,9 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
+      sameSite: 'lax'
     },
+    name: 'careerate.sid'
   });
 }
 
@@ -245,8 +247,9 @@ export async function setupAuth(app: Express): Promise<void> {
       console.log(`Authenticating callback with domain: ${domain}`);
       
       passport.authenticate(`replitauth:${domain}`, {
-        successReturnToOrRedirect: "/",
-        failureRedirect: "/api/login",
+        successRedirect: '/dashboard',
+        failureRedirect: '/api/login',
+        failureMessage: true
       })(req, res, next);
     });
 
