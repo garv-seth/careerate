@@ -34,6 +34,13 @@ const ProfilePage = () => {
       const formData = new FormData();
       formData.append('resume', file);
       
+      console.log(`Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
+      
+      // Log form data for debugging
+      for (let [key, value] of formData.entries()) {
+        console.log(`Form data: ${key} = ${value instanceof File ? value.name : value}`);
+      }
+      
       const response = await fetch('/api/onboarding/upload-resume', {
         method: 'POST',
         body: formData,
@@ -41,6 +48,7 @@ const ProfilePage = () => {
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Upload error response:', errorData);
         throw new Error(errorData.error || 'Failed to upload resume');
       }
       
@@ -182,32 +190,40 @@ const ProfilePage = () => {
                       onChange={handleResumeChange}
                       className="hidden"
                     />
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        onClick={handleChooseFile}
-                        variant="outline" 
-                        className="flex-1"
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        {uploadedResume ? uploadedResume.name : 'Select File'}
-                      </Button>
-                      <Button 
-                        onClick={handleResumeUpload}
-                        disabled={!uploadedResume || uploading}
-                        className="flex-1"
-                      >
-                        {uploading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload Resume
-                          </>
-                        )}
-                      </Button>
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                      <div className="w-full sm:flex-1 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 flex items-center justify-center">
+                        <FileText className="w-4 h-4 mr-2 text-muted-foreground" />
+                        <span className="text-sm truncate max-w-[180px]">
+                          {uploadedResume ? uploadedResume.name : 'No file selected'}
+                        </span>
+                      </div>
+                      <div className="flex w-full sm:w-auto gap-2 mt-2 sm:mt-0">
+                        <Button 
+                          onClick={handleChooseFile}
+                          variant="outline" 
+                          className="flex-1"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Select File
+                        </Button>
+                        <Button 
+                          onClick={handleResumeUpload}
+                          disabled={!uploadedResume || uploading}
+                          className="flex-1"
+                        >
+                          {uploading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Analyzing...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   

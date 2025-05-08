@@ -628,7 +628,42 @@ const trackAgentActivity = (activity: AgentActivity) => {
   console.log(`Agent ${activity.agent}: ${activity.action}`, loggableActivity.detail || '');
 };
 
-// Main entry point for the agent workflow
+
+// Get the model for a specific agent type
+export const getAgentModel = async (agentType: string, userId: string) => {
+  try {
+    // Get user settings
+    const { storage } = await import('../server/storage');
+    const settings = await storage.getUserSettings(userId);
+
+    if (!settings || !settings.models) {
+      // Return default models if no settings exist
+      const defaultModels: Record<string, string> = {
+        orchestration: 'claude-3-7-sonnet',
+        resume: 'gpt-4-1106-preview',
+        research: 'pplx-70b-online', 
+        learning: 'claude-3-7-haiku'
+      };
+
+      return defaultModels[agentType] || 'gpt-4-turbo';
+    }
+
+    return settings.models[agentType];
+  } catch (error) {
+    console.error('Error getting agent model:', error);
+    // Return default models if error
+    const fallbackModels: Record<string, string> = {
+      orchestration: 'claude-3-7-sonnet',
+      resume: 'gpt-4-1106-preview',
+      research: 'pplx-70b-online',
+      learning: 'claude-3-7-haiku'
+    };
+
+    return fallbackModels[agentType] || 'gpt-4-turbo';
+  }
+};
+
+// Run the agent workflow
 export const runCareerate = async (userId: string, resumeText: string, isPremium: boolean = false) => {
   console.log(`Starting Careerate analysis for user ${userId} (Premium: ${isPremium})`);
 
@@ -1349,4 +1384,5 @@ function createSampleCareerAdvice() {
       ]
     }
   };
+}
 }

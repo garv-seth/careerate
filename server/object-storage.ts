@@ -36,29 +36,24 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     console.log("Filtering file:", file.originalname, "Mimetype:", file.mimetype);
-    
-    // Accept common document types for resume uploads
+
+    // Check file types - be more lenient with MIME types
     const allowedTypes = [
-      "application/pdf", 
-      "application/msword", 
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "text/plain",
-      // Also accept common browser MIME types that might be sent
-      "application/octet-stream"
+      "application/octet-stream"  // Allow generic binary type
     ];
-    
-    // For development/testing, log the MIME type
-    console.log(`Received file with MIME type: ${file.mimetype}`);
-    
-    // Be lenient with MIME types for better user experience
-    if (allowedTypes.includes(file.mimetype) || 
-        file.originalname.endsWith(".pdf") || 
-        file.originalname.endsWith(".docx") || 
-        file.originalname.endsWith(".doc") || 
-        file.originalname.endsWith(".txt")) {
+
+    // Check by extension as well for better compatibility
+    const allowedExtensions = ['.pdf', '.doc', '.docx', '.txt'];
+    const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
+
+    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only PDF, DOCX, DOC, and TXT files are allowed.") as any);
+      cb(new Error('Invalid file type. Only PDF, DOCX, DOC, and TXT files are allowed.'));
     }
   },
 });
@@ -68,29 +63,29 @@ const upload = multer({
 // and returns content for other types
 const extractTextFromFile = async (filePath: string, mimeType: string): Promise<string> => {
   console.log(`Extracting text from file: ${filePath} with mimeType: ${mimeType}`);
-  
+
   try {
     const fs = await import('fs');
-    
+
     // For text files, read directly
     if (mimeType === 'text/plain') {
       const text = fs.readFileSync(filePath, 'utf-8');
       console.log("Successfully extracted text from TXT file");
       return text;
     }
-    
+
     // For PDF, DOCX, etc. we would normally use specialized libraries
     // For now, if not plaintext, we use a simplified approach - in production,
     // we would integrate PDF.js, mammoth.js, etc. for proper extraction
-    
+
     // Log file size for debugging
     const stats = fs.statSync(filePath);
     console.log(`File size: ${stats.size} bytes`);
-    
+
     // Simplified extraction for MVP - just reads first 2KB as text
     const buffer = fs.readFileSync(filePath);
     let extractedText = "";
-    
+
     // Try to extract readable text from binary files
     for (let i = 0; i < Math.min(buffer.length, 2048); i++) {
       const char = buffer[i];
@@ -103,7 +98,7 @@ const extractTextFromFile = async (filePath: string, mimeType: string): Promise<
         extractedText += '\n';
       }
     }
-    
+
     if (extractedText.length > 0) {
       console.log("Extracted some readable text from binary file");
       return `Extracted text from ${path.basename(filePath)}:\n\n${extractedText}`;
@@ -122,7 +117,7 @@ const extractTextFromFile = async (filePath: string, mimeType: string): Promise<
 // Upload middleware
 export const uploadResume = async (req: any, res: Response, next: NextFunction) => {
   console.log("Upload resume middleware triggered");
-  
+
   // Ensure the tmp directory exists
   try {
     const tmpDir = path.join(process.cwd(), "tmp");
@@ -135,37 +130,37 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
   } catch (dirError) {
     console.error("Error ensuring tmp directory exists:", dirError);
   }
-  
+
   const singleUpload = upload.single("resume");
-  
+
   singleUpload(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
       return res.status(400).json({ message: err.message });
     }
-    
+
     console.log("File upload request processed", req.file ? "with file" : "without file");
-    
+
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-    
+
     const userId = req.user.claims.sub;
     const file = req.file;
     const filePath = file.path;
-    
+
     console.log("Resume file uploaded:", file.originalname, "Size:", file.size, "bytes");
-    
+
     try {
       // Extract text from resume
       const resumeText = await extractTextFromFile(filePath, file.mimetype);
       console.log("Text extracted successfully from resume");
-      
+
       try {
         // Upload file to object storage
         const objectKey = `resumes/${userId}/${Date.now()}-${file.originalname}`;
         const fileStream = createReadStream(filePath);
-        
+
         await objectStorage.uploadFromStream(objectKey, fileStream, {
           compress: true
         });
@@ -174,7 +169,7 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
         console.error("Error uploading to object storage, continuing with extracted text:", uploadError);
         // We continue even if object storage fails - the text is more important
       }
-      
+
       // Clean up local file
       try {
         await unlink(filePath);
@@ -183,7 +178,7 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
         console.error("Error deleting temporary file:", unlinkError);
         // Non-fatal error, continue processing
       }
-      
+
       // Attach resume text to request for next middleware
       req.resumeText = resumeText;
       console.log("Resume text attached to request, proceeding to next middleware");

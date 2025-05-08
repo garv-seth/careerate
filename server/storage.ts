@@ -36,7 +36,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+
   // Profile operations
   getProfileByUserId(userId: string): Promise<Profile | undefined>;
   createProfile(profile: { 
@@ -57,12 +57,12 @@ export interface IStorage {
     preferredLearningStyle?: string,
     timeAvailability?: string
   }): Promise<Profile>;
-  
+
   // Skills operations
   getUserSkills(userId: string): Promise<UserSkill[]>;
   addUserSkill(userSkill: InsertUserSkill): Promise<UserSkill>;
   deleteUserSkills(userId: string): Promise<void>;
-  
+
   // Vector operations
   getVectorsByUserId(userId: string): Promise<Vector[]>;
   createVector(vector: InsertVector): Promise<Vector>;
@@ -74,40 +74,44 @@ export interface IStorage {
   createCareerPath(careerPath: InsertCareerPath): Promise<CareerPath>;
   updateCareerPath(id: number, updates: Partial<InsertCareerPath>): Promise<CareerPath>;
   deleteCareerPath(id: number): Promise<void>;
-  
+
   getMilestonesByCareerPathId(careerPathId: number): Promise<CareerMilestone[]>;
   createCareerMilestone(milestone: InsertCareerMilestone): Promise<CareerMilestone>;
   updateCareerMilestoneStatus(id: number, isCompleted: boolean): Promise<CareerMilestone>;
-  
+
   getAlternativePathsByCareerPathId(careerPathId: number): Promise<any[]>;
-  
+
   // PREMIUM FEATURE 2: Executive Network Access
   getUpcomingNetworkEvents(limit?: number): Promise<NetworkEvent[]>;
   getNetworkEventById(id: number): Promise<NetworkEvent | undefined>;
   registerForEvent(registration: InsertEventRegistration): Promise<EventRegistration>;
   getUserEventRegistrations(userId: string): Promise<any[]>;
-  
+
   getAvailableMentorships(limit?: number): Promise<any[]>;
   getMentorshipById(id: number): Promise<any | undefined>;
   applyForMentorship(application: { mentorshipId: number, userId: string, goalsDescription: string }): Promise<any>;
   getUserMentorshipApplications(userId: string): Promise<any[]>;
-  
+
   // PREMIUM FEATURE 3: Skills Gap Accelerator
   getAllSkills(category?: string): Promise<any[]>;
   getSkillById(id: number): Promise<any | undefined>;
   getUserSkills(userId: string): Promise<UserSkill[]>;
   addUserSkill(userSkill: InsertUserSkill): Promise<UserSkill>;
   updateUserSkillLevel(id: number, currentLevel: number, targetLevel: number): Promise<UserSkill>;
-  
+
   getLearningResourcesBySkillIds(skillIds: number[]): Promise<any[]>;
   getLearningResourceById(id: number): Promise<any | undefined>;
-  
+
   getUserLearningPaths(userId: string): Promise<LearningPath[]>;
   getLearningPathById(id: number): Promise<any | undefined>;
   createLearningPath(learningPath: InsertLearningPath): Promise<LearningPath>;
   addResourceToLearningPath(learningPathId: number, resourceId: number, order: number): Promise<any>;
   markResourceAsCompleted(learningPathId: number, resourceId: number): Promise<any>;
   getLearningPathProgress(learningPathId: number): Promise<number>;
+
+  // Settings operations
+  getUserSettings(userId: string): Promise<any | null>;
+  updateUserSettings(userId: string, settings: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -172,7 +176,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(profiles.userId, userId))
       .returning();
-    
+
     if (!profile) {
       // If no profile exists, create one
       return this.createProfile({ 
@@ -181,7 +185,7 @@ export class DatabaseStorage implements IStorage {
         lastScan: new Date(),
       });
     }
-    
+
     return profile;
   }
 
@@ -194,7 +198,7 @@ export class DatabaseStorage implements IStorage {
   }): Promise<Profile> {
     // Check if profile exists
     const existingProfile = await this.getProfileByUserId(userId);
-    
+
     if (!existingProfile) {
       // Create new profile if it doesn't exist
       return this.createProfile({
@@ -204,7 +208,7 @@ export class DatabaseStorage implements IStorage {
         ...updates
       });
     }
-    
+
     // Update existing profile
     const [profile] = await db
       .update(profiles)
@@ -214,7 +218,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(profiles.userId, userId))
       .returning();
-    
+
     return profile;
   }
 
@@ -270,7 +274,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(careerPaths.id, id))
       .returning();
-    
+
     return careerPath;
   }
 
@@ -300,7 +304,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(careerMilestones.id, id))
       .returning();
-    
+
     return milestone;
   }
 
@@ -416,6 +420,17 @@ export class DatabaseStorage implements IStorage {
   async getLearningPathProgress(learningPathId: number): Promise<number> {
     // Implementation pending
     return 0;
+  }
+
+  // Settings operations
+  async getUserSettings(userId: string): Promise<any | null> {
+    // Implementation for fetching user settings
+    return null; // Return null if no settings exist
+  }
+
+  async updateUserSettings(userId: string, settings: any): Promise<any> {
+    // Implementation for updating user settings
+    return settings;
   }
 }
 
