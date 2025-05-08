@@ -228,13 +228,14 @@ export async function setupAuth(app: Express): Promise<void> {
         console.log(`Return URL stored: ${req.session.returnTo}`);
       }
       
-      // Fix the hostname usage (avoid the deprecated req.host)
-      const domain = req.hostname || req.headers.host?.split(':')[0] || 'localhost';
+      const domain = req.get('host')?.split(':')[0] || 'localhost';
       console.log(`Authenticating with domain: ${domain}`);
       
       passport.authenticate(`replitauth:${domain}`, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
+        successRedirect: req.session.returnTo || '/dashboard',
+        failureRedirect: '/',
       })(req, res, next);
     });
 
@@ -242,14 +243,29 @@ export async function setupAuth(app: Express): Promise<void> {
     app.get("/api/callback", (req, res, next) => {
       console.log("Callback route accessed");
       
-      // Fix the hostname usage (avoid the deprecated req.host)
-      const domain = req.hostname || req.headers.host?.split(':')[0] || 'localhost';
+      const domain = req.get('host')?.split(':')[0] || 'localhost';
       console.log(`Authenticating callback with domain: ${domain}`);
       
-      passport.authenticate(`replitauth:${domain}`, {
-        successRedirect: '/dashboard',
-        failureRedirect: '/api/login',
-        failureMessage: true
+      passport.authenticate(`replitauth:${domain}`, (err, user) => {
+        if (err) { 
+          console.error("Auth error:", err);
+          return res.redirect('/'); 
+        }
+        if (!user) { 
+          console.error("No user returned");
+          return res.redirect('/'); 
+        }
+        
+        req.logIn(user, (err) => {
+          if (err) { 
+            console.error("Login error:", err);
+            return res.redirect('/'); 
+          }
+          
+          const returnTo = req.session.returnTo || '/dashboard';
+          delete req.session.returnTo;
+          return res.redirect(returnTo);
+        });
       })(req, res, next);
     });
 
