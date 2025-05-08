@@ -64,7 +64,7 @@ const TubelightNavbar = () => {
                 </Button>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/agents">
-                    <Brain className="h-4 w-4 mr-2" />
+                    <Cpu className="h-4 w-4 mr-2" />
                     Agents
                   </Link>
                 </Button>
@@ -83,7 +83,7 @@ const TubelightNavbar = () => {
                       Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/agents')}>
-                      <Brain className="mr-2 h-4 w-4" />
+                      <Cpu className="mr-2 h-4 w-4" />
                       Agents
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/profile')}>
@@ -145,7 +145,7 @@ const TubelightNavbar = () => {
                         </Button>
                         <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
                           <Link to="/agents" onClick={() => setIsMobileMenuOpen(false)}>
-                            <Brain className="mr-2 h-4 w-4" />
+                            <Cpu className="mr-2 h-4 w-4" />
                             Agents
                           </Link>
                         </Button>
