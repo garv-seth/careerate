@@ -95,8 +95,8 @@ const modelOptions: Record<string, ModelOption[]> = {
   ]
 };
 
-// Main SettingsPage component function
-function SettingsPage() {
+// Merged the duplicate SettingsPage components
+const SettingsPage = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
@@ -311,6 +311,6 @@ function SettingsPage() {
       <Footer2 />
     </div>
   );
-}
+};
 
 export default SettingsPage;
