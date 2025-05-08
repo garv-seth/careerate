@@ -17,6 +17,7 @@ import {
   Settings, 
   LogOut, 
   Menu,
+  X,
   LayoutDashboard,
   Cpu
 } from 'lucide-react';
@@ -50,7 +51,7 @@ const TubelightNavbar = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link to="/" className="flex items-center space-x-2">
             <div className="flex items-center font-medium text-lg">
               <span className="text-primary">Careerate</span>
             </div>
@@ -61,13 +62,13 @@ const TubelightNavbar = () => {
             {isAuthenticated ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/dashboard">
+                  <Link to="/dashboard">
                     <LayoutDashboard className="h-4 w-4 mr-2" />
                     Dashboard
                   </Link>
                 </Button>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/agents">
+                  <Link to="/agents">
                     <Cpu className="h-4 w-4 mr-2" />
                     Agents
                   </Link>
@@ -109,10 +110,10 @@ const TubelightNavbar = () => {
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/">Home</Link>
+                  <Link to="/">Home</Link>
                 </Button>
                 <Button variant="default" size="sm" asChild>
-                  <Link href="/login">Login</Link>
+                  <Link to="/login">Login</Link>
                 </Button>
               </>
             )}
@@ -142,25 +143,25 @@ const TubelightNavbar = () => {
                       </div>
                       <div className="space-y-1">
                         <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
                             <LayoutDashboard className="mr-2 h-4 w-4" />
                             Dashboard
                           </Link>
                         </Button>
                         <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/agents" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link to="/agents" onClick={() => setIsMobileMenuOpen(false)}>
                             <Cpu className="mr-2 h-4 w-4" />
                             Agents
                           </Link>
                         </Button>
                         <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
                             <User className="mr-2 h-4 w-4" />
                             Profile
                           </Link>
                         </Button>
                         <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                          <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link to="/settings" onClick={() => setIsMobileMenuOpen(false)}>
                             <Settings className="mr-2 h-4 w-4" />
                             Settings
                           </Link>
@@ -174,13 +175,13 @@ const TubelightNavbar = () => {
                   ) : (
                     <>
                       <Button variant="ghost" size="sm" className="justify-start" asChild>
-                        <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
                           <Home className="mr-2 h-4 w-4" />
                           Home
                         </Link>
                       </Button>
                       <Button size="sm" className="mt-2" asChild>
-                        <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                           Login
                         </Link>
                       </Button>

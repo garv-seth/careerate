@@ -1,0 +1,44 @@
+[vite] connecting...
+[vite] connected.
+useNavigate() may be used only in the context of a  component.
+useNavigate() may be used only in the context of a  component.
+The above error occurred in the <TubelightNavbar> component:
+
+    at TubelightNavbar (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/components/ui/tubelight-navbar.tsx?t=1746739026539:42:45)
+    at div
+    at HomePage (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/pages/home.tsx?t=1746739026539:45:46)
+    at Route (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4226163e:323:16)
+    at Switch (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4226163e:379:17)
+    at Router
+    at div
+    at OnboardingProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-onboarding.tsx:51:38)
+    at AuthProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-auth.tsx:21:32)
+    at V (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=4226163e:44:25)
+    at J (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=4226163e:42:18)
+    at QueryClientProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=4226163e:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at TubelightNavbar (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/components/ui/tubelight-navbar.tsx?t=1746739026539:42:45)
+at div
+at HomePage (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/pages/home.tsx?t=1746739026539:45:46)
+at Route (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4226163e:323:16)
+at Switch (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4226163e:379:17)
+at Router
+at div
+at OnboardingProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-onboarding.tsx:51:38)
+at AuthProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-auth.tsx:21:32)
+at V (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=4226163e:44:25)
+at J (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=4226163e:42:18)
+at QueryClientProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=4226163e:2805:3)
+at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+useNavigate() may be used only in the context of a  component.
