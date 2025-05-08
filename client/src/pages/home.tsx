@@ -294,7 +294,7 @@ const HomePage = () => {
               {isAuthenticated ? "View Dashboard" : "Get Early Access"}
             </Button>
             <Button 
-              onClick={(e) => smoothScrollTo('features')}
+              onClick={(e) => smoothScrollTo('features', e)}
               variant="outline" 
               size="lg" 
               className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-gray hover:bg-primary-700/90 hover:border-white font-semibold shadow-lg"
