@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,12 +24,12 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const TubelightNavbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
-    setLocation('/');
+    navigate('/');
   };
 
   const getInitials = () => {
@@ -78,19 +78,19 @@ const TubelightNavbar = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setLocation('/dashboard')}>
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation('/agents')}>
+                    <DropdownMenuItem onClick={() => navigate('/agents')}>
                       <Cpu className="mr-2 h-4 w-4" />
                       Agents
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation('/profile')}>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLocation('/settings')}>
+                    <DropdownMenuItem onClick={() => navigate('/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
