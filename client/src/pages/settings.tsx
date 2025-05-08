@@ -1,147 +1,6 @@
-
-import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from 'next-themes';
-import TubelightNavbar from '@/components/ui/tubelight-navbar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import Footer2 from '@/components/ui/footer2';
-
-const SettingsPage = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const { theme, setTheme } = useTheme();
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  // No direct redirect needed here, the ProtectedRoute component will handle it
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <TubelightNavbar />
-      
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Model Preferences</CardTitle>
-              <CardDescription>Configure the AI models used by different agents</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="cara-model">Cara (Orchestration) Model</Label>
-                  <Select defaultValue="gpt-4">
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
-                      <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
-                      <SelectItem value="claude">Claude 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="maya-model">Maya (Resume Analysis) Model</Label>
-                  <Select defaultValue="gpt-4">
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
-                      <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
-                      <SelectItem value="claude">Claude 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Analysis Settings</CardTitle>
-              <CardDescription>Configure how agents analyze your career data</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Deep Analysis Mode</Label>
-                  <p className="text-sm text-muted-foreground">Perform more thorough but slower analysis</p>
-                </div>
-                <Switch />
-              </div>
-              
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Real-time Market Data</Label>
-                  <p className="text-sm text-muted-foreground">Include latest market trends in analysis</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Theme Settings</CardTitle>
-              <CardDescription>Configure the appearance of the application</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">Toggle between light and dark theme</p>
-                </div>
-                <Switch checked={theme === 'dark'} onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Configure how you want to receive updates</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive updates via email</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Browser Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive desktop notifications</p>
-                </div>
-                <Switch />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-      
-      <Footer2 />
-    </div>
-  );
-};
-
-export default SettingsPage;
 import React, { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { useTheme } from 'next-themes';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import Footer2 from '@/components/ui/footer2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -238,7 +97,8 @@ const modelOptions: Record<string, ModelOption[]> = {
 
 const SettingsPage = () => {
   const { toast } = useToast();
-  
+  const { theme, setTheme } = useTheme();
+
   // Example default settings - would be fetched from API
   const [settings, setSettings] = useState({
     models: {
@@ -252,11 +112,11 @@ const SettingsPage = () => {
       realTimeMarketData: true
     },
     theme: {
-      darkMode: true,
+      darkMode: theme === 'dark',
       highContrast: false
     }
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   // Mock settings save mutation
@@ -316,7 +176,7 @@ const SettingsPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TubelightNavbar />
-      
+
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="flex items-center justify-between">
@@ -335,7 +195,7 @@ const SettingsPage = () => {
               )}
             </Button>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>AI Model Preferences</CardTitle>
@@ -349,21 +209,21 @@ const SettingsPage = () => {
                   selectedModelId={settings.models.orchestration}
                   onModelChange={(id) => handleModelChange('orchestration', id)}
                 />
-                
+
                 <ModelSelector
                   modelType="Maya (Resume Analysis)"
                   availableModels={modelOptions.resume}
                   selectedModelId={settings.models.resume}
                   onModelChange={(id) => handleModelChange('resume', id)}
                 />
-                
+
                 <ModelSelector
                   modelType="Ellie (Industry Research)"
                   availableModels={modelOptions.research}
                   selectedModelId={settings.models.research}
                   onModelChange={(id) => handleModelChange('research', id)}
                 />
-                
+
                 <ModelSelector
                   modelType="Sophia (Learning)"
                   availableModels={modelOptions.learning}
@@ -373,7 +233,7 @@ const SettingsPage = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Analysis Settings</CardTitle>
@@ -391,9 +251,9 @@ const SettingsPage = () => {
                   onCheckedChange={(checked) => handleSwitchChange('analysis', 'deepAnalysis', checked)}
                 />
               </div>
-              
+
               <Separator />
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="market-data">Real-time Market Data</Label>
@@ -407,7 +267,7 @@ const SettingsPage = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Theme Settings</CardTitle>
@@ -422,12 +282,15 @@ const SettingsPage = () => {
                 <Switch
                   id="dark-mode"
                   checked={settings.theme.darkMode}
-                  onCheckedChange={(checked) => handleSwitchChange('theme', 'darkMode', checked)}
+                  onCheckedChange={(checked) => {
+                    handleSwitchChange('theme', 'darkMode', checked);
+                    setTheme(checked ? 'dark' : 'light');
+                  }}
                 />
               </div>
-              
+
               <Separator />
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="high-contrast">High Contrast</Label>
@@ -443,7 +306,7 @@ const SettingsPage = () => {
           </Card>
         </div>
       </main>
-      
+
       <Footer2 />
     </div>
   );
