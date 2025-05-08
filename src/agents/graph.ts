@@ -1385,4 +1385,3 @@ function createSampleCareerAdvice() {
     }
   };
 }
-}
