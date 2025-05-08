@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useLocation } from 'wouter';
+import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,12 +25,16 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const TubelightNavbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    setLocation('/');
+  };
+  
+  const navigate = (path: string) => {
+    setLocation(path);
   };
 
   const getInitials = () => {
