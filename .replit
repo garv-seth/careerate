@@ -15,8 +15,16 @@ run = ["sh", "-c", "npm run start"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 5001
+externalPort = 3000
+
+[[ports]]
+localPort = 5002
+externalPort = 3001
+
 [workflows]
-runButton = "Project"
+runButton = "Start Careerate"
 
 [[workflows.workflow]]
 name = "Project"
@@ -35,6 +43,32 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Start Careerate"
+author = 33980514
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node|tsx\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Start Careerate"
+author = 33980514
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node|tsx\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-d5e190b1-d202-4d66-89eb-fa130443d464"
