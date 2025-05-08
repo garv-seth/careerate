@@ -95,11 +95,16 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
+      // Only use secure cookies in production with HTTPS
       secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
-      sameSite: 'lax'
+      sameSite: 'lax',
+      // Make sure cookies work across subdomains
+      domain: process.env.NODE_ENV === "production" ? '.gocareerate.com' : undefined
     },
-    name: 'careerate.sid'
+    name: 'careerate.sid',
+    // Ensure session handling is complete before continuing
+    rolling: true
   });
 }
 
@@ -228,13 +233,21 @@ export async function setupAuth(app: Express): Promise<void> {
         console.log(`Return URL stored: ${req.session.returnTo}`);
       }
       
-      const domain = req.get('host')?.split(':')[0] || 'localhost';
-      console.log(`Authenticating with domain: ${domain}`);
+      // Get full hostname including port for local development
+      const host = req.get('host') || 'localhost:5000';
+      // Extract domain without port for strategy selection
+      const domain = host.split(':')[0];
+      console.log(`Authenticating with host: ${host}, domain: ${domain}`);
       
-      passport.authenticate(`replitauth:${domain}`, {
+      // Find the best matching strategy
+      const domainList = process.env.REPLIT_DOMAINS!.split(",");
+      const bestMatch = domainList.includes(domain) ? domain : domainList[0];
+      console.log(`Selected strategy: replitauth:${bestMatch}`);
+      
+      passport.authenticate(`replitauth:${bestMatch}`, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],
-        successRedirect: req.session.returnTo || '/dashboard',
+        // Don't use successRedirect here, let the callback handle it
         failureRedirect: '/',
       })(req, res, next);
     });
@@ -262,9 +275,18 @@ export async function setupAuth(app: Express): Promise<void> {
             return res.redirect('/'); 
           }
           
-          const returnTo = req.session.returnTo || '/dashboard';
-          delete req.session.returnTo;
-          return res.redirect(returnTo);
+          // Make sure the session is saved before redirecting
+          req.session.save((err) => {
+            if (err) {
+              console.error("Session save error:", err);
+              return res.redirect('/');
+            }
+            
+            const returnTo = req.session.returnTo || '/dashboard';
+            delete req.session.returnTo;
+            console.log(`Redirecting to: ${returnTo}`);
+            return res.redirect(returnTo);
+          });
         });
       })(req, res, next);
     });

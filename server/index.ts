@@ -11,6 +11,31 @@ app.use(express.urlencoded({ extended: false }));
 // Set app to trust proxies for secure cookies behind load balancers
 app.set("trust proxy", 1);
 
+// Add CORS headers for development
+app.use((req, res, next) => {
+  // Allow requests from Replit domains and local development
+  const allowedOrigins = [
+    'https://gocareerate.com',
+    'https://careerate.replit.dev',
+    'http://localhost:5000'
+  ];
+  
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 // Configure session middleware (now from replitAuth.ts)
 app.use(getSession());
 
