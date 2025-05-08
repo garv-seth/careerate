@@ -58,11 +58,11 @@ export function NavBar({ items, className }: NavBarProps) {
   return (
     <div
       className={cn(
-        "fixed top-0 left-1/2 -translate-x-1/2 z-50 pt-6",
+        "fixed top-4 left-1/2 -translate-x-1/2 z-50",
         className,
       )}
     >
-      <div className="flex items-center gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
+      <div className="flex items-center gap-3 bg-background/70 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-xl">
         {items?.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.name;
@@ -79,7 +79,7 @@ export function NavBar({ items, className }: NavBarProps) {
               className={cn(
                 "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors",
                 "text-foreground/80 hover:text-primary",
-                isActive && "bg-muted text-primary",
+                isActive && "bg-muted/50 text-primary font-bold",
               )}
             >
               <span className="hidden md:inline">{item.name}</span>
@@ -97,10 +97,10 @@ export function NavBar({ items, className }: NavBarProps) {
                     damping: 30,
                   }}
                 >
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full">
-                    <div className="absolute w-12 h-6 bg-primary/20 rounded-full blur-md -top-2 -left-2" />
-                    <div className="absolute w-8 h-6 bg-primary/20 rounded-full blur-md -top-1" />
-                    <div className="absolute w-4 h-4 bg-primary/20 rounded-full blur-sm top-0 left-2" />
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-primary rounded-t-full">
+                    <div className="absolute w-14 h-7 bg-primary/30 rounded-full blur-md -top-3 -left-2" />
+                    <div className="absolute w-10 h-6 bg-primary/30 rounded-full blur-md -top-2 left-0" />
+                    <div className="absolute w-6 h-4 bg-primary/40 rounded-full blur-sm -top-1 left-2" />
                   </div>
                 </motion.div>
               )}
@@ -134,7 +134,7 @@ const TubelightNavbar = () => {
 
   return (
     <>
-      <div className="h-20"></div> {/* Spacer for fixed navbar */}
+      <div className="h-24"></div> {/* Spacer for fixed navbar */}
       <NavBar items={navItems} />
     </>
   );
