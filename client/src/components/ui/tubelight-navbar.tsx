@@ -231,13 +231,14 @@ const TubelightNavbar = () => {
     { name: 'Settings', url: '/settings', icon: Settings }
   ];
 
+  // Get current location to check if we're on the landing page
+  // This hook must be called unconditionally at the top level
+  const [location] = useLocation();
+  const isLandingPage = location === '/';
+
   if (!isAuthenticated) {
     return null; // Don't show navbar for unauthenticated users
   }
-
-  // Get current location to check if we're on the landing page
-  const [location] = useLocation();
-  const isLandingPage = location === '/';
 
   return (
     <>
