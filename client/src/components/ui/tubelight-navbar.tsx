@@ -117,7 +117,7 @@ export function NavBar({ items, className }: NavBarProps) {
       {/* Mobile Hamburger Toggle */}
       {isMobile && (
         <motion.button 
-          className="absolute -left-14 top-2 bg-background/70 backdrop-blur-lg border border-border rounded-full p-2 shadow-lg"
+          className="absolute right-2 top-2 bg-background/70 backdrop-blur-lg border border-border rounded-full p-2 shadow-lg"
           onClick={toggleMenu}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -151,15 +151,15 @@ export function NavBar({ items, className }: NavBarProps) {
           <motion.div 
             className={cn(
               "flex items-center gap-3 bg-background/70 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-xl",
-              isMobile && "flex-col px-4 py-3 absolute top-12 left-0 right-0 w-max min-w-[200px] rounded-xl"
+              isMobile && "flex-col px-4 py-3 absolute top-12 right-0 w-max min-w-[200px] rounded-xl"
             )}
             initial={isMobile ? "hidden" : false}
             animate="visible"
             exit="hidden"
             variants={menuVariants}
             style={{ 
-              x: isMobile ? "-50%" : 0,
-              originX: isMobile ? 0.5 : 0
+              x: isMobile ? 0 : 0,
+              originX: isMobile ? 1 : 0
             }}
           >
             {items?.map((item) => {
