@@ -4,12 +4,12 @@ import { useLocation } from 'wouter';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from "@/lib/utils";
-import { 
-  Home, 
-  User, 
-  Settings, 
+import {
+  Home,
+  User,
+  Settings,
   LayoutDashboard,
-  Cpu, 
+  Cpu,
   Menu,
   X,
   type LucideIcon
@@ -95,9 +95,9 @@ export function NavBar({ items, className }: NavBarProps) {
 
   const itemVariants = {
     hidden: { opacity: 0, y: -10, scale: 0.9 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
+    visible: {
+      opacity: 1,
+      y: 0,
       scale: 1,
       transition: {
         type: "spring",
@@ -116,12 +116,12 @@ export function NavBar({ items, className }: NavBarProps) {
     >
       {/* Mobile Hamburger Toggle */}
       {isMobile && (
-        <motion.button 
+        <motion.button
           className="absolute right-2 top-2 bg-background/70 backdrop-blur-lg border border-border rounded-full p-2 shadow-lg"
           onClick={toggleMenu}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          animate={{ 
+          animate={{
             rotate: isMenuOpen ? 90 : 0,
             backgroundColor: isMenuOpen ? "rgba(var(--primary), 0.2)" : "rgba(var(--background), 0.7)"
           }}
@@ -148,16 +148,16 @@ export function NavBar({ items, className }: NavBarProps) {
       {/* Desktop or Expanded Mobile Menu */}
       <AnimatePresence>
         {(!isMobile || isMenuOpen) && (
-          <motion.div 
+          <motion.div
             className={cn(
               "flex items-center gap-3 bg-background/70 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-xl",
-              isMobile && "flex-col px-4 py-3 absolute top-12 right-0 w-max min-w-[200px] rounded-xl"
+              isMobile && "flex-col px-4 py-3 absolute top-12 right-1 w-max min-w-[200px] rounded-xl"
             )}
             initial={isMobile ? "hidden" : false}
             animate="visible"
             exit="hidden"
             variants={menuVariants}
-            style={{ 
+            style={{
               x: isMobile ? 0 : 0,
               originX: isMobile ? 1 : 0
             }}
