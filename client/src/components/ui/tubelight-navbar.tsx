@@ -151,12 +151,15 @@ export function NavBar({ items, className }: NavBarProps) {
           <motion.div
             className={cn(
               "flex items-center gap-3 bg-background/70 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-xl",
-              isMobile && "flex-col px-4 py-3 absolute top-12 right-1 w-max min-w-[200px] rounded-xl"
+              isMobile && "flex-col px-4 py-3 absolute top-12 right-2 w-max min-w-[200px] rounded-xl"
             )}
             initial={isMobile ? "hidden" : false}
             animate="visible"
             exit="hidden"
-            variants={menuVariants}
+            variants={isMobile ? {
+              hidden: { opacity: 0, scale: 0.95, y: -10, originX: 1, originY: 0 },
+              visible: { opacity: 1, scale: 1, y: 0, originX: 1, originY: 0 }
+            } : menuVariants}
           >
             {items?.map((item) => {
               const Icon = item.icon;
