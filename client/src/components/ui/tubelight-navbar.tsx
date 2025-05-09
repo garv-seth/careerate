@@ -157,10 +157,6 @@ export function NavBar({ items, className }: NavBarProps) {
             animate="visible"
             exit="hidden"
             variants={menuVariants}
-            style={{
-              x: isMobile ? 0 : 0,
-              originX: isMobile ? 1 : 0
-            }}
           >
             {items?.map((item) => {
               const Icon = item.icon;
