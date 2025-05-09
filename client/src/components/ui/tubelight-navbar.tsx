@@ -122,8 +122,7 @@ export function NavBar({ items, className }: NavBarProps) {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           animate={{
-            rotate: isMenuOpen ? 90 : 0,
-            backgroundColor: isMenuOpen ? "rgba(var(--primary), 0.2)" : "rgba(var(--background), 0.7)"
+            rotate: isMenuOpen ? 90 : 0
           }}
           transition={{
             type: "spring",
@@ -134,9 +133,9 @@ export function NavBar({ items, className }: NavBarProps) {
           <AnimatePresence mode="wait">
             <motion.div
               key={isMenuOpen ? "close" : "menu"}
-              initial={{ opacity: 0, rotate: -90 }}
-              animate={{ opacity: 1, rotate: 0 }}
-              exit={{ opacity: 0, rotate: 90 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
               {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
