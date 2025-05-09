@@ -237,7 +237,6 @@ const TubelightNavbar = () => {
 
   return (
     <>
-      <div className="h-24"></div> {/* Spacer for fixed navbar */}
       <NavBar items={navItems} />
     </>
   );
