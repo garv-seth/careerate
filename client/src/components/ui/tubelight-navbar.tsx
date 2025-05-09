@@ -235,8 +235,13 @@ const TubelightNavbar = () => {
     return null; // Don't show navbar for unauthenticated users
   }
 
+  // Get current location to check if we're on the landing page
+  const [location] = useLocation();
+  const isLandingPage = location === '/';
+
   return (
     <>
+      {!isLandingPage && <div className="h-24"></div>} {/* Spacer only for non-landing pages */}
       <NavBar items={navItems} />
     </>
   );
