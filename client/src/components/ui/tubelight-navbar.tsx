@@ -188,7 +188,7 @@ export function NavBar({ items, className }: NavBarProps) {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              className="flex-col px-4 py-3 absolute top-12 right-2 w-max min-w-[200px] rounded-xl bg-background/70 border border-border backdrop-blur-lg shadow-xl z-10"
+              className="flex-col px-4 py-3 absolute top-14 right-0 w-max min-w-[200px] rounded-xl bg-background/70 border border-border backdrop-blur-lg shadow-xl z-10"
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
