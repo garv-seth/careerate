@@ -25,6 +25,27 @@ import {
   userLearningPaths,
   type LearningPath,
   type InsertLearningPath,
+  // New feature imports
+  aiVulnerabilityAssessments,
+  type AiVulnerabilityAssessment,
+  type InsertAiVulnerabilityAssessment,
+  careerMigrationPaths,
+  type CareerMigrationPath,
+  type InsertCareerMigrationPath,
+  careerSimulations,
+  type CareerSimulation,
+  type InsertCareerSimulation,
+  simulationTimepoints,
+  type SimulationTimepoint,
+  type InsertSimulationTimepoint,
+  jobMarketInsights,
+  companyInsights,
+  salaryNegotiations,
+  type SalaryNegotiation,
+  type InsertSalaryNegotiation,
+  contractReviews,
+  type ContractReview,
+  type InsertContractReview,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
