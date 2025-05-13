@@ -18,7 +18,7 @@ export const AreaChart = ({
   index,
   categories,
   colors = ['primary'],
-  valueFormatter = (value) => `${value}`,
+  valueFormatter = (value: number) => `${value}`,
   showLegend = true,
   showYAxis = false
 }: AreaChartProps) => {
@@ -52,7 +52,7 @@ export const BarChart = ({
   index,
   categories,
   colors = ['primary'],
-  valueFormatter = (value) => `${value}`,
+  valueFormatter = (value: number) => `${value}`,
   showLegend = true,
   layout = 'horizontal'
 }: BarChartProps) => {

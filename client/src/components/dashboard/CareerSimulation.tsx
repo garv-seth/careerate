@@ -443,7 +443,7 @@ export function CareerSimulation({
                   index="year"
                   categories={["salary"]}
                   colors={["primary"]}
-                  valueFormatter={(value) => `$${value.toLocaleString()}`}
+                  valueFormatter={(value: number) => `$${value.toLocaleString()}`}
                   showLegend={false}
                   showYAxis={true}
                 />
@@ -463,7 +463,7 @@ export function CareerSimulation({
                   index="skill"
                   categories={["level"]}
                   colors={["primary"]}
-                  valueFormatter={(value) => `${value}/10`}
+                  valueFormatter={(value: number) => `${value}/10`}
                   showLegend={false}
                   layout="vertical"
                 />
