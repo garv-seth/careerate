@@ -133,6 +133,44 @@ export interface IStorage {
   // Settings operations
   getUserSettings(userId: string): Promise<any | null>;
   updateUserSettings(userId: string, settings: any): Promise<any>;
+
+  // NEW FEATURE: AI Vulnerability Assessment
+  getUserVulnerabilityAssessment(userId: string): Promise<AiVulnerabilityAssessment | undefined>;
+  createVulnerabilityAssessment(assessment: InsertAiVulnerabilityAssessment): Promise<AiVulnerabilityAssessment>;
+  updateVulnerabilityAssessment(id: number, updates: Partial<InsertAiVulnerabilityAssessment>): Promise<AiVulnerabilityAssessment>;
+
+  // NEW FEATURE: Career Migration Engine
+  getCareerMigrationPathsByUserId(userId: string): Promise<CareerMigrationPath[]>;
+  getCareerMigrationPathById(id: number): Promise<CareerMigrationPath | undefined>;
+  createCareerMigrationPath(migrationPath: InsertCareerMigrationPath): Promise<CareerMigrationPath>;
+  updateCareerMigrationPath(id: number, updates: Partial<InsertCareerMigrationPath>): Promise<CareerMigrationPath>;
+  deleteCareerMigrationPath(id: number): Promise<void>;
+
+  // NEW FEATURE: Career Simulation
+  getCareerSimulationsByUserId(userId: string): Promise<CareerSimulation[]>;
+  getCareerSimulationById(id: number): Promise<CareerSimulation | undefined>;
+  createCareerSimulation(simulation: InsertCareerSimulation): Promise<CareerSimulation>;
+  updateCareerSimulation(id: number, updates: Partial<InsertCareerSimulation>): Promise<CareerSimulation>;
+  deleteCareerSimulation(id: number): Promise<void>;
+  
+  getSimulationTimepointsBySimulationId(simulationId: number): Promise<SimulationTimepoint[]>;
+  createSimulationTimepoint(timepoint: InsertSimulationTimepoint): Promise<SimulationTimepoint>;
+  
+  // NEW FEATURE: Premium Job Market Data
+  getJobMarketInsights(industry?: string, role?: string, limit?: number): Promise<any[]>;
+  getCompanyInsights(companyName?: string, industry?: string, limit?: number): Promise<any[]>;
+  
+  // NEW FEATURE: Salary Negotiation
+  getSalaryNegotiationsByUserId(userId: string): Promise<SalaryNegotiation[]>;
+  getSalaryNegotiationById(id: number): Promise<SalaryNegotiation | undefined>;
+  createSalaryNegotiation(negotiation: InsertSalaryNegotiation): Promise<SalaryNegotiation>;
+  updateSalaryNegotiation(id: number, updates: Partial<InsertSalaryNegotiation>): Promise<SalaryNegotiation>;
+  deleteSalaryNegotiation(id: number): Promise<void>;
+  
+  getContractReviewsByUserId(userId: string): Promise<ContractReview[]>;
+  getContractReviewById(id: number): Promise<ContractReview | undefined>;
+  createContractReview(review: InsertContractReview): Promise<ContractReview>;
+  updateContractReview(id: number, updates: Partial<InsertContractReview>): Promise<ContractReview>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -452,6 +490,169 @@ export class DatabaseStorage implements IStorage {
   async updateUserSettings(userId: string, settings: any): Promise<any> {
     // Implementation for updating user settings
     return settings;
+  }
+
+  // NEW FEATURE: AI Vulnerability Assessment
+  async getUserVulnerabilityAssessment(userId: string): Promise<AiVulnerabilityAssessment | undefined> {
+    const assessments = await db.select().from(aiVulnerabilityAssessments).where(eq(aiVulnerabilityAssessments.userId, userId))
+      .orderBy(desc(aiVulnerabilityAssessments.createdAt)).limit(1);
+    return assessments[0];
+  }
+
+  async createVulnerabilityAssessment(assessment: InsertAiVulnerabilityAssessment): Promise<AiVulnerabilityAssessment> {
+    const result = await db.insert(aiVulnerabilityAssessments).values(assessment).returning();
+    return result[0];
+  }
+
+  async updateVulnerabilityAssessment(id: number, updates: Partial<InsertAiVulnerabilityAssessment>): Promise<AiVulnerabilityAssessment> {
+    const result = await db.update(aiVulnerabilityAssessments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(aiVulnerabilityAssessments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // NEW FEATURE: Career Migration Engine
+  async getCareerMigrationPathsByUserId(userId: string): Promise<CareerMigrationPath[]> {
+    return db.select().from(careerMigrationPaths).where(eq(careerMigrationPaths.userId, userId));
+  }
+
+  async getCareerMigrationPathById(id: number): Promise<CareerMigrationPath | undefined> {
+    const paths = await db.select().from(careerMigrationPaths).where(eq(careerMigrationPaths.id, id));
+    return paths[0];
+  }
+
+  async createCareerMigrationPath(migrationPath: InsertCareerMigrationPath): Promise<CareerMigrationPath> {
+    const result = await db.insert(careerMigrationPaths).values(migrationPath).returning();
+    return result[0];
+  }
+
+  async updateCareerMigrationPath(id: number, updates: Partial<InsertCareerMigrationPath>): Promise<CareerMigrationPath> {
+    const result = await db.update(careerMigrationPaths)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(careerMigrationPaths.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteCareerMigrationPath(id: number): Promise<void> {
+    await db.delete(careerMigrationPaths).where(eq(careerMigrationPaths.id, id));
+  }
+
+  // NEW FEATURE: Career Simulation
+  async getCareerSimulationsByUserId(userId: string): Promise<CareerSimulation[]> {
+    return db.select().from(careerSimulations).where(eq(careerSimulations.userId, userId));
+  }
+
+  async getCareerSimulationById(id: number): Promise<CareerSimulation | undefined> {
+    const simulations = await db.select().from(careerSimulations).where(eq(careerSimulations.id, id));
+    return simulations[0];
+  }
+
+  async createCareerSimulation(simulation: InsertCareerSimulation): Promise<CareerSimulation> {
+    const result = await db.insert(careerSimulations).values(simulation).returning();
+    return result[0];
+  }
+
+  async updateCareerSimulation(id: number, updates: Partial<InsertCareerSimulation>): Promise<CareerSimulation> {
+    const result = await db.update(careerSimulations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(careerSimulations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteCareerSimulation(id: number): Promise<void> {
+    await db.delete(careerSimulations).where(eq(careerSimulations.id, id));
+  }
+
+  async getSimulationTimepointsBySimulationId(simulationId: number): Promise<SimulationTimepoint[]> {
+    return db.select().from(simulationTimepoints)
+      .where(eq(simulationTimepoints.simulationId, simulationId))
+      .orderBy(simulationTimepoints.yearIndex);
+  }
+
+  async createSimulationTimepoint(timepoint: InsertSimulationTimepoint): Promise<SimulationTimepoint> {
+    const result = await db.insert(simulationTimepoints).values(timepoint).returning();
+    return result[0];
+  }
+
+  // NEW FEATURE: Premium Job Market Data
+  async getJobMarketInsights(industry?: string, role?: string, limit: number = 20): Promise<any[]> {
+    let query = db.select().from(jobMarketInsights);
+    
+    if (industry) {
+      query = query.where(eq(jobMarketInsights.industry, industry));
+    }
+    
+    if (role) {
+      query = query.where(eq(jobMarketInsights.role, role));
+    }
+    
+    return query.orderBy(desc(jobMarketInsights.insightDate)).limit(limit);
+  }
+
+  async getCompanyInsights(companyName?: string, industry?: string, limit: number = 20): Promise<any[]> {
+    let query = db.select().from(companyInsights);
+    
+    if (companyName) {
+      query = query.where(eq(companyInsights.companyName, companyName));
+    }
+    
+    if (industry) {
+      query = query.where(eq(companyInsights.industry, industry));
+    }
+    
+    return query.orderBy(desc(companyInsights.insightDate)).limit(limit);
+  }
+
+  // NEW FEATURE: Salary Negotiation
+  async getSalaryNegotiationsByUserId(userId: string): Promise<SalaryNegotiation[]> {
+    return db.select().from(salaryNegotiations).where(eq(salaryNegotiations.userId, userId));
+  }
+
+  async getSalaryNegotiationById(id: number): Promise<SalaryNegotiation | undefined> {
+    const negotiations = await db.select().from(salaryNegotiations).where(eq(salaryNegotiations.id, id));
+    return negotiations[0];
+  }
+
+  async createSalaryNegotiation(negotiation: InsertSalaryNegotiation): Promise<SalaryNegotiation> {
+    const result = await db.insert(salaryNegotiations).values(negotiation).returning();
+    return result[0];
+  }
+
+  async updateSalaryNegotiation(id: number, updates: Partial<InsertSalaryNegotiation>): Promise<SalaryNegotiation> {
+    const result = await db.update(salaryNegotiations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(salaryNegotiations.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSalaryNegotiation(id: number): Promise<void> {
+    await db.delete(salaryNegotiations).where(eq(salaryNegotiations.id, id));
+  }
+
+  async getContractReviewsByUserId(userId: string): Promise<ContractReview[]> {
+    return db.select().from(contractReviews).where(eq(contractReviews.userId, userId));
+  }
+
+  async getContractReviewById(id: number): Promise<ContractReview | undefined> {
+    const reviews = await db.select().from(contractReviews).where(eq(contractReviews.id, id));
+    return reviews[0];
+  }
+
+  async createContractReview(review: InsertContractReview): Promise<ContractReview> {
+    const result = await db.insert(contractReviews).values(review).returning();
+    return result[0];
+  }
+
+  async updateContractReview(id: number, updates: Partial<InsertContractReview>): Promise<ContractReview> {
+    const result = await db.update(contractReviews)
+      .set(updates)
+      .where(eq(contractReviews.id, id))
+      .returning();
+    return result[0];
   }
 }
 
