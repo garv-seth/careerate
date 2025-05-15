@@ -160,51 +160,108 @@ const ProfilePage = () => {
                   )}
                 </div>
                 <CardDescription>
-                  Your current subscription status and details
+                  Your current subscription status and plan details
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium">Current Plan</h3>
-                    <p className="text-muted-foreground">
-                      {user?.subscriptionTier === 'premium' ? 'Premium ($20/month)' : 'Free Tier'}
-                    </p>
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4">
+                      {user?.subscriptionTier === 'premium' 
+                        ? <CheckCircle className="h-6 w-6 text-primary" /> 
+                        : <FileText className="h-6 w-6 text-muted-foreground" />
+                      }
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg">
+                        {user?.subscriptionTier === 'premium' ? 'Premium Plan' : 'Free Plan'}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {user?.subscriptionTier === 'premium' 
+                          ? '$20/month - Full access to all features' 
+                          : 'Limited access to basic features'}
+                      </p>
+                    </div>
                   </div>
                   
-                  {user?.subscriptionStatus && (
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                     <div>
-                      <h3 className="font-medium">Status</h3>
-                      <p className="text-muted-foreground capitalize">
-                        {user.subscriptionStatus}
+                      <h3 className="text-sm font-medium">Status</h3>
+                      <div className="flex items-center mt-1">
+                        <span className={`h-2 w-2 rounded-full mr-2 ${
+                          user?.subscriptionStatus === 'active' 
+                            ? 'bg-green-500' 
+                            : user?.subscriptionStatus === 'canceled' 
+                              ? 'bg-yellow-500' 
+                              : 'bg-gray-500'
+                        }`}></span>
+                        <p className="text-sm capitalize">
+                          {user?.subscriptionStatus || 'Active'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {user?.subscriptionPeriodEnd && (
+                      <div>
+                        <h3 className="text-sm font-medium">
+                          {user?.subscriptionStatus === 'canceled' 
+                            ? 'Access Until' 
+                            : 'Next Billing Date'}
+                        </h3>
+                        <p className="text-sm mt-1">
+                          {new Date(user.subscriptionPeriodEnd).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <h3 className="text-sm font-medium">AI Credits</h3>
+                      <p className="text-sm mt-1">
+                        {user?.subscriptionTier === 'premium' ? '100 credits/month' : '5 credits/month'}
                       </p>
                     </div>
-                  )}
-                  
-                  {user?.subscriptionPeriodEnd && (
+                    
                     <div>
-                      <h3 className="font-medium">Next Billing Date</h3>
-                      <p className="text-muted-foreground">
-                        {new Date(user.subscriptionPeriodEnd).toLocaleDateString()}
+                      <h3 className="text-sm font-medium">Premium Features</h3>
+                      <p className="text-sm mt-1">
+                        {user?.subscriptionTier === 'premium' ? 'Full Access' : 'Restricted'}
                       </p>
                     </div>
-                  )}
+                  </div>
                   
-                  <div className="pt-2">
+                  <div className="pt-4 flex flex-col space-y-2">
                     {user?.subscriptionTier === 'premium' ? (
-                      <Button 
-                        variant="outline" 
-                        onClick={() => window.location.href = '/subscription'}
-                      >
-                        Manage Subscription
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => window.location.href = '/subscription'}
+                          className="w-full"
+                        >
+                          Manage Subscription
+                        </Button>
+                        {user?.subscriptionStatus !== 'canceled' && (
+                          <p className="text-xs text-center text-muted-foreground">
+                            You can cancel anytime from the subscription management page
+                          </p>
+                        )}
+                      </>
                     ) : (
-                      <Button 
-                        variant="default"
-                        onClick={() => window.location.href = '/pricing'}
-                      >
-                        Upgrade to Premium
-                      </Button>
+                      <>
+                        <Button 
+                          variant="default"
+                          onClick={() => window.location.href = '/pricing'}
+                          className="w-full"
+                        >
+                          Upgrade to Premium
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground">
+                          Get full access to all AI career tools and insights
+                        </p>
+                      </>
                     )}
                   </div>
                 </div>

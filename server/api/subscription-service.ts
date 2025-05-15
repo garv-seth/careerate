@@ -1,6 +1,15 @@
 import { Request, Response } from "express";
 import Stripe from "stripe";
 import { storage } from "../storage";
+import { db } from "../db";
+import { 
+  users, 
+  subscriptionPlans, 
+  subscriptionTransactions, 
+  usageTracking, 
+  rateLimits 
+} from "@shared/schema";
+import { eq, and, sql, desc } from "drizzle-orm";
 
 // Initialize Stripe with the secret key
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -9,7 +18,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Premium plan price - $25 per month
+// Premium plan price - $20 per month
 const PREMIUM_PLAN_PRICE_ID = "price_premium_monthly"; // Replace with actual Stripe price ID when created
 
 // Create or get a subscription for the user
@@ -445,14 +454,8 @@ interface ExtendedStorage {
   return user;
 };
 
-// Add db import
-import { db } from "../db";
+// Add types for the database operations
 import { 
-  users, 
-  subscriptionPlans, 
-  subscriptionTransactions, 
-  usageTracking, 
-  rateLimits, 
   type User, 
   type SubscriptionPlan, 
   type SubscriptionTransaction, 
@@ -462,4 +465,3 @@ import {
   type InsertUsageTracking,
   type InsertRateLimit
 } from "@shared/schema";
-import { eq, and, sql, desc } from "drizzle-orm";
