@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -7,6 +7,13 @@ import onboardingRouter from "./api/onboarding";
 import settingsRouter from './api/settings';
 import careerServiceRouter, { initCareerServiceSockets } from './api/career-service';
 import { Server as SocketIOServer } from "socket.io";
+import { 
+  getOrCreateSubscription,
+  handleStripeWebhook,
+  getUserSubscription,
+  cancelSubscription,
+  makeUserPremium
+} from './api/subscription-service';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up Replit authentication
@@ -16,6 +23,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', onboardingRouter);
   app.use('/api/settings', settingsRouter);
   app.use('/api', careerServiceRouter);
+  
+  // Subscription routes
+  app.post('/api/create-subscription', isAuthenticated, getOrCreateSubscription);
+  app.get('/api/subscription', isAuthenticated, getUserSubscription);
+  app.post('/api/cancel-subscription', isAuthenticated, cancelSubscription);
+  app.post('/api/admin/make-premium', isAuthenticated, makeUserPremium);
+  
+  // Stripe webhook - no auth needed as it comes from Stripe
+  app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), handleStripeWebhook);
 
   // Development routes - only available in development
   if (process.env.NODE_ENV === "development") {
