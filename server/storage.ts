@@ -366,8 +366,30 @@ export class DatabaseStorage implements IStorage {
   
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    try {
+      // Just select the columns we know exist to avoid errors
+      const [user] = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          stripeCustomerId: users.stripeCustomerId,
+          stripeSubscriptionId: users.stripeSubscriptionId,
+          subscriptionStatus: users.subscriptionStatus,
+          subscriptionTier: users.subscriptionTier,
+          subscriptionPeriodEnd: users.subscriptionPeriodEnd,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt
+        })
+        .from(users)
+        .where(eq(users.id, id));
+      return user;
+    } catch (error) {
+      console.error("Error in getUser:", error);
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
@@ -380,19 +402,41 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+  async upsertUser(userData: Partial<UpsertUser>): Promise<User> {
+    try {
+      // Make sure we have a valid user object with required fields
+      // Ensure username is present for new users, or don't update it for existing users
+      const values = {
+        ...userData,
+        // Set a default username if not provided and this is a new user
+        username: userData.username || `user_${userData.id}`,
+      };
+      
+      const [user] = await db
+        .insert(users)
+        .values(values as any)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            // Don't update username if it already exists
+            email: values.email,
+            firstName: values.firstName,
+            lastName: values.lastName, 
+            profileImageUrl: values.profileImageUrl,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    } catch (error) {
+      console.error("Error in upsertUser:", error);
+      // If insert fails, try to get the existing user
+      if (userData.id) {
+        const existingUser = await this.getUser(userData.id);
+        if (existingUser) return existingUser;
+      }
+      throw error;
+    }
   }
 
   // Profile operations

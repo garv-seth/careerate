@@ -17,7 +17,7 @@ if (import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
 }
 
 const SubscriptionPage = () => {
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [subscribing, setSubscribing] = useState(false);

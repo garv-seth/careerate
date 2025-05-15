@@ -331,13 +331,13 @@ export async function setupAuth(app: Express): Promise<void> {
           console.log(`Creating new user record for: ${userId}`);
           // Try to create the user if they don't exist yet
           try {
+            // Create new user with available fields - handle username specially
+            // since it has NOT NULL constraint but might not be provided by Replit Auth
             const newUser = await storage.upsertUser({
               id: userId,
-              username: req.user.claims.username || `user_${userId}`,
               email: req.user.claims.email,
               firstName: req.user.claims.first_name,
               lastName: req.user.claims.last_name,
-              bio: req.user.claims.bio,
               profileImageUrl: req.user.claims.profile_image_url,
             });
             console.log(`Created new user: ${newUser.id}`);
