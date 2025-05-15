@@ -13,6 +13,7 @@ import {
   Home,
   Info,
   DollarSign,
+  ShieldAlert,
   type LucideIcon
 } from 'lucide-react';
 
@@ -144,19 +145,30 @@ const TubelightNavbar = () => {
   const [, setLocation] = useLocation();
   const [location] = useLocation();
 
-  // Different nav items based on authentication status
-  const navItems: NavItem[] = isAuthenticated 
-    ? [
-        { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-        { name: 'Agents', url: '/agents', icon: Cpu },
-        { name: 'Profile', url: '/profile', icon: User },
-        { name: 'Settings', url: '/settings', icon: Settings }
-      ]
-    : [
-        { name: 'Home', url: '/', icon: Home },
-        { name: 'About', url: '/about', icon: Info },
-        { name: 'Pricing', url: '/pricing', icon: DollarSign }
-      ];
+  // Different nav items based on authentication status and user role
+  const isAdmin = user?.email === 'garv.seth@gmail.com';
+  
+  let navItems: NavItem[] = [];
+  
+  if (isAuthenticated) {
+    navItems = [
+      { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+      { name: 'Agents', url: '/agents', icon: Cpu },
+      { name: 'Profile', url: '/profile', icon: User },
+      { name: 'Settings', url: '/settings', icon: Settings }
+    ];
+    
+    // Add Admin link for admin users
+    if (isAdmin) {
+      navItems.push({ name: 'Admin', url: '/admin', icon: ShieldAlert });
+    }
+  } else {
+    navItems = [
+      { name: 'Home', url: '/', icon: Home },
+      { name: 'About', url: '/about', icon: Info },
+      { name: 'Pricing', url: '/pricing', icon: DollarSign }
+    ];
+  }
 
   const handleLogout = async () => {
     await logout();
