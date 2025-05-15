@@ -29,7 +29,7 @@ const AboutPage = () => {
             </CardContent>
           </Card>
           
-          <Card className="mb-8">
+          <Card>
             <CardHeader>
               <CardTitle>Our Approach</CardTitle>
               <CardDescription>Data-driven career insights</CardDescription>
@@ -42,22 +42,6 @@ const AboutPage = () => {
               <p>
                 Rather than generic advice, Careerate delivers custom insights based on the latest data about how AI is affecting different professions,
                 what skills are emerging as valuable, and which career paths offer the most promising futures.
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Our Team</CardTitle>
-              <CardDescription>Experts in career development and AI</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Careerate was founded by a team of professionals with backgrounds in career counseling, workforce development, AI research, and data science.
-                We're committed to helping people thrive professionally as technology continues to transform the working world.
-              </p>
-              <p>
-                Our team continuously monitors developments in AI and the job market to ensure our platform provides the most current and relevant guidance possible.
               </p>
             </CardContent>
           </Card>

@@ -16,6 +16,7 @@ import Profile from "@/pages/profile";
 import Subscription from "@/pages/subscription";
 import AboutPage from "@/pages/about";
 import PricingPage from "@/pages/pricing";
+import SignupPage from "@/pages/signup";
 
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
@@ -28,6 +29,7 @@ function Router() {
       {/* Public Pages */}
       <Route path="/about" component={AboutPage} />
       <Route path="/pricing" component={PricingPage} />
+      <Route path="/signup" component={SignupPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
       

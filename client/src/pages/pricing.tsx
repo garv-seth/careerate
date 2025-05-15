@@ -11,14 +11,17 @@ const PricingPage = () => {
   const { isAuthenticated, login } = useAuth();
 
   const handleSubscribe = () => {
+    // If already authenticated, go to subscription management
     if (isAuthenticated) {
       setLocation('/subscription');
     } else {
-      login('/subscription');
+      // If not authenticated, direct to signup page with premium option
+      setLocation('/signup');
     }
   };
 
   const handleStartFree = () => {
+    // Free tier users just need to authenticate with Replit
     if (isAuthenticated) {
       setLocation('/dashboard');
     } else {
@@ -82,7 +85,7 @@ const PricingPage = () => {
                 <CardTitle className="text-2xl">Premium</CardTitle>
                 <CardDescription>Full access to all career tools</CardDescription>
                 <div className="mt-2">
-                  <span className="text-3xl font-bold">$25</span>
+                  <span className="text-3xl font-bold">$20</span>
                   <span className="text-gray-500 ml-2">per month</span>
                 </div>
               </CardHeader>
