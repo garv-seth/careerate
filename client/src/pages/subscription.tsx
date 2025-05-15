@@ -161,7 +161,7 @@ const SubscriptionPage = () => {
               )}
             </CardTitle>
             <CardDescription>Full access to all AI career tools</CardDescription>
-            <div className="mt-2 text-2xl font-bold">$25 <span className="text-sm font-normal text-muted-foreground">/month</span></div>
+            <div className="mt-2 text-2xl font-bold">$20 <span className="text-sm font-normal text-muted-foreground">/month</span></div>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
