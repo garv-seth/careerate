@@ -27,25 +27,25 @@ import {
   type InsertLearningPath,
   // New feature imports
   aiVulnerabilityAssessments,
-  type AiVulnerabilityAssessment,
-  type InsertAiVulnerabilityAssessment,
   careerMigrationPaths,
-  type CareerMigrationPath,
-  type InsertCareerMigrationPath,
   careerSimulations,
-  type CareerSimulation,
-  type InsertCareerSimulation,
   simulationTimepoints,
-  type SimulationTimepoint,
-  type InsertSimulationTimepoint,
   jobMarketInsights,
   companyInsights,
-  salaryNegotiations,
-  type SalaryNegotiation,
-  type InsertSalaryNegotiation,
-  contractReviews,
-  type ContractReview,
-  type InsertContractReview,
+  // Subscription imports
+  subscriptionPlans,
+  type SubscriptionPlan,
+  type InsertSubscriptionPlan,
+  subscriptionTransactions,
+  type SubscriptionTransaction,
+  type InsertSubscriptionTransaction,
+  usageTracking,
+  type UsageTracking,
+  type InsertUsageTracking,
+  rateLimits,
+  type RateLimit,
+  type InsertRateLimit,
+  userAccessLogs
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -57,6 +57,28 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Subscription operations
+  updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User>;
+  updateUserSubscription(userId: string, subscriptionData: {
+    stripeSubscriptionId: string;
+    subscriptionStatus: string;
+    subscriptionTier: string;
+    subscriptionPeriodEnd?: Date;
+  }): Promise<User>;
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlanById(planId: string): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionTransaction(transaction: InsertSubscriptionTransaction): Promise<SubscriptionTransaction>;
+  getUserTransactions(userId: string): Promise<SubscriptionTransaction[]>;
+  
+  // Usage tracking
+  trackUsage(usage: InsertUsageTracking): Promise<UsageTracking>;
+  getUserUsage(userId: string, feature?: string): Promise<UsageTracking[]>;
+  
+  // Rate limits
+  getRateLimit(userId: string, feature: string): Promise<RateLimit | undefined>;
+  updateRateLimit(rateLimit: InsertRateLimit & { id?: number }): Promise<RateLimit>;
+  incrementUsage(userId: string, feature: string): Promise<boolean>; // returns true if under limit
 
   // Profile operations
   getProfileByUserId(userId: string): Promise<Profile | undefined>;
@@ -174,6 +196,174 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Subscription operations
+  async updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ stripeCustomerId })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
+  
+  async updateUserSubscription(userId: string, subscriptionData: {
+    stripeSubscriptionId: string;
+    subscriptionStatus: string;
+    subscriptionTier: string;
+    subscriptionPeriodEnd?: Date;
+  }): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        stripeSubscriptionId: subscriptionData.stripeSubscriptionId,
+        subscriptionStatus: subscriptionData.subscriptionStatus,
+        subscriptionTier: subscriptionData.subscriptionTier,
+        subscriptionPeriodEnd: subscriptionData.subscriptionPeriodEnd || null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
+  
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.isActive, true));
+  }
+  
+  async getSubscriptionPlanById(planId: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(subscriptionPlans)
+      .where(eq(subscriptionPlans.id, planId));
+    return plan;
+  }
+  
+  async createSubscriptionTransaction(transaction: InsertSubscriptionTransaction): Promise<SubscriptionTransaction> {
+    const [newTransaction] = await db
+      .insert(subscriptionTransactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
+  }
+  
+  async getUserTransactions(userId: string): Promise<SubscriptionTransaction[]> {
+    return await db
+      .select()
+      .from(subscriptionTransactions)
+      .where(eq(subscriptionTransactions.userId, userId))
+      .orderBy(desc(subscriptionTransactions.transactionDate));
+  }
+  
+  async trackUsage(usage: InsertUsageTracking): Promise<UsageTracking> {
+    const [newUsage] = await db
+      .insert(usageTracking)
+      .values(usage)
+      .returning();
+    return newUsage;
+  }
+  
+  async getUserUsage(userId: string, feature?: string): Promise<UsageTracking[]> {
+    if (feature) {
+      return await db
+        .select()
+        .from(usageTracking)
+        .where(and(
+          eq(usageTracking.userId, userId),
+          eq(usageTracking.feature, feature)
+        ))
+        .orderBy(desc(usageTracking.usageDate));
+    } else {
+      return await db
+        .select()
+        .from(usageTracking)
+        .where(eq(usageTracking.userId, userId))
+        .orderBy(desc(usageTracking.usageDate));
+    }
+  }
+  
+  async getRateLimit(userId: string, feature: string): Promise<RateLimit | undefined> {
+    const now = new Date();
+    const [limit] = await db
+      .select()
+      .from(rateLimits)
+      .where(and(
+        eq(rateLimits.userId, userId),
+        eq(rateLimits.feature, feature),
+        sql`${rateLimits.periodStart} <= ${now}`,
+        sql`${rateLimits.periodEnd} >= ${now}`
+      ));
+    return limit;
+  }
+  
+  async updateRateLimit(rateLimit: InsertRateLimit & { id?: number }): Promise<RateLimit> {
+    if (rateLimit.id) {
+      // Update existing
+      const [updatedLimit] = await db
+        .update(rateLimits)
+        .set({
+          currentUsage: rateLimit.currentUsage,
+          lastUpdated: new Date()
+        })
+        .where(eq(rateLimits.id, rateLimit.id))
+        .returning();
+      return updatedLimit;
+    } else {
+      // Create new
+      const [newLimit] = await db
+        .insert(rateLimits)
+        .values({
+          ...rateLimit,
+          lastUpdated: new Date()
+        })
+        .returning();
+      return newLimit;
+    }
+  }
+  
+  async incrementUsage(userId: string, feature: string): Promise<boolean> {
+    // Get current rate limit
+    let limit = await this.getRateLimit(userId, feature);
+    
+    // If no limit exists, check user's subscription tier and create appropriate limit
+    if (!limit) {
+      const user = await this.getUser(userId);
+      if (!user) return false;
+      
+      const now = new Date();
+      const periodEnd = new Date();
+      periodEnd.setDate(periodEnd.getDate() + 30); // Default 30-day period
+      
+      // Set limits based on subscription tier
+      const usageLimit = user.subscriptionTier === 'premium' ? 100 : 5; // Premium: 100/month, Free: 5/month
+      
+      limit = await this.updateRateLimit({
+        userId,
+        feature,
+        periodStart: now,
+        periodEnd,
+        usageLimit,
+        currentUsage: 0
+      });
+    }
+    
+    // Check if already over limit
+    if (limit.currentUsage >= limit.usageLimit) {
+      return false;
+    }
+    
+    // Increment usage
+    await this.updateRateLimit({
+      ...limit,
+      id: limit.id,
+      currentUsage: limit.currentUsage + 1
+    });
+    
+    return true;
+  }
+  
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));

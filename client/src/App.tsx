@@ -13,6 +13,7 @@ import Dashboard from "@/pages/dashboard.new";
 import AgentTestPage from "@/pages/agent-test.new";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
+import Subscription from "@/pages/subscription";
 
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
@@ -50,6 +51,12 @@ function Router() {
       <Route path="/profile">
         <ProtectedRoute>
           <Profile />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/subscription">
+        <ProtectedRoute>
+          <Subscription />
         </ProtectedRoute>
       </Route>
       

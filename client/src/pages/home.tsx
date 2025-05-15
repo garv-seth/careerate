@@ -79,7 +79,7 @@ const HomePage = () => {
                 className="mt-6 text-xl text-gray-700 dark:text-gray-200 max-w-2xl mx-auto font-medium drop-shadow-sm"
                 variants={fadeIn}
               >
-                Is AI coming for your job? Don't panic—prepare. Our proprietary career intelligence platform helps you analyze your AI vulnerability, chart safe migration paths, and simulate future-proof career trajectories.
+                Don't let AI replace you. Embrace it.
               </motion.p>
               <motion.div 
                 className="mt-10 max-w-md mx-auto sm:flex sm:justify-center md:mt-12"
