@@ -14,6 +14,8 @@ import AgentTestPage from "@/pages/agent-test.new";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import Subscription from "@/pages/subscription";
+import AboutPage from "@/pages/about";
+import PricingPage from "@/pages/pricing";
 
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
@@ -22,6 +24,12 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      
+      {/* Public Pages */}
+      <Route path="/about" component={AboutPage} />
+      <Route path="/pricing" component={PricingPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
       
       {/* Protected Routes */}
       <Route path="/dashboard">
@@ -59,10 +67,6 @@ function Router() {
           <Subscription />
         </ProtectedRoute>
       </Route>
-      
-      {/* Public Legal Pages */}
-      <Route path="/terms" component={TermsPage} />
-      <Route path="/privacy" component={PrivacyPage} />
       
       <Route component={NotFound} />
     </Switch>
