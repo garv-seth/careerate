@@ -14,7 +14,7 @@ import {
   cancelSubscription,
   makeUserPremium
 } from './api/subscription-service';
-import setPremiumStatus from './api/admin/set-premium';
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up Replit authentication
@@ -31,8 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/cancel-subscription', isAuthenticated, cancelSubscription);
   app.post('/api/admin/make-premium', isAuthenticated, makeUserPremium);
   
-  // Admin routes
-  app.post('/api/admin/set-premium', setPremiumStatus);
+
   
   // Stripe webhook - no auth needed as it comes from Stripe
   app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), handleStripeWebhook);

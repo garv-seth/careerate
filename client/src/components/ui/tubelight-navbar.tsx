@@ -145,9 +145,7 @@ const TubelightNavbar = () => {
   const [, setLocation] = useLocation();
   const [location] = useLocation();
 
-  // Different nav items based on authentication status and user role
-  const isAdmin = user?.email === 'garv.seth@gmail.com';
-  
+  // Different nav items based on authentication status
   let navItems: NavItem[] = [];
   
   if (isAuthenticated) {
@@ -157,11 +155,6 @@ const TubelightNavbar = () => {
       { name: 'Profile', url: '/profile', icon: User },
       { name: 'Settings', url: '/settings', icon: Settings }
     ];
-    
-    // Add Admin link for admin users
-    if (isAdmin) {
-      navItems.push({ name: 'Admin', url: '/admin', icon: ShieldAlert });
-    }
   } else {
     navItems = [
       { name: 'Home', url: '/', icon: Home },
