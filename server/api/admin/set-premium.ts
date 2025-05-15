@@ -8,7 +8,8 @@ import { isAuthenticated } from '../../replitAuth';
 export const setPremiumStatus = async (req: Request, res: Response) => {
   try {
     // Admin-only access check
-    if (!(req.user as any)?.claims?.email === 'garv.seth@gmail.com') {
+    const userEmail = (req.user as any)?.claims?.email;
+    if (userEmail !== 'garv.seth@gmail.com') {
       return res.status(403).json({ 
         success: false, 
         message: 'Unauthorized: Admin access required' 
@@ -35,9 +36,10 @@ export const setPremiumStatus = async (req: Request, res: Response) => {
 
     // Update user with premium status
     const updatedUser = await storage.updateUserSubscription(targetUserId, {
+      stripeSubscriptionId: isPremium ? 'admin_premium_' + Date.now() : '',
       subscriptionTier: isPremium ? 'premium' : 'free',
       subscriptionStatus: isPremium ? 'active' : 'free',
-      subscriptionPeriodEnd: isPremium ? expirationDate : null
+      subscriptionPeriodEnd: isPremium ? expirationDate : undefined
     });
 
     return res.status(200).json({

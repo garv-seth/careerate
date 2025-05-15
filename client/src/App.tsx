@@ -17,6 +17,7 @@ import Subscription from "@/pages/subscription";
 import AboutPage from "@/pages/about";
 import PricingPage from "@/pages/pricing";
 import SignupPage from "@/pages/signup";
+import AdminPage from "@/pages/admin";
 
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
