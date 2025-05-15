@@ -148,6 +148,69 @@ const ProfilePage = () => {
           </Card>
 
           <div className="grid gap-6 md:grid-cols-2">
+            {/* Subscription Status Card */}
+            <Card className={user?.subscriptionTier === 'premium' ? 'border-2 border-primary' : ''}>
+              <CardHeader className={user?.subscriptionTier === 'premium' ? 'bg-primary/5' : ''}>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Subscription</CardTitle>
+                  {user?.subscriptionTier === 'premium' && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-white">
+                      PREMIUM
+                    </span>
+                  )}
+                </div>
+                <CardDescription>
+                  Your current subscription status and details
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-medium">Current Plan</h3>
+                    <p className="text-muted-foreground">
+                      {user?.subscriptionTier === 'premium' ? 'Premium ($20/month)' : 'Free Tier'}
+                    </p>
+                  </div>
+                  
+                  {user?.subscriptionStatus && (
+                    <div>
+                      <h3 className="font-medium">Status</h3>
+                      <p className="text-muted-foreground capitalize">
+                        {user.subscriptionStatus}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {user?.subscriptionPeriodEnd && (
+                    <div>
+                      <h3 className="font-medium">Next Billing Date</h3>
+                      <p className="text-muted-foreground">
+                        {new Date(user.subscriptionPeriodEnd).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="pt-2">
+                    {user?.subscriptionTier === 'premium' ? (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => window.location.href = '/subscription'}
+                      >
+                        Manage Subscription
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="default"
+                        onClick={() => window.location.href = '/pricing'}
+                      >
+                        Upgrade to Premium
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
             <Card>
               <CardHeader>
                 <CardTitle>Career Summary</CardTitle>

@@ -59,12 +59,12 @@ export function NavBar({ items, className }: NavBarProps) {
 
   return (
     <nav className={cn(
-      'fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-screen-lg px-4 pointer-events-auto',
+      'fixed top-4 left-1/2 -translate-x-1/2 z-50 w-auto max-w-fit px-4 pointer-events-auto',
       className
     )}>
       {/* Desktop Navigation */}
       {!isMobile && (
-        <div className="pointer-events-auto flex justify-center gap-10 bg-background/40 backdrop-blur-lg rounded-full py-2 px-8 shadow-lg">
+        <div className="pointer-events-auto flex justify-center gap-6 bg-background/40 backdrop-blur-lg rounded-full py-2 px-6 shadow-lg">
           {items.map(item => {
             const isActive = active === item.name;
             return (
