@@ -10,6 +10,9 @@ import {
   Settings,
   Menu as MenuIcon,
   X as XIcon,
+  Home,
+  Info,
+  DollarSign,
   type LucideIcon
 } from 'lucide-react';
 
@@ -137,29 +140,35 @@ export function NavBar({ items, className }: NavBarProps) {
 }
 
 const TubelightNavbar = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, login, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [location] = useLocation();
 
-  if (!isAuthenticated) return null;
-
-  const navItems: NavItem[] = [
-    { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-    { name: 'Agents', url: '/agents', icon: Cpu },
-    { name: 'Profile', url: '/profile', icon: User },
-    { name: 'Settings', url: '/settings', icon: Settings }
-  ];
+  // Different nav items based on authentication status
+  const navItems: NavItem[] = isAuthenticated 
+    ? [
+        { name: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+        { name: 'Agents', url: '/agents', icon: Cpu },
+        { name: 'Profile', url: '/profile', icon: User },
+        { name: 'Settings', url: '/settings', icon: Settings }
+      ]
+    : [
+        { name: 'Home', url: '/', icon: Home },
+        { name: 'About', url: '/about', icon: Info },
+        { name: 'Pricing', url: '/pricing', icon: DollarSign }
+      ];
 
   const handleLogout = async () => {
     await logout();
     setLocation('/');
   };
-
-  const isLanding = location === '/';
+  
+  // Check if we're on landing page to decide on spacer
+  const showSpacer = location !== '/';
 
   return (
     <>
-      {!isLanding && <div className="h-20" />} {/* spacer */}
+      {showSpacer && <div className="h-20" />} {/* spacer */}
       <NavBar items={navItems} />
     </>
   );
