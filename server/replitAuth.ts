@@ -233,15 +233,17 @@ export async function setupAuth(app: Express): Promise<void> {
         console.log(`Return URL stored: ${req.session.returnTo}`);
       }
       
-      // Get full hostname including port for local development
-      const host = req.get('host') || 'localhost:5000';
-      // Extract domain without port for strategy selection
-      const domain = host.split(':')[0];
-      console.log(`Authenticating with host: ${host}, domain: ${domain}`);
+      // Get hostname - fix deprecated usage by using req.hostname
+      const hostname = req.hostname || 'localhost';
+      // Get port if available
+      const port = req.socket.localPort || '5000';
+      const host = port === '80' || port === '443' ? hostname : `${hostname}:${port}`;
+      
+      console.log(`Authenticating with hostname: ${hostname}, full host: ${host}`);
       
       // Find the best matching strategy
       const domainList = process.env.REPLIT_DOMAINS!.split(",");
-      const bestMatch = domainList.includes(domain) ? domain : domainList[0];
+      const bestMatch = domainList.includes(hostname) ? hostname : domainList[0];
       console.log(`Selected strategy: replitauth:${bestMatch}`);
       
       passport.authenticate(`replitauth:${bestMatch}`, {
@@ -256,10 +258,11 @@ export async function setupAuth(app: Express): Promise<void> {
     app.get("/api/callback", (req, res, next) => {
       console.log("Callback route accessed");
       
-      const domain = req.get('host')?.split(':')[0] || 'localhost';
-      console.log(`Authenticating callback with domain: ${domain}`);
+      // Use req.hostname instead of req.get('host')
+      const hostname = req.hostname || 'localhost';
+      console.log(`Authenticating callback with hostname: ${hostname}`);
       
-      passport.authenticate(`replitauth:${domain}`, (err, user) => {
+      passport.authenticate(`replitauth:${hostname}`, (err, user) => {
         if (err) { 
           console.error("Auth error:", err);
           return res.redirect('/'); 
@@ -383,7 +386,10 @@ export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
   const refreshToken = req.user.refresh_token;
   if (!refreshToken) {
     console.log("No refresh token, redirecting to login");
-    return res.redirect("/api/login");
+    return res.status(401).json({ 
+      error: "Session expired", 
+      redirect: "/api/login?returnTo=" + encodeURIComponent(req.originalUrl) 
+    });
   }
 
   try {
@@ -396,9 +402,23 @@ export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
     updateUserSession(req.user, tokenResponse);
     console.log("Token refreshed successfully");
     
-    return next();
+    // Save updated session before continuing
+    req.session.save((err) => {
+      if (err) {
+        console.error("Error saving session after token refresh:", err);
+        return res.status(401).json({ 
+          error: "Session error", 
+          redirect: "/api/login?returnTo=" + encodeURIComponent(req.originalUrl) 
+        });
+      }
+      return next();
+    });
   } catch (error) {
     console.error("Error refreshing token:", error);
-    return res.redirect("/api/login");
+    // Don't redirect - return JSON response so client can handle it
+    return res.status(401).json({ 
+      error: "Authentication expired", 
+      redirect: "/api/login?returnTo=" + encodeURIComponent(req.originalUrl) 
+    });
   }
 };
