@@ -1,0 +1,144 @@
+
+> rest-express@1.0.0 dev
+✅ PINECONE_API_KEY found! Initializing Pinecone client
+Testing Pinecone API connection...
+Initializing OpenAI embeddings...
+✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o
+Testing OpenAI API connection...
+Creating simplified ADK-inspired workflow implementation
+✅ Pinecone API test successful! Found 0 indexes
+No indexes found. Will create one if needed during operation.
+✅ OpenAI embeddings test successful! Generated vector of length 1536
+✅ OpenAI API test successful! Response: It looks like you're trying to test a connection. ...
+Creating agents with initialized OpenAI client
+✅ All agents created successfully
+4:22:31 AM [express] Session table already exists.
+Setting up Auth...
+Setting up reliable development auth...
+Auth setup complete!
+Development routes will be available at /auth-test
+4:22:31 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+4:23:31 AM [express] GET /api/auth/user 401 in 2ms :: {"message":"Unauthorized"}
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:27 AM [express] GET /api/login 302 in 77ms
+4:26:31 AM [express] GET /api/auth/user 200 in 24ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:32 AM [express] GET /api/onboarding/user-profile 200 in 29ms
+4:26:32 AM [express] GET /api/onboarding/onboarding-status 200 in 30ms
+User connected to socket: demo_user_123
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:32 AM [express] GET /api/login 302 in 65ms
+Demo user logged in successfully
+4:26:32 AM [express] GET /api/login 302 in 73ms
+4:26:32 AM [express] GET /api/auth/user 401 in 1ms :: {"message":"Unauthorized"}
+User disconnected: demo_user_123
+Demo user logged in successfully
+4:26:33 AM [express] GET /api/login 302 in 67ms
+4:26:35 AM [express] GET /api/auth/user 200 in 23ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:35 AM [express] GET /api/onboarding/onboarding-status 200 in 34ms
+4:26:35 AM [express] GET /api/onboarding/user-profile 200 in 30ms
+Demo user logged in successfully
+User connected to socket: demo_user_123
+Demo user logged in successfully
+4:26:35 AM [express] GET /api/login 302 in 65ms
+Demo user logged in successfully
+4:26:35 AM [express] GET /api/login 302 in 66ms
+User disconnected: demo_user_123
+4:26:35 AM [express] GET /api/auth/user 304 in 24ms :: {"id":"demo_user_123","name":"Demo User","ema…
+Demo user logged in successfully
+4:26:36 AM [express] GET /api/onboarding/onboarding-status 200 in 3ms
+4:26:36 AM [express] GET /api/login 302 in 67ms
+User connected to socket: demo_user_123
+4:26:36 AM [express] GET /api/onboarding/user-profile 200 in 3ms
+4:26:36 AM [express] GET /api/auth/user 304 in 23ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:36 AM [express] GET /api/onboarding/user-profile 200 in 24ms
+4:26:36 AM [express] GET /api/onboarding/onboarding-status 200 in 26ms
+User connected to socket: demo_user_123
+Demo user logged in successfully
+4:26:37 AM [express] GET /api/login 302 in 89ms
+Demo user logged in successfully
+4:26:37 AM [express] GET /api/login 302 in 67ms
+Demo user logged in successfully
+4:26:37 AM [express] GET /api/login 302 in 70ms
+4:26:39 AM [express] GET /api/auth/user 304 in 22ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:39 AM [express] GET /api/onboarding/onboarding-status 200 in 24ms
+Demo user logged in successfully
+User connected to socket: demo_user_123
+4:26:39 AM [express] GET /api/login 302 in 67ms
+4:26:39 AM [express] GET /api/onboarding/user-profile 200 in 3ms
+Demo user logged in successfully
+4:26:39 AM [express] GET /api/login 302 in 81ms
+Demo user logged in successfully
+4:26:39 AM [express] GET /api/login 302 in 67ms
+User disconnected: demo_user_123
+4:26:39 AM [express] GET /api/auth/user 304 in 22ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:40 AM [express] GET /api/onboarding/user-profile 200 in 27ms
+4:26:40 AM [express] GET /api/onboarding/onboarding-status 200 in 29ms
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:40 AM [express] GET /api/login 302 in 69ms
+User connected to socket: demo_user_123
+User disconnected: demo_user_123
+Demo user logged in successfully
+4:26:40 AM [express] GET /api/login 302 in 69ms
+4:26:41 AM [express] GET /api/auth/user 304 in 23ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:42 AM [express] GET /api/onboarding/user-profile 200 in 31ms
+4:26:42 AM [express] GET /api/onboarding/onboarding-status 200 in 26ms
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:42 AM [express] GET /api/login 302 in 67ms
+User connected to socket: demo_user_123
+Demo user logged in successfully
+4:26:42 AM [express] GET /api/login 302 in 67ms
+4:26:43 AM [express] GET /api/auth/user 304 in 23ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:44 AM [express] GET /api/onboarding/onboarding-status 200 in 28ms
+4:26:44 AM [express] GET /api/onboarding/user-profile 200 in 28ms
+User connected to socket: demo_user_123
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:44 AM [express] GET /api/login 302 in 74ms
+Demo user logged in successfully
+4:26:44 AM [express] GET /api/login 302 in 75ms
+4:26:45 AM [express] GET /api/auth/user 304 in 24ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:46 AM [express] GET /api/onboarding/onboarding-status 200 in 24ms
+4:26:46 AM [express] GET /api/onboarding/user-profile 200 in 27ms
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:46 AM [express] GET /api/login 302 in 67ms
+User connected to socket: demo_user_123
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:46 AM [express] GET /api/login 302 in 65ms
+4:26:47 AM [express] GET /api/auth/user 304 in 24ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:48 AM [express] GET /api/onboarding/user-profile 200 in 42ms
+4:26:48 AM [express] GET /api/onboarding/onboarding-status 200 in 41ms
+Demo user logged in successfully
+Demo user logged in successfully
+User connected to socket: demo_user_123
+4:26:48 AM [express] GET /api/login 302 in 66ms
+Demo user logged in successfully
+4:26:48 AM [express] GET /api/login 302 in 70ms
+4:26:49 AM [express] GET /api/auth/user 304 in 22ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:49 AM [express] GET /api/onboarding/onboarding-status 200 in 27ms
+4:26:49 AM [express] GET /api/onboarding/user-profile 200 in 38ms
+Demo user logged in successfully
+Demo user logged in successfully
+4:26:50 AM [express] GET /api/login 302 in 68ms
+User connected to socket: demo_user_123
+Demo user logged in successfully
+4:26:50 AM [express] GET /api/login 302 in 67ms
+User disconnected: demo_user_123
+4:26:51 AM [express] GET /api/auth/user 304 in 21ms :: {"id":"demo_user_123","name":"Demo User","ema…
+4:26:51 AM [express] GET /api/onboarding/user-profile 200 in 68ms
+4:26:51 AM [express] GET /api/onboarding/onboarding-status 200 in 35ms
+Demo user logged in successfully
+User connected to socket: demo_user_123
+Demo user logged in successfully
+4:26:52 AM [express] GET /api/login 302 in 80ms
+Demo user logged in successfully
+4:26:52 AM [express] GET /api/login 302 in 68ms
+User disconnected: demo_user_123

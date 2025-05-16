@@ -1,0 +1,43 @@
+
+> rest-express@1.0.0 dev
+✅ PINECONE_API_KEY found! Initializing Pinecone client
+Testing Pinecone API connection...
+Initializing OpenAI embeddings...
+✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o
+Testing OpenAI API connection...
+Creating simplified ADK-inspired workflow implementation
+3:03:32 AM [express] Session table already exists.
+Setting up authentication...
+Setting up Replit Auth...
+Using domain for auth: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+Discovering Replit OIDC configuration...
+Failed to set up Replit Auth: TypeError: "clientId" must be a non-empty string
+    at CodedTypeError (/home/runner/workspace/node_modules/openid-client/src/index.ts:837:15)
+    at new Configuration (/home/runner/workspace/node_modules/openid-client/src/index.ts:1841:13)
+    at Module.discovery (/home/runner/workspace/node_modules/openid-client/src/index.ts:1274:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async memoize.maxAge (/home/runner/workspace/server/replitAuth.ts:23:12)
+    at async setupAuth (/home/runner/workspace/server/replitAuth.ts:117:20)
+    at async registerRoutes (/home/runner/workspace/server/routes.ts:15:3)
+    at async <anonymous> (/home/runner/workspace/server/index.ts:54:18) {
+  code: 'ERR_INVALID_ARG_TYPE',
+  [cause]: undefined
+}
+node:internal/process/promises:391
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+TypeError: "clientId" must be a non-empty string
+    at CodedTypeError (/home/runner/workspace/node_modules/openid-client/src/index.ts:837:15)
+    at new Configuration (/home/runner/workspace/node_modules/openid-client/src/index.ts:1841:13)
+    at Module.discovery (/home/runner/workspace/node_modules/openid-client/src/index.ts:1274:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async memoize.maxAge (/home/runner/workspace/server/replitAuth.ts:23:12)
+    at async setupAuth (/home/runner/workspace/server/replitAuth.ts:117:20)
+    at async registerRoutes (/home/runner/workspace/server/routes.ts:15:3)
+    at async <anonymous> (/home/runner/workspace/server/index.ts:54:18) {
+  code: 'ERR_INVALID_ARG_TYPE',
+  [cause]: undefined
+}
+
+Node.js v20.18.1
