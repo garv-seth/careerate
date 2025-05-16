@@ -77,6 +77,12 @@ function Router() {
           <CheckoutSuccessPage />
         </ProtectedRoute>
       </Route>
+      
+      <Route path="/subscription-success">
+        <ProtectedRoute>
+          <SubscriptionSuccessPage />
+        </ProtectedRoute>
+      </Route>
 
 
       <Route component={NotFound} />
