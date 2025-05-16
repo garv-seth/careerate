@@ -57,14 +57,28 @@ const SubscriptionPage = () => {
     setSubscribing(true);
     try {
       // Call the API to create a subscription
-      createSubscription();
+      const response = await createSubscription();
       
-      // The subscription endpoint will redirect to Stripe or return success
-      toast({
-        title: "Processing Subscription",
-        description: "Please complete the payment process if redirected.",
-      });
-      
+      // If response contains client secret, complete checkout
+      if (response?.clientSecret) {
+        setClientSecret(response.clientSecret);
+        const stripe = await stripePromise;
+        
+        // Redirect to Stripe checkout
+        const { error } = await stripe.redirectToCheckout({
+          clientSecret: response.clientSecret
+        });
+        
+        if (error) {
+          throw new Error(error.message);
+        }
+      } else {
+        // Direct success without checkout
+        toast({
+          title: "Subscription Activated",
+          description: "Your premium subscription is now active.",
+        });
+      }
     } catch (error) {
       console.error('Subscription error:', error);
       toast({
