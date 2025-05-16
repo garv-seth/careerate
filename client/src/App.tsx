@@ -14,6 +14,7 @@ import AgentTestPage from "@/pages/agent-test.new";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import Subscription from "@/pages/subscription";
+import CheckoutSuccessPage from "@/pages/checkout-success";
 import AboutPage from "@/pages/about";
 import PricingPage from "@/pages/pricing";
 import SignupPage from "@/pages/signup";
@@ -67,9 +68,12 @@ function Router() {
       <Route path="/subscription">
         <ProtectedRoute>
           <Subscription />
-          <Route path="/checkout-success" >
-             <CheckoutSuccessPage />
-          </Route>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/checkout-success">
+        <ProtectedRoute>
+          <CheckoutSuccessPage />
         </ProtectedRoute>
       </Route>
 
