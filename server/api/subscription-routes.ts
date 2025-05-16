@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { isAuthenticated } from '../replitAuth';
 import Stripe from 'stripe';
-import { storage } from '../storage';
+import { updateUserSubscription, getUserByStripeCustomerId, getSubscriptionDetails } from '../subscription-utils';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -19,9 +19,9 @@ const router = Router();
 // Get subscription details for the current user
 router.get('/subscription', isAuthenticated, async (req: any, res) => {
   try {
-    const user = await storage.getUser(req.user.id);
+    const userDetails = await getSubscriptionDetails(req.user.id);
     
-    if (!user) {
+    if (!userDetails) {
       return res.status(404).json({ error: 'User not found' });
     }
     
@@ -39,9 +39,9 @@ router.get('/subscription', isAuthenticated, async (req: any, res) => {
     };
     
     // If user has a subscription, get details from Stripe
-    if (user.stripeSubscriptionId) {
+    if (userDetails.stripeSubscriptionId) {
       try {
-        const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        const subscription = await stripe.subscriptions.retrieve(userDetails.stripeSubscriptionId);
         
         if (subscription.status === 'active' || subscription.status === 'trialing') {
           subscriptionDetails = {
@@ -91,15 +91,15 @@ router.get('/subscription', isAuthenticated, async (req: any, res) => {
 // Create a new subscription for the current user
 router.post('/create-subscription', isAuthenticated, async (req: any, res) => {
   try {
-    const user = await storage.getUser(req.user.id);
+    const userDetails = await getSubscriptionDetails(req.user.id);
     
-    if (!user) {
+    if (!userDetails) {
       return res.status(404).json({ error: 'User not found' });
     }
     
     // If user already has a subscription
-    if (user.stripeSubscriptionId) {
-      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+    if (userDetails.stripeSubscriptionId) {
+      const subscription = await stripe.subscriptions.retrieve(userDetails.stripeSubscriptionId);
       
       // If subscription is active, just return it
       if (subscription.status === 'active') {
@@ -115,7 +115,7 @@ router.post('/create-subscription', isAuthenticated, async (req: any, res) => {
           cancel_at_period_end: false,
         });
         
-        await storage.updateUser(user.id, {
+        await updateUserSubscription(req.user.id, {
           subscriptionStatus: 'active',
         });
         
@@ -127,19 +127,21 @@ router.post('/create-subscription', isAuthenticated, async (req: any, res) => {
     }
     
     // Create or get customer
-    let customerId = user.stripeCustomerId;
+    let customerId = userDetails.stripeCustomerId;
     
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: user.email || undefined,
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
+        email: req.user.email || undefined,
+        name: `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || undefined,
         metadata: {
-          userId: user.id
+          userId: req.user.id
         }
       });
       
       customerId = customer.id;
-      await storage.updateUser(user.id, { stripeCustomerId: customerId });
+      await updateUserSubscription(req.user.id, { 
+        stripeCustomerId: customerId 
+      });
     }
     
     // Create the subscription
@@ -155,7 +157,7 @@ router.post('/create-subscription', isAuthenticated, async (req: any, res) => {
     });
     
     // Update user with subscription data
-    await storage.updateUser(user.id, {
+    await updateUserSubscription(req.user.id, {
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
       subscriptionTier: 'premium',
@@ -178,23 +180,23 @@ router.post('/create-subscription', isAuthenticated, async (req: any, res) => {
 // Cancel the current user's subscription
 router.post('/cancel-subscription', isAuthenticated, async (req: any, res) => {
   try {
-    const user = await storage.getUser(req.user.id);
+    const userDetails = await getSubscriptionDetails(req.user.id);
     
-    if (!user) {
+    if (!userDetails) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    if (!user.stripeSubscriptionId) {
+    if (!userDetails.stripeSubscriptionId) {
       return res.status(400).json({ error: 'No active subscription found' });
     }
     
     // Cancel at period end
-    const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+    const subscription = await stripe.subscriptions.update(userDetails.stripeSubscriptionId, {
       cancel_at_period_end: true,
     });
     
     // Update user subscription status
-    await storage.updateUser(user.id, {
+    await updateUserSubscription(req.user.id, {
       subscriptionStatus: 'canceled',
     });
     

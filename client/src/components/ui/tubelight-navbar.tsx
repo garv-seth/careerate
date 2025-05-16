@@ -168,12 +168,9 @@ const TubelightNavbar = () => {
     setLocation('/');
   };
   
-  // Check if we're on landing page to decide on spacer
-  const showSpacer = location !== '/';
-
   return (
     <>
-      {showSpacer && <div className="h-20" />} {/* spacer */}
+      <div className="h-20" /> {/* Always add spacer to prevent content overlap */}
       <NavBar items={navItems} />
     </>
   );

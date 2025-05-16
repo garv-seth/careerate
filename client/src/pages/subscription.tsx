@@ -1,366 +1,373 @@
-import { useState, useEffect } from 'react';
-import { useSubscription } from '@/hooks/useSubscription';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  CheckIcon, 
+  XIcon, 
+  CreditCardIcon, 
+  CrownIcon, 
+  SparklesIcon 
+} from 'lucide-react';
+import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { Check, X, AlertTriangle, Lock } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useSubscription } from '@/hooks/useSubscription';
 
-// Always load Stripe outside of components
-let stripePromise: Promise<any> | null = null;
-if (import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// Make sure to call loadStripe outside of a component's render to avoid recreating the Stripe object on every render
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
 }
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-const SubscriptionPage = () => {
-  const [, navigate] = useLocation();
+const formatDate = (date: Date | undefined) => {
+  if (!date) return 'N/A';
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const CheckoutForm = ({ onSuccess }: { onSuccess: () => void }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [subscribing, setSubscribing] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  
-  const {
-    subscription,
-    isLoading,
-    createSubscription,
-    cancelSubscription,
-    isPremium,
-    isCanceling,
-  } = useSubscription();
-  
-  useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!authLoading && !isAuthenticated) {
-      navigate('/');
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to manage your subscription.",
-        variant: "destructive",
-      });
-    }
-  }, [isAuthenticated, authLoading, navigate, toast]);
-  
-  const handleSubscribe = async () => {
-    if (!stripePromise) {
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!stripe || !elements) {
       toast({
         title: "Error",
-        description: "Payment system is not available at the moment.",
-        variant: "destructive",
+        description: "Stripe has not yet loaded. Please try again.",
+        variant: "destructive"
       });
       return;
     }
-    
-    setSubscribing(true);
-    try {
-      // Call the API to create a subscription
-      const response = await createSubscription();
-      
-      // If response contains client secret, complete checkout
-      if (response?.clientSecret) {
-        setClientSecret(response.clientSecret);
-        const stripe = await stripePromise;
-        
-        // Redirect to Stripe checkout
-        const { error } = await stripe.redirectToCheckout({
-          clientSecret: response.clientSecret
-        });
-        
-        if (error) {
-          throw new Error(error.message);
-        }
-      } else {
-        // Direct success without checkout
-        toast({
-          title: "Subscription Activated",
-          description: "Your premium subscription is now active.",
-        });
-      }
-    } catch (error) {
-      console.error('Subscription error:', error);
+
+    setIsSubmitting(true);
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/subscription-success`,
+      },
+      redirect: 'if_required'
+    });
+
+    if (error) {
       toast({
-        title: "Subscription Error",
-        description: "There was a problem processing your subscription.",
-        variant: "destructive",
+        title: "Payment Failed",
+        description: error.message,
+        variant: "destructive"
       });
-    } finally {
-      setSubscribing(false);
+      setIsSubmitting(false);
+    } else {
+      toast({
+        title: "Payment Successful",
+        description: "Thank you for your subscription!",
+      });
+      onSuccess();
     }
   };
-  
-  const formatDate = (date?: Date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement />
+      <Button 
+        type="submit" 
+        disabled={!stripe || isSubmitting} 
+        className="w-full"
+      >
+        {isSubmitting ? "Processing..." : "Subscribe Now"}
+      </Button>
+    </form>
+  );
+};
+
+const SubscriptionPage = () => {
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const { 
+    subscription, 
+    isLoading: subscriptionLoading, 
+    isPremium, 
+    refreshSubscription 
+  } = useSubscription();
+  const { toast } = useToast();
+
+  const { data: clientSecret, isLoading: secretLoading } = useQuery({
+    queryKey: ['/api/create-subscription'],
+    enabled: showPaymentForm && !isPremium,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    queryFn: async () => {
+      const response = await apiRequest('POST', '/api/create-subscription');
+      const data = await response.json();
+      return data.clientSecret;
+    }
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/cancel-subscription');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Subscription Canceled",
+        description: "Your subscription will remain active until the end of the current billing period.",
+      });
+      refreshSubscription();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to cancel subscription",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleSubscribe = () => {
+    setShowPaymentForm(true);
   };
-  
-  if (isLoading || authLoading) {
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentForm(false);
+    refreshSubscription();
+  };
+
+  const handleCancelSubscription = () => {
+    if (confirm("Are you sure you want to cancel your premium subscription?")) {
+      cancelMutation.mutate();
+    }
+  };
+
+  if (subscriptionLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
-  
+
   return (
-    <div className="container max-w-4xl py-12">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Subscription Management</h1>
-        <p className="text-muted-foreground">Choose the plan that fits your career growth needs</p>
-      </div>
+    <div className="container py-8 max-w-5xl">
+      <h1 className="text-3xl font-bold mb-6">Subscription Plans</h1>
       
-      <div className="grid md:grid-cols-2 gap-8">
+      {subscription.status === 'canceled' && subscription.currentPeriodEnd && (
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-6">
+          <p className="text-yellow-800">
+            Your subscription has been canceled and will end on {formatDate(subscription.currentPeriodEnd)}.
+            Until then, you'll still have access to all premium features.
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Free Plan */}
-        <Card className={`border-2 ${subscription?.tier === 'free' ? 'border-primary' : 'border-border'}`}>
+        <Card className={`${subscription.tier === 'free' && subscription.status === 'active' ? 'border-primary' : ''}`}>
           <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              Free Plan
-              {subscription?.tier === 'free' && (
-                <Badge variant="outline" className="ml-2 bg-primary/10">Current Plan</Badge>
+            <div className="flex justify-between items-center">
+              <CardTitle>Free Plan</CardTitle>
+              {subscription.tier === 'free' && subscription.status === 'active' && (
+                <Badge variant="outline" className="bg-primary/10 text-primary">Current Plan</Badge>
               )}
-            </CardTitle>
-            <CardDescription>Basic AI career vulnerability assessment</CardDescription>
-            <div className="mt-2 text-2xl font-bold">$0 <span className="text-sm font-normal text-muted-foreground">/month</span></div>
+            </div>
+            <CardDescription>Basic career tools</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="text-3xl font-bold">$0 <span className="text-sm font-normal text-muted-foreground">/ month</span></div>
+            
             <ul className="space-y-2">
-              <li className="flex items-start">
-                <Check size={18} className="mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Basic vulnerability assessment</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Basic AI Vulnerability Assessment</span>
               </li>
-              <li className="flex items-start">
-                <Check size={18} className="mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>5 AI credits per month</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Basic Career Insights</span>
               </li>
-              <li className="flex items-start">
-                <X size={18} className="mr-2 text-red-500 mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground">Career migration pathways</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>5 AI Credits per Month</span>
               </li>
-              <li className="flex items-start">
-                <X size={18} className="mr-2 text-red-500 mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground">Career simulations</span>
+              <li className="flex items-center">
+                <XIcon className="w-5 h-5 text-red-500 mr-2" />
+                <span className="text-muted-foreground">Career Migration Paths</span>
               </li>
-              <li className="flex items-start">
-                <X size={18} className="mr-2 text-red-500 mt-0.5 flex-shrink-0" />
-                <span className="text-muted-foreground">Advanced AI insights</span>
+              <li className="flex items-center">
+                <XIcon className="w-5 h-5 text-red-500 mr-2" />
+                <span className="text-muted-foreground">Advanced Career Simulations</span>
+              </li>
+              <li className="flex items-center">
+                <XIcon className="w-5 h-5 text-red-500 mr-2" />
+                <span className="text-muted-foreground">Advanced Market Insights</span>
               </li>
             </ul>
           </CardContent>
           <CardFooter>
-            {subscription?.tier === 'free' ? (
-              <Button className="w-full" disabled variant="outline">Current Plan</Button>
+            {!isPremium ? (
+              <p className="text-muted-foreground w-full text-center">Current plan</p>
             ) : (
-              <Button className="w-full" variant="outline" disabled={subscription?.status === 'canceled'}>
-                Free Plan
+              <Button variant="outline" className="w-full" onClick={handleCancelSubscription} disabled={cancelMutation.isPending || subscription.status === 'canceled'}>
+                {cancelMutation.isPending ? "Processing..." : "Downgrade to Free"}
               </Button>
             )}
           </CardFooter>
         </Card>
-        
+
         {/* Premium Plan */}
-        <Card className={`border-2 ${subscription?.tier === 'premium' && subscription?.status !== 'canceled' ? 'border-primary' : 'border-border'}`}>
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              Premium Plan
-              {subscription?.tier === 'premium' && (
-                <Badge variant="outline" className="ml-2 bg-primary/10">
-                  {subscription.status === 'canceled' ? 'Canceling' : 'Current Plan'}
-                </Badge>
+        <Card className={`${isPremium ? 'border-primary' : ''}`}>
+          <CardHeader className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-t-lg">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <CrownIcon className="w-5 h-5 text-yellow-500 mr-2" />
+                <CardTitle>Premium Plan</CardTitle>
+              </div>
+              {isPremium && (
+                <Badge variant="outline" className="bg-primary/10 text-primary">Current Plan</Badge>
               )}
-            </CardTitle>
-            <CardDescription>Full access to all AI career tools</CardDescription>
-            <div className="mt-2 text-2xl font-bold">$20 <span className="text-sm font-normal text-muted-foreground">/month</span></div>
+            </div>
+            <CardDescription>Full access to all features</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4 pt-6">
+            <div className="text-3xl font-bold">$19.99 <span className="text-sm font-normal text-muted-foreground">/ month</span></div>
+            
             <ul className="space-y-2">
-              <li className="flex items-start">
-                <Check size={18} className="mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Advanced vulnerability assessment</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Advanced AI Vulnerability Assessment</span>
               </li>
-              <li className="flex items-start">
-                <Check size={18} className="mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>100 AI credits per month</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Full Career Insights</span>
               </li>
-              <li className="flex items-start">
-                <Check size={18} className="mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Career migration pathways</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Career Migration Paths</span>
               </li>
-              <li className="flex items-start">
-                <Check size={18} className="mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Career simulations with timepoints</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Advanced Career Simulations</span>
               </li>
-              <li className="flex items-start">
-                <Check size={18} className="mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Advanced AI insights and recommendations</span>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Comprehensive Market Insights</span>
+              </li>
+              <li className="flex items-center">
+                <CheckIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>100 AI Credits per Month</span>
               </li>
             </ul>
           </CardContent>
           <CardFooter>
-            {subscription?.tier === 'premium' ? (
-              subscription.status === 'canceled' ? (
-                <div className="w-full space-y-2">
-                  <Button className="w-full" variant="outline" disabled>
-                    Canceling
+            {isPremium ? (
+              <p className="text-muted-foreground w-full text-center">
+                {subscription.currentPeriodEnd 
+                  ? `Renewal date: ${formatDate(subscription.currentPeriodEnd)}` 
+                  : 'Current plan'}
+              </p>
+            ) : (
+              showPaymentForm && clientSecret ? (
+                <div className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="mb-4 w-full" 
+                    onClick={() => setShowPaymentForm(false)}
+                  >
+                    Cancel
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Access until {formatDate(subscription.currentPeriodEnd)}
-                  </p>
+                  <Elements 
+                    stripe={stripePromise} 
+                    options={{ clientSecret, appearance: { theme: 'stripe' } }}
+                  >
+                    <CheckoutForm onSuccess={handlePaymentSuccess} />
+                  </Elements>
                 </div>
               ) : (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button className="w-full" variant="outline">Cancel Subscription</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Your premium access will continue until the end of your current billing period. You will lose access to premium features after that.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => cancelSubscription()} disabled={isCanceling}>
-                        {isCanceling ? 'Canceling...' : 'Yes, Cancel'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button 
+                  className="w-full" 
+                  onClick={handleSubscribe}
+                  disabled={secretLoading}
+                >
+                  {secretLoading ? (
+                    <>
+                      <span className="mr-2">Loading</span>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCardIcon className="w-4 h-4 mr-2" />
+                      Subscribe Now
+                    </>
+                  )}
+                </Button>
               )
-            ) : (
-              <Button 
-                className="w-full" 
-                onClick={handleSubscribe} 
-                disabled={subscribing}
-              >
-                {subscribing ? 'Processing...' : 'Upgrade to Premium'}
-              </Button>
             )}
           </CardFooter>
         </Card>
       </div>
-      
-      {/* Subscription Info Section */}
-      {subscription && (
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Subscription Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Current Plan</p>
-                  <p className="font-medium">{subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <p className="font-medium flex items-center">
-                    {subscription.status === 'active' ? (
-                      <>
-                        <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-                        Active
-                      </>
-                    ) : subscription.status === 'canceled' ? (
-                      <>
-                        <span className="h-2 w-2 bg-yellow-500 rounded-full mr-2"></span>
-                        Canceling
-                      </>
-                    ) : subscription.status === 'past_due' ? (
-                      <>
-                        <span className="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
-                        Past Due
-                      </>
-                    ) : (
-                      <>
-                        <span className="h-2 w-2 bg-gray-500 rounded-full mr-2"></span>
-                        {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-                      </>
-                    )}
-                  </p>
-                </div>
-                {subscription.currentPeriodEnd && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Current Period Ends</p>
-                    <p className="font-medium">{formatDate(subscription.currentPeriodEnd)}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-muted-foreground">AI Credits Available</p>
-                  <p className="font-medium">{subscription.features.aiCreditsPerMonth} per month</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Feature Access Section */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Features Access</CardTitle>
-          <CardDescription>What you can currently access with your plan</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className={`p-4 rounded-lg border ${subscription?.features.vulnerabilityAssessment ? 'bg-primary/5' : 'bg-muted/20'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium">Vulnerability Assessment</h3>
-                  {subscription?.features.vulnerabilityAssessment ? (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 hover:bg-green-500/10">Accessible</Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-muted text-muted-foreground"><Lock size={12} className="mr-1" /> Locked</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">Assess your career's vulnerability to AI disruption</p>
-              </div>
-              
-              <div className={`p-4 rounded-lg border ${subscription?.features.careerMigration ? 'bg-primary/5' : 'bg-muted/20'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium">Career Migration</h3>
-                  {subscription?.features.careerMigration ? (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 hover:bg-green-500/10">Accessible</Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-muted text-muted-foreground"><Lock size={12} className="mr-1" /> Premium</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">Explore alternative career paths based on your skills</p>
-              </div>
-              
-              <div className={`p-4 rounded-lg border ${subscription?.features.careerSimulation ? 'bg-primary/5' : 'bg-muted/20'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium">Career Simulation</h3>
-                  {subscription?.features.careerSimulation ? (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 hover:bg-green-500/10">Accessible</Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-muted text-muted-foreground"><Lock size={12} className="mr-1" /> Premium</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">Simulate career transitions with timepoint analysis</p>
-              </div>
-              
-              <div className={`p-4 rounded-lg border ${subscription?.features.advancedInsights ? 'bg-primary/5' : 'bg-muted/20'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium">Advanced Insights</h3>
-                  {subscription?.features.advancedInsights ? (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 hover:bg-green-500/10">Accessible</Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-muted text-muted-foreground"><Lock size={12} className="mr-1" /> Premium</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">Get detailed insights and personalized recommendations</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-4">Plan Comparison</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-muted border-b">
+                <th className="text-left p-3">Feature</th>
+                <th className="text-center p-3">Free Plan</th>
+                <th className="text-center p-3">Premium Plan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="p-3 font-medium">AI Vulnerability Assessment</td>
+                <td className="text-center p-3">Basic</td>
+                <td className="text-center p-3">Advanced</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-3 font-medium">Career Insights</td>
+                <td className="text-center p-3">Basic</td>
+                <td className="text-center p-3">Comprehensive</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-3 font-medium">Career Migration Paths</td>
+                <td className="text-center p-3"><XIcon className="w-5 h-5 text-red-500 mx-auto" /></td>
+                <td className="text-center p-3"><CheckIcon className="w-5 h-5 text-green-500 mx-auto" /></td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-3 font-medium">Career Simulations</td>
+                <td className="text-center p-3"><XIcon className="w-5 h-5 text-red-500 mx-auto" /></td>
+                <td className="text-center p-3"><CheckIcon className="w-5 h-5 text-green-500 mx-auto" /></td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-3 font-medium">Market Insights</td>
+                <td className="text-center p-3">Limited</td>
+                <td className="text-center p-3">Full Access</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium">AI Credits per Month</td>
+                <td className="text-center p-3">5</td>
+                <td className="text-center p-3">100</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
