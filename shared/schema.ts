@@ -42,6 +42,7 @@ export const users = pgTable("users", {
   subscriptionStatus: varchar("subscription_status").default("free"), // free, active, canceled, past_due
   subscriptionTier: varchar("subscription_tier").default("free"), // free, premium
   subscriptionPeriodEnd: timestamp("subscription_period_end"),
+  aiCreditsRemaining: integer("ai_credits_remaining").default(5), // Default to free tier credits
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
