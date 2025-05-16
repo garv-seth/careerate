@@ -31,7 +31,7 @@ console.log('🏗️ Building client with Vite...');
 await new Promise((resolve, reject) => {
   const buildProcess = spawn('npx', ['vite', 'build'], {
     stdio: 'inherit',
-    shell: true
+    shell: false
   });
   
   buildProcess.on('close', (code) => {
@@ -50,7 +50,7 @@ console.log('🔄 Transpiling server code...');
 await new Promise((resolve, reject) => {
   const tscProcess = spawn('npx', ['tsc', '-p', 'tsconfig.build.json'], {
     stdio: 'inherit',
-    shell: true
+    shell: false
   });
   
   tscProcess.on('close', (code) => {
