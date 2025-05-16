@@ -6,14 +6,9 @@ import { uploadResume, getResume } from "./object-storage";
 import onboardingRouter from "./api/onboarding";
 import settingsRouter from './api/settings';
 import careerServiceRouter, { initCareerServiceSockets } from './api/career-service';
+import subscriptionRouter from './api/subscription-routes';
 import { Server as SocketIOServer } from "socket.io";
-import { 
-  getOrCreateSubscription,
-  handleStripeWebhook,
-  getUserSubscription,
-  cancelSubscription,
-  makeUserPremium
-} from './api/subscription-service';
+import Stripe from 'stripe';
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -26,15 +21,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', careerServiceRouter);
   
   // Subscription routes
-  app.post('/api/create-subscription', isAuthenticated, getOrCreateSubscription);
-  app.get('/api/subscription', isAuthenticated, getUserSubscription);
-  app.post('/api/cancel-subscription', isAuthenticated, cancelSubscription);
-  app.post('/api/admin/make-premium', isAuthenticated, makeUserPremium);
-  
-
+  app.use('/api', subscriptionRouter);
   
   // Stripe webhook - no auth needed as it comes from Stripe
-  app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), handleStripeWebhook);
+  app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(400).send('Stripe is not configured');
+    }
+    
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16' as any,
+    });
+    
+    const sig = req.headers['stripe-signature'] as string;
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    try {
+      if (!endpointSecret) {
+        // For simplicity, we'll just log the event in development
+        console.log('Webhook received:', req.body);
+        return res.send({ received: true });
+      }
+      
+      // Verify the event came from Stripe
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        endpointSecret
+      );
+      
+      // Handle specific events
+      switch (event.type) {
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated':
+          const subscription = event.data.object as Stripe.Subscription;
+          
+          // Update user's subscription status in your database
+          // This is a simplified example - you'd need to look up the user by their Stripe customer ID
+          console.log(`Subscription ${subscription.id} was ${event.type}`);
+          break;
+        
+        case 'customer.subscription.deleted':
+          const deletedSubscription = event.data.object as Stripe.Subscription;
+          console.log(`Subscription ${deletedSubscription.id} was canceled`);
+          break;
+      }
+      
+      res.send({ received: true });
+    } catch (err: any) {
+      console.error(`Webhook Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  });
 
   // Development routes - only available in development
   if (process.env.NODE_ENV === "development") {
