@@ -15,6 +15,7 @@ import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import Subscription from "@/pages/subscription";
 import CheckoutSuccessPage from "@/pages/checkout-success";
+import SubscriptionSuccessPage from "@/pages/subscription-success";
 import AboutPage from "@/pages/about";
 import PricingPage from "@/pages/pricing";
 import SignupPage from "@/pages/signup";
