@@ -1,51 +1,3 @@
-
-import { useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle } from 'lucide-react';
-
-const CheckoutSuccessPage = () => {
-  const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  useEffect(() => {
-    // Refresh subscription data
-    queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
-    
-    // Show success toast
-    toast({
-      title: "Payment Successful",
-      description: "Your premium subscription has been activated.",
-    });
-  }, [toast, queryClient]);
-  
-  return (
-    <div className="container max-w-md py-12 flex flex-col items-center justify-center min-h-[80vh]">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
-        <CheckCircle className="h-10 w-10 text-green-600" />
-      </div>
-      
-      <h1 className="text-2xl font-bold mb-2 text-center">Payment Successful!</h1>
-      <p className="text-center text-muted-foreground mb-8">
-        Thank you for subscribing to Careerate Premium. Your account has been upgraded and you now have access to all premium features.
-      </p>
-      
-      <div className="flex flex-col gap-4 w-full">
-        <Button onClick={() => navigate('/dashboard')} className="w-full">
-          Go to Dashboard
-        </Button>
-        <Button onClick={() => navigate('/subscription')} variant="outline" className="w-full">
-          View Subscription Details
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-export default CheckoutSuccessPage;
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -54,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 const CheckoutSuccessPage = () => {
   const [, setLocation] = useLocation();
@@ -61,12 +14,16 @@ const CheckoutSuccessPage = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);
   const [status, setStatus] = useState<'success' | 'processing' | 'error'>('processing');
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Extract any query parameters that might contain payment info
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
     const paymentIntent = urlParams.get('payment_intent');
+
+    // Refresh subscription data
+    queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
 
     if (!sessionId && !paymentIntent) {
       setStatus('error');
@@ -134,7 +91,7 @@ const CheckoutSuccessPage = () => {
     };
 
     verifyPayment();
-  }, [isAuthenticated, setLocation, toast]);
+  }, [isAuthenticated, setLocation, toast, queryClient]);
 
   const handleLoginAndRedirect = () => {
     if (isAuthenticated) {
@@ -147,7 +104,7 @@ const CheckoutSuccessPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <TubelightNavbar />
-      
+
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
           <Card className="w-full">
@@ -156,7 +113,7 @@ const CheckoutSuccessPage = () => {
                 {status === 'success' && <CheckCircle className="text-green-500" />}
                 {status === 'processing' && <Loader2 className="animate-spin text-blue-500" />}
                 {status === 'error' && <CheckCircle className="text-red-500" />}
-                
+
                 {status === 'success' && 'Payment Successful'}
                 {status === 'processing' && 'Processing Payment'}
                 {status === 'error' && 'Payment Error'}
@@ -180,7 +137,7 @@ const CheckoutSuccessPage = () => {
                       <p className="text-sm">Your premium subscription has been activated successfully. You now have full access to all features.</p>
                     </div>
                   )}
-                  
+
                   {status === 'error' && (
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-800 dark:text-red-200">
                       <p className="font-medium mb-1">Transaction Failed</p>
