@@ -45,7 +45,7 @@ await new Promise((resolve, reject) => {
     '--sourcemap'
   ], {
     stdio: 'inherit',
-    shell: true
+    shell: false
   });
   
   tscProcess.on('close', (code) => {
@@ -80,7 +80,7 @@ await new Promise((resolve, reject) => {
     '--sourcemap'
   ], {
     stdio: 'inherit',
-    shell: true
+    shell: false
   });
   
   tscProcess.on('close', (code) => {
@@ -106,7 +106,7 @@ await new Promise((resolve, reject) => {
     '--sourcemap'
   ], {
     stdio: 'inherit',
-    shell: true
+    shell: false
   });
   
   tscProcess.on('close', (code) => {
@@ -133,7 +133,7 @@ await new Promise((resolve, reject) => {
     '--sourcemap'
   ], {
     stdio: 'inherit',
-    shell: true
+    shell: false
   });
   
   tscProcess.on('close', (code) => {
@@ -150,17 +150,35 @@ await new Promise((resolve, reject) => {
 // Step 2: Copy JavaScript files that don't need transpilation
 console.log('📋 Copying JavaScript files...');
 await new Promise((resolve, reject) => {
-  const copyProcess = spawn('bash', ['-c', 'find server -name "*.js" -type f -exec cp {} dist/server/ \\;'], {
-    stdio: 'inherit',
-    shell: true
+  // Using multiple separate spawn calls instead of shell command
+  // This eliminates the shell: true security risk
+  const findProcess = spawn('find', ['server', '-name', '*.js', '-type', 'f'], {
+    stdio: ['ignore', 'pipe', 'inherit'],
+    shell: false
   });
   
-  copyProcess.on('close', (code) => {
+  let fileList = '';
+  findProcess.stdout.on('data', (data) => {
+    fileList += data.toString();
+  });
+  
+  findProcess.on('close', async (code) => {
     if (code === 0) {
+      const files = fileList.trim().split('\n').filter(Boolean);
+      
+      // Copy each file individually without using shell
+      for (const file of files) {
+        try {
+          await fs.copyFile(file, path.join(__dirname, 'dist', 'server', path.basename(file)));
+        } catch (err) {
+          console.error(`Error copying ${file}:`, err);
+        }
+      }
+      
       console.log('✅ JavaScript files copied successfully');
       resolve();
     } else {
-      console.error(`❌ JavaScript file copy failed with code ${code}`);
+      console.error(`❌ Finding JavaScript files failed with code ${code}`);
       // Don't reject, as this step is optional
       resolve();
     }
