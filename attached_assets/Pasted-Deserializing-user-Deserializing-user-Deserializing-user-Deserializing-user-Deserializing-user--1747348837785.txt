@@ -1,0 +1,171 @@
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+User info route accessed
+Getting user info for ID: 33980514
+Returning user info for: 33980514
+10:35:00 PM [express] GET /api/auth/user 304 in 161ms :: {"id":"33980514","email":"garv.seth@gmail.co…
+Deserializing user
+User info route accessed
+Getting user info for ID: 33980514
+Returning user info for: 33980514
+10:37:12 PM [express] GET /api/auth/user 304 in 193ms :: {"id":"33980514","email":"garv.seth@gmail.co…
+Deserializing user
+User info route accessed
+Getting user info for ID: 33980514
+Returning user info for: 33980514
+10:39:26 PM [express] GET /api/auth/user 304 in 2203ms :: {"id":"33980514","email":"garv.seth@gmail.c…
+Deserializing user
+User info route accessed
+Getting user info for ID: 33980514
+Returning user info for: 33980514
+10:39:41 PM [express] GET /api/auth/user 304 in 160ms :: {"id":"33980514","email":"garv.seth@gmail.co…
+Deserializing user
+Deserializing user
+Token expired, attempting refresh
+Refreshing token
+Error refreshing token: ResponseBodyError: server responded with an error in the response body
+    at checkOAuthBodyError (/home/runner/workspace/node_modules/oauth4webapi/src/index.ts:2741:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processGenericAccessTokenResponse (/home/runner/workspace/node_modules/oauth4webapi/src/index.ts:3414:3)
+    at async Module.refreshTokenGrant (/home/runner/workspace/node_modules/openid-client/src/index.ts:3492:14)
+    at async isAuthenticated (/home/runner/workspace/server/replitAuth.ts:393:27) {
+  cause: {
+    error: 'invalid_grant',
+    error_description: 'grant request is invalid'
+  },
+  code: 'OAUTH_RESPONSE_BODY_ERROR',
+  error: 'invalid_grant',
+  status: 400,
+  error_description: 'grant request is invalid'
+}
+10:39:58 PM [express] POST /api/admin/set-premium 302 in 440ms
+Deserializing user
+Login route accessed
+Authenticating with host: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev, domain: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+Selected strategy: replitauth:bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+express deprecated req.host: Use req.hostname instead file:/home/runner/workspace/node_modules/openid-client/build/passport.js:165:49
+10:39:58 PM [express] GET /api/login 302 in 40ms
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+Deserializing user
+User info route accessed
+Getting user info for ID: 33980514
+Returning user info for: 33980514
+10:40:12 PM [express] GET /api/auth/user 304 in 143ms :: {"id":"33980514","email":"garv.seth@gmail.co…
+Deserializing user
+Deserializing user
+Deserializing user
+Token expired, attempting refresh
+Refreshing token
+Error refreshing token: ResponseBodyError: server responded with an error in the response body
+    at checkOAuthBodyError (/home/runner/workspace/node_modules/oauth4webapi/src/index.ts:2741:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processGenericAccessTokenResponse (/home/runner/workspace/node_modules/oauth4webapi/src/index.ts:3414:3)
+    at async Module.refreshTokenGrant (/home/runner/workspace/node_modules/openid-client/src/index.ts:3492:14)
+    at async isAuthenticated (/home/runner/workspace/server/replitAuth.ts:393:27) {
+  cause: {
+    error: 'invalid_grant',
+    error_description: 'grant request is invalid'
+  },
+  code: 'OAUTH_RESPONSE_BODY_ERROR',
+  error: 'invalid_grant',
+  status: 400,
+  error_description: 'grant request is invalid'
+}
+10:40:17 PM [express] POST /api/create-subscription 302 in 133ms
+Deserializing user
+Login route accessed
+Authenticating with host: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev, domain: bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+Selected strategy: replitauth:bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev
+10:40:17 PM [express] GET /api/login 302 in 27ms
