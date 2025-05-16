@@ -1,0 +1,34 @@
+[vite] connecting...
+[vite] connected.
+CheckoutSuccessPage is not defined
+CheckoutSuccessPage is not defined
+The above error occurred in the <Router> component:
+
+    at Router (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/App.tsx?v=In5mYYFt3zBWUwUVXwpBQ:141:183)
+    at div
+    at OnboardingProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-onboarding.tsx:51:38)
+    at AuthProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-auth.tsx:21:32)
+    at V (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=bd58af1e:44:25)
+    at J (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=bd58af1e:42:18)
+    at QueryClientProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=9387ad66:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at Router (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/App.tsx?v=In5mYYFt3zBWUwUVXwpBQ:141:183)
+at div
+at OnboardingProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-onboarding.tsx:51:38)
+at AuthProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/src/hooks/use-auth.tsx:21:32)
+at V (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=bd58af1e:44:25)
+at J (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/next-themes.js?v=bd58af1e:42:18)
+at QueryClientProvider (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=9387ad66:2805:3)
+at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://bfd824a8-80f1-45b8-9c48-fc95b77a9105-00-14k8dzmk8x22u.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+CheckoutSuccessPage is not defined
