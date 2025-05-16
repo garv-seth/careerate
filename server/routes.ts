@@ -14,6 +14,7 @@ import {
   cancelSubscription,
   makeUserPremium
 } from './api/subscription-service';
+import subscriptionServiceRouter from './api/subscription-service';
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -21,18 +22,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Apply API routes
-  app.use('/api', onboardingRouter);
-  app.use('/api/settings', settingsRouter);
   app.use('/api', careerServiceRouter);
-  
+  app.use('/api/onboarding', onboardingRouter);
+  app.use('/api/settings', settingsRouter);
+  app.use('/api/subscription', subscriptionServiceRouter);
+
   // Subscription routes
   app.post('/api/create-subscription', isAuthenticated, getOrCreateSubscription);
   app.get('/api/subscription', isAuthenticated, getUserSubscription);
   app.post('/api/cancel-subscription', isAuthenticated, cancelSubscription);
   app.post('/api/admin/make-premium', isAuthenticated, makeUserPremium);
-  
 
-  
+
+
   // Stripe webhook - no auth needed as it comes from Stripe
   app.post('/api/webhook/stripe', express.raw({type: 'application/json'}), handleStripeWebhook);
 

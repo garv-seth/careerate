@@ -57,7 +57,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: UpsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+
   // Subscription operations
   updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<User>;
   updateUserSubscription(userId: string, subscriptionData: {
@@ -70,11 +70,11 @@ export interface IStorage {
   getSubscriptionPlanById(planId: string): Promise<SubscriptionPlan | undefined>;
   createSubscriptionTransaction(transaction: InsertSubscriptionTransaction): Promise<SubscriptionTransaction>;
   getUserTransactions(userId: string): Promise<SubscriptionTransaction[]>;
-  
+
   // Usage tracking
   trackUsage(usage: InsertUsageTracking): Promise<UsageTracking>;
   getUserUsage(userId: string, feature?: string): Promise<UsageTracking[]>;
-  
+
   // Rate limits
   getRateLimit(userId: string, feature: string): Promise<RateLimit | undefined>;
   updateRateLimit(rateLimit: InsertRateLimit & { id?: number }): Promise<RateLimit>;
@@ -174,21 +174,21 @@ export interface IStorage {
   createCareerSimulation(simulation: InsertCareerSimulation): Promise<CareerSimulation>;
   updateCareerSimulation(id: number, updates: Partial<InsertCareerSimulation>): Promise<CareerSimulation>;
   deleteCareerSimulation(id: number): Promise<void>;
-  
+
   getSimulationTimepointsBySimulationId(simulationId: number): Promise<SimulationTimepoint[]>;
   createSimulationTimepoint(timepoint: InsertSimulationTimepoint): Promise<SimulationTimepoint>;
-  
+
   // NEW FEATURE: Premium Job Market Data
   getJobMarketInsights(industry?: string, role?: string, limit?: number): Promise<any[]>;
   getCompanyInsights(companyName?: string, industry?: string, limit?: number): Promise<any[]>;
-  
+
   // NEW FEATURE: Salary Negotiation
   getSalaryNegotiationsByUserId(userId: string): Promise<SalaryNegotiation[]>;
   getSalaryNegotiationById(id: number): Promise<SalaryNegotiation | undefined>;
   createSalaryNegotiation(negotiation: InsertSalaryNegotiation): Promise<SalaryNegotiation>;
   updateSalaryNegotiation(id: number, updates: Partial<InsertSalaryNegotiation>): Promise<SalaryNegotiation>;
   deleteSalaryNegotiation(id: number): Promise<void>;
-  
+
   getContractReviewsByUserId(userId: string): Promise<ContractReview[]>;
   getContractReviewById(id: number): Promise<ContractReview | undefined>;
   createContractReview(review: InsertContractReview): Promise<ContractReview>;
@@ -205,7 +205,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedUser;
   }
-  
+
   async updateUserSubscription(userId: string, subscriptionData: {
     stripeSubscriptionId: string;
     subscriptionStatus: string;
@@ -225,14 +225,14 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedUser;
   }
-  
+
   async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     return await db
       .select()
       .from(subscriptionPlans)
       .where(eq(subscriptionPlans.isActive, true));
   }
-  
+
   async getSubscriptionPlanById(planId: string): Promise<SubscriptionPlan | undefined> {
     const [plan] = await db
       .select()
@@ -240,7 +240,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(subscriptionPlans.id, planId));
     return plan;
   }
-  
+
   async createSubscriptionTransaction(transaction: InsertSubscriptionTransaction): Promise<SubscriptionTransaction> {
     const [newTransaction] = await db
       .insert(subscriptionTransactions)
@@ -248,7 +248,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return newTransaction;
   }
-  
+
   async getUserTransactions(userId: string): Promise<SubscriptionTransaction[]> {
     return await db
       .select()
@@ -256,7 +256,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(subscriptionTransactions.userId, userId))
       .orderBy(desc(subscriptionTransactions.transactionDate));
   }
-  
+
   async trackUsage(usage: InsertUsageTracking): Promise<UsageTracking> {
     const [newUsage] = await db
       .insert(usageTracking)
@@ -264,7 +264,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return newUsage;
   }
-  
+
   async getUserUsage(userId: string, feature?: string): Promise<UsageTracking[]> {
     if (feature) {
       return await db
@@ -283,7 +283,7 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(usageTracking.usageDate));
     }
   }
-  
+
   async getRateLimit(userId: string, feature: string): Promise<RateLimit | undefined> {
     const now = new Date();
     const [limit] = await db
@@ -297,7 +297,7 @@ export class DatabaseStorage implements IStorage {
       ));
     return limit;
   }
-  
+
   async updateRateLimit(rateLimit: InsertRateLimit & { id?: number }): Promise<RateLimit> {
     if (rateLimit.id) {
       // Update existing
@@ -322,23 +322,23 @@ export class DatabaseStorage implements IStorage {
       return newLimit;
     }
   }
-  
+
   async incrementUsage(userId: string, feature: string): Promise<boolean> {
     // Get current rate limit
     let limit = await this.getRateLimit(userId, feature);
-    
+
     // If no limit exists, check user's subscription tier and create appropriate limit
     if (!limit) {
       const user = await this.getUser(userId);
       if (!user) return false;
-      
+
       const now = new Date();
       const periodEnd = new Date();
       periodEnd.setDate(periodEnd.getDate() + 30); // Default 30-day period
-      
+
       // Set limits based on subscription tier
       const usageLimit = user.subscriptionTier === 'premium' ? 100 : 5; // Premium: 100/month, Free: 5/month
-      
+
       limit = await this.updateRateLimit({
         userId,
         feature,
@@ -348,22 +348,22 @@ export class DatabaseStorage implements IStorage {
         currentUsage: 0
       });
     }
-    
+
     // Check if already over limit
     if (limit.currentUsage >= limit.usageLimit) {
       return false;
     }
-    
+
     // Increment usage
     await this.updateRateLimit({
       ...limit,
       id: limit.id,
       currentUsage: limit.currentUsage + 1
     });
-    
+
     return true;
   }
-  
+
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     try {
@@ -411,7 +411,7 @@ export class DatabaseStorage implements IStorage {
         // Set a default username if not provided and this is a new user
         username: userData.username || `user_${userData.id}`,
       };
-      
+
       const [user] = await db
         .insert(users)
         .values(values as any)
@@ -814,29 +814,29 @@ export class DatabaseStorage implements IStorage {
   // NEW FEATURE: Premium Job Market Data
   async getJobMarketInsights(industry?: string, role?: string, limit: number = 20): Promise<any[]> {
     let query = db.select().from(jobMarketInsights);
-    
+
     if (industry) {
       query = query.where(eq(jobMarketInsights.industry, industry));
     }
-    
+
     if (role) {
       query = query.where(eq(jobMarketInsights.role, role));
     }
-    
+
     return query.orderBy(desc(jobMarketInsights.insightDate)).limit(limit);
   }
 
   async getCompanyInsights(companyName?: string, industry?: string, limit: number = 20): Promise<any[]> {
     let query = db.select().from(companyInsights);
-    
+
     if (companyName) {
       query = query.where(eq(companyInsights.companyName, companyName));
     }
-    
+
     if (industry) {
       query = query.where(eq(companyInsights.industry, industry));
     }
-    
+
     return query.orderBy(desc(companyInsights.insightDate)).limit(limit);
   }
 

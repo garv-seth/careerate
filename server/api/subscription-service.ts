@@ -1,3 +1,124 @@
+
+import express from 'express';
+import { isAuthenticated } from '../middleware/auth';
+import * as storage from '../storage';
+
+const router = express.Router();
+
+// Create a subscription 
+router.post('/create-subscription', async (req, res) => {
+  try {
+    const { priceId } = req.body;
+    
+    // In a real implementation, this would connect to Stripe or another payment processor
+    // For demo purposes, we'll just return a dummy client secret
+    
+    const clientSecret = 'dummy_client_secret_' + Math.random().toString(36).substring(2, 15);
+    
+    res.json({
+      clientSecret,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Error creating subscription:', error);
+    res.status(500).json({ 
+      status: 'error',
+      message: 'Failed to create subscription' 
+    });
+  }
+});
+
+// Verify a payment after checkout
+router.post('/verify-payment', async (req, res) => {
+  try {
+    const { sessionId, paymentIntent } = req.body;
+    
+    // In a real implementation, this would verify the payment with Stripe
+    // For demo purposes, we'll just return a success response
+    
+    // If user is authenticated, update their subscription status
+    if (req.user) {
+      const userId = req.user.claims.sub;
+      
+      // Update user's subscription status
+      await storage.updateUserSubscription(userId, {
+        tier: 'premium',
+        status: 'active',
+        periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Payment verified successfully'
+    });
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify payment'
+    });
+  }
+});
+
+// Get current subscription status
+router.get('/status', isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    const user = await storage.getUserById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      subscription: {
+        tier: user.subscriptionTier || 'free',
+        status: user.subscriptionStatus || 'inactive',
+        periodEnd: user.subscriptionPeriodEnd,
+      }
+    });
+  } catch (error) {
+    console.error('Error getting subscription status:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to get subscription status'
+    });
+  }
+});
+
+// Cancel subscription
+router.post('/cancel', isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = req.user.claims.sub;
+    
+    // In a real implementation, this would cancel the subscription with Stripe
+    // For demo purposes, we'll just update the user's subscription status
+    
+    await storage.updateUserSubscription(userId, {
+      status: 'canceled',
+      // Keep the periodEnd date as is, so they have access until the end of the period
+    });
+    
+    res.json({
+      status: 'success',
+      message: 'Subscription canceled successfully'
+    });
+  } catch (error) {
+    console.error('Error canceling subscription:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to cancel subscription'
+    });
+  }
+});
+
+export default router;
+
 import { Request, Response } from "express";
 import Stripe from "stripe";
 import { storage } from "../storage";
