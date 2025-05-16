@@ -1,6 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 export interface SubscriptionFeatures {
   vulnerabilityAssessment: boolean;
@@ -13,111 +12,62 @@ export interface SubscriptionFeatures {
 
 export interface SubscriptionDetails {
   tier: 'free' | 'premium';
-  status: 'active' | 'canceled' | 'past_due' | 'incomplete';
+  status: string;
   currentPeriodEnd?: Date;
   stripeStatus?: string;
   features: SubscriptionFeatures;
 }
 
-export const useSubscription = () => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+const defaultSubscription: SubscriptionDetails = {
+  tier: 'free',
+  status: 'active',
+  features: {
+    vulnerabilityAssessment: true,
+    basicInsights: true,
+    careerMigration: false,
+    careerSimulation: false,
+    advancedInsights: false,
+    aiCreditsPerMonth: 5
+  }
+};
 
-  // Get current subscription details
-  const { data: subscription, isLoading, error } = useQuery<SubscriptionDetails>({
+export function useSubscription() {
+  const { data: subscription, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/subscription'],
-    refetchOnWindowFocus: false,
+    enabled: true,
+    // Increase staletime to reduce API calls, but allow refetching when needed
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
   });
 
-  // Create or manage subscription
-  const { mutate: createSubscription, isPending: isCreatingSubscription } = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/create-subscription');
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // If no client secret is returned, refresh the data (internal subscription activation)
-      if (!data.clientSecret) {
-        // Refresh subscription data
-        queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
-        toast({
-          title: 'Subscription Started',
-          description: 'Your premium subscription is now active.',
-        });
-      }
-      
-      return data;
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Subscription Error',
-        description: error.message || 'Failed to create subscription',
-        variant: 'destructive',
-      });
-    },
-  });
+  const isPremium = subscription?.tier === 'premium' && 
+    (subscription?.status === 'active' || subscription?.status === 'trialing');
 
-  // Cancel subscription
-  const { mutate: cancelSubscription, isPending: isCanceling } = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/cancel-subscription');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
-      toast({
-        title: 'Subscription Canceled',
-        description: 'Your premium subscription will be canceled at the end of your billing period.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Cancellation Error',
-        description: error.message || 'Failed to cancel subscription',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Make a specific user premium (admin function)
-  const { mutate: makeUserPremium, isPending: isMakingPremium } = useMutation({
-    mutationFn: async (userId: string) => {
-      const response = await apiRequest('POST', '/api/admin/make-premium', { userId });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: 'User Made Premium',
-        description: data.message || 'User has been given premium access.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Admin Action Failed',
-        description: error.message || 'Failed to make user premium',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Helper function to check if user can access a feature based on subscription
-  const canAccessFeature = (featureName: keyof SubscriptionFeatures): boolean => {
-    if (!subscription) return false;
-    return subscription.features[featureName] === true;
+  const hasFeature = (featureName: keyof SubscriptionFeatures) => {
+    return subscription?.features?.[featureName] ?? defaultSubscription.features[featureName];
   };
 
-  // Return all subscription-related functions and data
+  // Function to check if feature is premium-only
+  const isPremiumFeature = (featureName: keyof SubscriptionFeatures) => {
+    return !defaultSubscription.features[featureName] && hasFeature(featureName);
+  };
+
+  // For components that need to know how many AI credits remain
+  const aiCreditsRemaining = subscription?.features?.aiCreditsPerMonth || 
+    defaultSubscription.features.aiCreditsPerMonth;
+
+  const refreshSubscription = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
+  };
+
   return {
-    subscription,
+    subscription: subscription || defaultSubscription,
     isLoading,
     error,
-    createSubscription,
-    cancelSubscription,
-    makeUserPremium,
-    isCreatingSubscription,
-    isCanceling,
-    isMakingPremium,
-    canAccessFeature,
-    isPremium: subscription?.tier === 'premium' && subscription?.status === 'active',
+    isPremium,
+    hasFeature,
+    isPremiumFeature,
+    aiCreditsRemaining,
+    refreshSubscription
   };
-};
+}
