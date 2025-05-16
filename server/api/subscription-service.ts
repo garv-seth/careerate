@@ -62,6 +62,8 @@ export const getOrCreateSubscription = async (req: any, res: Response) => {
       }],
       payment_behavior: 'default_incomplete',
       expand: ['latest_invoice.payment_intent'],
+      success_url: `${process.env.APP_URL || 'https://careerate.replit.app'}/checkout-success`,
+      cancel_url: `${process.env.APP_URL || 'https://careerate.replit.app'}/subscription?canceled=true`,
     });
     
     // Update user with subscription info

@@ -36,18 +36,17 @@ export const useSubscription = () => {
       return response.json();
     },
     onSuccess: (data) => {
-      // Redirect to Stripe Checkout if there's a client secret
-      if (data.clientSecret) {
-        // Will handle this in the subscription page component
-        return data;
+      // If no client secret is returned, refresh the data (internal subscription activation)
+      if (!data.clientSecret) {
+        // Refresh subscription data
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
+        toast({
+          title: 'Subscription Started',
+          description: 'Your premium subscription is now active.',
+        });
       }
-
-      // Refresh subscription data
-      queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
-      toast({
-        title: 'Subscription Started',
-        description: 'Your premium subscription is now active.',
-      });
+      
+      return data;
     },
     onError: (error: any) => {
       toast({

@@ -25,52 +25,55 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      
+
       {/* Public Pages */}
       <Route path="/about" component={AboutPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/signup" component={SignupPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
-      
+
       {/* Protected Routes */}
       <Route path="/dashboard">
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
       </Route>
-      
+
       <Route path="/onboarding">
         <ProtectedRoute>
           <OnboardingWizard />
         </ProtectedRoute>
       </Route>
-      
+
       <Route path="/agents">
         <ProtectedRoute>
           <AgentTestPage />
         </ProtectedRoute>
       </Route>
-      
+
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
         </ProtectedRoute>
       </Route>
-      
+
       <Route path="/profile">
         <ProtectedRoute>
           <Profile />
         </ProtectedRoute>
       </Route>
-      
+
       <Route path="/subscription">
         <ProtectedRoute>
           <Subscription />
+          <Route path="/checkout-success" >
+             <CheckoutSuccessPage />
+          </Route>
         </ProtectedRoute>
       </Route>
-      
-      
+
+
       <Route component={NotFound} />
     </Switch>
   );
