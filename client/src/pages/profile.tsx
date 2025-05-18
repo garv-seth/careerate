@@ -82,6 +82,18 @@ const ProfilePage = () => {
     },
   });
 
+  // Truncate filename if too long
+  const truncateFilename = (filename: string, maxLength: number = 20) => {
+    if (!filename) return '';
+    if (filename.length <= maxLength) return filename;
+    
+    const extension = filename.split('.').pop() || '';
+    const nameWithoutExt = filename.substring(0, filename.length - extension.length - 1);
+    
+    const truncatedName = nameWithoutExt.substring(0, maxLength - extension.length - 3) + '...';
+    return `${truncatedName}.${extension}`;
+  };
+
   const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -125,18 +137,18 @@ const ProfilePage = () => {
         <div className="max-w-4xl mx-auto space-y-8">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-start gap-6">
-                <Avatar className="w-24 h-24">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+                <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
                   <AvatarImage src={user?.profileImageUrl || undefined} />
                   <AvatarFallback>{user?.name?.charAt(0) || user?.username?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
-                <div className="flex-grow">
-                  <div className="flex items-center justify-between">
+                <div className="flex-grow w-full text-center sm:text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <h1 className="text-2xl font-bold">{user?.name || user?.username}</h1>
                       <p className="text-muted-foreground">{user?.email}</p>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="self-start">
                       <Pencil className="w-4 h-4 mr-2" />
                       Edit Profile
                     </Button>
@@ -147,11 +159,11 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2">
             {/* Subscription Status Card */}
             <Card className={user?.subscriptionTier === 'premium' ? 'border-2 border-primary' : ''}>
               <CardHeader className={user?.subscriptionTier === 'premium' ? 'bg-primary/5' : ''}>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <CardTitle>Subscription</CardTitle>
                   {user?.subscriptionTier === 'premium' && (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-white">
@@ -184,7 +196,7 @@ const ProfilePage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
                     <div>
                       <h3 className="text-sm font-medium">Status</h3>
                       <div className="flex items-center mt-1">
@@ -310,40 +322,39 @@ const ProfilePage = () => {
                       onChange={handleResumeChange}
                       className="hidden"
                     />
-                    <div className="flex flex-col sm:flex-row items-center gap-2">
-                      <div className="w-full sm:flex-1 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 flex items-center justify-center">
-                        <FileText className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm truncate max-w-[180px]">
-                          {uploadedResume ? uploadedResume.name : 'No file selected'}
+                    <div className="flex flex-col space-y-3">
+                      <div className="w-full border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 flex items-center">
+                        <FileText className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm truncate flex-1 mr-2">
+                          {uploadedResume ? truncateFilename(uploadedResume.name, 25) : 'No file selected'}
                         </span>
-                      </div>
-                      <div className="flex w-full sm:w-auto gap-2 mt-2 sm:mt-0">
                         <Button 
                           onClick={handleChooseFile}
                           variant="outline" 
-                          className="flex-1"
+                          size="sm"
+                          className="flex-shrink-0 ml-auto"
                         >
                           <FileText className="w-4 h-4 mr-2" />
-                          Select File
-                        </Button>
-                        <Button 
-                          onClick={handleResumeUpload}
-                          disabled={!uploadedResume || uploading}
-                          className="flex-1"
-                        >
-                          {uploading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Analyzing...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-4 h-4 mr-2" />
-                              Upload
-                            </>
-                          )}
+                          Browse
                         </Button>
                       </div>
+                      <Button 
+                        onClick={handleResumeUpload}
+                        disabled={!uploadedResume || uploading}
+                        className="w-full"
+                      >
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Analyzing Resume...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload & Analyze
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </div>
 
