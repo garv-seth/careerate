@@ -6,11 +6,11 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <TubelightNavbar />
-      
+
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-8">About Careerate</h1>
-          
+
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Our Mission</CardTitle>
@@ -28,7 +28,7 @@ const AboutPage = () => {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Our Approach</CardTitle>
@@ -45,6 +45,7 @@ const AboutPage = () => {
               </p>
             </CardContent>
           </Card>
+
         </div>
       </div>
     </div>

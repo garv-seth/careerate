@@ -7,6 +7,7 @@ import { queryClient } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
 
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
+import PageWrapper from '@/components/ui/page-wrapper';
 import Footer2 from '@/components/ui/footer2';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,21 +111,21 @@ const Dashboard = () => {
   // Handle resume upload
   const handleResumeUpload = async () => {
     if (!resumeFile) return;
-    
+
     setUploading(true);
-    
+
     const formData = new FormData();
     formData.append('resume', resumeFile);
-    
+
     uploadResumeMutation.mutate(formData);
-    
+
     setUploading(false);
   };
 
   // Handle vulnerability assessment start
   const handleStartVulnerabilityAssessment = (jobTitle: string, industry: string) => {
     startVulnerabilityAssessment(jobTitle, industry);
-    
+
     // In a real app, this would trigger a backend call to start the assessment
     toast({
       title: 'Assessment started',
@@ -135,7 +136,7 @@ const Dashboard = () => {
   // Handle career migration path generation
   const handleStartCareerMigration = (currentRole: string) => {
     startCareerMigration(currentRole);
-    
+
     // In a real app, this would trigger a backend call to generate migration paths
     toast({
       title: 'Generating career paths',
@@ -146,7 +147,7 @@ const Dashboard = () => {
   // Handle career simulation
   const handleStartCareerSimulation = (params: any) => {
     startCareerSimulation(params);
-    
+
     // In a real app, this would trigger a backend call to run the simulation
     toast({
       title: 'Simulation started',
@@ -169,112 +170,112 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <TubelightNavbar />
-      
-      <main className="flex-grow container mx-auto px-4 pb-20 mt-24">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="w-full lg:w-1/4">
-            <ProfileSidebar 
-              user={user} 
-              profile={profile} 
-              resumeFile={resumeFile} 
-              onResumeChange={handleResumeChange}
-              onResumeUpload={handleResumeUpload}
-              uploading={uploading}
-              isPremium={isPremium}
-            />
+      <PageWrapper>
+        <main className="flex-grow container mx-auto px-4 pb-20">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Sidebar */}
+            <div className="w-full lg:w-1/4">
+              <ProfileSidebar 
+                user={user} 
+                profile={profile} 
+                resumeFile={resumeFile} 
+                onResumeChange={handleResumeChange}
+                onResumeUpload={handleResumeUpload}
+                uploading={uploading}
+                isPremium={isPremium}
+              />
+            </div>
+
+            {/* Main Content */}
+            <div className="w-full lg:w-3/4">
+              {!profile?.resumeText ? (
+                <GetStartedCard />
+              ) : profileLoading ? (
+                <LoadingCard />
+              ) : (
+                <Tabs defaultValue="vulnerability" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="vulnerability" className="flex items-center gap-1">
+                      <Shield className="h-4 w-4" />
+                      <span className="hidden sm:inline">AI Vulnerability</span>
+                      <span className="inline sm:hidden">Vulnerability</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="migration" className="flex items-center gap-1">
+                      <ArrowRight className="h-4 w-4" />
+                      <span className="hidden sm:inline">Career Migration</span>
+                      <span className="inline sm:hidden">Migration</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="simulation" className="flex items-center gap-1 relative">
+                      <PlayCircle className="h-4 w-4" />
+                      <span className="hidden sm:inline">Simulation</span>
+                      <span className="inline sm:hidden">Sim</span>
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+                    </TabsTrigger>
+                    <TabsTrigger value="negotiation" className="flex items-center gap-1">
+                      <DollarSign className="h-4 w-4" />
+                      <span className="hidden sm:inline">Salary Negotiation</span>
+                      <span className="inline sm:hidden">Salary</span>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="vulnerability" className="mt-6">
+                    <VulnerabilityAssessment 
+                      assessmentData={vulnerabilityData} 
+                      onStartAssessment={handleStartVulnerabilityAssessment}
+                      isAssessing={vulnerabilityLoading || analysisProgress.stage === 'vulnerability-analysis'}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="migration" className="mt-6">
+                    <CareerMigration 
+                      migrationData={migrationPaths} 
+                      onStartMigration={handleStartCareerMigration}
+                      isLoading={migrationLoading || analysisProgress.stage === 'migration-paths'}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="simulation" className="mt-6">
+                    <CareerSimulation
+                      simulationData={careerSimulation}
+                      onStartSimulation={handleStartCareerSimulation}
+                      isRunning={simulationLoading || analysisProgress.stage === 'simulation'}
+                      isPremium={isPremium}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="negotiation" className="mt-6">
+                    <div className="space-y-6">
+                      <h2 className="text-2xl font-bold">AI-powered Salary Negotiation</h2>
+                      <Card className="border-primary/20 bg-primary/5">
+                        <CardHeader>
+                          <CardTitle>Coming Soon</CardTitle>
+                          <CardDescription>
+                            Our AI salary negotiation assistant is currently in development
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex flex-col items-center text-center space-y-4 py-6">
+                            <DollarSign className="h-16 w-16 text-primary opacity-50" />
+                            <h3 className="text-xl font-bold">Maximize Your Compensation</h3>
+                            <p className="text-gray-500 max-w-md">
+                              Our AI negotiation coach will help you secure the best possible salary and benefits package for your next role. This feature will be available soon!
+                            </p>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button className="w-full" disabled>
+                            Join Waitlist
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              )}
+            </div>
           </div>
-
-          {/* Main Content */}
-          <div className="w-full lg:w-3/4">
-            {!profile?.resumeText ? (
-              <GetStartedCard />
-            ) : profileLoading ? (
-              <LoadingCard />
-            ) : (
-              <Tabs defaultValue="vulnerability" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="vulnerability" className="flex items-center gap-1">
-                    <Shield className="h-4 w-4" />
-                    <span className="hidden sm:inline">AI Vulnerability</span>
-                    <span className="inline sm:hidden">Vulnerability</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="migration" className="flex items-center gap-1">
-                    <ArrowRight className="h-4 w-4" />
-                    <span className="hidden sm:inline">Career Migration</span>
-                    <span className="inline sm:hidden">Migration</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="simulation" className="flex items-center gap-1 relative">
-                    <PlayCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Simulation</span>
-                    <span className="inline sm:hidden">Sim</span>
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
-                  </TabsTrigger>
-                  <TabsTrigger value="negotiation" className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span className="hidden sm:inline">Salary Negotiation</span>
-                    <span className="inline sm:hidden">Salary</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="vulnerability" className="mt-6">
-                  <VulnerabilityAssessment 
-                    assessmentData={vulnerabilityData} 
-                    onStartAssessment={handleStartVulnerabilityAssessment}
-                    isAssessing={vulnerabilityLoading || analysisProgress.stage === 'vulnerability-analysis'}
-                  />
-                </TabsContent>
-
-                <TabsContent value="migration" className="mt-6">
-                  <CareerMigration 
-                    migrationData={migrationPaths} 
-                    onStartMigration={handleStartCareerMigration}
-                    isLoading={migrationLoading || analysisProgress.stage === 'migration-paths'}
-                  />
-                </TabsContent>
-
-                <TabsContent value="simulation" className="mt-6">
-                  <CareerSimulation
-                    simulationData={careerSimulation}
-                    onStartSimulation={handleStartCareerSimulation}
-                    isRunning={simulationLoading || analysisProgress.stage === 'simulation'}
-                    isPremium={isPremium}
-                  />
-                </TabsContent>
-
-                <TabsContent value="negotiation" className="mt-6">
-                  <div className="space-y-6">
-                    <h2 className="text-2xl font-bold">AI-powered Salary Negotiation</h2>
-                    <Card className="border-primary/20 bg-primary/5">
-                      <CardHeader>
-                        <CardTitle>Coming Soon</CardTitle>
-                        <CardDescription>
-                          Our AI salary negotiation assistant is currently in development
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex flex-col items-center text-center space-y-4 py-6">
-                          <DollarSign className="h-16 w-16 text-primary opacity-50" />
-                          <h3 className="text-xl font-bold">Maximize Your Compensation</h3>
-                          <p className="text-gray-500 max-w-md">
-                            Our AI negotiation coach will help you secure the best possible salary and benefits package for your next role. This feature will be available soon!
-                          </p>
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        <Button className="w-full" disabled>
-                          Join Waitlist
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            )}
-          </div>
-        </div>
-      </main>
-      
+        </main>
+      </PageWrapper>
       <Footer2 />
     </div>
   );
@@ -318,9 +319,9 @@ const ProfileSidebar = ({
               )}
             </div>
           </div>
-          
+
           <Separator />
-          
+
           {profile && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -330,7 +331,7 @@ const ProfileSidebar = ({
               <p className="font-medium">{profile.careerStage || 'Not specified'}</p>
             </div>
           )}
-          
+
           {profile?.industryFocus && profile.industryFocus.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -344,7 +345,7 @@ const ProfileSidebar = ({
               </div>
             </div>
           )}
-          
+
           {profile?.careerGoals && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -356,7 +357,7 @@ const ProfileSidebar = ({
           )}
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
@@ -401,7 +402,7 @@ const ProfileSidebar = ({
                   </p>
                 )}
               </div>
-              
+
               <Button 
                 className="w-full"
                 onClick={onResumeUpload}
@@ -420,7 +421,7 @@ const ProfileSidebar = ({
           )}
         </CardContent>
       </Card>
-      
+
       {isPremium ? (
         <Card className="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-950/40 dark:to-secondary-950/40 border-primary/20">
           <CardHeader className="pb-3">
@@ -463,7 +464,7 @@ const ProfileSidebar = ({
                 <span className="text-sm">Salary Negotiation</span>
               </div>
             </div>
-            
+
             <Button className="w-full" variant="secondary">
               Upgrade Now
             </Button>
@@ -494,7 +495,7 @@ const GetStartedCard = () => {
               <p className="text-gray-500">Assess your vulnerability to AI displacement</p>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <div className="flex items-start gap-2">
               <div className="mt-0.5 rounded-full bg-primary/10 p-1">
@@ -516,7 +517,7 @@ const GetStartedCard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="text-center">
           <p className="text-sm text-gray-500 mb-4">
             To get started, upload your resume using the form in the sidebar
