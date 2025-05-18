@@ -1,8 +1,8 @@
-
 import React, { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
+import PageWrapper from '@/components/ui/page-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -33,25 +33,25 @@ const ProfilePage = () => {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('resume', file);
-      
+
       console.log(`Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
-      
+
       // Log form data for debugging
       for (let [key, value] of formData.entries()) {
         console.log(`Form data: ${key} = ${value instanceof File ? value.name : value}`);
       }
-      
+
       const response = await fetch('/api/onboarding/upload-resume', {
         method: 'POST',
         body: formData,
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Upload error response:', errorData);
         throw new Error(errorData.error || 'Failed to upload resume');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -63,7 +63,7 @@ const ProfilePage = () => {
         description: 'Your resume has been analyzed and your profile updated.',
         className: 'bg-green-50 border-green-200',
       });
-      
+
       // Clear the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -120,7 +120,7 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TubelightNavbar />
-      
+      <PageWrapper>
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-8">
           <Card>
@@ -183,7 +183,7 @@ const ProfilePage = () => {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                     <div>
                       <h3 className="text-sm font-medium">Status</h3>
@@ -200,7 +200,7 @@ const ProfilePage = () => {
                         </p>
                       </div>
                     </div>
-                    
+
                     {user?.subscriptionPeriodEnd && (
                       <div>
                         <h3 className="text-sm font-medium">
@@ -217,14 +217,14 @@ const ProfilePage = () => {
                         </p>
                       </div>
                     )}
-                    
+
                     <div>
                       <h3 className="text-sm font-medium">AI Credits</h3>
                       <p className="text-sm mt-1">
                         {user?.subscriptionTier === 'premium' ? '100 credits/month' : '5 credits/month'}
                       </p>
                     </div>
-                    
+
                     <div>
                       <h3 className="text-sm font-medium">Premium Features</h3>
                       <p className="text-sm mt-1">
@@ -232,7 +232,7 @@ const ProfilePage = () => {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="pt-4 flex flex-col space-y-2">
                     {user?.subscriptionTier === 'premium' ? (
                       <>
@@ -267,7 +267,7 @@ const ProfilePage = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Career Summary</CardTitle>
@@ -346,7 +346,7 @@ const ProfilePage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {uploadSuccess && (
                     <Alert className="bg-green-50 border-green-200">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -355,7 +355,7 @@ const ProfilePage = () => {
                       </AlertDescription>
                     </Alert>
                   )}
-                  
+
                   {uploadError && (
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
@@ -364,7 +364,7 @@ const ProfilePage = () => {
                       </AlertDescription>
                     </Alert>
                   )}
-                  
+
                   {profile?.resumeText && (
                     <Card className="bg-muted/50">
                       <CardContent className="pt-4">
@@ -381,7 +381,8 @@ const ProfilePage = () => {
           </div>
         </div>
       </main>
-      
+      </PageWrapper>
+
       <Footer2 />
     </div>
   );

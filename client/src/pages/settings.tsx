@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
+import PageWrapper from '@/components/ui/page-wrapper';
 import Footer2 from '@/components/ui/footer2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -178,135 +179,137 @@ const SettingsPage = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <TubelightNavbar />
 
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Settings</h1>
-            <Button onClick={handleSaveSettings} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
+      <PageWrapper>
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Settings</h1>
+              <Button onClick={handleSaveSettings} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Model Preferences</CardTitle>
+                <CardDescription>Configure the AI models used by the different agents</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <ModelSelector
+                    modelType="Cara (Orchestration)"
+                    availableModels={modelOptions.orchestration}
+                    selectedModelId={settings.models.orchestration}
+                    onModelChange={(id) => handleModelChange('orchestration', id)}
+                  />
+
+                  <ModelSelector
+                    modelType="Maya (Resume Analysis)"
+                    availableModels={modelOptions.resume}
+                    selectedModelId={settings.models.resume}
+                    onModelChange={(id) => handleModelChange('resume', id)}
+                  />
+
+                  <ModelSelector
+                    modelType="Ellie (Industry Research)"
+                    availableModels={modelOptions.research}
+                    selectedModelId={settings.models.research}
+                    onModelChange={(id) => handleModelChange('research', id)}
+                  />
+
+                  <ModelSelector
+                    modelType="Sophia (Learning)"
+                    availableModels={modelOptions.learning}
+                    selectedModelId={settings.models.learning}
+                    onModelChange={(id) => handleModelChange('learning', id)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Analysis Settings</CardTitle>
+                <CardDescription>Configure how agents analyze your career data</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="deep-analysis">Deep Analysis Mode</Label>
+                    <p className="text-sm text-muted-foreground">Perform more thorough but slower analysis</p>
+                  </div>
+                  <Switch
+                    id="deep-analysis"
+                    checked={settings.analysis.deepAnalysis}
+                    onCheckedChange={(checked) => handleSwitchChange('analysis', 'deepAnalysis', checked)}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="market-data">Real-time Market Data</Label>
+                    <p className="text-sm text-muted-foreground">Include latest market trends in analysis</p>
+                  </div>
+                  <Switch
+                    id="market-data"
+                    checked={settings.analysis.realTimeMarketData}
+                    onCheckedChange={(checked) => handleSwitchChange('analysis', 'realTimeMarketData', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Theme Settings</CardTitle>
+                <CardDescription>Customize the appearance of the application</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dark-mode">Dark Mode</Label>
+                    <p className="text-sm text-muted-foreground">Use dark theme throughout the application</p>
+                  </div>
+                  <Switch
+                    id="dark-mode"
+                    checked={settings.theme.darkMode}
+                    onCheckedChange={(checked) => {
+                      handleSwitchChange('theme', 'darkMode', checked);
+                      setTheme(checked ? 'dark' : 'light');
+                    }}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="high-contrast">High Contrast</Label>
+                    <p className="text-sm text-muted-foreground">Increase contrast for better readability</p>
+                  </div>
+                  <Switch
+                    id="high-contrast"
+                    checked={settings.theme.highContrast}
+                    onCheckedChange={(checked) => handleSwitchChange('theme', 'highContrast', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Model Preferences</CardTitle>
-              <CardDescription>Configure the AI models used by the different agents</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <ModelSelector
-                  modelType="Cara (Orchestration)"
-                  availableModels={modelOptions.orchestration}
-                  selectedModelId={settings.models.orchestration}
-                  onModelChange={(id) => handleModelChange('orchestration', id)}
-                />
-
-                <ModelSelector
-                  modelType="Maya (Resume Analysis)"
-                  availableModels={modelOptions.resume}
-                  selectedModelId={settings.models.resume}
-                  onModelChange={(id) => handleModelChange('resume', id)}
-                />
-
-                <ModelSelector
-                  modelType="Ellie (Industry Research)"
-                  availableModels={modelOptions.research}
-                  selectedModelId={settings.models.research}
-                  onModelChange={(id) => handleModelChange('research', id)}
-                />
-
-                <ModelSelector
-                  modelType="Sophia (Learning)"
-                  availableModels={modelOptions.learning}
-                  selectedModelId={settings.models.learning}
-                  onModelChange={(id) => handleModelChange('learning', id)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Analysis Settings</CardTitle>
-              <CardDescription>Configure how agents analyze your career data</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="deep-analysis">Deep Analysis Mode</Label>
-                  <p className="text-sm text-muted-foreground">Perform more thorough but slower analysis</p>
-                </div>
-                <Switch
-                  id="deep-analysis"
-                  checked={settings.analysis.deepAnalysis}
-                  onCheckedChange={(checked) => handleSwitchChange('analysis', 'deepAnalysis', checked)}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="market-data">Real-time Market Data</Label>
-                  <p className="text-sm text-muted-foreground">Include latest market trends in analysis</p>
-                </div>
-                <Switch
-                  id="market-data"
-                  checked={settings.analysis.realTimeMarketData}
-                  onCheckedChange={(checked) => handleSwitchChange('analysis', 'realTimeMarketData', checked)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Theme Settings</CardTitle>
-              <CardDescription>Customize the appearance of the application</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="dark-mode">Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">Use dark theme throughout the application</p>
-                </div>
-                <Switch
-                  id="dark-mode"
-                  checked={settings.theme.darkMode}
-                  onCheckedChange={(checked) => {
-                    handleSwitchChange('theme', 'darkMode', checked);
-                    setTheme(checked ? 'dark' : 'light');
-                  }}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="high-contrast">High Contrast</Label>
-                  <p className="text-sm text-muted-foreground">Increase contrast for better readability</p>
-                </div>
-                <Switch
-                  id="high-contrast"
-                  checked={settings.theme.highContrast}
-                  onCheckedChange={(checked) => handleSwitchChange('theme', 'highContrast', checked)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+        </main>
+      </PageWrapper>
 
       <Footer2 />
     </div>

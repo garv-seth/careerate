@@ -2,6 +2,7 @@ import React from 'react';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import Footer2 from '@/components/ui/footer2';
 import { Separator } from '@/components/ui/separator';
+import PageWrapper from '@/components/ui/page-wrapper';
 
 const TermsPage = () => {
   return (
