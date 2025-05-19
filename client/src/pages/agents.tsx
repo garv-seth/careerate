@@ -115,14 +115,14 @@ function AgentsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background dark:bg-gray-950">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-900">
       <TubelightNavbar />
       <PageWrapper>
-        <main className="container mx-auto px-4 py-8 flex-grow">
+        <main className="container mx-auto px-4 py-8 flex-grow text-black dark:text-white">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col gap-2 mb-6">
-              <h1 className="text-3xl font-bold">AI Agent Team</h1>
-              <p className="text-muted-foreground dark:text-gray-400">Our specialized AI agents work together to accelerate your career growth</p>
+              <h1 className="text-3xl font-bold text-black dark:text-white">AI Agent Team</h1>
+              <p className="text-gray-600 dark:text-gray-300">Our specialized AI agents work together to accelerate your career growth</p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">

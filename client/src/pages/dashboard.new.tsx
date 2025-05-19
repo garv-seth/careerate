@@ -122,10 +122,10 @@ const Dashboard = () => {
   }, [serviceError]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background dark:bg-gray-950">
+    <div className="flex min-h-screen flex-col bg-white dark:bg-slate-900">
       <TubelightNavbar />
       <PageWrapper>
-        <main className="flex-grow container mx-auto px-4 pb-20 dark:text-gray-100">
+        <main className="flex-grow container mx-auto px-4 pb-20 text-black dark:text-white">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Sidebar */}
             <div className="w-full lg:w-1/4">
