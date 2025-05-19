@@ -47,9 +47,18 @@ const ProfilePage = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Upload error response:', errorData);
-        throw new Error(errorData.error || 'Failed to upload resume');
+        let errorMessage = 'Failed to upload resume';
+        try {
+          // Try to parse error as JSON
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // If it's not JSON (e.g., HTML error page), use status text
+          console.error('Error response was not JSON:', e);
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        console.error('Upload error response:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       return response.json();
