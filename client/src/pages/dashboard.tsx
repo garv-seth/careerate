@@ -62,9 +62,6 @@ interface CareerAdvice {
 
 const Dashboard = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-
   // Socket.IO connection for real-time agent updates
   const { 
     connected: socketConnected, 
@@ -84,38 +81,6 @@ const Dashboard = () => {
     enabled: isAuthenticated && !!profile?.resumeText,
   });
 
-  // Handle resume upload
-  const uploadResumeMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await apiRequest("POST", "/api/resume/upload", formData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Resume uploaded successfully",
-        description: "Your resume is being analyzed by our AI.",
-      });
-
-      // Start analysis via socket connection if connected
-      if (socketConnected && data.profile && data.profile.resumeText) {
-        // Start real-time agent analysis
-        startAnalysis(data.profile.resumeText);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/advise"] });
-      }, 2000);
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to upload resume",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   // Show socket connection error
   useEffect(() => {
     if (socketError) {
@@ -126,45 +91,6 @@ const Dashboard = () => {
       });
     }
   }, [socketError]);
-
-  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setResumeFile(e.target.files[0]);
-    }
-  };
-
-  const handleResumeUpload = async () => {
-    if (!resumeFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select a resume file to upload.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log("Uploading file:", resumeFile.name, "Size:", resumeFile.size, "Type:", resumeFile.type);
-
-    const formData = new FormData();
-    formData.append("resume", resumeFile);
-
-    // Log form data contents for debugging
-    for (let [key, value] of formData.entries()) {
-      console.log(`Form Data: ${key} = ${value instanceof File ? value.name : value}`);
-    }
-
-    setUploading(true);
-    try {
-      console.log("Starting upload mutation");
-      const result = await uploadResumeMutation.mutateAsync(formData);
-      console.log("Upload result:", result);
-    } catch (error) {
-      console.error("Upload error:", error);
-    } finally {
-      setUploading(false);
-      setResumeFile(null);
-    }
-  };
 
   const generateRoadmapMutation = useMutation({
     mutationFn: async () => {
@@ -194,7 +120,7 @@ const Dashboard = () => {
   // No direct redirect needed here, the ProtectedRoute component will handle it
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
+    <div className="min-h-screen flex flex-col bg-background">
       <TubelightNavbar />
 
       <main className="flex-grow container mx-auto px-4 pb-20 mt-24">
@@ -204,10 +130,6 @@ const Dashboard = () => {
             <ProfileSidebar 
               user={user} 
               profile={profile} 
-              resumeFile={resumeFile} 
-              onResumeChange={handleResumeChange}
-              onResumeUpload={handleResumeUpload}
-              uploading={uploading}
               generateRoadmap={generateRoadmapMutation.mutate}
               generatingRoadmap={generateRoadmapMutation.isPending}
             />
@@ -269,10 +191,6 @@ const LoadingState = () => (
 const ProfileSidebar = ({ 
   user, 
   profile, 
-  resumeFile, 
-  onResumeChange, 
-  onResumeUpload,
-  uploading,
   generateRoadmap,
   generatingRoadmap
 }) => (
@@ -284,12 +202,12 @@ const ProfileSidebar = ({
       </CardHeader>
       <CardContent>
         <div className="flex items-center space-x-4 mb-4">
-          <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
             {user?.username?.[0]?.toUpperCase() || "U"}
           </div>
           <div>
             <p className="font-medium">{user?.username || "User"}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email || ""}</p>
+            <p className="text-sm text-muted-foreground">{user?.email || ""}</p>
           </div>
         </div>
 
@@ -309,44 +227,19 @@ const ProfileSidebar = ({
             </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
-
-    <Card>
-      <CardHeader>
-        <CardTitle>Upload Resume</CardTitle>
-        <CardDescription>
-          Upload your resume to get AI-powered career insights
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 mb-4">
-          <CloudUpload className="w-10 h-10 text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            {resumeFile ? resumeFile.name : "PDF, DOCX, or TXT (max 5MB)"}
-          </p>
-          <input
-            type="file"
-            id="resume"
-            className="hidden"
-            accept=".pdf,.docx,.doc,.txt"
-            onChange={onResumeChange}
-          />
-          <label htmlFor="resume">
-            <Button variant="outline" size="sm" className="cursor-pointer" asChild>
-              <span>Select File</span>
-            </Button>
-          </label>
+        
+        <div className="mt-4">
+          {!profile?.resumeText && (
+            <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+              Please upload your resume from the Profile page to enable analysis
+            </div>
+          )}
+          {profile?.resumeText && (
+            <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
+              Resume uploaded successfully
+            </div>
+          )}
         </div>
-
-        <Button 
-          className="w-full" 
-          disabled={!resumeFile || uploading}
-          onClick={onResumeUpload}
-        >
-          {uploading ? "Uploading..." : "Scan Resume"}
-          <Upload className="ml-2 h-4 w-4" />
-        </Button>
       </CardContent>
     </Card>
 

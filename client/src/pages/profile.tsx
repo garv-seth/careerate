@@ -47,12 +47,24 @@ const ProfilePage = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Upload error response:', errorData);
-        throw new Error(errorData.error || 'Failed to upload resume');
+        let errorMessage = 'Failed to upload resume';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If JSON parsing fails, use text from response
+          errorMessage = await response.text() || errorMessage;
+        }
+        console.error('Upload error response:', errorMessage);
+        throw new Error(errorMessage);
       }
 
-      return response.json();
+      try {
+        return await response.json();
+      } catch (e) {
+        // If response isn't valid JSON but upload was successful
+        return { success: true };
+      }
     },
     onSuccess: () => {
       setUploading(false);
@@ -138,7 +150,7 @@ const ProfilePage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-                <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
+                <Avatar className="w-14 h-14 sm:w-16 sm:h-16">
                   <AvatarImage src={user?.profileImageUrl || undefined} />
                   <AvatarFallback>{user?.name?.charAt(0) || user?.username?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>

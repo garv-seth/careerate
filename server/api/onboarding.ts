@@ -48,19 +48,72 @@ router.post('/upload-resume', isAuthenticated, async (req: Request, res: Respons
         
         const resumeText = req.resumeText;
         
-        // Connect to AI agent system for resume analysis
-        const { agentEmitter } = await import('../../src/agents/graph');
-        const { runAgentWorkflow } = await import('../../src/agents/graph');
-        
-        // Notify client of analysis start
-        agentEmitter.emit('status_update', { 
-          agent: 'maya', 
-          status: 'active',
-          userId 
-        });
-        
-        // Extract skills from the resume using Maya agent
-        const analysis = await runAgentWorkflow(resumeText, userId);
+        try {
+          // Connect to AI agent system for resume analysis
+          const { agentEmitter, executeAgentWorkflow } = await import('../../src/agents/graph');
+          
+          // Get user settings for agent models
+          const settingsResult = await pool.query(
+            'SELECT settings FROM users WHERE id = $1',
+            [userId]
+          );
+
+          let agentModels = {
+            orchestration: 'gpt-4o',
+            resume: 'gpt-4o',
+            research: 'gpt-4o',
+            learning: 'gpt-4o'
+          };
+
+          // Use user's model preferences if available
+          if (settingsResult.rows.length > 0 && settingsResult.rows[0].settings?.models) {
+            agentModels = settingsResult.rows[0].settings.models;
+          }
+          
+          // Notify client of analysis start
+          agentEmitter.emit('status_update', { 
+            agent: 'maya', 
+            status: 'active',
+            userId 
+          });
+          
+          // Start the analysis asynchronously, don't wait for it to complete
+          executeAgentWorkflow(resumeText, agentModels)
+            .then(async (state) => {
+              console.log('Resume analysis completed successfully:', state);
+              
+              // Extract skills and set complete status when done
+              const skills = state.skills || [];
+              
+              // Signal completion when all is done
+              agentEmitter.emit('status_update', { 
+                agent: 'maya', 
+                status: 'complete',
+                userId 
+              });
+              
+              // Store the analysis result if needed
+              try {
+                await pool.query(
+                  'INSERT INTO resume_analyses (user_id, results, created_at) VALUES ($1, $2, NOW())',
+                  [userId, state]
+                );
+              } catch (dbError) {
+                console.error('Error storing analysis result:', dbError);
+              }
+            })
+            .catch((error) => {
+              console.error('Error executing agent workflow:', error);
+              agentEmitter.emit('status_update', { 
+                agent: 'maya', 
+                status: 'error',
+                userId,
+                message: 'Failed to analyze resume'
+              });
+            });
+          
+          // For immediate response, create a basic analysis object
+          const analysis = { skills: [] };
         
         // Extract skills from analysis result
         const extractedSkills = analysis.skills || [];
