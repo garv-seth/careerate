@@ -284,9 +284,9 @@ const ProfileSidebar = ({
       </CardHeader>
       <CardContent>
         <div className="flex items-center space-x-4 mb-4">
-          <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold">
-            {user?.username?.[0]?.toUpperCase() || "U"}
-          </div>
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+          {user?.username?.[0]?.toUpperCase() || "U"}
+        </div>
           <div>
             <p className="font-medium">{user?.username || "User"}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email || ""}</p>

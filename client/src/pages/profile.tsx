@@ -86,10 +86,10 @@ const ProfilePage = () => {
   const truncateFilename = (filename: string, maxLength: number = 20) => {
     if (!filename) return '';
     if (filename.length <= maxLength) return filename;
-    
+
     const extension = filename.split('.').pop() || '';
     const nameWithoutExt = filename.substring(0, filename.length - extension.length - 1);
-    
+
     const truncatedName = nameWithoutExt.substring(0, maxLength - extension.length - 3) + '...';
     return `${truncatedName}.${extension}`;
   };
@@ -138,7 +138,7 @@ const ProfilePage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-                <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
                   <AvatarImage src={user?.profileImageUrl || undefined} />
                   <AvatarFallback>{user?.name?.charAt(0) || user?.username?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
