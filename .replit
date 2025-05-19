@@ -24,7 +24,7 @@ localPort = 5002
 externalPort = 3001
 
 [workflows]
-runButton = "Start Careerate Fixed"
+runButton = "Start Careerate"
 
 [[workflows.workflow]]
 name = "Project"
@@ -59,19 +59,6 @@ args = "npm run dev"
 
 [[workflows.workflow]]
 name = "Start Careerate"
-author = 33980514
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"node|tsx\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Start Careerate Fixed"
 author = 33980514
 mode = "sequential"
 
