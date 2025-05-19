@@ -237,13 +237,13 @@ function AgentsPage() {
               </TabsContent>
               
               <TabsContent value="deep-accelerate" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
+                <Card className="bg-white text-black dark:bg-slate-800 dark:text-white border dark:border-gray-700">
+                  <CardHeader className="bg-white dark:bg-slate-800">
                     <div className="flex items-center gap-2">
                       <Zap className="h-6 w-6 text-amber-500" />
-                      <CardTitle>Deep Accelerate</CardTitle>
+                      <CardTitle className="text-black dark:text-white">Deep Accelerate</CardTitle>
                     </div>
-                    <CardDescription>Unleash the full power of all agents working together</CardDescription>
+                    <CardDescription className="text-gray-600 dark:text-gray-300">Unleash the full power of all agents working together</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="p-4 border rounded-lg bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
