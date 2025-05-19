@@ -35,37 +35,39 @@ router.post('/upload-resume', isAuthenticated, (req: Request, res: Response) => 
   res.setHeader('Content-Type', 'application/json');
   
   try {
-    if (!req.user?.claims?.sub) {
+    if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'User ID not found' });
     }
 
-    const userId = req.user.claims.sub;
+    const userId = req.user.id;
     console.log(`Processing resume upload for user ${userId}`);
     
-    // Use the uploadResume middleware with proper error handling
-    uploadResume(req, res, async (err) => {
+    // Use multer to handle the file upload first
+    upload.single('resume')(req, res, async (err) => {
       if (err) {
-        console.error("Error in resume upload middleware:", err);
+        console.error("Error in multer file upload:", err);
         return res.status(400).json({ error: err.message || 'File upload failed' });
       }
       
-      // Even if no resume text was extracted, consider it a success for the file upload part
-      if (!req.resumeText) {
-        console.warn("No resume text extracted but file was uploaded");
-        req.resumeText = "Resume file uploaded, but text could not be extracted";
+      if (!req.file) {
+        console.error("No file was uploaded");
+        return res.status(400).json({ error: 'No file was uploaded' });
       }
-      
+
       try {
-        // Store in profile first - most important step
+        // Now pass to the uploadResume function to store in object storage
+        const resumeText = await uploadResume(req.file, userId);
+        
+        // Store in profile
         const existingProfile = await storage.getProfileByUserId(userId);
         
         if (existingProfile) {
-          await storage.updateProfileResume(userId, req.resumeText);
+          await storage.updateProfileResume(userId, resumeText);
           await storage.updateProfile(userId, { lastScan: new Date() });
         } else {
           await storage.createProfile({
             userId,
-            resumeText: req.resumeText,
+            resumeText: resumeText,
             lastScan: new Date(),
           });
         }
