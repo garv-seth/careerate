@@ -11,6 +11,12 @@ app.use(express.urlencoded({ extended: false }));
 // Set app to trust proxies for secure cookies behind load balancers
 app.set("trust proxy", 1);
 
+// Override default error handler to always return JSON
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
 // Add CORS headers for development
 app.use((req, res, next) => {
   // Allow requests from Replit domains and local development
