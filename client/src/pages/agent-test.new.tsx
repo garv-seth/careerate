@@ -256,12 +256,7 @@ const AgentTestPage = () => {
                   </CardContent>
                 </Card>
 
-                <div className="mt-6">
-                  <AgentActivityPanel 
-                    activities={agentActivities} 
-                    agentStatuses={agentStatuses} 
-                  />
-                </div>
+                {/* Agent activity panel removed to avoid duplication */}
               </TabsContent>
 
               <TabsContent value="results">
