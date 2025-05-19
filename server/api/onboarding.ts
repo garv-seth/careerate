@@ -114,9 +114,9 @@ router.post('/upload-resume', isAuthenticated, async (req: Request, res: Respons
           
           // For immediate response, create a basic analysis object
           const analysis = { skills: [] };
-        
-        // Extract skills from analysis result
-        const extractedSkills = analysis.skills || [];
+          
+          // Extract skills from analysis result
+          const extractedSkills = analysis.skills || [];
         
         // Store extracted text and analysis in profile
         const existingProfile = await storage.getProfileByUserId(userId);
