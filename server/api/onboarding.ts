@@ -121,8 +121,8 @@ router.post('/upload-resume', isAuthenticated, async (req: Request, res: Respons
           // Store extracted text and analysis in profile
           const existingProfile = await storage.getProfileByUserId(userId);
         
-        if (existingProfile) {
-          await storage.updateProfileResume(userId, resumeText);
+          if (existingProfile) {
+            await storage.updateProfileResume(userId, resumeText);
           
           // Update profile with extracted data
           await storage.updateProfile(userId, {
