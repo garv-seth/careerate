@@ -51,6 +51,23 @@ const ProfilePage = () => {
         try {
           // Try to parse error as JSON
           const errorData = await response.json();
+          
+          // Handle obsolete endpoint redirect case
+          if (response.status === 410 && errorData.redirectTo) {
+            console.log('Detected obsolete endpoint, redirecting to:', errorData.redirectTo);
+            // Re-attempt the upload to the new endpoint
+            const redirectResponse = await fetch(errorData.redirectTo, {
+              method: 'POST',
+              body: formData,
+            });
+            
+            if (!redirectResponse.ok) {
+              throw new Error('Redirect to new endpoint failed');
+            }
+            
+            return redirectResponse.json();
+          }
+          
           errorMessage = errorData.error || errorData.message || errorMessage;
         } catch (e) {
           // If it's not JSON (e.g., HTML error page), use status text

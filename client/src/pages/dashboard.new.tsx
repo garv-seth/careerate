@@ -132,10 +132,6 @@ const Dashboard = () => {
               <ProfileSidebar 
                 user={user} 
                 profile={profile} 
-                resumeFile={resumeFile} 
-                onResumeChange={handleResumeChange}
-                onResumeUpload={handleResumeUpload}
-                uploading={uploading}
                 isPremium={isPremium}
               />
             </div>
@@ -238,12 +234,12 @@ const Dashboard = () => {
 const ProfileSidebar = ({ 
   user, 
   profile, 
-  resumeFile, 
-  onResumeChange, 
-  onResumeUpload, 
-  uploading,
   isPremium = false
 }: any) => {
+  // Navigate to profile page for resume upload
+  const navigateToProfileForResume = () => {
+    window.location.href = '/profile';
+  };
   return (
     <div className="space-y-6">
       <Card>

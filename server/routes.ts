@@ -95,39 +95,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Resume upload routes
+  // Resume upload routes (redirects to the main onboarding upload endpoint)
   app.post('/api/resume/upload', isAuthenticated, async (req: any, res) => {
     try {
-      console.log("Resume upload endpoint hit");
-      console.log("Headers:", req.headers);
-      console.log("Content type:", req.headers['content-type']);
-
-      // Use custom upload middleware
-      uploadResume(req, res, async (err) => {
-        if (err) {
-          console.error("Error in upload middleware:", err);
-          return res.status(400).json({ message: err.message || "File upload error" });
-        }
-
-        const userId = req.user.claims.sub;
-        const resumeText = req.resumeText;
-
-        if (!resumeText) {
-          return res.status(400).json({ message: "No resume text extracted" });
-        }
-
-        console.log("Resume text extracted successfully for user:", userId);
-
-        try {
-          // Update profile with resume text
-          const profile = await storage.updateProfileResume(userId, resumeText);
-          console.log("Profile updated with resume text:", profile);
-
-          return res.json({ message: "Resume uploaded and analyzed successfully", profile });
-        } catch (profileError) {
-          console.error("Error updating profile:", profileError);
-          return res.status(500).json({ message: "Failed to update profile" });
-        }
+      // This is a legacy endpoint - redirect users to use the main onboarding endpoint
+      console.log("Legacy resume upload endpoint hit - redirecting to main endpoint");
+      
+      // Return a special response informing client to use the correct endpoint
+      return res.status(410).json({ 
+        message: "This endpoint is deprecated. Please use /api/onboarding/upload-resume instead.",
+        redirectTo: "/api/onboarding/upload-resume" 
       });
     } catch (error) {
       console.error("Error in upload route handler:", error);

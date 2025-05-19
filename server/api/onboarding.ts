@@ -59,19 +59,13 @@ router.post('/upload-resume', isAuthenticated, async (req: Request, res: Respons
           userId 
         });
         
-        // Extract skills from the resume using Maya agent
-        const analysis = await runAgentWorkflow(resumeText, userId);
-        
-        // Extract skills from analysis result
-        const extractedSkills = analysis.skills || [];
-        
-        // Store extracted text and analysis in profile
+        // Store extracted text in profile first
         const existingProfile = await storage.getProfileByUserId(userId);
         
         if (existingProfile) {
           await storage.updateProfileResume(userId, resumeText);
           
-          // Update profile with extracted data
+          // Update profile with last scan date
           await storage.updateProfile(userId, {
             lastScan: new Date(),
           });
@@ -84,20 +78,35 @@ router.post('/upload-resume', isAuthenticated, async (req: Request, res: Respons
           });
         }
         
-        // Set status to complete
-        agentEmitter.emit('status_update', { 
-          agent: 'maya', 
-          status: 'complete',
-          userId 
-        });
-        
-        return res.status(200).json({
-          message: 'Resume uploaded and analyzed successfully',
-          analysis: {
-            skills: extractedSkills,
-            source: 'resume'
-          }
-        });
+        try {
+          // Extract skills from the resume using Maya agent
+          const analysis = await runAgentWorkflow(resumeText, userId);
+          
+          // Extract skills from analysis result
+          const extractedSkills = analysis.skills || [];
+          
+          // Set status to complete
+          agentEmitter.emit('status_update', { 
+            agent: 'maya', 
+            status: 'complete',
+            userId 
+          });
+          
+          return res.status(200).json({
+            message: 'Resume uploaded and analyzed successfully',
+            analysis: {
+              skills: extractedSkills,
+              source: 'resume'
+            }
+          });
+        } catch (analysisError) {
+          console.error('Error analyzing resume:', analysisError);
+          // Still return success for upload but note analysis failed
+          return res.status(200).json({
+            message: 'Resume uploaded successfully, but analysis encountered an error',
+            error: 'Analysis failed, please try again later'
+          });
+        }
       } catch (processingError) {
         console.error('Error processing resume:', processingError);
         return res.status(500).json({ error: 'Failed to process resume' });

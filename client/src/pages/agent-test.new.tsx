@@ -15,7 +15,7 @@ import { AgentActivityPanel, AgentInfoCard } from '@/components/dashboard/AgentA
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import Footer2 from '@/components/ui/footer2';
 import PageBackground from '@/components/ui/page-background';
-import { Wifi, WifiOff, Send, Info, Upload, FileText, AlertTriangle, Brain, CloudUpload, BarChart2, BookOpen, ChevronRight, ExternalLink, Clock, BookMarked } from 'lucide-react';
+import { Wifi, WifiOff, Send, Info, Upload, FileText, AlertTriangle, Brain, CloudUpload, BarChart2, BookOpen, ChevronRight, ExternalLink, Clock, BookMarked, ArrowRight } from 'lucide-react';
 import PageWrapper from '@/components/ui/page-wrapper';
 
 // Career advice interface
