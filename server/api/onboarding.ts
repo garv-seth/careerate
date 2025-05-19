@@ -30,103 +30,82 @@ const upload = multer({
 });
 
 // Handle resume upload
-router.post('/upload-resume', isAuthenticated, async (req: Request, res: Response) => {
-  try {
-    if (!req.user?.claims?.sub) {
-      return res.status(401).json({ error: 'User ID not found' });
-    }
+router.post('/upload-resume', isAuthenticated, (req: Request, res: Response) => {
+  if (!req.user?.claims?.sub) {
+    return res.status(401).json({ error: 'User ID not found' });
+  }
 
-    const userId = req.user.claims.sub;
+  const userId = req.user.claims.sub;
+  
+  // Use the uploadResume middleware
+  uploadResume(req, res, async (err) => {
+    if (err) {
+      console.error("Error in resume upload middleware:", err);
+      return res.status(400).json({ error: err.message || 'File upload failed' });
+    }
     
-    // Use our middleware to handle the upload - need to call next middleware after completion
-    uploadResume(req, res, async (err) => {
+    // Check if we have the resume text after upload
+    if (!req.resumeText) {
+      console.error("No resume text extracted");
+      return res.status(400).json({ error: 'Failed to extract text from resume' });
+    }
+    
+    try {
+      // Store in profile first - most important step
+      const existingProfile = await storage.getProfileByUserId(userId);
+      
+      if (existingProfile) {
+        await storage.updateProfileResume(userId, req.resumeText);
+        await storage.updateProfile(userId, { lastScan: new Date() });
+      } else {
+        await storage.createProfile({
+          userId,
+          resumeText: req.resumeText,
+          lastScan: new Date(),
+        });
+      }
+      
+      // Connect to AI system - this can fail but we still want to save the resume
       try {
-        // Check if there was an error in the upload middleware
-        if (err) {
-          console.error("Error in upload middleware:", err);
-          return res.status(400).json({ error: err.message || 'File upload failed' });
-        }
+        const { agentEmitter, runAgentWorkflow } = await import('../../src/agents/graph');
         
-        // Make sure we have a file
-        if (!req.file) {
-          return res.status(400).json({ error: 'No file was provided' });
-        }
-        
-        // After middleware processes the file and extracts text
-        if (!req.resumeText) {
-          return res.status(400).json({ error: 'Failed to extract text from resume' });
-        }
-        
-        const resumeText = req.resumeText;
-        
-        // Connect to AI agent system for resume analysis
-        const { agentEmitter } = await import('../../src/agents/graph');
-        const { runAgentWorkflow } = await import('../../src/agents/graph');
-        
-        // Notify client of analysis start
+        // Notify client that analysis is starting
         agentEmitter.emit('status_update', { 
           agent: 'maya', 
           status: 'active',
           userId 
         });
         
-        // Store extracted text in profile first
-        const existingProfile = await storage.getProfileByUserId(userId);
+        // Get analysis results  
+        const analysis = await runAgentWorkflow(req.resumeText, userId);
+        const extractedSkills = analysis.skills || [];
         
-        if (existingProfile) {
-          await storage.updateProfileResume(userId, resumeText);
-          
-          // Update profile with last scan date
-          await storage.updateProfile(userId, {
-            lastScan: new Date(),
-          });
-        } else {
-          // Create new profile if it doesn't exist
-          await storage.createProfile({
-            userId,
-            resumeText,
-            lastScan: new Date(),
-          });
-        }
+        // Mark as complete
+        agentEmitter.emit('status_update', { 
+          agent: 'maya', 
+          status: 'complete',
+          userId 
+        });
         
-        try {
-          // Extract skills from the resume using Maya agent
-          const analysis = await runAgentWorkflow(resumeText, userId);
-          
-          // Extract skills from analysis result
-          const extractedSkills = analysis.skills || [];
-          
-          // Set status to complete
-          agentEmitter.emit('status_update', { 
-            agent: 'maya', 
-            status: 'complete',
-            userId 
-          });
-          
-          return res.status(200).json({
-            message: 'Resume uploaded and analyzed successfully',
-            analysis: {
-              skills: extractedSkills,
-              source: 'resume'
-            }
-          });
-        } catch (analysisError) {
-          console.error('Error analyzing resume:', analysisError);
-          // Still return success for upload but note analysis failed
-          return res.status(200).json({
-            message: 'Resume uploaded successfully, but analysis encountered an error',
-            error: 'Analysis failed, please try again later'
-          });
-        }
-      } catch (processingError) {
-        console.error('Error processing resume:', processingError);
-        return res.status(500).json({ error: 'Failed to process resume' });
+        return res.status(200).json({
+          message: 'Resume uploaded and analyzed successfully',
+          analysis: {
+            skills: extractedSkills,
+            source: 'resume'
+          }
+        });
+      } catch (analysisError) {
+        console.error('Error analyzing resume:', analysisError);
+        return res.status(200).json({
+          message: 'Resume uploaded successfully, but analysis encountered an error',
+          error: 'Analysis failed, please try again later'
+        });
       }
-    });
-  } catch (error) {
-    console.error('Error handling resume upload:', error);
-    return res.status(500).json({ error: 'Failed to upload resume' });
-  }
+    } catch (error) {
+      console.error('Error processing resume:', error);
+      return res.status(500).json({ error: 'Failed to process resume' });
+    }
+  });
 });
 
 // Save user profile data
