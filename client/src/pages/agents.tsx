@@ -91,23 +91,23 @@ function AgentsPage() {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                <Card className="bg-purple-50 dark:bg-purple-950/70 border-purple-200 dark:border-purple-800">
                   <CardHeader>
                     <CardTitle className="text-purple-700 dark:text-purple-300">Maya</CardTitle>
-                    <CardDescription>Resume Analyzer</CardDescription>
+                    <CardDescription className="dark:text-purple-200/80">Resume Analyzer</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">Specializes in analyzing your resume to identify skills, experience, and career trajectory patterns.</p>
+                    <p className="text-sm dark:text-purple-100/90">Specializes in analyzing your resume to identify skills, experience, and career trajectory patterns.</p>
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800">
+                <Card className="bg-pink-50 dark:bg-pink-950/70 border-pink-200 dark:border-pink-800">
                   <CardHeader>
                     <CardTitle className="text-pink-700 dark:text-pink-300">Ellie</CardTitle>
-                    <CardDescription>Industry Analyst</CardDescription>
+                    <CardDescription className="dark:text-pink-200/80">Industry Analyst</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">Researches market trends, industry developments, and automation risks relevant to your career.</p>
+                    <p className="text-sm dark:text-pink-100/90">Researches market trends, industry developments, and automation risks relevant to your career.</p>
                   </CardContent>
                 </Card>
                 

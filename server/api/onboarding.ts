@@ -50,7 +50,6 @@ router.post('/upload-resume', isAuthenticated, (req: Request, res: Response) => 
       }
       
       // Even if no resume text was extracted, consider it a success for the file upload part
-      // This prevents the JSON parsing error
       if (!req.resumeText) {
         console.warn("No resume text extracted but file was uploaded");
         req.resumeText = "Resume file uploaded, but text could not be extracted";
@@ -70,51 +69,21 @@ router.post('/upload-resume', isAuthenticated, (req: Request, res: Response) => 
             lastScan: new Date(),
           });
         }
-      
-      // Connect to AI system - this can fail but we still want to save the resume
-      try {
-        const { agentEmitter, runAgentWorkflow } = await import('../../src/agents/graph');
         
-        // Notify client that analysis is starting
-        agentEmitter.emit('status_update', { 
-          agent: 'maya', 
-          status: 'active',
-          userId 
-        });
-        
-        // Get analysis results  
-        const analysis = await runAgentWorkflow(req.resumeText, userId);
-        const extractedSkills = analysis.skills || [];
-      } catch (analysisError) {
-        console.error("Error during agent workflow:", analysisError);
-        // Continue without failing the request - we still saved the resume
-        
-        // Mark as complete
-        agentEmitter.emit('status_update', { 
-          agent: 'maya', 
-          status: 'complete',
-          userId 
-        });
-        
+        // Simple success response without AI analysis
         return res.status(200).json({
-          message: 'Resume uploaded and analyzed successfully',
-          analysis: {
-            skills: extractedSkills,
-            source: 'resume'
-          }
+          message: 'Resume uploaded successfully',
+          success: true
         });
-      } catch (analysisError) {
-        console.error('Error analyzing resume:', analysisError);
-        return res.status(200).json({
-          message: 'Resume uploaded successfully, but analysis encountered an error',
-          error: 'Analysis failed, please try again later'
-        });
+      } catch (error) {
+        console.error('Error processing resume:', error);
+        return res.status(500).json({ error: 'Failed to process resume' });
       }
-    } catch (error) {
-      console.error('Error processing resume:', error);
-      return res.status(500).json({ error: 'Failed to process resume' });
-    }
-  });
+    });
+  } catch (outerError) {
+    console.error("Unexpected error in resume upload endpoint:", outerError);
+    return res.status(500).json({ error: 'Server error during upload process' });
+  }
 });
 
 // Save user profile data
