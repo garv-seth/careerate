@@ -140,7 +140,13 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
     if (err) {
       console.error("Multer error:", err);
       // Return JSON error response directly
-      return res.status(400).json({ error: err.message || "File upload failed" });
+      try {
+        return res.status(400).json({ error: err.message || "File upload failed" });
+      } catch (e) {
+        console.error("Error sending JSON response:", e);
+        // Ensure we send a clean JSON response even if there's an error
+        return res.status(500).send(JSON.stringify({ error: "Server error during file upload" }));
+      }
     }
 
     console.log("File upload request processed", req.file ? "with file" : "without file");

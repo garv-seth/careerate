@@ -41,12 +41,11 @@ const ProfilePage = () => {
         console.log(`Form data: ${key} = ${value instanceof File ? value.name : value}`);
       }
 
-      // Try the main onboarding endpoint first
+      // Add specific error handling to handle the JSON parsing issue
       try {
         const response = await fetch('/api/onboarding/upload-resume', {
           method: 'POST',
           // Don't set Content-Type header manually - let the browser set it correctly with the boundary
-          // This is critical for multipart/form-data uploads
           body: formData,
         });
 
@@ -69,7 +68,7 @@ const ProfilePage = () => {
           
           // If it contains HTML, it's likely a server error page
           if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            errorMessage = `Invalid server response - please try again`;
           } else {
             errorMessage = text || errorMessage;
           }
