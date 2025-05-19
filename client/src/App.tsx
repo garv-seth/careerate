@@ -10,7 +10,7 @@ import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home";
 import Dashboard from "@/pages/dashboard.new";
-import AgentTestPage from "@/pages/agent-test.new";
+import AgentsPage from "@/pages/agents";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import Subscription from "@/pages/subscription";
@@ -50,7 +50,7 @@ function Router() {
 
       <Route path="/agents">
         <ProtectedRoute>
-          <AgentTestPage />
+          <AgentsPage />
         </ProtectedRoute>
       </Route>
 
