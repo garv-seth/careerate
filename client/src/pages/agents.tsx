@@ -115,14 +115,14 @@ function AgentsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-900">
+    <div className="min-h-screen flex flex-col">
       <TubelightNavbar />
       <PageWrapper>
-        <main className="container mx-auto px-4 py-8 flex-grow text-black dark:text-white">
+        <main className="container mx-auto px-4 py-8 flex-grow">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col gap-2 mb-6">
-              <h1 className="text-3xl font-bold text-black dark:text-white">AI Agent Team</h1>
-              <p className="text-gray-600 dark:text-gray-300">Our specialized AI agents work together to accelerate your career growth</p>
+              <h1 className="text-3xl font-bold">AI Agent Team</h1>
+              <p className="text-muted-foreground">Our specialized AI agents work together to accelerate your career growth</p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
@@ -134,10 +134,10 @@ function AgentsPage() {
               <TabsContent value="agents" className="space-y-6 mt-6">
                 {/* Resume info section */}
                 <div className="mb-8">
-                  <Card className="bg-white text-black dark:bg-slate-800 dark:text-white border dark:border-gray-700">
-                    <CardHeader className="bg-white dark:bg-slate-800">
-                      <CardTitle className="text-black dark:text-white">Resume Status</CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-300">Your resume is used by our AI agents for analysis</CardDescription>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Resume Status</CardTitle>
+                      <CardDescription>Your resume is used by our AI agents for analysis</CardDescription>
                     </CardHeader>
                     <CardContent>
                       {profileLoading ? (
@@ -237,13 +237,13 @@ function AgentsPage() {
               </TabsContent>
               
               <TabsContent value="deep-accelerate" className="space-y-6 mt-6">
-                <Card className="bg-white text-black dark:bg-slate-800 dark:text-white border dark:border-gray-700">
-                  <CardHeader className="bg-white dark:bg-slate-800">
+                <Card>
+                  <CardHeader>
                     <div className="flex items-center gap-2">
                       <Zap className="h-6 w-6 text-amber-500" />
-                      <CardTitle className="text-black dark:text-white">Deep Accelerate</CardTitle>
+                      <CardTitle>Deep Accelerate</CardTitle>
                     </div>
-                    <CardDescription className="text-gray-600 dark:text-gray-300">Unleash the full power of all agents working together</CardDescription>
+                    <CardDescription>Unleash the full power of all agents working together</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="p-4 border rounded-lg bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
