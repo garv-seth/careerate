@@ -1,12 +1,19 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import TubelightNavbar from '@/components/ui/tubelight-navbar';
 import PageWrapper from '@/components/ui/page-wrapper';
 import Footer2 from '@/components/ui/footer2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, AlertCircle, ArrowUpRight, Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
+import { FileText, AlertCircle, ArrowUpRight, Info, Zap, ArrowRight, Loader2 } from 'lucide-react';
 
 function AgentsPage() {
   const { user } = useAuth();
@@ -111,13 +118,13 @@ function AgentsPage() {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                <Card className="bg-green-50 dark:bg-green-950/70 border-green-200 dark:border-green-800">
                   <CardHeader>
                     <CardTitle className="text-green-700 dark:text-green-300">Sophia</CardTitle>
-                    <CardDescription>Learning Advisor</CardDescription>
+                    <CardDescription className="dark:text-green-200/80">Learning Advisor</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">Creates personalized learning plans based on your skills and career goals for optimal skill development.</p>
+                    <p className="text-sm dark:text-green-100/90">Creates personalized learning plans based on your skills and career goals for optimal skill development.</p>
                   </CardContent>
                 </Card>
               </div>
