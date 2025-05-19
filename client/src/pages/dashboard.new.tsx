@@ -70,56 +70,10 @@ const Dashboard = () => {
     enabled: isAuthenticated && isPremium && !!profile?.resumeText,
   });
 
-  // Handle resume upload
-  const uploadResumeMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await apiRequest('POST', '/api/resume/upload', formData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: 'Resume uploaded successfully',
-        description: 'Your resume is being analyzed for AI vulnerability.',
-      });
-
-      // Start analysis via the career service
-      if (connected && data.profile && data.profile.resumeText) {
-        startAnalysis(data.profile.resumeText);
-      }
-
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vulnerability-assessment'] });
-    },
-    onError: () => {
-      toast({
-        title: 'Upload failed',
-        description: 'There was an error uploading your resume. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  });
-
-  // Handle file selection
-  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setResumeFile(file);
-    }
-  };
-
-  // Handle resume upload
-  const handleResumeUpload = async () => {
-    if (!resumeFile) return;
-
-    setUploading(true);
-
-    const formData = new FormData();
-    formData.append('resume', resumeFile);
-
-    uploadResumeMutation.mutate(formData);
-
-    setUploading(false);
+  // Navigate to profile page for resume upload
+  const navigateToProfileForResume = () => {
+    // Use window.location to navigate to profile page
+    window.location.href = '/profile';
   };
 
   // Handle vulnerability assessment start
