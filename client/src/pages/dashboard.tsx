@@ -87,8 +87,26 @@ const Dashboard = () => {
   // Handle resume upload
   const uploadResumeMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest("POST", "/api/resume/upload", formData);
-      return response.json();
+      try {
+        const response = await apiRequest("POST", "/api/resume/upload", formData);
+        
+        // Log the raw response to check if it's HTML
+        const text = await response.text();
+        console.log("Raw response from /api/resume/upload:", text);
+  
+        try {
+          // Attempt to parse the response as JSON
+          const json = JSON.parse(text);
+          return json;
+        } catch (jsonError) {
+          console.error("Error parsing JSON:", jsonError);
+          throw new Error("Unexpected response format.  The server returned HTML instead of JSON.");
+        }
+  
+      } catch (apiError) {
+        console.error("API request error:", apiError);
+        throw new Error(`Failed to upload resume: ${apiError.message}`);
+      }
     },
     onSuccess: (data) => {
       toast({
@@ -107,10 +125,11 @@ const Dashboard = () => {
         queryClient.invalidateQueries({ queryKey: ["/api/advise"] });
       }, 2000);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Mutation error:", error); // Log the full error object
       toast({
         title: "Failed to upload resume",
-        description: error.message,
+        description: error.message || "An unexpected error occurred.", // Use the error message
         variant: "destructive",
       });
     },
@@ -194,7 +213,7 @@ const Dashboard = () => {
   // No direct redirect needed here, the ProtectedRoute component will handle it
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900">
+    <div className="min-h-screen flex flex-col bg-background">
       <TubelightNavbar />
 
       <main className="flex-grow container mx-auto px-4 pb-20 mt-24">
@@ -220,33 +239,7 @@ const Dashboard = () => {
             ) : profileLoading || adviceLoading ? (
               <AnalyzingCard />
             ) : (
-              <Tabs defaultValue="risk" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="risk">Automation Risk</TabsTrigger>
-                  <TabsTrigger value="skills">Skill Gaps</TabsTrigger>
-                  <TabsTrigger value="roadmap">Career Roadmap</TabsTrigger>
-                  <TabsTrigger value="simulator" className="relative">
-                    Career Simulator
-                    <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-primary text-[10px] font-bold text-white rounded-full">PRO</span>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="risk" className="mt-6">
-                  <RiskAnalysisTab careerAdvice={careerAdvice} />
-                </TabsContent>
-
-                <TabsContent value="skills" className="mt-6">
-                  <SkillGapsTab careerAdvice={careerAdvice} />
-                </TabsContent>
-
-                <TabsContent value="roadmap" className="mt-6">
-                  <RoadmapTab careerAdvice={careerAdvice} />
-                </TabsContent>
-                <TabsContent value="simulator" className="mt-6">
-                  {/* Career Simulator content will go here */}
-                  <p>This is the career simulator.  This is a premium feature.</p>
-                </TabsContent>
-              </Tabs>
+              <ResumeDashboard careerAdvice={careerAdvice} profile={profile}/>
             )}
           </div>
         </div>
@@ -256,6 +249,36 @@ const Dashboard = () => {
     </div>
   );
 };
+
+const ResumeDashboard = ({ careerAdvice, profile }: { careerAdvice?: CareerAdvice; profile: any }) => (
+  <Tabs defaultValue="risk" className="w-full">
+    <TabsList className="grid w-full grid-cols-4">
+      <TabsTrigger value="risk">Automation Risk</TabsTrigger>
+      <TabsTrigger value="skills">Skill Gaps</TabsTrigger>
+      <TabsTrigger value="roadmap">Career Roadmap</TabsTrigger>
+      <TabsTrigger value="simulator" className="relative">
+        Career Simulator
+        <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-primary text-[10px] font-bold text-white rounded-full">PRO</span>
+      </TabsTrigger>
+    </TabsList>
+
+    <TabsContent value="risk" className="mt-6">
+      <RiskAnalysisTab careerAdvice={careerAdvice} />
+    </TabsContent>
+
+    <TabsContent value="skills" className="mt-6">
+      <SkillGapsTab careerAdvice={careerAdvice} />
+    </TabsContent>
+
+    <TabsContent value="roadmap" className="mt-6">
+      <RoadmapTab careerAdvice={careerAdvice} />
+    </TabsContent>
+    <TabsContent value="simulator" className="mt-6">
+      {/* Career Simulator content will go here */}
+      <p>This is the career simulator.  This is a premium feature.</p>
+    </TabsContent>
+  </Tabs>
+);
 
 const LoadingState = () => (
   <div className="flex h-screen w-full items-center justify-center">
@@ -312,43 +335,45 @@ const ProfileSidebar = ({
       </CardContent>
     </Card>
 
-    <Card>
-      <CardHeader>
-        <CardTitle>Upload Resume</CardTitle>
-        <CardDescription>
-          Upload your resume to get AI-powered career insights
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 mb-4">
-          <CloudUpload className="w-10 h-10 text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            {resumeFile ? resumeFile.name : "PDF, DOCX, or TXT (max 5MB)"}
-          </p>
-          <input
-            type="file"
-            id="resume"
-            className="hidden"
-            accept=".pdf,.docx,.doc,.txt"
-            onChange={onResumeChange}
-          />
-          <label htmlFor="resume">
-            <Button variant="outline" size="sm" className="cursor-pointer" asChild>
-              <span>Select File</span>
-            </Button>
-          </label>
-        </div>
+    {!profile?.resumeText && (
+      <Card>
+        <CardHeader>
+          <CardTitle>Upload Resume</CardTitle>
+          <CardDescription>
+            Upload your resume to get AI-powered career insights
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 mb-4">
+            <CloudUpload className="w-10 h-10 text-gray-400 mb-2" />
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              {resumeFile ? resumeFile.name : "PDF, DOCX, or TXT (max 5MB)"}
+            </p>
+            <input
+              type="file"
+              id="resume"
+              className="hidden"
+              accept=".pdf,.docx,.doc,.txt"
+              onChange={onResumeChange}
+            />
+            <label htmlFor="resume">
+              <Button variant="outline" size="sm" className="cursor-pointer" asChild>
+                <span>Select File</span>
+              </Button>
+            </label>
+          </div>
 
-        <Button 
-          className="w-full" 
-          disabled={!resumeFile || uploading}
-          onClick={onResumeUpload}
-        >
-          {uploading ? "Uploading..." : "Scan Resume"}
-          <Upload className="ml-2 h-4 w-4" />
-        </Button>
-      </CardContent>
-    </Card>
+          <Button 
+            className="w-full" 
+            disabled={!resumeFile || uploading}
+            onClick={onResumeUpload}
+          >
+            {uploading ? "Uploading..." : "Scan Resume"}
+            <Upload className="ml-2 h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    )}
 
     <Card>
       <CardHeader>

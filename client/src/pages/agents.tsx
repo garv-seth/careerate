@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,11 +6,11 @@ import PageWrapper from '@/components/ui/page-wrapper';
 import Footer2 from '@/components/ui/footer2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, AlertCircle, ArrowUpRight } from 'lucide-react';
+import { FileText, AlertCircle, ArrowUpRight, Info } from 'lucide-react';
 
 function AgentsPage() {
   const { user } = useAuth();
-  
+
   // Fetch user profile
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["/api/profile"],
@@ -25,7 +24,8 @@ function AgentsPage() {
         <main className="container mx-auto px-4 py-8 flex-grow">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold mb-6">AI Agent Team</h1>
-            
+
+            {/* Resume info section */}
             <div className="mb-8">
               <Card>
                 <CardHeader>
@@ -76,7 +76,7 @@ function AgentsPage() {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Keep other agent-related content */}
             <div className="grid gap-6 md:grid-cols-2">
               <Card>

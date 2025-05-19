@@ -138,7 +138,7 @@ const ProfilePage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-                <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
+                <Avatar className="w-12 h-12 sm:w-16 sm:h-16">
                   <AvatarImage src={user?.profileImageUrl || undefined} />
                   <AvatarFallback>{user?.name?.charAt(0) || user?.username?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
