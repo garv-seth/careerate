@@ -137,61 +137,10 @@ const AgentTestPage = () => {
   };
 
   // Handle resume file change
-  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setResumeFile(e.target.files[0]);
-    }
-  };
-
-  // Handle file upload
-  const uploadResumeMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await apiRequest("POST", "/api/resume/upload", formData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Resume uploaded successfully",
-        description: "Your resume is being analyzed by our AI.",
-      });
-
-      // Start analysis via socket connection
-      if (connected && data.profile && data.profile.resumeText) {
-        setAnalyzing(true);
-        setAnalysisComplete(false);
-        startAnalysis(data.profile.resumeText);
-        setResumeText(data.profile.resumeText);
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to upload resume",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleResumeUpload = async () => {
-    if (!resumeFile) {
-      toast({
-        title: "No file selected",
-        description: "Please select a resume file to upload.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("resume", resumeFile);
-
-    setUploading(true);
-    try {
-      await uploadResumeMutation.mutateAsync(formData);
-    } finally {
-      setUploading(false);
-      setResumeFile(null);
-    }
+  // Navigate to profile page for resume upload
+  const navigateToProfileForResume = () => {
+    // Use window location to navigate to profile page
+    window.location.href = '/profile';
   };
 
   if (isLoading) {
@@ -282,48 +231,27 @@ const AgentTestPage = () => {
                     <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 mb-4">
                       <CloudUpload className="w-10 h-10 text-gray-400 mb-2" />
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                        {resumeFile ? resumeFile.name : "PDF, DOCX, or TXT (max 5MB)"}
+                        Upload your resume via the Profile page
                       </p>
-                      <input
-                        type="file"
-                        id="resume"
-                        className="hidden"
-                        accept=".pdf,.docx,.doc,.txt"
-                        onChange={handleResumeChange}
-                        disabled={analyzing || uploading}
-                      />
-                      <label htmlFor="resume">
-                        <Button variant="outline" size="sm" className="cursor-pointer" asChild disabled={analyzing || uploading}>
-                          <span>Select File</span>
-                        </Button>
-                      </label>
-                    </div>
-
-                    <div className="mt-4 flex flex-col sm:flex-row gap-2 items-center justify-between">
-                      <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <Info className="h-3 w-3" />
-                        <span>Your resume will be analyzed by our AI agent team</span>
-                      </div>
-
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Resume uploads are only available through your profile page
+                      </p>
                       <Button 
+                        variant="default" 
                         size="lg"
-                        variant="default"
-                        onClick={handleResumeUpload} 
-                        disabled={!resumeFile || !connected || analyzing || uploading}
+                        onClick={navigateToProfileForResume}
                         className="w-full sm:w-auto"
                       >
-                        {uploading || analyzing ? (
-                          <>
-                            <span className="animate-pulse">{uploading ? "Uploading..." : "Analyzing..."}</span>
-                            <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          </>
-                        ) : (
-                          <>
-                            Upload & Analyze
-                            <Upload className="ml-2 h-4 w-4" />
-                          </>
-                        )}
+                        Go to Profile Page
+                        <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-center">
+                      <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Info className="h-3 w-3" />
+                        <span>Your resume will be analyzed by our AI agent team after upload</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

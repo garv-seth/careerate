@@ -337,40 +337,14 @@ const ProfileSidebar = ({
             <div className="space-y-4">
               <div className="border-2 border-dashed rounded-md p-6 text-center">
                 <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500 mb-2">Upload your resume (PDF or DOCX)</p>
-                <Input
-                  type="file"
-                  id="resumeFile"
-                  accept=".pdf,.docx,.doc"
-                  onChange={onResumeChange}
-                  className="hidden"
-                />
-                <Label htmlFor="resumeFile" className="cursor-pointer">
-                  <Button variant="outline" size="sm" className="w-full">
-                    Choose File
-                  </Button>
-                </Label>
-                {resumeFile && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Selected: {resumeFile.name}
-                  </p>
-                )}
+                <p className="text-sm text-gray-500 mb-2">Upload your resume via the Profile page</p>
+                <Button 
+                  className="w-full mt-2"
+                  onClick={navigateToProfileForResume}
+                >
+                  Go to Profile Page
+                </Button>
               </div>
-
-              <Button 
-                className="w-full"
-                onClick={onResumeUpload}
-                disabled={!resumeFile || uploading}
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  'Upload Resume'
-                )}
-              </Button>
             </div>
           )}
         </CardContent>
