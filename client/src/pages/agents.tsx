@@ -134,10 +134,10 @@ function AgentsPage() {
               <TabsContent value="agents" className="space-y-6 mt-6">
                 {/* Resume info section */}
                 <div className="mb-8">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Resume Status</CardTitle>
-                      <CardDescription>Your resume is used by our AI agents for analysis</CardDescription>
+                  <Card className="bg-white text-black dark:bg-slate-800 dark:text-white border dark:border-gray-700">
+                    <CardHeader className="bg-white dark:bg-slate-800">
+                      <CardTitle className="text-black dark:text-white">Resume Status</CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-300">Your resume is used by our AI agents for analysis</CardDescription>
                     </CardHeader>
                     <CardContent>
                       {profileLoading ? (
@@ -262,7 +262,7 @@ function AgentsPage() {
                              selectedModel.includes('large') ? ' (Large)' : 
                              selectedModel.includes('huge') ? ' (Huge)' : ''}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-gray-600 dark:text-gray-300">
                             Set in Settings
                           </span>
                         </div>
@@ -280,7 +280,7 @@ function AgentsPage() {
                     )}
                     
                     {accelerateResults ? (
-                      <div className="space-y-4 p-4 border rounded-lg dark:border-gray-700">
+                      <div className="space-y-4 p-4 border rounded-lg bg-slate-800 text-white border-gray-700">
                         <h3 className="font-semibold">Analysis Results</h3>
                         <div className="space-y-2">
                           <h4 className="text-sm font-medium">Career Trajectory Insights</h4>
@@ -295,7 +295,7 @@ function AgentsPage() {
                             {accelerateResults.recommendations ? (
                               accelerateResults.recommendations.map((rec, idx) => (
                                 <li key={idx} className="text-sm flex items-start gap-2">
-                                  <ArrowRight className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                                  <ArrowRight className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
                                   <span>{rec}</span>
                                 </li>
                               ))
@@ -319,7 +319,7 @@ function AgentsPage() {
                                 ? "Analysis in progress..." 
                                 : "Start Deep Accelerate Analysis"}
                             </p>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                               {deepAccelerateMutation.isPending 
                                 ? "Our AI agents are working together to analyze your career data" 
                                 : "All agents will work together to give you comprehensive career insights"}
