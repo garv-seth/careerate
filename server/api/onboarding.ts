@@ -118,8 +118,8 @@ router.post('/upload-resume', isAuthenticated, async (req: Request, res: Respons
           // Extract skills from analysis result
           const extractedSkills = analysis.skills || [];
         
-        // Store extracted text and analysis in profile
-        const existingProfile = await storage.getProfileByUserId(userId);
+          // Store extracted text and analysis in profile
+          const existingProfile = await storage.getProfileByUserId(userId);
         
         if (existingProfile) {
           await storage.updateProfileResume(userId, resumeText);
