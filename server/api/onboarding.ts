@@ -39,8 +39,19 @@ router.post('/upload-resume', isAuthenticated, async (req: Request, res: Respons
     const userId = req.user.claims.sub;
     
     // Use our middleware to handle the upload - need to call next middleware after completion
-    uploadResume(req, res, async () => {
+    uploadResume(req, res, async (err) => {
       try {
+        // Check if there was an error in the upload middleware
+        if (err) {
+          console.error("Error in upload middleware:", err);
+          return res.status(400).json({ error: err.message || 'File upload failed' });
+        }
+        
+        // Make sure we have a file
+        if (!req.file) {
+          return res.status(400).json({ error: 'No file was provided' });
+        }
+        
         // After middleware processes the file and extracts text
         if (!req.resumeText) {
           return res.status(400).json({ error: 'Failed to extract text from resume' });

@@ -82,8 +82,13 @@ import { setupSessionTable } from './setup-sessions';
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Log the error but don't throw it again
+    console.error("Error caught in global handler:", err);
+    
+    // Ensure we only send a response if one hasn't been sent already
+    if (!res.headersSent) {
+      return res.status(status).json({ error: message });
+    }
   });
 
   // importantly only setup vite in development and after

@@ -43,6 +43,8 @@ const ProfilePage = () => {
 
       const response = await fetch('/api/onboarding/upload-resume', {
         method: 'POST',
+        // Don't set Content-Type header manually - let the browser set it correctly with the boundary
+        // This is critical for multipart/form-data uploads
         body: formData,
       });
 

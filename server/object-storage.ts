@@ -136,13 +136,15 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
   singleUpload(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
-      return res.status(400).json({ message: err.message });
+      // Always return JSON response, not HTML
+      return next(err);
     }
 
     console.log("File upload request processed", req.file ? "with file" : "without file");
 
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      console.error("No file found in request");
+      return next(new Error("No file uploaded"));
     }
 
     const userId = req.user.claims.sub;
@@ -191,7 +193,7 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
       } catch (unlinkError) {
         console.error("Error deleting temporary file:", unlinkError);
       }
-      res.status(500).json({ message: "Error processing resume" });
+      return next(new Error("Error processing resume"));
     }
   });
 };
