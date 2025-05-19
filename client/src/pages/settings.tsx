@@ -121,21 +121,45 @@ const SettingsPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock settings save mutation
+  // Actual settings save mutation
   const saveSettingsMutation = useMutation({
     mutationFn: async (settings: any) => {
-      // This would be a real API call in production
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true });
-        }, 1000);
+      // Make API call to save settings
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+        credentials: 'include'
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save settings');
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       toast({
         title: 'Settings saved',
         description: 'Your preferences have been updated successfully.',
       });
+      
+      // Apply model changes immediately if possible
+      if (typeof window !== 'undefined') {
+        // Update theme immediately
+        if (settings.theme.darkMode) {
+          setTheme('dark');
+        } else {
+          setTheme('light');
+        }
+        
+        // Signal that settings have changed
+        window.dispatchEvent(new CustomEvent('settings-updated', { 
+          detail: settings 
+        }));
+      }
     },
     onError: () => {
       toast({

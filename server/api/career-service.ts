@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { isAuthenticated } from "../replitAuth";
 import { storage } from "../storage";
 import { Server as SocketIOServer } from "socket.io";
@@ -6,6 +6,8 @@ import { EventEmitter } from "events";
 import type { Server } from "http";
 import { OpenAI } from "@langchain/openai";
 import { z } from "zod";
+import { pool } from '../db';
+import { executeAgentWorkflow, AgentState, resetAgentState } from '../../src/agents/graph';
 
 // Create a new event emitter for career service events
 export const careerServiceEmitter = new EventEmitter();
@@ -414,6 +416,118 @@ router.get('/career-simulations', isAuthenticated, async (req: any, res) => {
     res.status(500).json({ message: 'Failed to fetch career simulations' });
   }
 });
+
+// Start a new career analysis
+export const startCareerAnalysis = async (req: Request, res: Response) => {
+  try {
+    // Get user ID from session
+    const userId = req.session?.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { input } = req.body;
+
+    if (!input) {
+      return res.status(400).json({ error: 'No input provided' });
+    }
+
+    // Get user settings for agent models
+    const settingsResult = await pool.query(
+      'SELECT settings FROM users WHERE id = $1',
+      [userId]
+    );
+
+    let agentModels = {
+      orchestration: 'gpt-4o',
+      resume: 'gpt-4o',
+      research: 'gpt-4o',
+      learning: 'gpt-4o'
+    };
+
+    // Use user's model preferences if available
+    if (settingsResult.rows.length > 0 && settingsResult.rows[0].settings?.models) {
+      agentModels = settingsResult.rows[0].settings.models;
+    }
+
+    // Start the agent workflow
+    console.log(`Starting career analysis for user ${userId} with input: ${input}`);
+
+    // Start the analysis asynchronously
+    executeAgentWorkflow(input, agentModels)
+      .then(async (state) => {
+        // Store the analysis result in the database
+        try {
+          await pool.query(
+            'INSERT INTO career_analyses (user_id, input, result, created_at) VALUES ($1, $2, $3, NOW())',
+            [userId, input, state]
+          );
+          console.log(`Analysis stored for user ${userId}`);
+        } catch (dbError) {
+          console.error('Error storing analysis result:', dbError);
+        }
+      })
+      .catch((error) => {
+        console.error('Error executing agent workflow:', error);
+      });
+
+    // Return initial state to the client
+    return res.status(202).json({
+      user_input: input,
+      status: {
+        cara: 'working',
+        maya: 'idle',
+        ellie: 'idle',
+        sophia: 'idle'
+      },
+      message: 'Analysis started'
+    });
+  } catch (error) {
+    console.error('Error starting career analysis:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Get current analysis state
+export const getAnalysisState = async (req: Request, res: Response) => {
+  try {
+    // Get user ID from session
+    const userId = req.session?.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    // Get the latest analysis for this user
+    const result = await pool.query(
+      'SELECT result FROM career_analyses WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No analysis found' });
+    }
+
+    return res.json(result.rows[0].result);
+  } catch (error) {
+    console.error('Error getting analysis state:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Reset analysis state
+export const resetAnalysisState = async (req: Request, res: Response) => {
+  try {
+    // Reset the agent state
+    resetAgentState();
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error resetting analysis state:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 // Salary negotiation endpoints can be added here
 

@@ -1,5 +1,5 @@
 /**
- * Agent workflow orchestration based on ADK (Agent Development Kit) architecture
+ * Agent workflow orchestration based on A2A (Agent Development Kit) architecture
  */
 import { EventEmitter } from 'events';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
@@ -8,7 +8,8 @@ import {
   createCaraAgent,
   createMayaAgent,
   createEllieAgent,
-  createSophiaAgent
+  createSophiaAgent,
+  agentEmitter
 } from './agents';
 import {
   caraInitialSystemPrompt,
@@ -18,132 +19,21 @@ import {
 } from './prompts';
 import { ChatOpenAI } from '@langchain/openai';
 
-// Event emitter to broadcast agent activities
-export const agentEmitter = new EventEmitter();
+// Agent instances
+let caraAgent: any = null;
+let mayaAgent: any = null;
+let ellieAgent: any = null;
+let sophiaAgent: any = null;
 
-// Types for agent activities and statuses
-export type AgentActivity = {
-  agent: 'cara' | 'maya' | 'ellie' | 'sophia';
-  action: string;
-  detail?: string;
-  timestamp: Date;
-  tools?: Array<'brave' | 'firecrawl' | 'browserbase' | 'database' | 'perplexity' | 'pinecone'>;
-  userId?: string; 
-  careerAdvice?: {
-    riskReport: {
-      overallRisk: number;
-      categories: Array<{
-        category: string;
-        risk: number;
-        description: string;
-      }>;
-      summary: string;
-    };
-    learningPlan: {
-      skills: Array<{
-        skill: string;
-        currentLevel: number;
-        targetLevel: number;
-        importance: number;
-      }>;
-      resources: Array<{
-        id: string;
-        title: string;
-        type: string;
-        provider: string;
-        duration: string;
-        level: string;
-        url: string;
-        skillsAddressed: string[];
-      }>;
-      timeEstimate: string;
-    };
-    nextSteps: {
-      immediate: string[];
-      shortTerm: string[];
-      longTerm: string[];
-    };
-    // Premium Features
-    premium?: {
-      // Career Trajectory Mapping
-      careerTrajectory?: {
-        targetRole: string;
-        timeframe: number; // in months
-        milestones: Array<{
-          title: string;
-          description: string;
-          targetDate: string;
-          priority: number; // 0=normal, 1=high, 2=critical
-        }>;
-        alternativePaths: Array<{
-          name: string;
-          description: string;
-          probabilityScore: number; // 0-100
-          potentialUpsides: string;
-          potentialDownsides: string;
-        }>;
-      };
-      // Executive Network Access
-      executiveNetwork?: {
-        recommendedEvents: Array<{
-          title: string;
-          description: string;
-          eventDate: string;
-          eventType: string;
-          speakerInfo: any;
-          relevanceScore: number; // 0-100
-        }>;
-        mentorshipOpportunities: Array<{
-          mentorName: string;
-          mentorTitle: string;
-          mentorCompany: string;
-          expertise: string[];
-          recommendationReason: string;
-          matchScore: number; // 0-100
-        }>;
-        networkingStrategy: string;
-      };
-      // Skills Gap Accelerator
-      skillsAccelerator?: {
-        assessedSkills: Array<{
-          name: string;
-          category: string;
-          currentLevel: number; // 1-10
-          targetLevel: number; // 1-10
-          marketDemand: number; // 0-100
-          futureRelevance: number; // 0-100
-          salarImpact: number; // in dollars
-          priority: number; // 0=normal, 1=high, 2=critical
-        }>;
-        personalizedLearningPath: {
-          name: string;
-          description: string;
-          estimatedCompletionTime: number; // in minutes
-          resources: Array<{
-            title: string;
-            provider: string;
-            type: string;
-            url: string;
-            cost: number; // in cents
-            duration: number; // in minutes
-            difficulty: string;
-            skillsAddressed: string[];
-            relevanceScore: number; // 0-100
-            order: number;
-          }>;
-        };
-        progressTrackingStrategy: string;
-      };
-    };
-  };
-};
+// Initialize OpenAI LLM
+let openai: ChatOpenAI | null = null;
 
 // Agent status tracking
 export type AgentStatuses = {
-  cara: 'idle' | 'active' | 'thinking' | 'complete';
-  maya: 'idle' | 'active' | 'thinking' | 'complete';
-  ellie: 'idle' | 'active' | 'thinking' | 'complete';
-  sophia: 'idle' | 'active' | 'thinking' | 'complete';
+  cara: 'idle' | 'working' | 'thinking' | 'complete';
+  maya: 'idle' | 'working' | 'thinking' | 'complete';
+  ellie: 'idle' | 'working' | 'thinking' | 'complete';
+  sophia: 'idle' | 'working' | 'thinking' | 'complete';
 };
 
 // Default status for all agents
@@ -154,13 +44,10 @@ export const agentStatuses: AgentStatuses = {
   sophia: 'idle'
 };
 
-// State tracking for agent context
-let currentAgentState: AgentState | null = null;
-
 // Status update function
 export const updateAgentStatus = (
   agent: 'cara' | 'maya' | 'ellie' | 'sophia',
-  status: 'idle' | 'active' | 'thinking' | 'complete'
+  status: 'idle' | 'working' | 'thinking' | 'complete'
 ) => {
   agentStatuses[agent] = status;
 
@@ -171,109 +58,35 @@ export const updateAgentStatus = (
 };
 
 // Interface for agent state
-interface AgentState {
-  input?: string;
-  userId?: string;
-  context?: any;
-  messages: BaseMessage[];
-  isPremium?: boolean; // Flag to indicate premium features are enabled
-  cara: {
-    messages: BaseMessage[];
-    results?: any;
-    careerTrajectory?: {
-      targetRole?: string;
-      timeframe?: number;
-      milestones?: any[];
-      alternativePaths?: any[];
-    };
-  };
-  maya: {
-    messages: BaseMessage[];
-    results?: any;
-    skills?: string[];
-    experience?: any;
-    education?: string;
-  };
-  ellie: {
-    messages: BaseMessage[];
-    results?: any;
-    marketInsights?: any;
-    trends?: string[];
-    opportunities?: any[];
-    executiveNetwork?: {
-      recommendedEvents?: any[];
-      mentorshipOpportunities?: any[];
-      networkingStrategy?: string;
-    };
-  };
-  sophia: {
-    messages: BaseMessage[];
-    results?: any;
-    learningPlan?: any;
-    resources?: any[];
-    roadmap?: any;
-    skillsAccelerator?: {
-      assessedSkills?: any[];
-      personalizedLearningPath?: any;
-      progressTrackingStrategy?: string;
-    };
-  };
-  final_output?: any;
-  premium?: {
-    careerTrajectory?: any;
-    executiveNetwork?: any;
-    skillsAccelerator?: any;
+export interface AgentState {
+  user_input: string;
+  cara_response?: string;
+  maya_response?: string;
+  ellie_response?: string;
+  sophia_response?: string;
+  skills?: string[];
+  experience?: any;
+  market_insights?: any;
+  learning_plan?: any;
+  final_plan?: string;
+  errors?: string[];
+  status: {
+    cara: 'idle' | 'working' | 'thinking' | 'complete';
+    maya: 'idle' | 'working' | 'thinking' | 'complete';
+    ellie: 'idle' | 'working' | 'thinking' | 'complete';
+    sophia: 'idle' | 'working' | 'thinking' | 'complete';
   };
 }
 
-// The LLM to use for all agents - initialize with mock first to avoid undefined errors
-let openai: ChatOpenAI = { 
-  invoke: async () => ({ content: "Mock response (initial)" }) 
-} as any;
+let currentAgentState: AgentState | null = null;
 
-// Initialize agents with mock implementations first to avoid undefined errors
-let caraAgent = async () => ({ 
-  message: new AIMessage("Mock response - initializing"), 
-  results: {} 
-});
-
-let mayaAgent = async () => ({ 
-  message: new AIMessage("Mock response - initializing"), 
-  results: {} 
-});
-
-let ellieAgent = async () => ({ 
-  message: new AIMessage("Mock response - initializing"), 
-  results: {} 
-});
-
-let sophiaAgent = async () => ({ 
-  message: new AIMessage("Mock response - initializing"), 
-  results: {} 
-});
-
-// This function will be called after OpenAI is initialized
-const initializeAgents = () => {
-  try {
-    console.log("Creating agents with initialized OpenAI client");
-    caraAgent = createCaraAgent(openai, caraInitialSystemPrompt);
-    mayaAgent = createMayaAgent(openai, mayaInitialSystemPrompt);
-    ellieAgent = createEllieAgent(openai, ellieInitialSystemPrompt);
-    sophiaAgent = createSophiaAgent(openai, sophiaInitialSystemPrompt);
-    console.log("✅ All agents created successfully");
-  } catch (error) {
-    console.error("❌ Error creating agents:", error);
-    // Keep existing mock implementations if error
-  }
-};
-
-// OpenAI initialization function
-const initializeOpenAI = async () => {
+// Initialize OpenAI with model from settings
+const initializeOpenAI = async (modelName: string = "gpt-4o") => {
   try {
     if (process.env.OPENAI_API_KEY) {
-      console.log("✅ OPENAI_API_KEY found! Initializing OpenAI with model gpt-4o");
+      console.log(`✅ OPENAI_API_KEY found! Initializing OpenAI with model ${modelName}`);
       openai = new ChatOpenAI({
-        modelName: "gpt-4o",
+        modelName: modelName,
         temperature: 0.1,
         openAIApiKey: process.env.OPENAI_API_KEY
       });
@@ -295,329 +108,408 @@ const initializeOpenAI = async () => {
       }
     } else {
       console.log("⚠️ OPENAI_API_KEY not provided, using mock implementation");
-      // Keep mock implementation
+      // Mock implementation
+      initializeMockAgents();
     }
   } catch (error) {
     console.error("❌ Error initializing OpenAI:", error);
     console.log("⚠️ Falling back to mock implementation due to error");
-    // Keep mock implementation
+    // Mock implementation
+    initializeMockAgents();
   }
 };
 
-// Initialize OpenAI (this runs asynchronously in the background)
-initializeOpenAI().catch(err => console.error("Failed to initialize OpenAI:", err));
-
-// Create a wrapper for the agent workflow execution
-// This simulates the architecture pattern from Google's Agent Development Kit
-// Using sequential execution with state tracking instead of LangGraph
-let executeAgentWorkflow: (state: AgentState) => Promise<AgentState>;
-
-// Define workflow node functions for each agent
-const caraNode = async (state: AgentState): Promise<AgentState> => {
-  updateAgentStatus('cara', 'active');
-  trackAgentActivity({
-    agent: 'cara',
-    action: 'Orchestrating analysis',
-    detail: 'Planning the analysis workflow and coordinating agents',
-    timestamp: new Date(),
-    tools: ['pinecone']
-  });
-
-  updateAgentStatus('cara', 'thinking');
-  console.log("Executing Cara agent...");
-  // Execute Cara agent with memory and collaboration
-console.log("Starting Cara agent with collaboration");
-const input = state.input || '';
-updateAgentStatus('cara', 'active');
-
-// Initialize analysis
-const result = await caraAgent(input);
-
-// Process message queue and coordinate with other agents
-const messages = await memoryManager.getMessages('cara');
-for (const msg of messages) {
-  await caraAgent.receiveMessage(msg.from, msg.message);
-}
-
-console.log("Cara agent execution complete");
-updateAgentStatus('cara', 'complete');
-
-  // Return updated state
-  return {
-    ...state,
-    cara: {
-      messages: [...(state.cara?.messages || []), 
-                 new HumanMessage({content: input}), 
-                 result.message],
-      results: result.results || {}
-    }
-  };
-};
-
-const mayaNode = async (state: AgentState): Promise<AgentState> => {
-  console.log("Starting Maya node in agent workflow");
-  updateAgentStatus('maya', 'active');
-  trackAgentActivity({
-    agent: 'maya',
-    action: 'Analyzing resume',
-    detail: 'Extracting skills, experience, and assessing automation risk',
-    timestamp: new Date(),
-    tools: ['perplexity', 'database']
-  });
-
-  updateAgentStatus('maya', 'thinking');
-  // Execute the Maya agent
-  const input = state.input || '';
-  console.log(`Executing Maya agent with input: ${input.substring(0, 50)}...`);
-
+// Initialize agents with proper LLM
+const initializeAgents = () => {
   try {
-    console.log("Calling Maya agent...");
-    const result = await mayaAgent(input);
-    console.log("Maya agent returned results successfully");
-    updateAgentStatus('maya', 'complete');
+    console.log("Creating agents with initialized OpenAI client");
+    caraAgent = createCaraAgent(openai, caraInitialSystemPrompt);
+    mayaAgent = createMayaAgent(openai, mayaInitialSystemPrompt);
+    ellieAgent = createEllieAgent(openai, ellieInitialSystemPrompt);
+    sophiaAgent = createSophiaAgent(openai, sophiaInitialSystemPrompt);
+    console.log("✅ All agents created successfully");
 
-    // Extract relevant data from result with type safety
-    const resultData = result.results || {};
-    console.log("Maya resultData:", JSON.stringify(resultData).substring(0, 200) + "...");
-
-    // Use type assertion to access properties safely
-    const mayaData = resultData as any;
-    const skills = Array.isArray(mayaData.skills) ? mayaData.skills : [];
-    console.log("Extracted skills:", skills);
-
-    const experience = mayaData.experience || {};
-    console.log("Extracted experience:", JSON.stringify(experience).substring(0, 100) + "...");
-
-    const education = typeof mayaData.education === 'string' ? mayaData.education : '';
-    console.log("Extracted education:", education);
-
-    // Return updated state
-    return {
-      ...state,
-      maya: {
-        messages: [...(state.maya?.messages || []), 
-                   new HumanMessage({content: input}), 
-                   result.message],
-        results: resultData,
-        skills,
-        experience,
-        education
-      }
-    };
+    // Register event listeners for agent communication
+    setupAgentEventListeners();
   } catch (error) {
-    console.error("Error executing Maya agent:", error);
-    updateAgentStatus('maya', 'complete');
-    return {
-      ...state,
-      maya: {
-        messages: [...(state.maya?.messages || []), 
-                   new HumanMessage({content: input})],
-        results: { error: "Error analyzing resume" },
-        skills: [],
-        experience: {},
-        education: ""
-      }
-    };
+    console.error("❌ Error creating agents:", error);
+    // Keep existing mock implementations if error
+    initializeMockAgents();
   }
 };
 
-const ellieNode = async (state: AgentState): Promise<AgentState> => {
-  updateAgentStatus('ellie', 'active');
-  trackAgentActivity({
-    agent: 'ellie',
-    action: 'Researching industry trends',
-    detail: 'Gathering information on job market, emerging technologies',
-    timestamp: new Date(),
-    tools: ['brave', 'firecrawl', 'browserbase']
-  });
+// Mock implementation for testing without API keys
+const initializeMockAgents = () => {
+  console.log("Initializing mock agents for testing");
 
-  updateAgentStatus('ellie', 'thinking');
-  // Execute the Ellie agent with skills from Maya
-  const skills = state.maya?.skills || [];
-  const skillsInput = JSON.stringify(skills);
-  console.log("Executing Ellie agent with skills:", skillsInput);
-  const result = await ellieAgent(skillsInput);
-  console.log("Ellie agent execution complete");
-  updateAgentStatus('ellie', 'complete');
-
-  // Extract relevant data from result with type safety
-  const resultData = result.results || {};
-
-  // Use type assertion to access properties safely
-  const ellieData = resultData as any;
-  const marketInsights = ellieData.marketInsights || {};
-  const trends = Array.isArray(ellieData.trends) ? ellieData.trends : [];
-  const opportunities = Array.isArray(ellieData.opportunities) ? ellieData.opportunities : [];
-
-  // Return updated state
-  return {
-    ...state,
-    ellie: {
-      messages: [...(state.ellie?.messages || []), 
-                 new HumanMessage({content: skillsInput}), 
-                 result.message],
-      results: resultData,
-      marketInsights,
-      trends,
-      opportunities
+  // Simple mock of the agent interfaces
+  caraAgent = {
+    analyze: async (input: string) => {
+      updateAgentStatus('cara', 'working');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      updateAgentStatus('cara', 'complete');
+      return {
+        message: new AIMessage("I've analyzed your career situation and coordinated with our specialized agents."),
+        results: {
+          analysis: "Mock analysis complete",
+          delegations: {}
+        }
+      };
+    },
+    broadcast: async (message: string, recipients: string[]) => {
+      console.log(`[MOCK] Cara broadcasting: ${message} to ${recipients.join(', ')}`);
+      return true;
+    },
+    updateState: (state: string) => {
+      updateAgentStatus('cara', state as any);
     }
   };
-};
 
-const sophiaNode = async (state: AgentState): Promise<AgentState> => {
-  updateAgentStatus('sophia', 'active');
-  trackAgentActivity({
-    agent: 'sophia',
-    action: 'Creating learning plan',
-    detail: 'Generating personalized learning roadmap and resource recommendations',
-    timestamp: new Date(),
-    tools: ['database', 'perplexity', 'browserbase']
-  });
-
-  updateAgentStatus('sophia', 'thinking');
-  // Execute the Sophia agent with skills from Maya and trends from Ellie
-  const skills = state.maya?.skills || [];
-  const trends = state.ellie?.trends || [];
-  const input = JSON.stringify({ skills, trends });
-  console.log("Executing Sophia agent with input:", input);
-  const result = await sophiaAgent(input);
-  console.log("Sophia agent execution complete");
-  updateAgentStatus('sophia', 'complete');
-
-  // Extract relevant data from result with type safety
-  const resultData = result.results || {};
-
-  // Use type assertion to access properties safely
-  const sophiaData = resultData as any;
-  const learningPlan = sophiaData.learningPlan || {};
-  const resources = Array.isArray(sophiaData.resources) ? sophiaData.resources : [];
-  const roadmap = sophiaData.roadmap || {};
-
-  // Return updated state
-  return {
-    ...state,
-    sophia: {
-      messages: [...(state.sophia?.messages || []), 
-                 new HumanMessage({content: input}), 
-                 result.message],
-      results: resultData,
-      learningPlan,
-      resources,
-      roadmap
+  mayaAgent = {
+    analyze: async (text: string) => {
+      updateAgentStatus('maya', 'working');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      updateAgentStatus('maya', 'complete');
+      return {
+        message: new AIMessage("I've analyzed your resume and extracted key skills and experience."),
+        results: {
+          skills: ["JavaScript", "React", "Node.js", "Communication", "Leadership"],
+          experience: {
+            years: 5,
+            titles: ["Software Developer", "Team Lead"],
+            domains: ["Web Development", "E-commerce"]
+          }
+        }
+      };
+    },
+    broadcast: async (message: string, recipients: string[]) => {
+      console.log(`[MOCK] Maya broadcasting: ${message} to ${recipients.join(', ')}`);
+      return true;
+    },
+    updateState: (state: string) => {
+      updateAgentStatus('maya', state as any);
     }
   };
+
+  ellieAgent = {
+    analyze: async (skills: string[]) => {
+      updateAgentStatus('ellie', 'working');
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      updateAgentStatus('ellie', 'complete');
+      return {
+        message: new AIMessage("I've researched current market trends for your skills."),
+        results: {
+          trends: ["Remote work continues to grow", "AI integration skills in high demand"],
+          opportunities: [
+            { title: "Senior Frontend Developer", relevantSkills: ["React", "JavaScript"] },
+            { title: "Full Stack Engineer", relevantSkills: ["Node.js", "JavaScript", "React"] }
+          ]
+        }
+      };
+    },
+    broadcast: async (message: string, recipients: string[]) => {
+      console.log(`[MOCK] Ellie broadcasting: ${message} to ${recipients.join(', ')}`);
+      return true;
+    },
+    updateState: (state: string) => {
+      updateAgentStatus('ellie', state as any);
+    }
+  };
+
+  sophiaAgent = {
+    createLearningPlan: async (skills: string[]) => {
+      updateAgentStatus('sophia', 'working');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      updateAgentStatus('sophia', 'complete');
+      return {
+        message: new AIMessage("I've created a personalized learning plan for your career growth."),
+        results: {
+          learningPlan: {
+            focusAreas: ["Advanced React", "AI Integration", "System Design"],
+            timeframe: {
+              shortTerm: "React Advanced Patterns",
+              mediumTerm: "AI Integration Fundamentals",
+              longTerm: "Senior Architecture Skills"
+            }
+          },
+          resources: [
+            { title: "Advanced React Patterns", provider: "Frontend Masters", type: "course" },
+            { title: "AI for JavaScript Developers", provider: "Udemy", type: "course" }
+          ]
+        }
+      };
+    },
+    broadcast: async (message: string, recipients: string[]) => {
+      console.log(`[MOCK] Sophia broadcasting: ${message} to ${recipients.join(', ')}`);
+      return true;
+    },
+    updateState: (state: string) => {
+      updateAgentStatus('sophia', state as any);
+    }
+  };
+
+  console.log("✅ Mock agents initialized");
+
+  // Register event listeners for agent communication
+  setupAgentEventListeners();
 };
 
-const synthesizeNode = async (state: AgentState): Promise<AgentState> => {
-  updateAgentStatus('cara', 'active');
-  trackAgentActivity({
-    agent: 'cara',
-    action: 'Synthesizing insights',
-    detail: 'Combining analysis from all agents to create final career advice',
-    timestamp: new Date(),
-    tools: ['pinecone', 'perplexity']
+// Setup event listeners for agent communication
+const setupAgentEventListeners = () => {
+  // Listen for agent status updates
+  agentEmitter.on('agent_status_update', (statuses) => {
+    console.log('Agent statuses updated:', statuses);
+
+    // Update current state if it exists
+    if (currentAgentState) {
+      currentAgentState.status = statuses;
+    }
   });
 
-  updateAgentStatus('cara', 'thinking');
-  // Synthesize the results from all agents
-  console.log(`Synthesizing final results from all agents${state.isPremium ? ' with premium features' : ''}`);
-  const finalResults = await synthesizeResults(
-    state.maya?.results || {}, 
-    state.ellie?.results || {}, 
-    state.sophia?.results || {}, 
-    state.userId || '', 
-    state.input || '',
-    state.isPremium || false,
-    {
-      careerTrajectory: state.cara?.careerTrajectory,
-      executiveNetwork: state.ellie?.executiveNetwork,
-      skillsAccelerator: state.sophia?.skillsAccelerator
+  // Listen for agent broadcasts
+  agentEmitter.on('agent_broadcast', (payload) => {
+    console.log(`Broadcast from ${payload.from}: ${payload.message} to ${payload.recipients.join(', ')}`);
+  });
+
+  // Listen for completed analysis
+  agentEmitter.on('analysis_complete', (result) => {
+    console.log('Analysis complete:', result.originalQuery);
+
+    // Update current state if it exists
+    if (currentAgentState) {
+      currentAgentState.final_plan = result.synthesisResult;
     }
-  );
-  console.log("Synthesis complete");
-  updateAgentStatus('cara', 'complete');
-
-  // Create an enhanced activity with the career advice attached
-  const completeActivity: AgentActivity = {
-    agent: 'cara',
-    action: 'Analysis complete',
-    detail: 'Career advice ready for review',
-    timestamp: new Date(),
-    careerAdvice: finalResults
-  };
-
-  // Emit activity with the career advice data attached
-  trackAgentActivity(completeActivity);
-
-  // Return updated state with final output
-  return {
-    ...state,
-    final_output: finalResults
-  };
+  });
 };
 
-// Initialize workflow execution function
-console.log("Creating simplified ADK-inspired workflow implementation");
-executeAgentWorkflow = async (initialState: AgentState): Promise<AgentState> => {
+// A2A-inspired workflow execution
+export const executeAgentWorkflow = async (input: string, agentModels: Record<string, string> = {}): Promise<AgentState> => {
+  console.log(`Starting agent workflow for input: ${input}`);
+
+  // Initialize state
+  currentAgentState = {
+    user_input: input,
+    status: { ...agentStatuses },
+    errors: []
+  };
+
+  // If agents aren't initialized, do so with specified models
+  if (!caraAgent) {
+    if (agentModels.orchestration) {
+      await initializeOpenAI(agentModels.orchestration);
+    } else {
+      await initializeOpenAI();
+    }
+  } else {
+    // If models have changed, reinitialize appropriate agents
+    if (openai && agentModels.orchestration && openai.modelName !== agentModels.orchestration) {
+      console.log(`Updating Cara's model to ${agentModels.orchestration}`);
+      const newLLM = new ChatOpenAI({
+        modelName: agentModels.orchestration,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      caraAgent = createCaraAgent(newLLM, caraInitialSystemPrompt);
+    }
+
+    if (openai && agentModels.resume && openai.modelName !== agentModels.resume) {
+      console.log(`Updating Maya's model to ${agentModels.resume}`);
+      const newLLM = new ChatOpenAI({
+        modelName: agentModels.resume,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      mayaAgent = createMayaAgent(newLLM, mayaInitialSystemPrompt);
+    }
+
+    if (openai && agentModels.research && openai.modelName !== agentModels.research) {
+      console.log(`Updating Ellie's model to ${agentModels.research}`);
+      const newLLM = new ChatOpenAI({
+        modelName: agentModels.research,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      ellieAgent = createEllieAgent(newLLM, ellieInitialSystemPrompt);
+    }
+
+    if (openai && agentModels.learning && openai.modelName !== agentModels.learning) {
+      console.log(`Updating Sophia's model to ${agentModels.learning}`);
+      const newLLM = new ChatOpenAI({
+        modelName: agentModels.learning,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      sophiaAgent = createSophiaAgent(newLLM, sophiaInitialSystemPrompt);
+    }
+  }
+
   try {
-    console.log("Starting agent workflow execution");
+    // Start with Cara as the orchestrator
+    console.log("1. Starting Cara analysis (orchestration)");
+    const caraResult = await caraAgent.analyze(input);
+    currentAgentState.cara_response = caraResult.message.content;
 
-    // Execute the workflow: cara -> maya -> ellie -> sophia -> synthesize
-    let currentState = initialState;
+    // Maya processes the resume content independently
+    console.log("2. Starting Maya analysis (resume)");
+    try {
+      const mayaResult = await mayaAgent.analyze(input);
+      currentAgentState.maya_response = mayaResult.message.content;
+      currentAgentState.skills = mayaResult.results.skills;
+      currentAgentState.experience = mayaResult.results.experience;
+    } catch (error) {
+      console.error("Error in Maya's analysis:", error);
+      currentAgentState.errors.push(`Maya error: ${error.message}`);
+    }
 
-    // Store the state for userId context in the activity tracking
-    currentAgentState = currentState;
+    // Ellie analyzes market trends based on skills from Maya
+    console.log("3. Starting Ellie analysis (market research)");
+    try {
+      // Wait briefly to ensure Maya's results are available
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Cara (orchestration planning)
-    console.log("Executing Cara node");
-    currentState = await caraNode(currentState);
+      // Get skills from current state or use placeholders
+      const skills = currentAgentState.skills || [
+        "JavaScript", "React", "Communication", "Problem Solving"
+      ];
 
-    // Store the updated state for context
-    currentAgentState = currentState;
+      const ellieResult = await ellieAgent.analyze(skills);
+      currentAgentState.ellie_response = ellieResult.message.content;
+      currentAgentState.market_insights = {
+        trends: ellieResult.results.trends,
+        opportunities: ellieResult.results.opportunities
+      };
+    } catch (error) {
+      console.error("Error in Ellie's analysis:", error);
+      currentAgentState.errors.push(`Ellie error: ${error.message}`);
+    }
 
-    // Maya (resume analysis)
-    console.log("Executing Maya node");
-    currentState = await mayaNode(currentState);
+    // Sophia creates learning plan based on Maya's skills and Ellie's insights
+    console.log("4. Starting Sophia analysis (learning plan)");
+    try {
+      // Wait briefly to ensure previous results are available
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Store the updated state for context
-    currentAgentState = currentState;
+      // Get skills from current state or use placeholders
+      const skills = currentAgentState.skills || [
+        "JavaScript", "React", "Communication", "Problem Solving"
+      ];
 
-    // Ellie (industry analysis)
-    console.log("Executing Ellie node");
-    currentState = await ellieNode(currentState);
+      const sophiaResult = await sophiaAgent.createLearningPlan(skills);
+      currentAgentState.sophia_response = sophiaResult.message.content;
+      currentAgentState.learning_plan = sophiaResult.results;
+    } catch (error) {
+      console.error("Error in Sophia's analysis:", error);
+      currentAgentState.errors.push(`Sophia error: ${error.message}`);
+    }
 
-    // Store the updated state for context
-    currentAgentState = currentState;
+    // Final synthesis by Cara
+    console.log("5. Final synthesis by Cara");
+    try {
+      const synthesisResult = await caraAgent.synthesizeResults?.();
+      if (synthesisResult) {
+        currentAgentState.final_plan = synthesisResult;
+      }
+    } catch (error) {
+      console.error("Error in final synthesis:", error);
+      currentAgentState.errors.push(`Synthesis error: ${error.message}`);
+    }
 
-    // Sophia (learning plan)
-    console.log("Executing Sophia node");
-    currentState = await sophiaNode(currentState);
-
-    // Store the updated state for context
-    currentAgentState = currentState;
-
-    // Final synthesis
-    console.log("Executing synthesis node");
-    currentState = await synthesizeNode(currentState);
-
-    // Clear the state after workflow completion
-    currentAgentState = null;
-
-    console.log("Agent workflow execution completed successfully");
-    return currentState;
+    console.log("Agent workflow complete!");
   } catch (error) {
     console.error("Error in agent workflow execution:", error);
+    currentAgentState.errors.push(`Workflow error: ${error.message}`);
+  }
 
-    // Return the partial state in case of error
-    return currentAgentState || initialState;
+  return currentAgentState;
+};
+
+// Function to update agent models based on settings
+export const updateAgentModels = async (modelSettings: Record<string, string>): Promise<boolean> => {
+  try {
+    console.log("Updating agent models with settings:", modelSettings);
+
+    // Reinitialize agents with new models
+    if (modelSettings.orchestration && openai) {
+      console.log(`Updating Cara's model to ${modelSettings.orchestration}`);
+      const newLLM = new ChatOpenAI({
+        modelName: modelSettings.orchestration,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      caraAgent = createCaraAgent(newLLM, caraInitialSystemPrompt);
+    }
+
+    if (modelSettings.resume && openai) {
+      console.log(`Updating Maya's model to ${modelSettings.resume}`);
+      const newLLM = new ChatOpenAI({
+        modelName: modelSettings.resume,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      mayaAgent = createMayaAgent(newLLM, mayaInitialSystemPrompt);
+    }
+
+    if (modelSettings.research && openai) {
+      console.log(`Updating Ellie's model to ${modelSettings.research}`);
+      const newLLM = new ChatOpenAI({
+        modelName: modelSettings.research,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      ellieAgent = createEllieAgent(newLLM, ellieInitialSystemPrompt);
+    }
+
+    if (modelSettings.learning && openai) {
+      console.log(`Updating Sophia's model to ${modelSettings.learning}`);
+      const newLLM = new ChatOpenAI({
+        modelName: modelSettings.learning,
+        temperature: 0.1,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      });
+      sophiaAgent = createSophiaAgent(newLLM, sophiaInitialSystemPrompt);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error updating agent models:", error);
+    return false;
   }
 };
 
+// Make analysis settings take effect
+export const updateAnalysisSettings = (settings: { deepAnalysis: boolean, realTimeMarketData: boolean }): void => {
+  console.log("Updating analysis settings:", settings);
+
+  // Broadcast settings to agents
+  agentEmitter.emit('analysis_settings_update', settings);
+};
+
+// Function to reset agent state
+export const resetAgentState = (): void => {
+  currentAgentState = null;
+
+  // Reset all agent statuses
+  updateAgentStatus('cara', 'idle');
+  updateAgentStatus('maya', 'idle');
+  updateAgentStatus('ellie', 'idle');
+  updateAgentStatus('sophia', 'idle');
+
+  console.log("Agent state reset");
+};
+
+// Initialize on module load
+initializeOpenAI();
+
+// Export functions and types
+export {
+  agentEmitter,
+  AgentState
+};
 // Track agent activity function
-const trackAgentActivity = (activity: AgentActivity) => {
+const trackAgentActivity = (activity: any) => {
   // Add userId from current state context if available
-  if (currentAgentState?.userId && !activity.userId) {
-    activity.userId = currentAgentState.userId;
+  if (currentAgentState?.user_input && !activity.userId) {
+    activity.userId = currentAgentState.user_input;
   }
 
   // Emit the activity to any listening clients
@@ -641,7 +533,7 @@ export const getAgentModel = async (agentType: string, userId: string) => {
       const defaultModels: Record<string, string> = {
         orchestration: 'claude-3-7-sonnet',
         resume: 'gpt-4-1106-preview',
-        research: 'pplx-70b-online', 
+        research: 'pplx-70b-online',
         learning: 'claude-3-7-haiku'
       };
 
@@ -682,7 +574,7 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
   });
 
   // Initial state for the workflow
-  const initialState: AgentState = {
+  const initialState: any = {
     input: resumeText,
     userId: userId,
     isPremium: isPremium,
@@ -695,12 +587,12 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
 
   try {
     // Set the current state for context in agent activities and status updates
-    currentAgentState = initialState;
+    //currentAgentState = initialState;
 
     // Run our custom agent workflow executor
     // This will execute all agents in sequence: cara -> maya -> ellie -> sophia -> synthesize
     console.log("Starting agent workflow for career analysis");
-    const result = await executeAgentWorkflow(initialState);
+    const result = await executeAgentWorkflow(resumeText);
 
     // Store vectors in Pinecone for future retrieval
     try {
@@ -722,7 +614,8 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
     }
 
     // Return the final synthesized results
-    return result.final_output || createSampleCareerAdvice();
+    //return result.final_output || createSampleCareerAdvice();
+    return result.final_plan;
   } catch (workflowError) {
     console.error("Error running agent workflow:", workflowError);
 
@@ -796,17 +689,17 @@ export const runCareerate = async (userId: string, resumeText: string, isPremium
 
     updateAgentStatus('cara', 'thinking');
     const finalResults = await synthesizeResults(
-      mayaResults, 
-      ellieResults, 
-      sophiaResults, 
-      userId, 
+      mayaResults,
+      ellieResults,
+      sophiaResults,
+      userId,
       resumeText,
       isPremium
     );
     updateAgentStatus('cara', 'complete');
 
     // Create an activity with the career advice attached
-    const completeActivity: AgentActivity = {
+    const completeActivity: any = {
       agent: 'cara',
       action: 'Analysis complete (fallback mode)',
       detail: 'Career advice ready for review (generated using fallback approach)',
@@ -859,7 +752,7 @@ async function runMayaAnalysis(resumeText: string, userId: string) {
     console.warn("Maya agent error, using fallback analysis:", error);
     return {
       skills: ["analytical thinking", "problem solving", "communication"],
-      experience: { 
+      experience: {
         roles: ["Professional"],
         years: 1,
         summary: "Experience information unavailable"
@@ -1245,7 +1138,7 @@ async function synthesizeResults(
 function getDescriptionForCategory(category: string, risk: number) {
   switch (category) {
     case "Automation":
-      return risk >= 4 
+      return risk >= 4
         ? "Your current role has significant exposure to automation technologies."
         : "Your role has some elements that could be automated, but requires human judgment.";
     case "Market Demand":

@@ -70,3 +70,91 @@ router.post('/', isAuthenticated, async (req: Request, res: Response) => {
 });
 
 export default router;
+import { Request, Response } from 'express';
+import { pool } from '../db';
+import { updateAgentModels, updateAnalysisSettings } from '../../src/agents/graph';
+
+// Get user settings
+export const getUserSettings = async (req: Request, res: Response) => {
+  try {
+    // Get user ID from session
+    const userId = req.session?.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    // Query the database for user settings
+    const result = await pool.query(
+      'SELECT settings FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Return settings or default values if not set
+    const settings = result.rows[0].settings || {
+      models: {
+        orchestration: 'claude-3-7-sonnet',
+        resume: 'gpt-4-1106-preview',
+        research: 'pplx-70b-online',
+        learning: 'claude-3-7-haiku'
+      },
+      analysis: {
+        deepAnalysis: false,
+        realTimeMarketData: true
+      },
+      theme: {
+        darkMode: false,
+        highContrast: false
+      }
+    };
+    
+    return res.json(settings);
+  } catch (error) {
+    console.error('Error getting user settings:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update user settings
+export const updateUserSettings = async (req: Request, res: Response) => {
+  try {
+    // Get user ID from session
+    const userId = req.session?.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    
+    const settings = req.body;
+    
+    // Validate settings structure
+    if (!settings || !settings.models || !settings.analysis || !settings.theme) {
+      return res.status(400).json({ error: 'Invalid settings format' });
+    }
+    
+    // Update settings in database
+    await pool.query(
+      'UPDATE users SET settings = $1 WHERE id = $2',
+      [settings, userId]
+    );
+    
+    // Apply model changes to the agent system
+    if (settings.models) {
+      await updateAgentModels(settings.models);
+    }
+    
+    // Apply analysis settings
+    if (settings.analysis) {
+      updateAnalysisSettings(settings.analysis);
+    }
+    
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating user settings:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
