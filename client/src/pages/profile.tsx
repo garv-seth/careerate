@@ -41,46 +41,45 @@ const ProfilePage = () => {
         console.log(`Form data: ${key} = ${value instanceof File ? value.name : value}`);
       }
 
-      const response = await fetch('/api/onboarding/upload-resume', {
-        method: 'POST',
-        // Don't set Content-Type header manually - let the browser set it correctly with the boundary
-        // This is critical for multipart/form-data uploads
-        body: formData,
-      });
+      // Try the main onboarding endpoint first
+      try {
+        const response = await fetch('/api/onboarding/upload-resume', {
+          method: 'POST',
+          // Don't set Content-Type header manually - let the browser set it correctly with the boundary
+          // This is critical for multipart/form-data uploads
+          body: formData,
+        });
 
-      if (!response.ok) {
-        let errorMessage = 'Failed to upload resume';
-        try {
-          // Try to parse error as JSON
-          const errorData = await response.json();
-          
-          // Handle obsolete endpoint redirect case
-          if (response.status === 410 && errorData.redirectTo) {
-            console.log('Detected obsolete endpoint, redirecting to:', errorData.redirectTo);
-            // Re-attempt the upload to the new endpoint
-            const redirectResponse = await fetch(errorData.redirectTo, {
-              method: 'POST',
-              body: formData,
-            });
-            
-            if (!redirectResponse.ok) {
-              throw new Error('Redirect to new endpoint failed');
-            }
-            
-            return redirectResponse.json();
-          }
-          
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
-          // If it's not JSON (e.g., HTML error page), use status text
-          console.error('Error response was not JSON:', e);
-          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        // Check if we got a successful response
+        if (response.ok) {
+          return response.json();
         }
-        console.error('Upload error response:', errorMessage);
-        throw new Error(errorMessage);
-      }
 
-      return response.json();
+        // Handle errors
+        let errorMessage = 'Failed to upload resume';
+        
+        // Try to parse as JSON first
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (jsonError) {
+          // Not JSON, possibly HTML response
+          const text = await response.text();
+          console.error('Non-JSON error response:', text);
+          
+          // If it contains HTML, it's likely a server error page
+          if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          } else {
+            errorMessage = text || errorMessage;
+          }
+        }
+        
+        throw new Error(errorMessage);
+      } catch (uploadError) {
+        console.error('Resume upload error:', uploadError);
+        throw uploadError;
+      }
     },
     onSuccess: () => {
       setUploading(false);
