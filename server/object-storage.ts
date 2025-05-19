@@ -133,18 +133,21 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
 
   const singleUpload = upload.single("resume");
 
+  // Always ensure we return JSON responses
+  res.setHeader('Content-Type', 'application/json');
+  
   singleUpload(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
-      // Always return JSON response, not HTML
-      return next(err);
+      // Return JSON error response directly
+      return res.status(400).json({ error: err.message || "File upload failed" });
     }
 
     console.log("File upload request processed", req.file ? "with file" : "without file");
 
     if (!req.file) {
       console.error("No file found in request");
-      return next(new Error("No file uploaded"));
+      return res.status(400).json({ error: "No file uploaded" });
     }
 
     const userId = req.user.claims.sub;
@@ -193,7 +196,7 @@ export const uploadResume = async (req: any, res: Response, next: NextFunction) 
       } catch (unlinkError) {
         console.error("Error deleting temporary file:", unlinkError);
       }
-      return next(new Error("Error processing resume"));
+      return res.status(500).json({ error: "Error processing resume" });
     }
   });
 };

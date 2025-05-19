@@ -85,9 +85,15 @@ import { setupSessionTable } from './setup-sessions';
     // Log the error but don't throw it again
     console.error("Error caught in global handler:", err);
     
+    // Always set JSON content type to force JSON response
+    res.setHeader('Content-Type', 'application/json');
+    
     // Ensure we only send a response if one hasn't been sent already
     if (!res.headersSent) {
       return res.status(status).json({ error: message });
+    } else {
+      // If headers were already sent, log that information
+      console.error("Headers already sent when error occurred");
     }
   });
 
