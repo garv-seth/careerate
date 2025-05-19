@@ -77,17 +77,55 @@ function AgentsPage() {
               </Card>
             </div>
 
-            {/* Keep other agent-related content */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>AI Agent Team</CardTitle>
-                  <CardDescription>Our specialized agents work together to analyze your career data</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p>Agent content here...</p>
-                </CardContent>
-              </Card>
+            {/* Agent Team Grid Display */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4">Meet Our AI Agent Team</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                  <CardHeader>
+                    <CardTitle className="text-blue-700 dark:text-blue-300">Cara</CardTitle>
+                    <CardDescription>Career Coach & Orchestrator</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">Coordinates your career analysis and creates comprehensive action plans based on specialized agent inputs.</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                  <CardHeader>
+                    <CardTitle className="text-purple-700 dark:text-purple-300">Maya</CardTitle>
+                    <CardDescription>Resume Analyzer</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">Specializes in analyzing your resume to identify skills, experience, and career trajectory patterns.</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800">
+                  <CardHeader>
+                    <CardTitle className="text-pink-700 dark:text-pink-300">Ellie</CardTitle>
+                    <CardDescription>Industry Analyst</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">Researches market trends, industry developments, and automation risks relevant to your career.</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                  <CardHeader>
+                    <CardTitle className="text-green-700 dark:text-green-300">Sophia</CardTitle>
+                    <CardDescription>Learning Advisor</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">Creates personalized learning plans based on your skills and career goals for optimal skill development.</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="mt-6 flex items-center p-4 bg-muted/50 rounded-lg">
+                <Info className="h-5 w-5 text-primary mr-2" />
+                <p className="text-sm">Our agents work together to provide personalized career insights once you upload your resume.</p>
+              </div>
             </div>
           </div>
         </main>

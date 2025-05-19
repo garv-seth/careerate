@@ -28,7 +28,7 @@ const ProfilePage = () => {
     enabled: !!user,
   });
 
-  // Handle resume upload
+  // Handle resume upload with robust error handling
   const uploadResumeMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
@@ -36,45 +36,44 @@ const ProfilePage = () => {
 
       console.log(`Uploading file: ${file.name}, size: ${file.size}, type: ${file.type}`);
 
-      // Log form data for debugging
-      for (let [key, value] of formData.entries()) {
-        console.log(`Form data: ${key} = ${value instanceof File ? value.name : value}`);
-      }
-
-      // Add specific error handling to handle the JSON parsing issue
       try {
-        const response = await fetch('/api/onboarding/upload-resume', {
+        // Add a timestamp to prevent caching issues
+        const timestamp = new Date().getTime();
+        const url = `/api/onboarding/upload-resume?t=${timestamp}`;
+        
+        // Use fetch with specific options to ensure proper handling
+        const response = await fetch(url, {
           method: 'POST',
-          // Don't set Content-Type header manually - let the browser set it correctly with the boundary
           body: formData,
+          // Important: don't manually set Content-Type for FormData
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
         });
 
-        // Check if we got a successful response
-        if (response.ok) {
-          return response.json();
+        // Special handling for potential HTML responses
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+          console.error('Received HTML response instead of JSON');
+          const htmlText = await response.text();
+          throw new Error('Server returned HTML instead of JSON. Please try again.');
         }
 
-        // Handle errors
-        let errorMessage = 'Failed to upload resume';
-        
-        // Try to parse as JSON first
+        // Try to parse JSON response
         try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (jsonError) {
-          // Not JSON, possibly HTML response
-          const text = await response.text();
-          console.error('Non-JSON error response:', text);
+          const jsonData = await response.json();
           
-          // If it contains HTML, it's likely a server error page
-          if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-            errorMessage = `Invalid server response - please try again`;
-          } else {
-            errorMessage = text || errorMessage;
+          if (!response.ok) {
+            const errorMsg = jsonData.error || jsonData.message || 'Unknown error occurred';
+            throw new Error(errorMsg);
           }
+          
+          return jsonData;
+        } catch (jsonError) {
+          console.error('JSON parsing error:', jsonError);
+          throw new Error('Invalid response format. Please try again.');
         }
-        
-        throw new Error(errorMessage);
       } catch (uploadError) {
         console.error('Resume upload error:', uploadError);
         throw uploadError;
