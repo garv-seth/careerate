@@ -1,4 +1,3 @@
-
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
@@ -292,98 +291,151 @@ class MayaAgent extends BaseAgent {
       'maya', 
       llm, 
       systemPrompt,
-      "Resume Analyzer",
-      "I analyze your resume to identify skills, experience, and career trajectory.",
-      "Profile analysis and skill extraction",
-      ["text analysis", "skill extraction", "career trajectory analysis"],
-      tools.filter(tool => ["database_lookup"].includes(tool.name))
+      "Resume Analysis Specialist",
+      "I specialize in deeply analyzing resumes and professional profiles to extract skills, experience, education, and provide a summary, key strengths, and areas for development.",
+      "Resume analysis, skill extraction, experience parsing, professional profile assessment",
+      ["resume_parsing", "skill_extraction", "experience_analysis", "strength_identification", "development_area_identification", "resume_summarization"],
+      // Add any specific tools Maya might need, e.g., a hypothetical "ATS_compatibility_checker"
+      tools.filter(tool => [/* "specific_tool_for_maya" */].includes(tool.name)) 
     );
   }
 
-  async analyze(text: string) {
+  async analyze(text: string): Promise<{ 
+    message: AIMessage, 
+    results: { 
+      skills: any[], 
+      experience: any, 
+      summary: string, 
+      strengths: string[], 
+      areasForDevelopment: string[] 
+    } 
+  }> {
     this.updateState('working');
-    
-    // Extract skills and experience using the LLM
-    const skills = await this.extractSkills(text);
-    const experience = await this.extractExperience(text);
-    
-    // Store embeddings for future reference
+    this.messageHistory.push(new HumanMessage(`Analyze the following resume text: ${text.substring(0, 8000)}`)); // Truncate for very long resumes
+
+    const analysisPrompt = ChatPromptTemplate.fromMessages([
+      ["system", this.systemPrompt],
+      new MessagesPlaceholder("messageHistory"),
+      ["human", `
+        Please analyze the provided resume text thoroughly. Based on your analysis, provide the following in a structured JSON format:
+        1.  **skills**: A comprehensive list of technical and soft skills. For each skill, provide the skill name and an estimated proficiency level (e.g., Beginner, Intermediate, Advanced, Expert) if inferable.
+            Example: [{ "name": "JavaScript", "level": "Advanced" }, { "name": "Project Management", "level": "Expert" }]
+        2.  **experience**: A summary of work experience, including roles, companies, duration, and key responsibilities/achievements for each.
+            Example: [{ "role": "Software Engineer", "company": "Tech Solutions Inc.", "duration": "Jan 2020 - Present", "summary": "Developed and maintained web applications..." }]
+        3.  **summary**: A concise overall summary of the candidate's profile (2-3 sentences).
+        4.  **strengths**: A list of 3-5 key professional strengths evident from the resume.
+        5.  **areasForDevelopment**: A list of 2-3 potential areas for development or skills to acquire for career growth, based on the resume and common career progression.
+
+        Focus on extracting factual information and making reasonable inferences.
+        Resume Text:
+        ---
+        ${text.substring(0, 8000)}
+        ---
+        
+        Return ONLY the JSON object containing these fields. Do not add any extra conversational text or markdown formatting around the JSON.
+        Ensure the JSON is well-formed.
+        Example JSON structure:
+        {
+          "skills": [{"name": "Python", "level": "Intermediate"}, {"name": "Communication", "level": "Advanced"}],
+          "experience": [{"role": "Data Analyst", "company": "Data Corp", "duration": "June 2021 - May 2023", "summary": "Analyzed sales data..."}],
+          "summary": "A data analyst with 2 years of experience...",
+          "strengths": ["Data Analysis", "Problem Solving"],
+          "areasForDevelopment": ["Machine Learning", "Cloud Platforms"]
+        }
+      `],
+    ]);
+
+    const chain = RunnableSequence.from([
+      analysisPrompt,
+      this.llm
+    ]);
+
+    let analysisResult;
+    let parsedAnalysis = {
+        skills: [],
+        experience: [],
+        summary: "Could not generate a summary.",
+        strengths: [],
+        areasForDevelopment: []
+    };
+
     try {
-      await storeResumeEmbeddings(text, { skills, experience });
-    } catch (error) {
-      console.error("Error storing resume embeddings:", error);
+      const response = await chain.invoke({ messageHistory: this.messageHistory });
+      this.messageHistory.push(response);
+      analysisResult = response.content;
+
+      // Attempt to parse the JSON output from the LLM
+      // The LLM might sometimes include ```json ... ``` or just the raw JSON.
+      let jsonString = analysisResult as string;
+      if (jsonString.startsWith("```json")) {
+        jsonString = jsonString.substring(7, jsonString.length - 3).trim();
+      } else if (jsonString.startsWith("```")) {
+         jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+      }
+      
+      try {
+        parsedAnalysis = JSON.parse(jsonString);
+      } catch (parseError) {
+        console.error("Maya: Error parsing LLM JSON response:", parseError);
+        console.error("Maya: Raw LLM response that failed parsing:", jsonString);
+        // Fallback or re-prompting could be implemented here
+        // For now, we use the default empty structure.
+         parsedAnalysis.summary = "Failed to parse detailed analysis. Resume processed, but insights may be limited.";
+      }
+
+    } catch (error: any) {
+      console.error("Maya: Error during LLM call for resume analysis:", error);
+      this.updateState('failed');
+      throw new Error("Maya failed to analyze the resume due to an LLM error.");
     }
     
-    // Store findings in memory
-    await this.storeMemory('skills', skills);
-    await this.storeMemory('experience', experience);
+    // Store extracted skills for Pinecone (if available and skills were extracted)
+    if (parsedAnalysis.skills && parsedAnalysis.skills.length > 0) {
+      try {
+        // Assuming storeResumeEmbeddings expects the raw text and the skills array
+        await storeResumeEmbeddings(text.substring(0, 8000), parsedAnalysis.skills); 
+        console.log("Maya: Resume text and skills stored for embeddings.");
+      } catch (embeddingError) {
+        console.error("Maya: Error storing resume embeddings:", embeddingError);
+        // Non-fatal, continue with analysis results
+      }
+    }
 
-    // Broadcast findings to other agents
-    await this.broadcast(
-      `Identified ${skills.length} skills and ${experience.years} years of experience`,
-      ['cara', 'ellie', 'sophia']
-    );
+    const finalResults = {
+      skills: parsedAnalysis.skills || [],
+      experience: parsedAnalysis.experience || [],
+      summary: parsedAnalysis.summary || "Resume analysis complete.",
+      strengths: parsedAnalysis.strengths || [],
+      areasForDevelopment: parsedAnalysis.areasForDevelopment || []
+    };
     
+    await this.storeMemory('last_analysis', finalResults);
     this.updateState('completed');
-
+    
     return {
-      message: new AIMessage("Resume analysis complete"),
-      results: { skills, experience }
+      message: new AIMessage("Resume analysis complete. Extracted skills, experience, summary, strengths, and areas for development."),
+      results: finalResults
     };
   }
 
-  private async extractSkills(text: string) {
-    const prompt = ChatPromptTemplate.fromMessages([
-      ["system", this.systemPrompt],
-      ["system", "Extract a comprehensive list of professional skills from the provided text. Include both technical and soft skills. Return as a JSON array of strings."],
-      ["human", text]
-    ]);
-    
-    const chain = RunnableSequence.from([
-      prompt,
-      this.llm
-    ]);
-    
-    const response = await chain.invoke({});
-    try {
-      return JSON.parse(response.content);
-    } catch (error) {
-      console.error("Error parsing skills JSON:", error);
-      return [];
-    }
-  }
-
-  private async extractExperience(text: string) {
-    const prompt = ChatPromptTemplate.fromMessages([
-      ["system", this.systemPrompt],
-      ["system", "Extract years of experience, job titles, and industry domains from the provided text. Return as a JSON object with 'years' (number), 'titles' (array), and 'domains' (array)."],
-      ["human", text]
-    ]);
-    
-    const chain = RunnableSequence.from([
-      prompt,
-      this.llm
-    ]);
-    
-    const response = await chain.invoke({});
-    try {
-      return JSON.parse(response.content);
-    } catch (error) {
-      console.error("Error parsing experience JSON:", error);
-      return { years: 0, titles: [], domains: [] };
-    }
-  }
+  // Remove or comment out old extractSkills and extractExperience if they are no longer used.
+  // private async extractSkills(text: string) { ... }
+  // private async extractExperience(text: string) { ... }
 
   protected async processMessage(from: string, message: string) {
-    if (from === 'cara' && message.includes('analysis request')) {
-      // Get the current analysis from Cara
-      const caraMemory = await memoryManager.recall('cara', 'current_analysis');
-      if (caraMemory) {
-        const results = await this.analyze(caraMemory);
-        return results.results;
+    // Maya typically acts on direct analysis requests, but could respond to Cara's queries
+    console.log(`Maya received message from ${from}: ${message}`);
+    // Example: if Cara asks for a re-analysis or specific detail
+    if (message.toLowerCase().includes("re-analyze") || message.toLowerCase().includes("clarify skill")) {
+      const lastResume = await this.recall('last_resume_text'); // Assuming resume text is stored
+      if (lastResume) {
+        // Potentially re-run a more focused analysis or part of it
+        // For now, just acknowledge
+        return "Acknowledged. If you need a specific part of the resume re-analyzed, please specify.";
       }
+      return "No resume text found in memory to re-analyze.";
     }
-    return null;
+    return `Maya acknowledges message from ${from}.`;
   }
 }
 

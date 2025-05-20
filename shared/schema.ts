@@ -25,7 +25,7 @@ export const sessions = pgTable(
     sess: jsonb("sess").notNull(),
     expire: timestamp("expire").notNull(),
   },
-  (table) => [index("IDX_session_expire").on(table.expire)],
+  (table: { expire: typeof sessions.expire }) => [index("IDX_session_expire").on(table.expire)],
 );
 
 // User table for Replit Auth
@@ -52,6 +52,11 @@ export const profiles = pgTable("profiles", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   resumeText: text("resume_text"),
+  resumeSummary: text("resume_summary"),
+  extractedSkills: jsonb("extracted_skills"),
+  extractedExperience: jsonb("extracted_experience"),
+  keyStrengths: text("key_strengths").array(),
+  areasForDevelopment: text("areas_for_development").array(),
   lastScan: timestamp("last_scan"),
   careerStage: varchar("career_stage"),
   industryFocus: text("industry_focus").array(),
@@ -82,6 +87,11 @@ export type User = typeof users.$inferSelect;
 export const insertProfileSchema = createInsertSchema(profiles).pick({
   userId: true,
   resumeText: true,
+  resumeSummary: true,
+  extractedSkills: true,
+  extractedExperience: true,
+  keyStrengths: true,
+  areasForDevelopment: true,
   lastScan: true,
   careerStage: true,
   industryFocus: true,

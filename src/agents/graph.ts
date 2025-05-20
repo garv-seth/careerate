@@ -18,6 +18,8 @@ import {
   sophiaInitialSystemPrompt
 } from './prompts';
 import { ChatOpenAI } from '@langchain/openai';
+import { storage } from '../../server/storage'; // For fetching profile data
+import { Profile, UserSkill } from '../../shared/schema'; // For type safety
 
 // Agent instances
 let caraAgent: any = null;
@@ -60,25 +62,35 @@ export const updateAgentStatus = (
 // Interface for agent state
 export interface AgentState {
   user_input: string;
-  cara_response?: string;
-  maya_response?: string;
-  ellie_response?: string;
-  sophia_response?: string;
-  skills?: string[];
+  cara_response?: string | object;
+  maya_response?: string | object;
+  ellie_response?: string | object;
+  sophia_response?: string | object;
+  skills?: any[];
   experience?: any;
   market_insights?: any;
   learning_plan?: any;
-  final_plan?: string;
-  errors?: string[];
-  status: {
-    cara: 'idle' | 'working' | 'thinking' | 'complete';
-    maya: 'idle' | 'working' | 'thinking' | 'complete';
-    ellie: 'idle' | 'working' | 'thinking' | 'complete';
-    sophia: 'idle' | 'working' | 'thinking' | 'complete';
-  };
+  final_plan?: string | object;
+  errors: { agent: string, message: string, details?: any }[];
+  status: AgentStatuses;
+  profile?: Profile | null;
+  mayaAnalysis?: any;
+  ellieInsights?: any;
+  sophiaPlan?: any;
 }
 
 let currentAgentState: AgentState | null = null;
+
+// Type for agent model configuration
+export type AgentModels = Record<string, string>;
+
+// Type for instances of all agents
+export type AgentInstances = {
+  caraAgent: any;
+  mayaAgent: any;
+  ellieAgent: any;
+  sophiaAgent: any;
+};
 
 // Initialize OpenAI with model from settings
 const initializeOpenAI = async (modelName: string = "gpt-4o") => {
@@ -120,7 +132,7 @@ const initializeOpenAI = async (modelName: string = "gpt-4o") => {
 };
 
 // Initialize agents with proper LLM
-const initializeAgents = () => {
+const initializeAgents = async (agentModels?: AgentModels): Promise<AgentInstances> => {
   try {
     console.log("Creating agents with initialized OpenAI client");
     caraAgent = createCaraAgent(openai, caraInitialSystemPrompt);
@@ -131,10 +143,13 @@ const initializeAgents = () => {
 
     // Register event listeners for agent communication
     setupAgentEventListeners();
+
+    return { caraAgent, mayaAgent, ellieAgent, sophiaAgent };
   } catch (error) {
     console.error("❌ Error creating agents:", error);
     // Keep existing mock implementations if error
     initializeMockAgents();
+    return { caraAgent, mayaAgent, ellieAgent, sophiaAgent };
   }
 };
 
@@ -356,9 +371,10 @@ export const executeAgentWorkflow = async (input: string, agentModels: Record<st
       currentAgentState.maya_response = mayaResult.message.content;
       currentAgentState.skills = mayaResult.results.skills;
       currentAgentState.experience = mayaResult.results.experience;
+      currentAgentState.mayaAnalysis = mayaResult.results;
     } catch (error) {
       console.error("Error in Maya's analysis:", error);
-      currentAgentState.errors.push(`Maya error: ${error.message}`);
+      currentAgentState.errors.push({ agent: "maya", message: error.message, details: error.stack });
     }
 
     // Ellie analyzes market trends based on skills from Maya
@@ -378,9 +394,10 @@ export const executeAgentWorkflow = async (input: string, agentModels: Record<st
         trends: ellieResult.results.trends,
         opportunities: ellieResult.results.opportunities
       };
+      currentAgentState.ellieInsights = ellieResult.results;
     } catch (error) {
       console.error("Error in Ellie's analysis:", error);
-      currentAgentState.errors.push(`Ellie error: ${error.message}`);
+      currentAgentState.errors.push({ agent: "ellie", message: error.message, details: error.stack });
     }
 
     // Sophia creates learning plan based on Maya's skills and Ellie's insights
@@ -397,9 +414,10 @@ export const executeAgentWorkflow = async (input: string, agentModels: Record<st
       const sophiaResult = await sophiaAgent.createLearningPlan(skills);
       currentAgentState.sophia_response = sophiaResult.message.content;
       currentAgentState.learning_plan = sophiaResult.results;
+      currentAgentState.sophiaPlan = sophiaResult.results;
     } catch (error) {
       console.error("Error in Sophia's analysis:", error);
-      currentAgentState.errors.push(`Sophia error: ${error.message}`);
+      currentAgentState.errors.push({ agent: "sophia", message: error.message, details: error.stack });
     }
 
     // Final synthesis by Cara
@@ -408,16 +426,17 @@ export const executeAgentWorkflow = async (input: string, agentModels: Record<st
       const synthesisResult = await caraAgent.synthesizeResults?.();
       if (synthesisResult) {
         currentAgentState.final_plan = synthesisResult;
+        currentAgentState.cara_response = synthesisResult;
       }
     } catch (error) {
       console.error("Error in final synthesis:", error);
-      currentAgentState.errors.push(`Synthesis error: ${error.message}`);
+      currentAgentState.errors.push({ agent: "cara_synthesis", message: error.message, details: error.stack });
     }
 
     console.log("Agent workflow complete!");
   } catch (error) {
     console.error("Error in agent workflow execution:", error);
-    currentAgentState.errors.push(`Workflow error: ${error.message}`);
+    currentAgentState.errors.push({ agent: "workflow_orchestrator", message: error.message, details: error.stack });
   }
 
   return currentAgentState;
@@ -505,6 +524,7 @@ export {
   agentEmitter,
   AgentState
 };
+
 // Track agent activity function
 const trackAgentActivity = (activity: any) => {
   // Add userId from current state context if available
@@ -519,7 +539,6 @@ const trackAgentActivity = (activity: any) => {
   const { careerAdvice, ...loggableActivity } = activity;
   console.log(`Agent ${activity.agent}: ${activity.action}`, loggableActivity.detail || '');
 };
-
 
 // Get the model for a specific agent type
 export const getAgentModel = async (agentType: string, userId: string) => {
@@ -1278,3 +1297,159 @@ function createSampleCareerAdvice() {
     }
   };
 }
+
+export interface DeepAccelerationState extends AgentState {
+  profile?: Profile | null;
+  mayaAnalysis?: any; // Output from Maya
+  ellieInsights?: any; // Output from Ellie
+  sophiaPlan?: any; // Output from Sophia
+  final_plan?: string | object; // Synthesized plan by Cara
+  errors: { agent: string, message: string, details?: any }[]; // Ensure errors is not optional
+}
+
+export const startDeepAccelerationWorkflow = async (
+  userId: string,
+  agentModels?: AgentModels // Optional: if specific models need to be used
+): Promise<DeepAccelerationState> => {
+  console.log(`[Graph] Starting Deep Acceleration Workflow for user ${userId}`);
+  let agents: AgentInstances;
+  try {
+    agents = await initializeAgents(agentModels);
+  } catch (initError: any) {
+    console.error("[Graph] Failed to initialize agents for Deep Acceleration:", initError);
+    return {
+      user_input: `Deep Acceleration for user ${userId}`,
+      cara_response: undefined,
+      maya_response: undefined,
+      ellie_response: undefined,
+      sophia_response: undefined,
+      final_plan: undefined,
+      errors: [{ agent: "system", message: "Agent initialization failed", details: initError.message }],
+      status: { ...agentStatuses },
+      profile: undefined,
+      skills: undefined,
+      experience: undefined,
+      market_insights: undefined,
+      learning_plan: undefined,
+      mayaAnalysis: undefined,
+      ellieInsights: undefined,
+      sophiaPlan: undefined
+    };
+  }
+
+  const { caraAgent, mayaAgent, ellieAgent, sophiaAgent } = agents;
+
+  const currentState: DeepAccelerationState = {
+    user_input: `Deep Acceleration for user ${userId}`,
+    errors: [],
+    status: { ...agentStatuses },
+    cara_response: undefined,
+    maya_response: undefined,
+    ellie_response: undefined,
+    sophia_response: undefined,
+    final_plan: undefined,
+    profile: undefined,
+    skills: undefined,
+    experience: undefined,
+    market_insights: undefined,
+    learning_plan: undefined,
+    mayaAnalysis: undefined,
+    ellieInsights: undefined,
+    sophiaPlan: undefined
+  };
+
+  try {
+    updateAgentStatus(caraAgent.name, "working", "Fetching user profile");
+    currentState.profile = await storage.getProfileByUserId(userId);
+    if (!currentState.profile || !currentState.profile.resumeText) {
+      updateAgentStatus(caraAgent.name, "failed", "Profile or resume text not found");
+      currentState.errors.push({ agent: "system", message: "User profile or resume text not found. Please upload a resume first." });
+      throw new Error("User profile or resume text not found.");
+    }
+    currentState.mayaAnalysis = {
+        summary: currentState.profile.resumeSummary,
+        skills: currentState.profile.extractedSkills,
+        experience: currentState.profile.extractedExperience,
+        strengths: currentState.profile.keyStrengths,
+        areasForDevelopment: currentState.profile.areasForDevelopment
+    };
+    updateAgentStatus(mayaAgent.name, "complete", "Resume analysis retrieved from profile");
+    currentState.maya_response = currentState.mayaAnalysis;
+
+    updateAgentStatus(caraAgent.name, "thinking", "Formulating Deep Acceleration strategy");
+    const skillsForEllieAndSophia = currentState.profile.extractedSkills || [];
+    if (!skillsForEllieAndSophia || (Array.isArray(skillsForEllieAndSophia) && skillsForEllieAndSophia.length === 0)) {
+        updateAgentStatus(caraAgent.name, "failed", "No skills found in profile for analysis");
+        currentState.errors.push({ agent: "system", message: "No skills extracted from resume to proceed with market analysis and learning plan." });
+        throw new Error("No skills found for Ellie/Sophia analysis.");
+    }
+    updateAgentStatus(caraAgent.name, "complete", "Initial planning complete");
+
+    updateAgentStatus(ellieAgent.name, "working", "Analyzing market trends for skills");
+    let skillNamesForEllie: string[] = [];
+    if (Array.isArray(skillsForEllieAndSophia)) {
+        skillNamesForEllie = skillsForEllieAndSophia.map((s: any) => typeof s === 'string' ? s : s.skill).filter(Boolean);
+    }
+    if (skillNamesForEllie.length === 0) {
+        updateAgentStatus(ellieAgent.name, "failed", "No valid skill names for market analysis");
+        currentState.errors.push({ agent: "ellie", message: "No valid skill names provided for market analysis." });
+        throw new Error("No valid skill names for Ellie.");
+    }
+    currentState.ellieInsights = await ellieAgent.analyze(skillNamesForEllie);
+    currentState.ellie_response = currentState.ellieInsights;
+    updateAgentStatus(ellieAgent.name, "complete", "Market analysis complete");
+
+    updateAgentStatus(sophiaAgent.name, "working", "Developing personalized learning plan");
+    let skillsForSophia: UserSkill[] = [];
+     if (Array.isArray(skillsForEllieAndSophia)) {
+        skillsForSophia = skillsForEllieAndSophia.map((s: any) => {
+            if (typeof s === 'string') return { skill: s, replitUserId: userId, source: 'resume' } as UserSkill;
+            if (typeof s === 'string') return { skill: s, replitUserId: userId, source: 'resume' } as UserSkill; // Convert to UserSkill
+            // Ensure it has the 'skill' property at least to somewhat align with UserSkill
+            return typeof s === 'object' && s !== null && typeof s.skill === 'string' ? s as UserSkill : null;
+        }).filter(Boolean) as UserSkill[];
+    }
+    if (skillsForSophia.length === 0) {
+        updateAgentStatus(sophiaAgent.name, "failed", "No valid skills for learning plan");
+        currentState.errors?.push({ agent: "sophia", message: "No valid skills provided for learning plan." });
+        throw new Error("No valid skills for Sophia.");
+    }
+
+    currentState.sophiaPlan = await sophiaAgent.createLearningPlan(
+        skillsForSophia,
+        currentState.profile.careerGoals || "general career growth",
+        currentState.ellieInsights // Pass Ellie's insights to Sophia
+    );
+    currentState.sophia_response = currentState.sophiaPlan;
+    updateAgentStatus(sophiaAgent.name, "complete", "Learning plan created");
+
+    // 5. Cara: Phase 2 - Synthesis
+    updateAgentStatus(caraAgent.name, "working", "Synthesizing Deep Acceleration Plan");
+    // Ensure complex objects passed to prompts are stringified.
+    const profileSummaryForPrompt = `Career Stage: ${currentState.profile.careerStage || 'N/A'}, Industry Focus: ${currentState.profile.industryFocus?.join(', ') || 'N/A'}, Career Goals: ${currentState.profile.careerGoals || 'N/A'}`;
+    const mayaAnalysisForPrompt = `Summary: ${currentState.mayaAnalysis?.summary || 'N/A'}, Key Strengths: ${currentState.mayaAnalysis?.strengths?.join(', ') || 'N/A'}, Areas for Development: ${currentState.mayaAnalysis?.areasForDevelopment?.join(', ') || 'N/A'}, Extracted Skills: ${JSON.stringify(currentState.mayaAnalysis?.skills || [], null, 2)}, Extracted Experience: ${JSON.stringify(currentState.mayaAnalysis?.experience || [], null, 2)}`;
+    const ellieInsightsForPrompt = JSON.stringify(currentState.ellieInsights || {}, null, 2);
+    const sophiaPlanForPrompt = JSON.stringify(currentState.sophiaPlan || {}, null, 2);
+
+    const synthesisPrompt = \`Synthesize a comprehensive Deep Acceleration Plan based on the following information:\n\nUser Profile:\n${profileSummaryForPrompt}\n\nResume Analysis (from Maya):\n${mayaAnalysisForPrompt}\n\nMarket Analysis (from Ellie):\n${ellieInsightsForPrompt}\n\nPersonalized Learning Plan (from Sophia):\n${sophiaPlanForPrompt}\n\nTask: Create a final, user-facing "Deep Acceleration Plan". It should be well-structured, actionable, and encouraging.\nIt should integrate insights from all agents. Highlight how the learning plan addresses skill gaps relevant to market demand and user goals.\nOutput the plan as a single structured JSON object.\nExample JSON structure:\n{\n  "title": "Your Deep Acceleration Plan",\n  "introduction": "A brief overview of the plan and its goals.",\n  "currentStanding": {\n    "summary": "Recap of user strengths and areas for development based on resume.",\n    "keyStrengths": ["Strength1", "Strength2"],\n    "areasForDevelopment": ["Area1", "Area2"]\n  },\n  "marketContext": {\n    "overview": "Summary of market trends for relevant skills.",\n    "opportunities": ["Opp1", "Opp2"],\n    "demandedSkills": ["SkillX", "SkillY"]\n  },\n  "strategicLearningRoadmap": {\n    "introduction": "How the learning plan connects to goals and market.",\n    "phases": [\n      { "phaseName": "Phase 1: Foundation", "description": "...", "resources": ["..."], "skillsTargeted": ["..."] }\n    ]\n  },\n  "nextSteps": ["Actionable item 1", "Actionable item 2"],\n  "closingMotivator": "An encouraging closing statement."\n}\`;
+    currentState.final_plan = await caraAgent.analyze(synthesisPrompt);
+    currentState.cara_response = currentState.final_plan;
+    updateAgentStatus(caraAgent.name, "complete", "Deep Acceleration Plan synthesized");
+    
+  } catch (error: any) {
+    console.error(\`[Graph] Error during Deep Acceleration Workflow for user \${userId}:\`, error);
+    const agentInError = Object.values(agentStatuses).find(s => s.status === \'working\' || s.status === \'thinking\');
+    currentState.errors.push({ \n        agent: agentInError ? agentInError.agentName : "workflow_error", \n        message: error.message || "An unexpected error occurred in the workflow.",
+        details: error.stack
+    });
+    Object.values(agents).forEach(agent => {
+        if (agentStatuses[agent.name].status === 'working' || agentStatuses[agent.name].status === 'thinking') {
+            updateAgentStatus(agent.name, "failed", error.message);
+        }
+    });
+  } finally {
+    console.log(\`[Graph] Deep Acceleration Workflow finished for user \${userId}. Final state:\`, currentState);
+  }
+
+  return currentState;
+};

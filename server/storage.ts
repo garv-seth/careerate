@@ -90,7 +90,12 @@ export interface IStorage {
     industryFocus?: string[],
     careerGoals?: string,
     preferredLearningStyle?: string,
-    timeAvailability?: string
+    timeAvailability?: string,
+    resumeSummary?: string | null,
+    extractedSkills?: any | null,
+    extractedExperience?: any | null,
+    keyStrengths?: string[] | null,
+    areasForDevelopment?: string[] | null
   }): Promise<Profile>;
   updateProfileResume(userId: string, resumeText: string): Promise<Profile>;
   updateProfile(userId: string, updates: {
@@ -98,7 +103,14 @@ export interface IStorage {
     industryFocus?: string[],
     careerGoals?: string,
     preferredLearningStyle?: string,
-    timeAvailability?: string
+    timeAvailability?: string,
+    resumeText?: string | null,
+    resumeSummary?: string | null,
+    extractedSkills?: any | null,
+    extractedExperience?: any | null,
+    keyStrengths?: string[] | null,
+    areasForDevelopment?: string[] | null,
+    lastScan?: Date | null
   }): Promise<Profile>;
 
   // Skills operations
@@ -453,10 +465,34 @@ export class DatabaseStorage implements IStorage {
     industryFocus?: string[],
     careerGoals?: string,
     preferredLearningStyle?: string,
-    timeAvailability?: string
+    timeAvailability?: string,
+    resumeSummary?: string | null, 
+    extractedSkills?: any | null, 
+    extractedExperience?: any | null, 
+    keyStrengths?: string[] | null, 
+    areasForDevelopment?: string[] | null 
   }): Promise<Profile> {
-    const [profile] = await db.insert(profiles).values(profileData).returning();
-    return profile;
+    const [newProfile] = await db
+      .insert(profiles)
+      .values({
+        userId: profileData.userId,
+        resumeText: profileData.resumeText,
+        lastScan: profileData.lastScan,
+        careerStage: profileData.careerStage,
+        industryFocus: profileData.industryFocus,
+        careerGoals: profileData.careerGoals,
+        preferredLearningStyle: profileData.preferredLearningStyle,
+        timeAvailability: profileData.timeAvailability,
+        resumeSummary: profileData.resumeSummary,
+        extractedSkills: profileData.extractedSkills,
+        extractedExperience: profileData.extractedExperience,
+        keyStrengths: profileData.keyStrengths,
+        areasForDevelopment: profileData.areasForDevelopment,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newProfile;
   }
 
   async updateProfileResume(userId: string, resumeText: string): Promise<Profile> {
@@ -487,32 +523,48 @@ export class DatabaseStorage implements IStorage {
     industryFocus?: string[],
     careerGoals?: string,
     preferredLearningStyle?: string,
-    timeAvailability?: string
+    timeAvailability?: string,
+    resumeText?: string | null,
+    resumeSummary?: string | null,
+    extractedSkills?: any | null,
+    extractedExperience?: any | null,
+    keyStrengths?: string[] | null,
+    areasForDevelopment?: string[] | null,
+    lastScan?: Date | null
   }): Promise<Profile> {
-    // Check if profile exists
-    const existingProfile = await this.getProfileByUserId(userId);
-
-    if (!existingProfile) {
-      // Create new profile if it doesn't exist
-      return this.createProfile({
-        userId,
-        resumeText: null,
-        lastScan: null,
-        ...updates
-      });
+    const currentProfile = await this.getProfileByUserId(userId);
+    if (!currentProfile) {
+      throw new Error(`Profile not found for user ID: ${userId}`);
     }
 
-    // Update existing profile
-    const [profile] = await db
+    const updateData: Partial<Profile> = {};
+
+    // Only add fields to updateData if they are present in the updates object
+    if (updates.careerStage !== undefined) updateData.careerStage = updates.careerStage;
+    if (updates.industryFocus !== undefined) updateData.industryFocus = updates.industryFocus;
+    if (updates.careerGoals !== undefined) updateData.careerGoals = updates.careerGoals;
+    if (updates.preferredLearningStyle !== undefined) updateData.preferredLearningStyle = updates.preferredLearningStyle;
+    if (updates.timeAvailability !== undefined) updateData.timeAvailability = updates.timeAvailability;
+    if (updates.resumeText !== undefined) updateData.resumeText = updates.resumeText;
+    if (updates.resumeSummary !== undefined) updateData.resumeSummary = updates.resumeSummary;
+    if (updates.extractedSkills !== undefined) updateData.extractedSkills = updates.extractedSkills;
+    if (updates.extractedExperience !== undefined) updateData.extractedExperience = updates.extractedExperience;
+    if (updates.keyStrengths !== undefined) updateData.keyStrengths = updates.keyStrengths;
+    if (updates.areasForDevelopment !== undefined) updateData.areasForDevelopment = updates.areasForDevelopment;
+    if (updates.lastScan !== undefined) updateData.lastScan = updates.lastScan;
+
+    if (Object.keys(updateData).length === 0) {
+      return currentProfile; // No actual updates to apply
+    }
+
+    updateData.updatedAt = new Date();
+
+    const [updatedProfile] = await db
       .update(profiles)
-      .set({ 
-        ...updates,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(profiles.userId, userId))
       .returning();
-
-    return profile;
+    return updatedProfile;
   }
 
   // Skills operations
